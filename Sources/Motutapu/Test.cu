@@ -1,3 +1,4 @@
+#ifdef WITH_CUDA
 
 #include <iostream>
 #include <Motutapu/Test.hpp>
@@ -13,4 +14,4 @@ void PrintCudaVersion()
     cudaDriverGetVersion(&driver_ver);
     std::cout << "CUDA Driver version: " << driver_ver << std::endl;
 }
-
+#endif
