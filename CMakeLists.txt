@@ -1,11 +1,13 @@
 # CMake version
-cmake_minimum_required(VERSION 3.8.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
 
 # Include cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
 # Declare project
 project(motutapu)
+
+option(USE_CUDA "USE_CUDA" ON)
 
 # Set output directories
 set(DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -22,6 +24,7 @@ include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
 
 # Compile options
+include(CMake/CheckAVX.cmake)
 include(CMake/CompileOptions.cmake)
 
 # Build type - Release by default
@@ -36,6 +39,10 @@ set(CMAKE_MACOSX_RPATH ON)
 add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/Motutapu)
 add_subdirectory(Tests/UnitTests)
+
+if(USE_CUDA)
+    add_compile_definitions(WITH_CUDA)
+endif()
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading

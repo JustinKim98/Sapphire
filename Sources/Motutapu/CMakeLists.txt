@@ -20,10 +20,33 @@ file(GLOB_RECURSE headers
 file(GLOB_RECURSE sources
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-# Build library
-add_library(${target}
-    ${sources})
+file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 
+# Build library
+if(USE_CUDA)
+    #set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+	find_package(CUDA 11.2)
+    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+	if(NOT CUDA_FOUND)
+		message(STATUS "CUDA not found")
+		set(USE_CUDA OFF)
+    else()
+        message(STATUS "CUDA found")
+	endif()
+endif()
+
+if(USE_CUDA)
+    add_definitions(-DUSE_CUDA)
+    enable_language("CUDA")
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
+    message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 52 61 75)
+    message(STATUS "CUDA enabled")
+
+else()
+    add_library(${target} ${sources})
+endif()
 # Project options
 set_target_properties(${target}
     PROPERTIES
@@ -40,15 +63,19 @@ target_compile_options(${target}
     INTERFACE
 )
 
-target_link_libraries(${target}
-    PRIVATE
+#if(NOT USE_CUDA)
 
-    PUBLIC
-    ${DEFAULT_LINKER_OPTIONS}
-	${DEFAULT_LIBRARIES}
+    target_link_libraries(${target}
+        PRIVATE
 
-    INTERFACE
-)
+        PUBLIC
+        ${DEFAULT_LINKER_OPTIONS}
+	    ${DEFAULT_LIBRARIES}
+    
+
+        INTERFACE
+    )
+#endif()
 
 # Install
 install(TARGETS ${target} DESTINATION lib)
