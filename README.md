@@ -2,7 +2,7 @@
 
 <img src="./Medias/Logo.png" width=306 height=344 />
 
-[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/utilForever/cpp-oss-template/blob/master/LICENSE) [![Build Status](https://travis-ci.org/utilForever/cpp-oss-template.svg?branch=master)](https://travis-ci.org/utilForever/cpp-oss-template/branches)
+[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/jwkim98/Motutapu/blob/master/LICENSE) [![Build Status](https://travis-ci.org/jwkim98/Motutapu.svg?branch=master)](https://travis-ci.org/jwkim98/Motutapu/branches)
 [![Build status](https://ci.appveyor.com/api/projects/status/v8c2tpqjy7mbghji?svg=true)](https://ci.appveyor.com/project/jwkim98/motutapu)
 
 [![codecov](https://codecov.io/gh/utilForever/cpp-oss-template/branch/master/graph/badge.svg)](https://codecov.io/gh/utilForever/cpp-oss-template)
@@ -33,7 +33,7 @@ I am always happy to answer questions or help with any issues you might have, an
 
 The class is licensed under the [MIT License](http://opensource.org/licenses/MIT):
 
-Copyright &copy; 2019 [Chris Ohk](http://www.github.com/utilForever).
+Copyright &copy; 2020[Justin Kim](http://www.github.com/jwkim98).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

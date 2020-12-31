@@ -22,7 +22,7 @@ lcov --gcov-tool /usr/bin/gcov-9 -c -d Tests/UnitTests -o test.info
 lcov --gcov-tool /usr/bin/gcov-9 -a base.info -a test.info -o coverage.info
 lcov --gcov-tool /usr/bin/gcov-9 -r coverage.info '/usr/*' -o coverage.info
 lcov --gcov-tool /usr/bin/gcov-9 -r coverage.info '*/Includes/*' -o coverage.info
-lcov --gcov-tool /usr/bin/gcov-9 -r coverage.info '*/Libraries/*' -o coverage.info
+lcov --gcov-tool /usr/bin/gcov-9 -r coverage.info '*/Sources/*' -o coverage.info
 lcov --gcov-tool /usr/bin/gcov-9 -l coverage.info
 
 curl -s https://codecov.io/bash > .codecov
