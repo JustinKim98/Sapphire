@@ -100,6 +100,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 		/GF           # -> enable string pooling
 		>
 
+		/openmp
+
 		# No manual c++11 enable for MSVC as all supported MSVC versions for cmake-init have C++11 implicitly enabled (MSVC >=2013)
 	)
 endif ()
@@ -151,6 +153,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_SYSTEM_NAME MATCHES "Linux")
 	set(DEFAULT_LINKER_OPTIONS
 		-pthread
 		-lstdc++fs
+		-fopenmp
 	)
 endif()
 
