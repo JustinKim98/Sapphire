@@ -5,27 +5,21 @@
 [![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/jwkim98/Motutapu/blob/master/LICENSE) [![Build Status](https://travis-ci.org/jwkim98/Motutapu.svg?branch=master)](https://travis-ci.org/jwkim98/Motutapu/branches)
 [![Build status](https://ci.appveyor.com/api/projects/status/v8c2tpqjy7mbghji?svg=true)](https://ci.appveyor.com/project/jwkim98/motutapu)
 
-[![codecov](https://codecov.io/gh/utilForever/cpp-oss-template/branch/master/graph/badge.svg)](https://codecov.io/gh/utilForever/cpp-oss-template)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7430fcc2933b44209cc97a87050c6a8e)](https://www.codacy.com/manual/utilForever/cpp-oss-template?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=utilForever/cpp-oss-template&amp;utm_campaign=Badge_Grade)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/utilForever/cpp-oss-template.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/cpp-oss-template/alerts/)
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/utilForever/cpp-oss-template.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/cpp-oss-template/context:cpp)
+[![codecov](https://codecov.io/gh/jwkim98/Motutapu/branch/master/graph/badge.svg?token=TABTFS9WBN)](https://codecov.io/gh/jwkim98/Motutapu)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d81d09c4b414983b5a99110dfb2a183)](https://www.codacy.com/gh/jwkim98/Motutapu/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jwkim98/Motutapu&amp;utm_campaign=Badge_Grade)
 
 Motutapu is a matrix operation library for use in machine learning applications.
+This repository was created for research purpose
 
-
-
-## How To Contribute
-
-Contributions are always welcome, either reporting issues/bugs or forking the repository and then issuing pull requests when you have completed some additional coding that you feel will be beneficial to the main project. If you are interested in contributing in a more dedicated capacity, then please contact me.
+## Aim of this project
+* Effivient Sparse-Sparse, Dense-Dense matrix multiplication
+* Takes benefit of SIMD (CPU) and SIMT (CUDA)
+* Support for deep-learning operations
 
 ## Contact
 
 You can contact me via e-mail (jwkimrhkgkr@gmail.com or jwkim98@kaist.ac.kr).
 I am always happy to answer questions or help with any issues you might have, and please be sure to share any additional work or your creations with me, I love seeing what other people are making.
-
-## References
-
-- https://github.com/codecov/cpp-11-standard
 
 ## License
 
