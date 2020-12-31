@@ -7,6 +7,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 # Declare project
 project(motutapu)
 
+option(USE_CUDA "USE_CUDA" ON)
+
 # Set output directories
 set(DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
@@ -22,6 +24,7 @@ include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
 
 # Compile options
+include(CMake/CheckAVX.cmake)
 include(CMake/CompileOptions.cmake)
 
 # Build type - Release by default

@@ -64,11 +64,20 @@ endif ()
 #
 
 set(DEFAULT_COMPILE_OPTIONS)
+CHECK_FOR_AVX()
 
 # MSVC compiler options
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	# remove default warning level from CMAKE_CXX_FLAGS
 	string (REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	if(HAVE_AVX_EXTENSIONS AND HAVE_AVX2_EXTENSIONS AND NOT MSVC_VERSION LESS 1800)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX /arch:AVX2")
+		add_compile_definitions(WITH_AVX2)
+	endif()
+	if(HAVE_AVX512_EXTENSIONS AND NOT MSVC_VERSION LESS 1800)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
+		add_compile_definitions(WITH_AVX512)
+	endif()
 endif()
 
 # MSVC compiler options
@@ -106,6 +115,15 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"
 		${WARN_AS_ERROR_FLAGS}
 		-std=c++1z
 	)
+
+	if(HAVE_AVX_EXTENSIONS AND HAVE_AVX2_EXTENSIONS)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2")
+		add_compile_definitions(WITH_AVX2)
+	endif()
+	if(HAVE_AVX512_EXTENSIONS)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512")
+		add_compile_definitions(WITH_AVX512)
+	endif()
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
