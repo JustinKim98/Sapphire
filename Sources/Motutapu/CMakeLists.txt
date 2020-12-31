@@ -35,7 +35,6 @@ endif()
 
 if(USE_CUDA)
     add_definitions(-DUSE_CUDA)
-    add_compile_definitions(WITH_CUDA)
     enable_language("CUDA")
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})

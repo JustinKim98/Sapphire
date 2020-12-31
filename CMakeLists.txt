@@ -26,6 +26,9 @@ include_directories(Libraries/doctest/doctest)
 # Compile options
 include(CMake/CheckAVX.cmake)
 include(CMake/CompileOptions.cmake)
+if(USE_CUDA)
+    add_compile_definitions(WITH_CUDA)
+endif()
 
 # Build type - Release by default
 if(NOT CMAKE_BUILD_TYPE)
