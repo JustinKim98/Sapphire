@@ -68,4 +68,11 @@ macro(CHECK_FOR_AVX)
         }"
         HAVE_AVX512_EXTENSIONS)
 
+        if(HAVE_AVX_EXTENSIONS AND HAVE_AVX2_EXTENSIONS)
+            message(STATUS "Found AVX/AVX2 instruction sets")
+        endif()
+        if(HAVE_AVX512_EXTENSIONS)
+            message(STATUS "Found AVX512 instruction set")
+        endif()
+
 endmacro(CHECK_FOR_AVX)

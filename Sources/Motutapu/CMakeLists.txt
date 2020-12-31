@@ -24,7 +24,9 @@ file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 
 # Build library
 if(USE_CUDA)
+    #set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 	find_package(CUDA 11.2)
+    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 	if(NOT CUDA_FOUND)
 		message(STATUS "CUDA not found")
 		set(USE_CUDA OFF)
@@ -61,17 +63,8 @@ target_compile_options(${target}
     INTERFACE
 )
 
-if(USE_CUDA)
-    target_link_libraries(${target}
-        PRIVATE
+#if(NOT USE_CUDA)
 
-        PUBLIC
-        ${DEFAULT_LINKER_OPTIONS}
-	    ${DEFAULT_LIBRARIES}
-
-        INTERFACE
-    )
-else()
     target_link_libraries(${target}
         PRIVATE
 
@@ -82,7 +75,7 @@ else()
 
         INTERFACE
     )
-endif()
+#endif()
 
 # Install
 install(TARGETS ${target} DESTINATION lib)

@@ -8,9 +8,10 @@ TEST_CASE("Simple test")
     CHECK(Add(2, 3) == 5);
 }
 
-#ifdef WITH_CUDA
+
 TEST_CASE("Check cuda")
 {
+#ifdef WITH_CUDA
     PrintCudaVersion();
-}
 #endif
+}
