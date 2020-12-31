@@ -2,14 +2,14 @@ language: cpp
 
 matrix:
   include:
-    - name: Test Ubuntu 18.04 + gcc-9 + codecov
+    - name: Test Ubuntu 18.04 + gcc-7 + codecov
       os: linux
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-9
+            - g++-7
       dist: xenial
       sudo: required
       compiler: gcc

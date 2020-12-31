@@ -66,7 +66,7 @@ SET(CMAKE_C_FLAGS_COVERAGE
     CACHE STRING "Flags used by the C compiler during coverage builds."
     FORCE )
 SET(CMAKE_EXE_LINKER_FLAGS_COVERAGE
-    ""
+    "" 
     CACHE STRING "Flags used for linking binaries during coverage builds."
     FORCE )
 SET(CMAKE_SHARED_LINKER_FLAGS_COVERAGE
