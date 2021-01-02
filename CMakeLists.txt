@@ -20,8 +20,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Includes
 include_directories(Includes)
+include_directories(Impl)
 include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
+if(USE_CUDA)
+    add_compile_definitions(WITH_CUDA)
+    include_directories(${CUDA_INCLUDE_DIRS})
+    message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
+endif()
 
 # Compile options
 include(CMake/CheckAVX.cmake)
@@ -40,9 +46,7 @@ add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/Motutapu)
 add_subdirectory(Tests/UnitTests)
 
-if(USE_CUDA)
-    add_compile_definitions(WITH_CUDA)
-endif()
+
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading
