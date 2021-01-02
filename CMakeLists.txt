@@ -23,10 +23,21 @@ include_directories(Includes)
 include_directories(Impl)
 include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
+
+# Build library
 if(USE_CUDA)
-    add_compile_definitions(WITH_CUDA)
-    include_directories(${CUDA_INCLUDE_DIRS})
-    message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
+    #set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+	find_package(CUDA 11.0)
+    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+	if(NOT CUDA_FOUND)
+		message(STATUS "CUDA not found")
+		set(USE_CUDA OFF)
+    else()
+        add_compile_definitions(WITH_CUDA)
+        include_directories(${CUDA_INCLUDE_DIRS})
+        message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
+        message(STATUS "CUDA found")
+	endif()
 endif()
 
 # Compile options
@@ -45,7 +56,6 @@ set(CMAKE_MACOSX_RPATH ON)
 add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/Motutapu)
 add_subdirectory(Tests/UnitTests)
-
 
 
 # Code coverage - Debug only

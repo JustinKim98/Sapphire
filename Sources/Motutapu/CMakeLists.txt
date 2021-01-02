@@ -22,18 +22,6 @@ file(GLOB_RECURSE sources
 
 file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 
-# Build library
-if(USE_CUDA)
-    #set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-	find_package(CUDA 11.0)
-    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-	if(NOT CUDA_FOUND)
-		message(STATUS "CUDA not found")
-		set(USE_CUDA OFF)
-    else()
-        message(STATUS "CUDA found")
-	endif()
-endif()
 
 if(USE_CUDA)
     add_definitions(-DUSE_CUDA)
@@ -47,6 +35,7 @@ if(USE_CUDA)
 else()
     add_library(${target} ${sources})
 endif()
+
 # Project options
 set_target_properties(${target}
     PROPERTIES
