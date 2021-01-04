@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace Motutapu::Util
+namespace Motutapu
 {
 class Shape
 {
