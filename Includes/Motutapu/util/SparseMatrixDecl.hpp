@@ -24,11 +24,11 @@ struct SparseMatrix
     static void CopyCPU(SparseMatrix& dest, const SparseMatrix& src);
 
 
-//#ifdef WITH_CUDA
+#ifdef WITH_CUDA
     static SparseMatrix AllocateOnGPU();
     static void CopyToGPU(SparseMatrix& dest, const SparseMatrix& src);
     static void CopyGPU(SparseMatrix& dest, const SparseMatrix& src);
-//#endif
+#endif
 };
 
 }

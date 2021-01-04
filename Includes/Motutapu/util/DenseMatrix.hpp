@@ -20,6 +20,16 @@ struct DenseMatrix
     unsigned int NumRows;
     unsigned int NumCols;
     unsigned int PadSize;
+
+    static DenseMatrix AllocateOnCPU();
+    static void CopyToCPU(DenseMatrix& dest, const DenseMatrix& src);
+    static void CopyCPU(DenseMatrix& dest, const DenseMatrix& src);
+
+#ifdef WITH_CUDA
+    static DenseMatrix AllocateOnGPU();
+    static void CopyToGPU(DenseMatrix& dest, const DenseMatrix& src);
+    static void CopyGPU(DenseMatrix& dest, const DenseMatrix& src);
+#endif
 };
 
 }

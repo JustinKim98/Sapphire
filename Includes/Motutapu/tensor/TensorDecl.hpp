@@ -7,10 +7,10 @@
 #ifndef MOTUTAPU_UTIL_TENSOR_DECL_HPP
 #define MOTUTAPU_UTIL_TENSOR_DECL_HPP
 
-#include <Motutapu/util/Shape.hpp>
+#include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
+#include <Motutapu/util/TensorDataDecl.hpp>
 #include <vector>
-#include <memory>
 
 namespace Motutapu
 {
@@ -24,11 +24,6 @@ class Tensor
 
     Tensor(Shape shape, Device device);
 
-    Tensor(Shape shape, std::size_t batchSize, Compute::Device device);
-
-    Tensor(Shape shape, std::size_t batchSize, Compute::Device device,
-           std::vector<T> data);
-
     ~Tensor();
 
     Tensor(const Tensor<T>& tensor);
@@ -37,71 +32,25 @@ class Tensor
     Tensor<T>& operator=(const Tensor<T>& tensor);
     Tensor<T>& operator=(Tensor<T>&& tensor) noexcept = delete;
 
-    void SetData(const std::vector<T>& data);
+    void ToGPU();
+    void ToCPU();
 
-    [[nodiscard]] std::size_t NumMatrix() const;
+    void ToSparse();
+    void ToDense();
 
-    [[nodiscard]] Tensor<T> SubTensor(std::initializer_list<int> index);
+    std::vector<T> Data();
+    Util::TensorData<T>& TensorData();
+    Shape Shape();
 
-
-    void ChangeBatchSize(std::size_t newBatchSize);
-
-    T& At(std::size_t batchIdx, std::vector<std::size_t> index);
-
-    const T& At(std::size_t batchIdx, std::vector<std::size_t> index) const;
-
-    //! Access the data linearly considering paddings
-    T& At(std::size_t idx);
-
-    const T& At(std::size_t idx) const;
-
-    [[nodiscard]] std::size_t ColumnElementSize() const
-    {
-        return m_columnElementSize;
-    }
-
-    [[nodiscard]] std::size_t ElementSize() const
-    {
-        return m_elementSize;
-    }
-
-    [[nodiscard]] std::size_t TotalElementSize() const
-    {
-        return m_elementSize * BatchSize;
-    }
-
-    [[nodiscard]] std::size_t GetDataByteSize() const
-    {
-        return TotalElementSize() * sizeof(T);
-    }
-
-    //! If both tensors are on same device, data is moved rather than copied
-    static void ForwardTensorData(Tensor<T>& source, Tensor<T>& destination);
-
-    static void MoveTensorData(Tensor<T>& source, Tensor<T>& destination);
-
-    static void CopyTensorData(const Tensor<T>& source, Tensor<T>& destination);
-
-    static void CopyCPUToGPU(Tensor<T>& dest, Tensor<T>& src);
-
-    static void CopyGPUToCPU(Tensor<T>& dest, Tensor<T>& src);
-
-    static void Sparsify(Tensor<T>& tensor);
-
-    static Tensor<T> Sparesify(const Tensor<T>& tensor);
-
-    /// Shape of this tensorData
-    Util::Shape TensorShape;
-    Device Device;
-    std::size_t BatchSize = 0;
+    void PushTrajectory(int operationId);
+    int PopTrajectory();
+    int PeekTrajectory();
 
  private:
-    std::size_t m_elementSize = 0;
-    std::size_t m_columnElementSize = 0;
+    int m_tensorId;
+    Device m_device;
 
-    std::size_t m_getElementSize() const;
-
-    std::size_t m_getPaddedColumnSize() const;
+    std::list<int> m_functionTrajectory;
 
     void m_freeData();
 };
