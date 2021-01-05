@@ -177,7 +177,7 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             }
             else
             {
-                success &= MemcpyGpuToGpu(
+                MemcpyGpuToGpu(
                     static_cast<void**>(dest->DenseMatCuda),
                     static_cast<void**>(src->DenseMatCuda),
                     src->DenseTotalLength * sizeof(T));

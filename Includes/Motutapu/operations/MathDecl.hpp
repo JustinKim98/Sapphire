@@ -11,7 +11,9 @@
 
 namespace Motutapu
 {
-
+template <typename T>
+static std::vector<Tensor<T>> MulOp(std::vector<Tensor<T>>& inputs,
+                                    Unit<T>& unit);
 }
 
 

@@ -32,8 +32,6 @@ class Shape
     bool operator==(const Shape& shape) const;
     bool operator!=(const Shape& shape) const;
 
-    Shape operator*(const Shape& shape) const;
-
     [[nodiscard]] std::string ToString() const
     {
         std::string msg;
@@ -49,19 +47,6 @@ class Shape
 
     [[nodiscard]] std::size_t At(std::size_t index) const;
 
-    void Expand(std::size_t rank);
-
-    void Shrink();
-
-    void Squeeze();
-
-    void UnSqueeze();
-
-    void Flatten();
-
-    void Concatenate();
-
-    void Stack();
 
     [[nodiscard]] std::size_t Dim() const;
 

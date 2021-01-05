@@ -11,24 +11,18 @@
 #include <functional>
 #include <Motutapu/util/TensorDataDecl.hpp>
 #include <Motutapu/util/ConcurrentQueue.hpp>
-#include <list>
 #include <string>
 #include <unordered_map>
 #include <shared_mutex>
-#include <thread>
 
 #include <Motutapu/tensor/TensorDecl.hpp>
-
-#ifdef WITH_CUDA
-#include <cuda_runtime.h>
-#endif
 
 namespace Motutapu
 {
 template <typename T>
 class Unit
 {
-protected:
+public:
     std::unordered_map<std::string, int> OutputMap;
     std::unordered_map<std::string, int> InputMap;
 
@@ -39,39 +33,42 @@ protected:
     std::unordered_map<std::string, T> ScalarLiterals;
     std::unordered_map<std::string, int> IntegerLiterals;
 
-    std::function<std::vector<Tensor<T>>(
-        std::vector<Tensor<T>>)> BackwardFuncFloat;
-};
+    std::function<std::vector<Tensor<T>>(std::vector<Tensor<T>>&, Unit<T>)>
+    BackwardFunction;
+    std::function<std::vector<Tensor<T>>(std::vector<Tensor<T>>&, Unit<T>)>
+    ForwardFunction;
 
-class Trajectory
-{
-    std::list<int> IdList;
+    std::function<void(Unit<T>)> SaveFunction;
 };
 
 class TensorPool
 {
 public:
-    Util::TensorData<float>& FloatTensorData(int tensorId);
-    Util::TensorData<int>& IntTensorData(int tensorId);
-    Util::TensorData<double>& DoubleTensorData(int tensorId);
+    TensorPool() = default;
+
+    template <typename T>
+    Util::TensorData<T>* GetTensorDataPtr(int tensorId);
+
+    template <typename T>
+    void InsertTensorData(Util::TensorData<T>* tensorData, int tensorId);
 
 private:
-    std::unordered_map<int, Util::TensorData<float>> TensorDataMapFloat;
-    std::unordered_map<int, Util::TensorData<int>> TensorDataMapInt;
-    std::unordered_map<int, Util::TensorData<double>> TensorDataMapDouble;
-    std::shared_mutex m_floatMapMtx;
-    std::shared_mutex m_intMapMtx;
-    std::shared_mutex m_doubleMapMtx;
+    std::unordered_map<int, Util::TensorData<float>*> m_tensorDataMapFloat;
+    std::unordered_map<int, Util::TensorData<int>*> m_tensorDataMapInt;
+    std::unordered_map<int, Util::TensorData<double>*> m_tensorDataMapDouble;
+    std::shared_mutex m_mtx;
 };
 
-class FunctionPool
+class UnitPool
 {
 protected:
     template <typename T>
-    static void RegisterUnit(Unit<T>, int unitId);
+    void InsertUnit(Unit<T>& unit, int unitId);
 
     template <typename T>
-    static Unit<T> GetUnit(int unitId);
+    Unit<T>& GetUnit(int unitId);
+
+    void Save();
 
 private:
     std::unordered_map<int, Unit<float>>
@@ -84,24 +81,12 @@ private:
     std::shared_mutex m_mtx;
 };
 
-class ResourcePool
-{
-public:
-    static std::thread PopThread();
-    static void PushThread(std::thread& thread);
 
-private:
-    static Util::ConcurrentQueue<std::thread> ThreadPool;
+static void AllocateResources();
+static void FreeResources();
 
-#ifdef WITH_CUDA
-public:
-    static cudaStream_t PopStream();
-    static void PushStream();
-private:
-    static Util::ConcurrentQueue<cudaStream_t> m_streamPool;
-
-#endif
-};
+static std::unique_ptr<TensorPool> GlobalTensorPool;
+static std::unique_ptr<UnitPool> GlobalUnitPool;
 }
 
 #endif

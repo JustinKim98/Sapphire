@@ -7,6 +7,8 @@
 #include <Motutapu/compute/cuda/Memory.hpp>
 #include <cuda_runtime.h>
 
+namespace Motutapu
+{
 __host__ bool CudaSetDevice(int deviceId)
 {
     int deviceCount;
@@ -46,3 +48,8 @@ __host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, size_t bytes)
 
     return error == cudaSuccess;
 }
+
+__global__ void MemcpyGpuToGpu(void* dest, void* src, size_t bytes)
+{
+}
+} // namespace Motutapu

@@ -47,6 +47,11 @@ class Device
         return m_padByteSize;
     }
 
+    [[nodiscard]] int Id() const
+    {
+        return m_id;
+    }
+
  private:
     int m_id = -1;
     DeviceType m_type = DeviceType::CPU;
