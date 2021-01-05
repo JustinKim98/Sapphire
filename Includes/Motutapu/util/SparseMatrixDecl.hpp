@@ -7,8 +7,7 @@
 #ifndef MOTUTAPU_UTIL_SPARSEMATRIX_DECL_HPP
 #define MOTUTAPU_UTIL_SPARSEMATRIX_DECL_HPP
 
-namespace Motutapu::Util
-{
+
 template <typename T>
 struct SparseMatrix
 {
@@ -18,19 +17,7 @@ struct SparseMatrix
 
     unsigned int NumRows;
     unsigned int NumCols;
-
-    static SparseMatrix AllocateOnCPU();
-    static void CopyToCPU(SparseMatrix& dest, const SparseMatrix& src);
-    static void CopyCPU(SparseMatrix& dest, const SparseMatrix& src);
-
-
-#ifdef WITH_CUDA
-    static SparseMatrix AllocateOnGPU();
-    static void CopyToGPU(SparseMatrix& dest, const SparseMatrix& src);
-    static void CopyGPU(SparseMatrix& dest, const SparseMatrix& src);
-#endif
 };
 
-}
 
 #endif
