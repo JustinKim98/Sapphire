@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_INDEXING_DECL_HPP
-#define MOTUTAPU_INDEXING_DECL_HPP
+#ifndef MOTUTAPU_INDEXINGINTERFACE_DECL_HPP
+#define MOTUTAPU_INDEXINGINTERFACE_DECL_HPP
 
 #include <functional>
 #include <Motutapu/tensor/TensorDecl.hpp>
