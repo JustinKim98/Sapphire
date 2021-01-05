@@ -37,6 +37,7 @@ if(USE_CUDA)
         include_directories(${CUDA_INCLUDE_DIRS})
         message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
         message(STATUS "CUDA found")
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --std=c++17 --gpu-architecture=sm_50")
 	endif()
 endif()
 
