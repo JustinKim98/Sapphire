@@ -11,6 +11,7 @@
 #include <Motutapu/util/Device.hpp>
 #include <Motutapu/util/TensorDataDecl.hpp>
 #include <vector>
+#include <list>
 
 namespace Motutapu
 {
@@ -40,7 +41,7 @@ class Tensor
 
     std::vector<T> Data();
     Util::TensorData<T>& TensorData();
-    Shape Shape();
+    Shape GetShape();
 
     void PushTrajectory(int operationId);
     int PopTrajectory();

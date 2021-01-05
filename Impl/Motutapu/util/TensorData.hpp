@@ -9,6 +9,7 @@
 
 #include <Motutapu/util/TensorDataDecl.hpp>
 #include <Motutapu/compute/cuda/Memory.hpp>
+#include <list>
 
 namespace Motutapu::Util
 {
