@@ -121,62 +121,6 @@ __global__ void CopyKernel(SparseMatrix<T>* destArray,
     }
 }
 
-template <typename T>
-__host__ void AllocateGpu(SparseMatrix<T>* targetArray,
-                          SparseMatrix<T>* hostRefArray, uint32_t size)
-{
-    cudaMalloc(reinterpret_cast<void**>(&targetArray),
-               size * SPARSEMATRIX_PADDED_SIZE);
-
-    cudaMemcpy(reinterpret_cast<void**>(&targetArray),
-               reinterpret_cast<void**>(&hostRefArray),
-               size * SPARSEMATRIX_PADDED_SIZE, cudaMemcpyHostToDevice);
-
-    cudaStream_t streamPool[size / DEFAULT_DIM_X];
-
-    uint32_t idx = 0;
-    uint32_t streamIdx = 0;
-    for (; idx < size; idx += DEFAULT_DIM_X, streamIdx++)
-    {
-        cudaStreamCreate(&streamPool[streamIdx]);
-        AllocateKernel<T><<<1, DEFAULT_DIM_X, 0, streamPool[streamIdx]>>>(
-            targetArray + idx,
-            DEFAULT_DIM_X);
-    }
-
-    if (idx > 0)
-        idx -= DEFAULT_DIM_X;
-
-    AllocateKernel<T><<<1, (size - idx)>>>(targetArray + idx,
-                                           size - idx);
-
-    for (int i = 0; i < size / DEFAULT_DIM_X; i ++)
-    {
-        cudaStreamSynchronize(streamPool[i]);
-        cudaStreamDestroy(streamPool[i]);
-    }
-}
-
-template <typename T>
-__host__ void CopyHostToGpu(SparseMatrix<T>* deviceArray,
-                            SparseMatrix<T>* hostArray, uint32_t size)
-{
-    cudaStream_t streamPool[size];
-    for (uint32_t i = 0; i < size; ++i)
-    {
-        SparseMatrix<T>* curDestPtr = deviceArray + i;
-        SparseMatrix<T>* curSrcPtr = deviceArray + i;
-        cudaStreamCreate(&streamPool[i]);
-        cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
-                        (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
-                        &streamPool[i]);
-        cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
-                        (curSrcPtr->NNZ + 1) * sizeof(uint32_t),
-                        &streamPool[i]);
-        cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
-                        (curSrcPtr->NNZ + 1) * sizeof(T), &streamPool[i]);
-    }
-}
 
 template <typename T>
 __global__ void CopySparseMatrixOnGpu(SparseMatrix<T>* destArray,
@@ -185,8 +129,8 @@ __global__ void CopySparseMatrixOnGpu(SparseMatrix<T>* destArray,
 {
     const auto totalNumWorkers = gridDim.x * blockDim.x;
     auto index = blockDim.x * blockIdx.x + threadIdx.x;
-    while (index < size)
 
+    while (index < size)
     {
         SparseMatrix<T>* destMatrix = destArray + index;
         SparseMatrix<T>* srcMatrix = srcArray + index;
@@ -212,6 +156,83 @@ __global__ void CopySparseMatrixOnGpu(SparseMatrix<T>* destArray,
 
         index += totalNumWorkers;
     }
+}
+
+template <typename T>
+__host__ void CopyHostToGpu(SparseMatrix<T>* deviceArray,
+                            SparseMatrix<T>* hostArray, uint32_t size)
+{
+    cudaStream_t streamPool[size];
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        SparseMatrix<T>* curDestPtr = deviceArray + i;
+        SparseMatrix<T>* curSrcPtr = hostArray + i;
+        cudaStreamCreate(&streamPool[i]);
+        cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
+                        (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
+                        streamPool[i]);
+        cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
+                        (curSrcPtr->NNZ + 1) * sizeof(uint32_t), streamPool[i]);
+        cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
+                        (curSrcPtr->NNZ + 1) * sizeof(T), streamPool[i]);
+    }
+
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        cudaStreamSynchronize(streamPool[i]);
+        cudaStreamDestroy(streamPool[i]);
+    }
+}
+
+template <typename T>
+__host__ void AllocateGpuShallow(SparseMatrix<T>* targetArray, uint32_t size)
+{
+    cudaMalloc(reinterpret_cast<void**>(&targetArray),
+               size * SPARSEMATRIX_PADDED_SIZE);
+}
+
+template <typename T>
+__host__ void AllocateGpuDeep(SparseMatrix<T>* targetArray,
+                          SparseMatrix<T>* hostRefArray, uint32_t size)
+{
+    cudaMemcpy(reinterpret_cast<void**>(&targetArray),
+               reinterpret_cast<void**>(&hostRefArray),
+               size * SPARSEMATRIX_PADDED_SIZE, cudaMemcpyHostToDevice);
+
+    cudaStream_t streamPool[size / DEFAULT_DIM_X];
+
+    uint32_t idx = 0;
+    uint32_t streamIdx = 0;
+    for (; idx < size; idx += DEFAULT_DIM_X, streamIdx++)
+    {
+        cudaStreamCreate(&streamPool[streamIdx]);
+        AllocateKernel<T><<<1, DEFAULT_DIM_X, 0, streamPool[streamIdx]>>>(
+            targetArray + idx, DEFAULT_DIM_X);
+    }
+
+    if (idx > 0)
+        idx -= DEFAULT_DIM_X;
+
+    AllocateKernel<T><<<1, (size - idx)>>>(targetArray + idx, size - idx);
+
+    for (int i = 0; i < size / DEFAULT_DIM_X; i++)
+    {
+        cudaStreamSynchronize(streamPool[i]);
+        cudaStreamDestroy(streamPool[i]);
+    }
+}
+
+
+template <typename T>
+unsigned long ConvertDenseToSparse(SparseMatrix<T>* sparse,
+                                   const T* dense, Shape shape, Device device)
+{
+}
+
+template <typename T>
+unsigned long ConvertSparseToDense(SparseMatrix<T>* dense, const T* sparse,
+                                   Shape shape, Device device)
+{
 }
 }
 #endif

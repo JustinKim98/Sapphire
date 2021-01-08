@@ -6,11 +6,22 @@
 
 #ifndef MOTUTAPU_CUDA_MEMORY_CUH
 #define MOTUTAPU_CUDA_MEMORY_CUH
-#include <Motutapu/util/SparseMatrixDecl.hpp>
+
 #include <Motutapu/compute/cuda/CudaParams.hpp>
 //#ifdef WITH_CUDA
 
-__host__ bool CudaSetDevice(int deviceId);
+
+__host__ bool CudaSetDevice(int deviceId)
+{
+    int deviceCount;
+    cudaGetDeviceCount(&deviceCount);
+    if (deviceId < deviceCount)
+    {
+        const cudaError_t error = cudaSetDevice(deviceId);
+        return error == cudaSuccess;
+    }
+    return false;
+}
 
 template <typename T>
 __global__ void CopyOnGpu(T* dest, const T* const src, unsigned int size)
@@ -23,13 +34,11 @@ __global__ void CopyOnGpu(T* dest, const T* const src, unsigned int size)
     }
 }
 
-
-
 template <typename T>
 __host__ __device__ bool CudaMalloc(T** ptr, size_t size)
 {
-    const cudaError_t error = cudaMalloc(reinterpret_cast<void**>(ptr),
-                                         size * sizeof(T));
+    const cudaError_t error =
+        cudaMalloc(reinterpret_cast<void**>(ptr), size * sizeof(T));
     return error == cudaSuccess;
 }
 
@@ -43,10 +52,9 @@ __host__ __device__ bool CudaFree(T** ptr)
 template <typename T>
 __host__ bool MemcpyHostToGpu(T* gpuPtr, T* hostPtr, size_t size)
 {
-    const cudaError_t error =
-        cudaMemcpy(reinterpret_cast<void*>(gpuPtr),
-                   reinterpret_cast<void*>(hostPtr), size * sizeof(T),
-                   cudaMemcpyHostToDevice);
+    const cudaError_t error = cudaMemcpy(
+        reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
+        size * sizeof(T), cudaMemcpyHostToDevice);
 
     return error == cudaSuccess;
 }
@@ -54,11 +62,9 @@ __host__ bool MemcpyHostToGpu(T* gpuPtr, T* hostPtr, size_t size)
 template <typename T>
 __host__ bool MemcpyGpuToHost(T* hostPtr, T* gpuPtr, size_t size)
 {
-    const cudaError_t error =
-        cudaMemcpy(reinterpret_cast<void*>(hostPtr),
-                   reinterpret_cast<void*>(gpuPtr),
-                   size * sizeof(T),
-                   cudaMemcpyDeviceToHost);
+    const cudaError_t error = cudaMemcpy(
+        reinterpret_cast<void*>(hostPtr), reinterpret_cast<void*>(gpuPtr),
+        size * sizeof(T), cudaMemcpyDeviceToHost);
 
     return error == cudaSuccess;
 }
@@ -82,47 +88,5 @@ __host__ void MemcpyGpuToGpu(T* dest, T* src, size_t size)
     CopyOnGpu<<<1, size>>>(dest + elementsCopied, src + elementsCopied,
                            size - elementsCopied);
 }
-
-template <typename T>
-__host__ void CopySparseHostToGpu(SparseMatrix<T>* dest,
-                                  SparseMatrix<T>* src,
-                                  unsigned int batchSize)
-{
-    
-}
-
-template <typename T>
-__host__ bool CopySparseGpuToHost(SparseMatrix<T>* dest,
-                                  SparseMatrix<T>* src,
-                                  unsigned int batchSize);
-
-template <typename T>
-__host__ void CopySparseGpuToGpu(SparseMatrix<T>* destArray,
-                                 SparseMatrix<T>* srcArray,
-                                 unsigned int batchSize)
-{
-    const auto destArrayTotalByteSize =
-        (2 * destArray->NNZ + destArray->RowIndex + 1) * sizeof(T);
-    cudaDeviceSetLimit(cudaLimitMallocHeapSize,
-                       destArrayTotalByteSize * batchSize);
-
-    unsigned int numCopied = 0;
-    if (batchSize > MAX_THREAD_DIM_X)
-    {
-        CopySparseMatrixOnGpu<T>
-        <<<batchSize / MAX_THREAD_DIM_X, MAX_THREAD_DIM_X>>>(
-                destArray, srcArray, batchSize);
-        numCopied += (batchSize / MAX_THREAD_DIM_X) * MAX_THREAD_DIM_X;
-    }
-
-    if (batchSize - numCopied > 0)
-    {
-        CopySparseMatrixOnGpu<T><<<1, batchSize - numCopied>>>(
-            destArray + numCopied, srcArray + numCopied, batchSize);
-    }
-
-
-}
-
 //#endif
 #endif
