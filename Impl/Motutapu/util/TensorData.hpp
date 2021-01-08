@@ -8,7 +8,8 @@
 #define MOTUTAPU_TENSORDATA_HPP
 
 #include <Motutapu/util/TensorDataDecl.hpp>
-#include <Motutapu/compute/cuda/Memory.hpp>
+#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/SparseMatrixCopy.cuh>
 #include <list>
 
 namespace Motutapu::Util
@@ -27,8 +28,15 @@ TensorData<T>* TensorData<T>::CreateTensorData(unsigned long batchSize,
     if (device.Type() == DeviceType::CUDA)
     {
         CudaSetDevice(device.Id());
-        CudaMalloc(static_cast<void**>(&tensorData->DenseMatCuda),
-                   size * sizeof(T));
+        if (isSparse)
+        {
+            Cuda::Sparse::AllocateGpuShallow<T>(tensorData->SparseMatCuda,
+                                                batchSize);
+        }
+        else
+        {
+            CudaMalloc<T>(&tensorData->DenseMatCuda, size);
+        }
     }
 #endif
 
@@ -55,12 +63,12 @@ bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData, Device device)
         if (tensorData->IsSparse)
         {
             isSuccess &=
-                CudaFree(static_cast<void**>(tensorData->SparseMatCuda));
+                CudaFree<T>(tensorData->SparseMatCuda);
         }
         else
         {
             isSuccess &=
-                CudaFree(static_cast<void**>(tensorData->DenseMatCuda));
+                CudaFree<T>(tensorData->DenseMatCuda);
         }
     }
 #endif
@@ -70,12 +78,12 @@ bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData, Device device)
 }
 
 template <typename T>
-void TensorData<T>::DenseToSparse(TensorData<T>* tensorData)
+void TensorData<T>::DenseToSparse(TensorData<T>* tensorData, Device device)
 {
 }
 
 template <typename T>
-void TensorData<T>::SparseToDense(TensorData<T>* tensorData)
+void TensorData<T>::SparseToDense(TensorData<T>* tensorData, Device device)
 {
 }
 
@@ -107,7 +115,7 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             dest->DenseTotalLength = 0;
             if (!src->IsSparse)
             {
-                auto length = ConvertDenseToSparse(dest->SparseMatHost,
+                auto length = m_convertDenseToSparse(dest->SparseMatHost,
                                                    src->DenseMatHost,
                                                    shape, src->PaddedRowSize,
                                                    device);
@@ -139,7 +147,8 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             }
         }
     }
-#ifdef WITH_CUDA
+
+    //#ifdef WITH_CUDA
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -152,7 +161,7 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
                                   src->SparseTotalLength * sizeof(T));
             if (!src->IsSparse)
             {
-                auto length = ConvertDenseToSparse(
+                auto length = m_convertDenseToSparse(
                     dest->SparseMatCuda, src->DenseMatCuda,
                     shape, 0, device);
 
@@ -160,9 +169,11 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             }
             else
             {
-                success &= CopySparseGpuToGpu(dest->SparseMatCuda,
-                                              src->DenseMatCuda,
-                                              src->BatchSize);
+                //! Source and destination are both sparse on the device memory
+                success &= Cuda::Sparse::CopySparseMatrixOnGpu(
+                    dest->SparseMatCuda,
+                    src->SparseMatCuda,
+                    src->BatchSize);
                 dest->SparseTotalLength = src->SparseTotalLength;
             }
         }
@@ -170,7 +181,7 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
         {
             if (src->IsSparse)
             {
-                auto length = ConvertSparseToDense(dest->DenseMatCuda,
+                auto length = m_convertSparseToDense(dest->DenseMatCuda,
                                                    src->SparseMatCuda,
                                                    shape, dest->PaddedRowSize,
                                                    device);
@@ -186,7 +197,7 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             }
         }
 
-#endif
+        //#endif
 
         src->IsBusy.exchange(true, std::memory_order_release);
         dest->IsBusy.exchange(true, std::memory_order_release);
@@ -195,8 +206,54 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
     return success;
 }
 
-template
-<typename T>
+template <typename T>
+void TensorData<T>::CopyHostToGpu(TensorData<T>* tensorData)
+{
+    if (tensorData.IsSparse)
+    {
+        CopySparseHostToGpu(tensorData->SparseMatCuda,
+                            tensorData->SparseMatHost, tensorData->BatchSize);
+    }
+    else
+    {
+        MemcpyHostToGpu(tensorData->DenseMatCuda, tensorData->DenseMatHost,
+                        tensorData->BatchSize);
+    }
+}
+
+template <typename T>
+void TensorData<T>::CopyGpuToHost(TensorData<T>* tensorData)
+{
+    if (tensorData.IsSparse)
+    {
+        CopySparseGpuToHost(tensorData->SparseMatHost,
+                            tensorData->SparseMatCuda, tensorData->BatchSize);
+    }
+    else
+    {
+        MemcpyGpuToHost(tensorData->DenseMatHost, tensorData->DenseMatCuda,
+                        tensorData->BatchSize);
+    }
+}
+
+
+template <typename T>
+unsigned long TensorData<T>::m_convertDenseToSparse(
+    SparseMatrix<T>* sparse, const T* dense,
+    Shape shape, unsigned long paddedRowSize,
+    Device device)
+{
+}
+
+template <typename T>
+unsigned long TensorData<T>::m_convertSparseToDense(
+    SparseMatrix<T>* sparse, const T* dense,
+    Shape shape, unsigned long paddedRowSize,
+    Device device)
+{
+}
+
+template <typename T>
 TensorData<T>::TensorData(unsigned long batchSize, Shape shape,
                           bool isSparse)
     : BatchSize(batchSize),

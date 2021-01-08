@@ -7,7 +7,6 @@
 #ifndef MOTUTAPU_TENSORDATA_DECL_HPP
 #define MOTUTAPU_TENSORDATA_DECL_HPP
 
-#include <Motutapu/util/DenseMatrix.hpp>
 #include <Motutapu/util/Device.hpp>
 #include <Motutapu/util/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
@@ -37,23 +36,24 @@ public:
                                            bool isSparse, Device device);
     static bool DestroyTensorData(TensorData<T>* tensorData, Device device);
 
-    static void DenseToSparse(TensorData<T>* tensorData);
-    static void SparseToDense(TensorData<T>* tensorData);
+    static void DenseToSparse(TensorData<T>* tensorData, Device device);
+    static void SparseToDense(TensorData<T>* tensorData, Device device);
 
     static bool CopyTensorData(TensorData<T>* dest, const TensorData<T>* src,
                                Device device);
-    static void CopyHostToGPU(TensorData<T>* tensorData);
-    static void CopyGPUToHost(TensorData<T>* tensorData);
+
+    static void CopyHostToGpu(TensorData<T>* tensorData);
+    static void CopyGpuToHost(TensorData<T>* tensorData);
 
 private:
 
-    static unsigned long ConvertDenseToSparse(SparseMatrix<T>* sparse,
+    static unsigned long m_convertDenseToSparse(SparseMatrix<T>* sparse,
                                               const T* dense,
                                               Shape shape,
                                               unsigned long paddedRowSize,
                                               Device device);
 
-    static unsigned long ConvertSparseToDense(SparseMatrix<T>* sparse,
+    static unsigned long m_convertSparseToDense(SparseMatrix<T>* sparse,
                                               const T* dense, Shape shape,
                                               unsigned long paddedRowSize,
                                               Device device);
