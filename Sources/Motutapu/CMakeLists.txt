@@ -45,12 +45,17 @@ set_target_properties(${target}
 # Compile options
 target_compile_options(${target}
     PRIVATE
-
+    $<$<COMPILE_LANGUAGE:CUDA>:
+    --generate-line-info
+    --use_fast_math
+    --relocatable-device-code=true
+    --default-stream per-thread>
     PUBLIC
     ${DEFAULT_COMPILE_OPTIONS}
 
     INTERFACE
 )
+
 
 #if(NOT USE_CUDA)
 
