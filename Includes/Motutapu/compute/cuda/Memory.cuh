@@ -8,8 +8,6 @@
 #define MOTUTAPU_CUDA_MEMORY_CUH
 
 #include <Motutapu/compute/cuda/CudaParams.hpp>
-//#ifdef WITH_CUDA
-
 
 __host__ bool CudaSetDevice(int deviceId)
 {
@@ -88,5 +86,4 @@ __host__ void MemcpyGpuToGpu(T* dest, T* src, size_t size)
     CopyOnGpu<<<1, size>>>(dest + elementsCopied, src + elementsCopied,
                            size - elementsCopied);
 }
-//#endif
 #endif
