@@ -9,7 +9,7 @@
 namespace Motutapu::Cuda::Dense
 {
 //! M, N, K must be smaller than 64
-__global__ void GemmHalf(half* out, half* A, half* B, size_t M,
+__global__ void GemmHalf(half* out, half* A, half* chunkPtrB, size_t M,
                          size_t N, size_t K,
                          size_t paddedColSizeA, size_t paddedColSizeB,
                          size_t paddedColSizeOut, size_t size)

@@ -23,8 +23,8 @@ __global__ void WmmaGemmFloat(float* Out, half* A, half* B,
                               size_t paddedColSizeA, size_t paddedColSizeB,
                               size_t paddedColSizeOut);
 
-__global__ void GemmHalf(half* out, half* A, half* B, size_t numRowOutA,
-                         size_t numRowOutB, size_t numColARowB,
+__global__ void GemmHalf(half* out, half* A, half* B, size_t M,
+                         size_t N, size_t K,
                          size_t paddedColSizeA, size_t paddedColSizeB,
                          size_t paddedColSizeOut, size_t size);
 
