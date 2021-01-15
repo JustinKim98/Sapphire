@@ -16,7 +16,6 @@
 #define MAX_GRID_DIM 65535
 
 #define DEFAULT_DIM_X 64
-
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cuda_runtime_api.h>

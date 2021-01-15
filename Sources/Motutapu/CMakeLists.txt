@@ -29,7 +29,7 @@ if(USE_CUDA)
     
     CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
     message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 52 61 75)
+    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 82)
     message(STATUS "CUDA enabled")
 
 else()
@@ -50,6 +50,7 @@ target_compile_options(${target}
     --use_fast_math
     --relocatable-device-code=true
     --default-stream per-thread>
+    -arch=sm_86
     PUBLIC
     ${DEFAULT_COMPILE_OPTIONS}
 
