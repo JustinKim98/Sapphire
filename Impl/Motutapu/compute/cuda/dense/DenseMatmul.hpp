@@ -15,15 +15,18 @@
 namespace Motutapu::Cuda::Dense
 {
 
-__global__ void WmmaGemmHalf(half* Out, half* A, half* B, size_t numRowOutA,
-                             size_t numRowOutB, size_t numColARowB,
+__global__ void WmmaGemmHalf(half* Out, half* A, half* B,
                              size_t paddedColSizeA, size_t paddedColSizeB,
-                             size_t paddedColSizeOut, size_t size);
+                             size_t paddedColSizeOut);
 
-__global__ void WmmaGemmFloat(float* Out, half* A, half* B, size_t numRowOutA,
-                              size_t numRowOutB, size_t numColARowB,
+__global__ void WmmaGemmFloat(float* Out, half* A, half* B,
                               size_t paddedColSizeA, size_t paddedColSizeB,
-                              size_t paddedColSizeOut, size_t size);
+                              size_t paddedColSizeOut);
+
+__global__ void GemmHalf(half* out, half* A, half* B, size_t numRowOutA,
+                         size_t numRowOutB, size_t numColARowB,
+                         size_t paddedColSizeA, size_t paddedColSizeB,
+                         size_t paddedColSizeOut, size_t size);
 
 }
 

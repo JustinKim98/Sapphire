@@ -9,17 +9,14 @@
 #include <mma.h>
 
 #define WARP_SIZE 32
-
-#if SHARED_MEMORY_LIMIT_64K
 #define CHUNK_K 4
-#else
-#define CHUNK_K 8
-#endif
 
 namespace Motutapu::Cuda::Dense
 {
-
 using namespace nvcuda;
+
+constexpr size_t tileDim = 16;
+constexpr size_t chunkSize = CHUNK_K;
 
 //! Matrix is divided into chunk with (chunkSize * chunkSize) tiles/
 //! Each chunk has tile, which is (16 x 16)
@@ -47,24 +44,24 @@ using namespace nvcuda;
 //! We assume A, B, and Out is in row-wise, and 256bit aligned
 //! chunkSize must be 4 if shared memory is equal or less than 64kB
 //! otherwise it can be set 8
-__global__ void WmmaGemmHalf(half* Out, half* A, half* B, size_t numRowOutA,
-                             size_t numRowOutB, size_t numColARowB,
+
+//! chunkIdxK should be called sequentially for available chunk sequences in K direction
+//! to make sure results are added
+__global__ void WmmaGemmHalf(half* Out, half* A, half* B,
                              size_t paddedColSizeA, size_t paddedColSizeB,
-                             size_t paddedColSizeOut, size_t size)
+                             size_t paddedColSizeOut, size_t chunkIdxK)
 {
-    constexpr size_t tileDim = 16;
-    constexpr size_t chunkSize = CHUNK_K;
     // Minimum shift we can use with 256bit alignment while protecting from bank
     // conflicts;
     constexpr size_t shift = 32 / sizeof(half);
     constexpr size_t shiftedSharedMemoryColSize = chunkSize * tileDim + shift;
 
     //! chunkSize*tileDim is 32 or 64 depending ong size of
-    extern __shared__ half sharedMemory[][shiftedSharedMemoryColSize];
+    __shared__ half sharedMemory[chunkSize * tileDim * 2][
+        shiftedSharedMemoryColSize];
 
     const size_t chunkIdxM = blockIdx.x;
     const size_t chunkIdxN = blockIdx.y;
-    const size_t chunkIdxK = blockIdx.z;
 
     const size_t warpIdx = threadIdx.x / WARP_SIZE;
     const size_t laneIdx = threadIdx.x % WARP_SIZE;
@@ -143,24 +140,21 @@ __global__ void WmmaGemmHalf(half* Out, half* A, half* B, size_t numRowOutA,
                             wmma::mem_row_major);
 }
 
-__global__ void WmmaGemmFloat(float* Out, half* A, half* B, size_t numRowOutA,
-                              size_t numRowOutB, size_t numColARowB,
+__global__ void WmmaGemmFloat(float* Out, half* A, half* B,
                               size_t paddedColSizeA, size_t paddedColSizeB,
-                              size_t paddedColSizeOut, size_t size)
+                              size_t paddedColSizeOut, size_t chunkIdxK)
 {
-    constexpr size_t tileDim = 16;
-    constexpr size_t chunkSize = CHUNK_K;
     // Minimum shift we can use with 256bit alignment while protecting from bank
     // conflicts;
     constexpr size_t shift = 32 / sizeof(float);
     constexpr size_t shiftedSharedMemoryColSize = chunkSize * tileDim + shift;
 
     //! chunkSize*tileDim is 32 or 64 depending ong size of
-    extern __shared__ half sharedMemory[][shiftedSharedMemoryColSize];
+    __shared__ half sharedMemory[chunkSize * tileDim * 2][
+        shiftedSharedMemoryColSize];
 
-    const size_t tileIdxM = blockIdx.x;
-    const size_t tileIdxN = blockIdx.y;
-    const size_t tileIdxK = blockIdx.z;
+    const size_t chunkIdxM = blockIdx.x;
+    const size_t chunkIdxN = blockIdx.y;
 
     const size_t warpIdx = threadIdx.x / WARP_SIZE;
     const size_t laneIdx = threadIdx.x % WARP_SIZE;
@@ -168,15 +162,14 @@ __global__ void WmmaGemmFloat(float* Out, half* A, half* B, size_t numRowOutA,
     const size_t tileRowIdx = warpIdx / 4;
     const size_t tileColIdx = warpIdx % 4;
 
-    const half* chunkPtrA = A + paddedColSizeA * tileIdxM * tileDim * chunkSize
-                             +
-                             tileIdxK * tileDim * chunkSize;
-    const half* chunkPtrB = B + paddedColSizeB * tileIdxK * tileDim * chunkSize
-                             +
-                             tileIdxN * tileDim * chunkSize;
-    float* chunkPtrOut = Out + paddedColSizeOut * tileIdxM * tileDim * chunkSize
+    const half* chunkPtrA = A + paddedColSizeA * chunkIdxM * tileDim * chunkSize
+                            + chunkIdxK * tileDim * chunkSize;
+    const half* chunkPtrB = B + paddedColSizeB * chunkIdxK * tileDim * chunkSize
+                            + chunkIdxN * tileDim * chunkSize;
+    float* chunkPtrOut = Out + paddedColSizeOut * chunkIdxM * tileDim *
+                         chunkSize
                          +
-                         tileIdxN * tileDim * chunkSize;
+                         chunkIdxN * tileDim * chunkSize;
 
     const half* tilePtrA = chunkPtrA + paddedColSizeA * tileRowIdx * tileDim;
     const half* tilePtrB = chunkPtrB + tileColIdx * tileDim;
@@ -238,5 +231,50 @@ __global__ void WmmaGemmFloat(float* Out, half* A, half* B, size_t numRowOutA,
 
     wmma::store_matrix_sync(tilePtrOut, fragAcc, paddedColSizeOut,
                             wmma::mem_row_major);
+}
+
+
+//! M, N, K must be smaller than 32
+//! 32 warps required
+__global__ void GemmHalf(half* out, half* A, half* B, size_t M,
+                         size_t N, size_t K, size_t paddedColSizeA,
+                         size_t paddedColSizeB, size_t paddedColSizeOut,
+                         size_t chunkIdxK)
+{
+    __shared__ half matrixA[tileDim * chunkSize][tileDim * chunkSize + 1];
+    __shared__ half matrixB[tileDim * chunkSize][tileDim * chunkSize + 1];
+
+    const size_t chunkIdxM = threadIdx.x;
+    const size_t chunkIdxN = threadIdx.y;
+
+    size_t rowIdx = threadIdx.x;
+    size_t colIdx = threadIdx.y;
+
+    const size_t blockIdxA =
+        chunkIdxM * paddedColSizeA * tileDim + chunkIdxK * tileDim;
+    const size_t blockIdxB =
+        chunkIdxK * paddedColSizeB * tileDim + chunkIdxN * tileDim;
+    const size_t blockIdxOut =
+        chunkIdxM * paddedColSizeOut * tileDim + chunkIdxN * tileDim;
+
+    half* chunkPtrA =
+        A + chunkIdxM * paddedColSizeA * tileDim + chunkIdxK * tileDim;
+
+    half* chunkPtrB =
+        B + chunkIdxK * paddedColSizeB * tileDim + chunkIdxN * tileDim;
+    half* chunkPtrK =
+        out + chunkIdxM * paddedColSizeOut * tileDim + chunkIdxN * tileDim;
+
+    const size_t copyIdxMA = chunkIdxM * chunkSize * tileDim + rowIdx;
+    const size_t copyIdxKA = chunkIdxK * chunkSize * tileDim + colIdx;
+    const size_t copyIdxKB= chunkIdxK * chunkSize * tileDim + rowIdx;
+    const size_t copyIdxNB = chunkIdxN * chunkSize * tileDim + colIdx;
+
+    if (copyIdxMA < M && copyIdxKA < K)
+        matrixA[rowIdx][colIdx] = *(A + paddedColSizeA * rowIdx + colIdx);
+    if (copyIdxKB < K && copyIdxNB < N)
+        matrixB[rowIdx][colIdx] = *(B + paddedColSizeB * rowIdx + colIdx);
+
+
 }
 }
