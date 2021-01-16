@@ -77,8 +77,8 @@ __host__ void MemcpyGpuToGpu(T* dest, T* src, size_t size)
         cudaStream_t stream0;
         cudaStreamCreate(&stream0);
         const auto requiredBlocks = size / MAX_THREAD_DIM_X;
-        CopyOnGpu<<<requiredBlocks, MAX_THREAD_DIM_X>>>(
-            dest, src, requiredBlocks * MAX_THREAD_DIM_X);
+        CopyOnGpu<<<requiredBlocks, MAX_THREAD_DIM_X>>>
+        (dest, src, requiredBlocks * MAX_THREAD_DIM_X);
 
         elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
     }
