@@ -8,15 +8,15 @@
 #define MOTUTAPU_SPARSIFY_DECL_HPP
 
 #include <Motutapu/util/SparseMatrix.hpp>
-#include <Motutapu/util/DenseMatrix.hpp>
 
 namespace Motutapu
 {
-template <typename T>
-void DenseToSparse(Util::DenseMatrix<T>& dest, Util::SparseMatrix<T> src);
 
 template <typename T>
-void SparseToDense(Util::SparseMatrix<T>& dest, Util::SparseMatrix<T> src);
+void DenseToSparse(T* dest, SparseMatrix<T> src);
+
+template <typename T>
+void SparseToDense(T* dest, SparseMatrix<T> src);
 
 }
 

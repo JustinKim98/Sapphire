@@ -4,13 +4,12 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_UTIL_TENSOR_DECL_HPP
-#define MOTUTAPU_UTIL_TENSOR_DECL_HPP
+#ifndef MOTUTAPU_TENSOR_DECL_HPP
+#define MOTUTAPU_TENSOR_DECL_HPP
 
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
-#include <Motutapu/util/TensorDataDecl.hpp>
-#include <vector>
+#include <Motutapu/tensor/TensorDataDecl.hpp>
 #include <list>
 
 namespace Motutapu
@@ -20,12 +19,12 @@ namespace Motutapu
 template <typename T>
 class Tensor
 {
- public:
+public:
     Tensor() = default;
 
     Tensor(Shape shape, Device device);
 
-    ~Tensor();
+    ~Tensor() = default;
 
     Tensor(const Tensor<T>& tensor);
     Tensor(Tensor<T>&& tensor) noexcept = delete;
@@ -33,29 +32,31 @@ class Tensor
     Tensor<T>& operator=(const Tensor<T>& tensor);
     Tensor<T>& operator=(Tensor<T>&& tensor) noexcept = delete;
 
-    void ToGPU();
-    void ToCPU();
-
-    void ToSparse();
-    void ToDense();
-
-    std::vector<T> Data();
-    Util::TensorData<T>& TensorData();
-    Shape GetShape();
+    [[nodiscard]] Shape GetShape() const;
+    [[nodiscard]] Device GetDevice() const;
 
     void PushTrajectory(int operationId);
-    int PopTrajectory();
-    int PeekTrajectory();
 
- private:
-    int m_tensorId;
-    Device m_device;
+    std::optional<int> PopTrajectory();
 
+    [[nodiscard]] std::optional<int> PeekTrajectory() const;
+
+    [[nodiscard]] std::optional<int> GetTensorDataKey() const;
+
+    void RegisterTensorData(Util::TensorData<T>* tensorData);
+
+private:
+    Shape m_shape;
+
+    //! Initial device when tensor was first created
+    Device m_initialDevice;
+    //! Ptr to the tensorData
+    Util::TensorData<T>* m_tensorData = nullptr;
+
+    //! List of IDs of the Units that has invoked
+    //! Ordered by invoked order from forward propagation
     std::list<int> m_functionTrajectory;
-
-    void m_freeData();
 };
-
 }
 
 #endif

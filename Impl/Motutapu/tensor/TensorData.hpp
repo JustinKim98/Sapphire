@@ -7,44 +7,22 @@
 #ifndef MOTUTAPU_TENSORDATA_HPP
 #define MOTUTAPU_TENSORDATA_HPP
 
-#include <Motutapu/util/TensorDataDecl.hpp>
+#include <Motutapu/tensor/TensorDataDecl.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
-#include <Motutapu/compute/cuda/SparseMatrixCopy.cuh>
-#include <list>
 
 namespace Motutapu::Util
 {
 template <typename T>
-TensorData<T>* TensorData<T>::CreateTensorData(unsigned long batchSize,
-                                               Shape shape, bool isSparse,
-                                               Device device)
+TensorData<T>* TensorData<T>::CreateTensorData(Shape shape, Device device,
+                                               bool isSparse, size_t batchSize)
 {
-    auto* tensorData = new TensorData<T>(batchSize, shape, isSparse);
-
-    const size_t size = batchSize * shape.Size();
-    tensorData->DenseMatHost = new T[size];
-
-#ifdef WITH_CUDA
-    if (device.Type() == DeviceType::CUDA)
-    {
-        CudaSetDevice(device.Id());
-        if (isSparse)
-        {
-            Cuda::Sparse::AllocateGpuShallow<T>(tensorData->SparseMatCuda,
-                                                batchSize);
-        }
-        else
-        {
-            CudaMalloc<T>(&tensorData->DenseMatCuda, size);
-        }
-    }
-#endif
-
+    auto* tensorData = new TensorData<T>(shape, isSparse, device);
+    tensorData->m_allocate(batchSize);
     return tensorData;
 }
 
 template <typename T>
-bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData, Device device)
+bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData)
 {
     bool isSuccess = true;
     if (tensorData->IsSparse)
@@ -56,25 +34,57 @@ bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData, Device device)
         delete[] tensorData->DenseMatHost;
     }
 
-#ifdef WITH_CUDA
-    if (device.Type() == DeviceType::CUDA)
+    if (tensorData.CurDevice.Type() == DeviceType::CUDA)
     {
-        isSuccess &= CudaSetDevice(device.Id());
+        isSuccess &= CudaSetDevice(tensorData.CurDevice.Id());
         if (tensorData->IsSparse)
         {
-            isSuccess &=
-                CudaFree<T>(tensorData->SparseMatCuda);
+            isSuccess &= CudaFree<T>(tensorData->SparseMatCuda);
         }
         else
         {
-            isSuccess &=
-                CudaFree<T>(tensorData->DenseMatCuda);
+            isSuccess &= CudaFree<T>(tensorData->DenseMatCuda);
         }
     }
-#endif
 
     delete tensorData;
     return isSuccess;
+}
+
+template <typename T>
+void TensorData<T>::m_allocate(unsigned long batchSize)
+{
+    const auto colSize = TensorShape.At(0);
+    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 0;
+
+    const auto padUnitSize = 32/sizeof(T);
+
+    const auto paddedColSize = colSize % padUnitSize == 0
+                                   ? colSize
+                                   : colSize / padUnitSize * padUnitSize +
+                                     padUnitSize;
+
+    //! Row padding not required in case of CPU
+    const auto paddedRowSize = rowSize % padUnitSize == 0
+                                   ? rowSize
+                                   : (rowSize / padUnitSize) * padUnitSize +
+                                     padUnitSize;
+
+    DenseMatHost = new T[batchSize * paddedRowSize * paddedColSize];
+
+    if (CurDevice.Type() == DeviceType::CUDA)
+    {
+        CudaSetDevice(CurDevice.Id());
+        if (IsSparse)
+        {
+            throw std::runtime_error("Sparse not implemented");
+        }
+        else
+        {
+            CudaMalloc<T>(&DenseMatCuda,
+                          batchSize * paddedRowSize * paddedColSize);
+        }
+    }
 }
 
 template <typename T>
@@ -116,9 +126,9 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             if (!src->IsSparse)
             {
                 auto length = m_convertDenseToSparse(dest->SparseMatHost,
-                                                   src->DenseMatHost,
-                                                   shape, src->PaddedRowSize,
-                                                   device);
+                    src->DenseMatHost,
+                    shape, src->PaddedRowSize,
+                    device);
                 dest->SparseTotalLength = length;
             }
             else
@@ -182,9 +192,9 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
             if (src->IsSparse)
             {
                 auto length = m_convertSparseToDense(dest->DenseMatCuda,
-                                                   src->SparseMatCuda,
-                                                   shape, dest->PaddedRowSize,
-                                                   device);
+                    src->SparseMatCuda,
+                    shape, dest->PaddedRowSize,
+                    device);
                 dest->DenseTotalLength = length;
             }
             else
@@ -254,11 +264,10 @@ unsigned long TensorData<T>::m_convertSparseToDense(
 }
 
 template <typename T>
-TensorData<T>::TensorData(unsigned long batchSize, Shape shape,
-                          bool isSparse)
-    : BatchSize(batchSize),
-      TensorShape(shape),
-      IsSparse(isSparse)
+TensorData<T>::TensorData(Shape shape, bool isSparse, Device device)
+    : TensorShape(shape),
+      IsSparse(isSparse),
+      CurDevice(device)
 {
 }
 } // namespace Motutapu::Util

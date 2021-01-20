@@ -9,15 +9,4 @@
 
 namespace Motutapu
 {
-void AllocateResources()
-{
-    GlobalTensorPool = std::make_unique<TensorPool>();
-    GlobalUnitPool = std::make_unique<UnitPool>();
-}
-
-void FreeResources()
-{
-    GlobalTensorPool.reset();
-    GlobalUnitPool.reset();
-}
 }

@@ -50,6 +50,7 @@ using namespace nvcuda;
 //! \param chunkIdxK : index of K
 template <size_t chunkSize>
 __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
+                             const half* C,
                              size_t paddedK, size_t paddedN,
                              size_t chunkIdxK)
 {
@@ -67,10 +68,10 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     constexpr size_t shift = 32 / sizeof(half);
     constexpr size_t shiftedSharedMemoryColSize = chunkSize * tileDim + shift;
 
-    //! Default chunk size is 4, and tile dimension is fixed to 16
+    //! If chunk size is 4, and tile dimension is fixed to 16
     //! This makes each block hold 64 x 64 submatrix (chunk)
     __shared__ half
-        sharedMemory[chunkSize * tileDim * 2][shiftedSharedMemoryColSize];
+        sharedMemory[chunkSize * tileDim * 3][shiftedSharedMemoryColSize];
 
     //! Each block identifies its chunk to compute using 2 dimensional
     const size_t chunkIdxM = blockIdx.x;
@@ -89,16 +90,22 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     const half* chunkPtrB = B +
                             paddedN * chunkIdxK * tileDim * chunkSize +
                             chunkIdxN * tileDim * chunkSize;
+    const half* chunkPtrC = C + paddedN * chunkIdxM * tileDim * chunkSize +
+                            chunkIdxN * tileDim * chunkSize;
+
     half* chunkPtrOut = Out +
                         paddedN * chunkIdxM * tileDim * chunkSize +
                         chunkIdxN * tileDim * chunkSize;
 
     const half* tilePtrA = chunkPtrA + paddedK * tileRowIdx * tileDim;
     const half* tilePtrB = chunkPtrB + tileColIdx * tileDim;
-    half* tilePtrOut = chunkPtrOut + paddedN * tileRowIdx * tileDim +
-                       tileColIdx * tileDim;
+    const half* tilePtrC =
+        chunkPtrC + paddedN * tileRowIdx * tileDim + tileColIdx * tileDim;
+    half* tilePtrOut =
+        chunkPtrOut + paddedN * tileRowIdx * tileDim + tileColIdx * tileDim;
 
     const size_t matrixBOffset = chunkSize * tileDim;
+    const size_t matrixCOffset = chunkSize * tileDim * 2;
 
     //! For half of the warps, copy matrix A while other half copies B
     const half* copyPtr;
@@ -108,6 +115,17 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     {
         copyPtr = tilePtrA + paddedK * (laneIdx / 2);
         sharedMemCopyRowIdx = tileRowIdx + laneIdx / 2;
+
+        const half* copyPtrC = tilePtrC + paddedN * (laneIdx / 2);
+        size_t sharedMemCopyRowIdxC = matrixCOffset + tileRowIdx + laneIdx / 2;
+
+#pragma unroll
+        for (size_t i = 0; i < tileDim; i++)
+        {
+            const size_t sharedMemCopyColIdx = tileColIdx * tileDim + i;
+            sharedMemory[sharedMemCopyRowIdxC][sharedMemCopyColIdx] =
+                *(copyPtrC + i);
+        }
     }
     else
     {
@@ -132,147 +150,49 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     wmma::fragment<wmma::matrix_b, tileDim, tileDim, tileDim, half,
                    wmma::row_major>
         fragB;
+
     wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, half> fragAcc;
 
-    // wmma::fill_fragment(fragAcc, 0.0f);
+    wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, half> fragOut;
+
     wmma::load_matrix_sync(fragAcc, tilePtrOut, paddedN,
                            wmma::mem_row_major);
 
 #pragma unroll
     for (size_t i = 0; i < chunkSize; ++i)
     {
-        wmma::load_matrix_sync(fragA, &sharedMemory[tileRowIdx][tileDim * i],
-                               shiftedSharedMemoryColSize);
         wmma::load_matrix_sync(
-            fragB, &sharedMemory[tileDim * i + matrixBOffset][tileColIdx],
+            fragA, &sharedMemory[tileDim * tileRowIdx][tileDim * i],
             shiftedSharedMemoryColSize);
-        wmma::mma_sync(fragAcc, fragA, fragB, fragAcc);
+        wmma::load_matrix_sync(
+            fragB,
+            &sharedMemory[tileDim * i + matrixBOffset][tileDim * tileColIdx],
+            shiftedSharedMemoryColSize);
+        wmma::load_matrix_sync(
+            fragAcc,
+            &sharedMemory[tileDim * i + matrixCOffset][tileDim * tileColIdx],
+            shiftedSharedMemoryColSize);
+        wmma::mma_sync(fragOut, fragA, fragB, fragAcc);
     }
 
-    wmma::store_matrix_sync(tilePtrOut, fragAcc, paddedN,
+    wmma::store_matrix_sync(tilePtrOut, fragOut, paddedN,
                             wmma::mem_row_major);
 }
 
-//! Computes Gemm operation on the chunk (Out = A x B + Out)
-//! \tparam chunkSize : size of the chunk
-//! \param Out : output matrix pointer containing whole matrix
-//! \param A : matrix A
-//! \param B : matrix B
-//! \param paddedColSizeA : padded column size of A
-//! \param paddedColSizeB : padded column size of B
-//! \param paddedColSizeOut : padded column size of output
-//! \param chunkIdxK : index of K
-template <size_t chunkSize>
-__global__ void WmmaGemmFloat(float* Out, half* A, half* B,
-                              size_t paddedColSizeA, size_t paddedColSizeB,
-                              size_t paddedColSizeOut, size_t chunkIdxK)
-{
-    static constexpr size_t tileDim = 16;
-
-    if constexpr ((chunkSize * tileDim * sizeof(half)) % 32 != 0)
-    {
-        static_assert(
-            false &&
-            "chunkSize * tileDim * sizeof(half) should be multiple of 32");
-    }
-
-    // Minimum shift we can use with 256bit alignment while protecting from bank
-    // conflicts;
-    constexpr size_t shift = 32 / sizeof(half);
-    constexpr size_t shiftedSharedMemoryColSize = chunkSize * tileDim + shift;
-
-    //! Default chunk size is 4, and tile dimension is fixed to 16
-    //! This makes each block hold 64 x 64 submatrix (chunk)
-    __shared__ half
-        sharedMemory[chunkSize * tileDim * 2][shiftedSharedMemoryColSize];
-
-    //! Each block identifies its chunk to compute using 2 dimensional
-    const size_t chunkIdxM = blockIdx.x;
-    const size_t chunkIdxN = blockIdx.y;
-
-    const size_t warpIdx = threadIdx.x / WARP_SIZE;
-    const size_t laneIdx = threadIdx.x % WARP_SIZE;
-
-    const size_t tileRowIdx = warpIdx / 4;
-    const size_t tileColIdx = warpIdx % 4;
-
-    //! Pointer that indicates starting address of chunk
-    const half* chunkPtrA = A +
-                            paddedColSizeA * chunkIdxM * tileDim * chunkSize +
-                            chunkIdxK * tileDim * chunkSize;
-    const half* chunkPtrB = B +
-                            paddedColSizeB * chunkIdxK * tileDim * chunkSize +
-                            chunkIdxN * tileDim * chunkSize;
-    float* chunkPtrOut = Out +
-                         paddedColSizeOut * chunkIdxM * tileDim * chunkSize +
-                         chunkIdxN * tileDim * chunkSize;
-
-    const half* tilePtrA = chunkPtrA + paddedColSizeA * tileRowIdx * tileDim;
-    const half* tilePtrB = chunkPtrB + tileColIdx * tileDim;
-    float* tilePtrOut = chunkPtrOut + paddedColSizeOut * tileRowIdx * tileDim +
-                        tileColIdx * tileDim;
-
-    const size_t matrixBOffset = chunkSize * tileDim;
-
-    //! For half of the warps, copy matrix A while other half copies B
-    const half* copyPtr;
-
-    size_t sharedMemCopyRowIdx;
-    if (laneIdx % 2)
-    {
-        copyPtr = tilePtrA + paddedColSizeA * (laneIdx / 2);
-        sharedMemCopyRowIdx = tileRowIdx + laneIdx / 2;
-    }
-    else
-    {
-        copyPtr = tilePtrB + paddedColSizeB * (laneIdx / 2);
-        sharedMemCopyRowIdx = matrixBOffset + tileRowIdx + laneIdx / 2;
-    }
-
-    //! Load the matrix to shared memory
-    //! each thread copies consecutive row from their src determined previously
-#pragma unroll
-    for (size_t i = 0; i < tileDim; i++)
-    {
-        const size_t sharedMemCopyColIdx = tileColIdx * tileDim + i;
-        sharedMemory[sharedMemCopyRowIdx][sharedMemCopyColIdx + i] =
-            *(copyPtr + i);
-    }
-
-    //! Load shared memory to fragments and accumulate
-    wmma::fragment<wmma::matrix_a, tileDim, tileDim, tileDim, half,
-                   wmma::row_major>
-        fragA;
-    wmma::fragment<wmma::matrix_b, tileDim, tileDim, tileDim, half,
-                   wmma::row_major>
-        fragB;
-    wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, float> fragAcc;
-
-    // wmma::fill_fragment(fragAcc, 0.0f);
-    wmma::load_matrix_sync(fragAcc, tilePtrOut, paddedColSizeOut,
-                           wmma::mem_row_major);
-
-    for (size_t i = 0; i < chunkSize; ++i)
-    {
-        wmma::load_matrix_sync(fragA, &sharedMemory[tileRowIdx][tileDim * i],
-                               shiftedSharedMemoryColSize);
-        wmma::load_matrix_sync(
-            fragB, &sharedMemory[tileDim * i + matrixBOffset][tileColIdx],
-            shiftedSharedMemoryColSize);
-        wmma::mma_sync(fragAcc, fragA, fragB, fragAcc);
-    }
-
-    wmma::store_matrix_sync(tilePtrOut, fragAcc, paddedColSizeOut,
-                            wmma::mem_row_major);
-}
-
+//! \tparam T : template data type
+//! \tparam tileDim : dimension of the tile
+//! \tparam chunkSize : size of the chunk should be under 2 for float types
+//! Required thread dimension is (tileDim x chunkSize) x (tileDim x chunkSize)
+//! each thread computes each output entry in the chunk
+//! Required block size is chunkDimM x chunkDimN
 template <typename T, size_t tileDim, size_t chunkSize>
-__global__ void Gemm(T* out, T* A, T* B,
+__global__ void Gemm(T* out, const T* A, const T* B, const T* C,
                      size_t paddedK, size_t paddedN,
                      size_t chunkIdxK)
 {
-    __shared__ half matrixA[tileDim * chunkSize][tileDim * chunkSize + 1];
-    __shared__ half matrixB[tileDim * chunkSize][tileDim * chunkSize + 1];
+    __shared__ T matrixA[tileDim * chunkSize][tileDim * chunkSize + 1];
+    __shared__ T matrixB[tileDim * chunkSize][tileDim * chunkSize + 1];
+    __shared__ T matrixC[tileDim * chunkSize][tileDim * chunkSize + 1];
 
     const size_t chunkIdxM = blockIdx.x;
     const size_t chunkIdxN = blockIdx.y;
@@ -286,24 +206,29 @@ __global__ void Gemm(T* out, T* A, T* B,
     const size_t blockIdxB =
         chunkIdxK * paddedN * chunkSize * tileDim + chunkIdxN * chunkSize *
         tileDim;
+    const size_t blockIdxC =
+        chunkIdxM * paddedK * chunkSize * tileDim +
+        chunkIdxN * chunkSize * tileDim;
     const size_t blockIdxOut =
         chunkIdxM * paddedK * chunkSize * tileDim + chunkIdxN * chunkSize *
         tileDim;
 
     const T* chunkPtrA = A + blockIdxA;
-
     const T* chunkPtrB = B + blockIdxB;
+    const T* chunkPtrC = C + blockIdxC;
+
     T* chunkPtrOut = out + blockIdxOut;
 
     matrixA[rowIdx][colIdx] = *(chunkPtrA + paddedK * rowIdx + colIdx);
     matrixB[rowIdx][colIdx] = *(chunkPtrB + paddedN * rowIdx + colIdx);
+    matrixC[rowIdx][colIdx] = *(chunkPtrC + paddedN * rowIdx + colIdx);
 
     T output = static_cast<T>(0.0f);
 
 #pragma unroll
     for (size_t i = 0; i < tileDim * chunkSize; ++i)
     {
-        output = output + matrixA[rowIdx][i] * matrixB[i][colIdx];
+        output = matrixC[rowIdx][colIdx] + matrixA[rowIdx][i] * matrixB[i][colIdx];
     }
 
     *(chunkPtrOut + paddedK * rowIdx + colIdx) = output;

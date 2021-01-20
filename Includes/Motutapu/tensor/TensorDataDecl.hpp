@@ -11,20 +11,29 @@
 #include <Motutapu/util/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
 #include <atomic>
+#include <shared_mutex>
 
 namespace Motutapu::Util
 {
+enum class Layout
+{
+    rowMajor,
+    columnMajor,
+};
+
 template <typename T>
 class TensorData
 {
 public:
     unsigned long DenseTotalLength = 0;
     unsigned long SparseTotalLength = 0;
+    unsigned long PaddedColumnSize = 0;
     unsigned long PaddedRowSize = 0;
     unsigned long BatchSize = 0;
 
     T* DenseMatHost = nullptr;
     T* DenseMatCuda = nullptr;
+
     SparseMatrix<T>* SparseMatHost = nullptr;
     SparseMatrix<T>* SparseMatCuda = nullptr;
     Shape TensorShape;
@@ -32,9 +41,17 @@ public:
     bool IsSparse = false; // True if Dense, False if Sparse
     std::atomic<bool> IsBusy = false;
 
-    static TensorData<T>* CreateTensorData(unsigned long batchSize, Shape shape,
-                                           bool isSparse, Device device);
-    static bool DestroyTensorData(TensorData<T>* tensorData, Device device);
+    Device CurDevice;
+
+    void SetKey(int key);
+
+    [[nodiscard]] int GetKey();
+
+    static TensorData<T>* CreateTensorData(
+        Shape shape, Device device,
+        bool isSparse, size_t batchSize);
+
+    static bool DestroyTensorData(TensorData<T>* tensorData);
 
     static void DenseToSparse(TensorData<T>* tensorData, Device device);
     static void SparseToDense(TensorData<T>* tensorData, Device device);
@@ -46,20 +63,27 @@ public:
     static void CopyGpuToHost(TensorData<T>* tensorData);
 
 private:
+    void m_allocate(unsigned long batchSize);
 
     static unsigned long m_convertDenseToSparse(SparseMatrix<T>* sparse,
-                                              const T* dense,
-                                              Shape shape,
-                                              unsigned long paddedRowSize,
-                                              Device device);
+                                                const T* dense,
+                                                Shape shape,
+                                                unsigned long paddedRowSize,
+                                                Device device);
 
     static unsigned long m_convertSparseToDense(SparseMatrix<T>* sparse,
-                                              const T* dense, Shape shape,
-                                              unsigned long paddedRowSize,
-                                              Device device);
+                                                const T* dense, Shape shape,
+                                                unsigned long paddedRowSize,
+                                                Device device);
 
-    TensorData(unsigned long batchSize, Shape shape, bool isSparse);
-    ~TensorData();
+    TensorData(Shape shape, bool isSparse, Device device);
+    ~TensorData() = default;
+
+    //! Key to identify tensor data
+    int m_key;
+
+    //! mutex to make sure operations on the resources is synchronized
+    std::shared_mutex m_mtx;
 };
 } // namespace Motutapu::Util
 

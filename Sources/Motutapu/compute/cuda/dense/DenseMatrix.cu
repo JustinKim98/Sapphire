@@ -5,12 +5,11 @@
 // property of any third parties.
 
 
-#include <Motutapu/compute/cuda/dense/DenseMatrix.hpp>
+#include <Motutapu/compute/cuda/dense/DenseMatrix.cuh>
 #include <mma.h>
 
 namespace Motutapu::Cuda::Dense
 {
-
 __host__ unsigned int Gcd(unsigned int a, unsigned int b)
 {
     if (!a)
@@ -20,7 +19,7 @@ __host__ unsigned int Gcd(unsigned int a, unsigned int b)
 
 __host__ unsigned int FindGCD(unsigned int arr[], int n)
 {
-    int result = arr[0];
+    unsigned int result = arr[0];
     for (int i = 1; i < n; i++)
     {
         result = Gcd(arr[i], result);
@@ -33,9 +32,11 @@ __host__ unsigned int FindGCD(unsigned int arr[], int n)
     return result;
 }
 
-__host__ void GemmTensorCore(half* out, half* A, half* B, unsigned int paddedN,
+__host__ void GemmTensorCore(half* out, half* A, half* B, half* C,
+                             unsigned int paddedN,
                              unsigned int paddedK, unsigned int paddedM,
-                             unsigned int batchSize)
+                             unsigned int batchSize, bool broadcastA,
+                             bool broadcastB, bool broadcastC)
 {
     static constexpr unsigned int tileDim = 16;
     const auto chunkDimM = paddedM / 16;
@@ -70,23 +71,30 @@ __host__ void GemmTensorCore(half* out, half* A, half* B, unsigned int paddedN,
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             half* ptrOut = out + paddedM * paddedN * batchIdx;
-            const half* ptrA = A + paddedM * paddedK * batchIdx;
-            const half* ptrB = B + paddedK * paddedN * batchIdx;
+            const half* ptrA =
+                A + paddedM * paddedK * (broadcastA ? 1 : batchIdx);
+            const half* ptrB =
+                B + paddedK * paddedN * (broadcastB ? 1 : batchIdx);
+            const half* ptrC =
+                C + paddedM * paddedN * (broadcastC ? 1 : batchIdx);
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
             if (chunkSize == 4)
                 WmmaGemmHalf<4><<<numBlocks, chunkSize * chunkSize * 32, 0,
-                                  streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrOut, paddedK, paddedN,
+                        chunkIdxK);
             if (chunkSize == 2)
                 WmmaGemmHalf<2><<<numBlocks, chunkSize * chunkSize * 32, 0,
-                                  streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrOut, paddedK, paddedN,
+                        chunkIdxK);
             if (chunkSize == 1)
                 WmmaGemmHalf<1><<<numBlocks, chunkSize * chunkSize * 32, 0,
-                                  streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrOut, paddedK, paddedN,
+                        chunkIdxK);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -101,9 +109,10 @@ __host__ void GemmTensorCore(half* out, half* A, half* B, unsigned int paddedN,
     }
 }
 
-__host__ void GemmNormalFloat(float* out, float* A, float* B,
+__host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
                               unsigned int paddedN, unsigned int paddedK,
-                              unsigned int paddedM, unsigned int batchSize)
+                              unsigned int paddedM, unsigned int batchSize,
+                              bool broadcastA, bool broadcastB, bool broadcastC)
 {
     static constexpr unsigned int tileDim = 8;
     const auto chunkDimM = paddedM / 16;
@@ -138,23 +147,30 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B,
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             float* ptrOut = out + paddedM * paddedN * batchIdx;
-            float* ptrA = A + paddedM * paddedK * batchIdx;
-            float* ptrB = B + paddedK * paddedN * batchIdx;
+            const float* ptrA =
+                A + paddedM * paddedK * (broadcastA ? 1 : batchIdx);
+            const float* ptrB =
+                B + paddedK * paddedN * (broadcastB ? 1 : batchIdx);
+            const float* ptrC =
+                C + paddedM * paddedN * (broadcastC ? 1 : batchIdx);
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
             if (chunkSize == 4)
                 Gemm<float, tileDim, 4><<<numBlocks, chunkSize * chunkSize * 32,
-                                          0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    0, streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                        chunkIdxK);
             if (chunkSize == 2)
                 Gemm<float, tileDim, 2><<<numBlocks, chunkSize * chunkSize * 32,
-                                          0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    0, streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                        chunkIdxK);
             if (chunkSize == 1)
                 Gemm<float, tileDim, 1><<<numBlocks, chunkSize * chunkSize * 32,
-                                          0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    0, streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                        chunkIdxK);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -169,9 +185,12 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B,
     }
 }
 
-__host__ void GemmNormalHalf(half* out, half* A, half* B, unsigned int paddedN,
+__host__ void GemmNormalHalf(half* out, const half* A, const half* B,
+                             const half* C,
+                             unsigned int paddedN,
                              unsigned int paddedK, unsigned int paddedM,
-                             unsigned int batchSize)
+                             unsigned int batchSize, bool broadcastA,
+                             bool broadcastB, bool broadcastC)
 {
     static constexpr unsigned int tileDim = 8;
     const auto chunkDimM = paddedM / 16;
@@ -206,23 +225,27 @@ __host__ void GemmNormalHalf(half* out, half* A, half* B, unsigned int paddedN,
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             half* ptrOut = out + paddedM * paddedN * batchIdx;
-            half* ptrA = A + paddedM * paddedK * batchIdx;
-            half* ptrB = B + paddedK * paddedN * batchIdx;
+            const half* ptrA =
+                A + paddedM * paddedK * (broadcastA ? 1 : batchIdx);
+            const half* ptrB =
+                B + paddedK * paddedN * (broadcastB ? 1 : batchIdx);
+            const half* ptrC =
+                C + paddedM * paddedN * (broadcastC ? 1 : batchIdx);
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
             if (chunkSize == 4)
                 Gemm<half, tileDim, 4><<<numBlocks, chunkSize * chunkSize * 32,
-                                         0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    0, streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK);
             if (chunkSize == 2)
                 Gemm<half, tileDim, 2><<<numBlocks, chunkSize * chunkSize * 32,
-                                         0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    0, streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK);
             if (chunkSize == 1)
                 Gemm<half, tileDim, 1><<<numBlocks, chunkSize * chunkSize * 32,
-                                         0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, paddedK, paddedN, chunkIdxK);
+                    0, streams[batchIdx]>>>(
+                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
