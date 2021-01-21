@@ -76,7 +76,7 @@ std::size_t Shape::Dim() const
     return m_shapeVector.size();
 }
 
-std::size_t Shape::Size() const
+std::size_t Shape::Size() const noexcept
 {
     std::size_t size = 1;
     for (auto i : m_shapeVector)

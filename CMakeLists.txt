@@ -33,11 +33,18 @@ if(USE_CUDA)
 		message(STATUS "CUDA not found")
 		set(USE_CUDA OFF)
     else()
+        if(NOT DEFINED ${CMAKE_CUDA_ARCHITECTURES})
+            #message(STATUS "Set arch")
+           #set(CMAKE_CUDA_ARCHITECTURES 52 60 61 75 86 CACHE STRING "CUDA architectures" FORCE)
+        endif()
         add_compile_definitions(WITH_CUDA)
         include_directories(${CUDA_INCLUDE_DIRS})
         message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
         message(STATUS "CUDA found")
-        set(CMAKE_NVCC_FLAGS "${CMAKE_NVCC_FLAGS} --std=c++17 --gpu-architecture=sm_82 --default-stream per-thread")
+        set(
+        CUDA_NVCC_FLAGS
+        ${CUDA_NVCC_FLAGS}; -gencode arch=compute_86,code=sm_86
+        )
 	endif()
 endif()
 
@@ -58,6 +65,7 @@ add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/Motutapu)
 add_subdirectory(Tests/UnitTests)
 
+message(STATUS "FLAGS : ${CMAKE_NVCC_FLAGS}")
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading

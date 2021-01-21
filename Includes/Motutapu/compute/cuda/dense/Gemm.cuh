@@ -7,7 +7,7 @@
 #ifndef MOTUTAPU_CUDA_DENSE_GEMM_CUH
 #define MOTUTAPU_CUDA_DENSE_GEMM_CUH
 
-#include <Motutapu/compute/cuda/dense/Gemm.cuh>
+#include <Motutapu/compute/cuda/CudaParams.hpp>
 
 namespace Motutapu::Cuda::Dense
 {

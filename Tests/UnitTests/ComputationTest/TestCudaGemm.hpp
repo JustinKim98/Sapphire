@@ -10,9 +10,8 @@
 #include <cuda_fp16.hpp>
 #include <Motutapu/tensor/Tensor.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
-#include <Motutapu/compute/cuda/dense/DenseGemm.cuh>
+#include <Motutapu/compute/cuda/dense/Gemm.cuh>
 #include <Motutapu/compute/cuda/Memory.cuh>
-#include "SolidComputations.hpp"
 
 namespace Motutapu::Test
 {

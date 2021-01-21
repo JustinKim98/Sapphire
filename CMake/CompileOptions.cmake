@@ -173,3 +173,4 @@ if (CMAKE_BUILD_TYPE MATCHES Debug AND (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR C
         -ftest-coverage
     )
 endif()
+

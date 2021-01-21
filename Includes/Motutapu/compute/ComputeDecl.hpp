@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_COMPUTE_HPP
-#define MOTUTAPU_COMPUTE_HPP
+#ifndef MOTUTAPU_COMPUTE_COMPUTE_DECL_HPP
+#define MOTUTAPU_COMPUTE_COMPUTE_DECL_HPP
 
 #include <Motutapu/tensor/TensorData.hpp>
 

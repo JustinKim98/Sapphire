@@ -4,12 +4,9 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 
-#include <Motutapu/compute/cuda/dense/DenseGemm.cuh>
-#include <mma.h>
 
-namespace Motutapu::Cuda::Dense
-{
 __host__ unsigned int Gcd(unsigned int a, unsigned int b)
 {
     if (!a)
@@ -33,10 +30,10 @@ __host__ unsigned int FindGCD(unsigned int arr[], int n)
 }
 
 __host__ void GemmTensor(half* out, half* A, half* B, half* C,
-                             unsigned int paddedM,
-                             unsigned int paddedN, unsigned int paddedK,
-                             unsigned int batchSize, bool broadcastA,
-                             bool broadcastB, bool broadcastC)
+                         unsigned int paddedM,
+                         unsigned int paddedN, unsigned int paddedK,
+                         unsigned int batchSize, bool broadcastA,
+                         bool broadcastB, bool broadcastC)
 {
     static constexpr unsigned int tileDim = 16;
     const auto chunkDimM = paddedM / 16;
@@ -60,7 +57,7 @@ __host__ void GemmTensor(half* out, half* A, half* B, half* C,
             chunkSize = 2;
     }
 
-    cudaStream_t streams[batchSize];
+    cudaStream_t streams[1000];
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         cudaStreamCreate(&streams[batchIdx]);
@@ -80,21 +77,10 @@ __host__ void GemmTensor(half* out, half* A, half* B, half* C,
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
-            if (chunkSize == 4)
-                WmmaGemmHalf<4><<<numBlocks, chunkSize * chunkSize * 32, 0,
-                    streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                        chunkIdxK);
-            if (chunkSize == 2)
-                WmmaGemmHalf<2><<<numBlocks, chunkSize * chunkSize * 32, 0,
-                    streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                        chunkIdxK);
-            if (chunkSize == 1)
-                WmmaGemmHalf<1><<<numBlocks, chunkSize * chunkSize * 32, 0,
-                    streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                        chunkIdxK);
+            WmmaGemmHalf<<<numBlocks, chunkSize * chunkSize * 32, 0,
+                streams[batchIdx]>>>(
+                    ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                    chunkIdxK, chunkSize);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -136,7 +122,7 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
             chunkSize = 2;
     }
 
-    cudaStream_t streams[batchSize];
+    cudaStream_t streams[1000];
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         cudaStreamCreate(&streams[batchIdx]);
@@ -156,21 +142,10 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
-            if (chunkSize == 4)
-                Gemm<float, tileDim, 4><<<numBlocks, chunkSize * chunkSize * 32,
-                    0, streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                        chunkIdxK);
-            if (chunkSize == 2)
-                Gemm<float, tileDim, 2><<<numBlocks, chunkSize * chunkSize * 32,
-                    0, streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                        chunkIdxK);
-            if (chunkSize == 1)
-                Gemm<float, tileDim, 1><<<numBlocks, chunkSize * chunkSize * 32,
-                    0, streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                        chunkIdxK);
+            GemmFloat<<<numBlocks, chunkSize * chunkSize * 32,
+                0, streams[batchIdx]>>>(
+                    ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                    chunkIdxK);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -214,7 +189,7 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
             chunkSize = 2;
     }
 
-    cudaStream_t streams[batchSize];
+    cudaStream_t streams[1000];
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         cudaStreamCreate(&streams[batchIdx]);
@@ -234,18 +209,10 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
-            if (chunkSize == 4)
-                Gemm<half, tileDim, 4><<<numBlocks, chunkSize * chunkSize * 32,
-                    0, streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK);
-            if (chunkSize == 2)
-                Gemm<half, tileDim, 2><<<numBlocks, chunkSize * chunkSize * 32,
-                    0, streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK);
-            if (chunkSize == 1)
-                Gemm<half, tileDim, 1><<<numBlocks, chunkSize * chunkSize * 32,
-                    0, streams[batchIdx]>>>(
-                        ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK);
+            GemmHalf<<<numBlocks, chunkSize * chunkSize * 32,
+                0, streams[batchIdx]>>>(
+                    ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK,
+                    tileDim, chunkSize);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -259,4 +226,4 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
         cudaStreamDestroy(streams[batchIdx]);
     }
 }
-}
+

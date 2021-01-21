@@ -6,6 +6,7 @@
 
 #include "TestCudaGemm.hpp"
 #include <iostream>
+#include <Motutapu/compute/naive/NaiveGemm.hpp>
 
 namespace Motutapu::Test
 {
@@ -59,7 +60,7 @@ void TensorGemmTest()
 
     Util::TensorData<half>::CopyGpuToHost(cudaOut);
 
-    Solid::Gemm(Out->DenseMatHost, A->DenseMatHost, B->DenseMatHost,
+    Naive::Gemm<float>(Out->DenseMatHost, A->DenseMatHost, B->DenseMatHost,
                 C->DenseMatHost, Out->PaddedRowSize, Out->PaddedColumnSize,
                 A->PaddedColumnSize, batchSize, false, false, false);
 
@@ -124,7 +125,7 @@ void FloatGemmTest()
 
     Util::TensorData<float>::CopyGpuToHost(cudaOut);
 
-    Solid::Gemm(Out->DenseMatHost, A->DenseMatHost, B->DenseMatHost,
+    Naive::Gemm<float>(Out->DenseMatHost, A->DenseMatHost, B->DenseMatHost,
                 C->DenseMatHost, Out->PaddedRowSize, Out->PaddedColumnSize,
                 A->PaddedColumnSize, batchSize, false, false, false);
 
