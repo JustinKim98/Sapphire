@@ -53,4 +53,38 @@ bool Shape::operator!=(const Shape& shape) const
     return m_shapeVector != shape.m_shapeVector;
 }
 
+std::string Shape::ToString() const
+{
+    std::string msg;
+    msg += "Dim : " + std::to_string(Dim()) + " ";
+    msg += " [";
+
+    for (auto dim : m_shapeVector)
+        msg += (std::to_string(dim) + " ");
+
+    msg += " ] ";
+    return msg;
+}
+
+std::size_t Shape::At(std::size_t index) const
+{
+    return m_shapeVector.at(index);
+}
+
+std::size_t Shape::Dim() const
+{
+    return m_shapeVector.size();
+}
+
+std::size_t Shape::Size() const
+{
+    std::size_t size = 1;
+    for (auto i : m_shapeVector)
+    {
+        size *= i;
+    }
+
+    return size;
+}
+
 } // namespace Motutapu::Util
