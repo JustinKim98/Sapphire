@@ -67,7 +67,7 @@ void TensorData<T>::m_allocate(unsigned long batchSize)
     //! Row padding not required in case of CPU
     const auto paddedRowSize = rowSize % padUnitSize == 0
                                    ? rowSize
-                                   : (rowSize / padUnitSize) * padUnitSize +
+                                   : rowSize / padUnitSize * padUnitSize +
                                      padUnitSize;
 
     DenseMatHost = new T[batchSize * paddedRowSize * paddedColSize];

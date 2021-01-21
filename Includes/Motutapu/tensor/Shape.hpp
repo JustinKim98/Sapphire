@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Jaewoo Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
@@ -100,12 +100,6 @@ class Shape
         m_shapeVector.at(axis) = value;
         return *this;
     }
-
-    Shape& Reshape(std::initializer_list<std::size_t> newShape);
-
-    void Transpose();
-
-    [[nodiscard]] Shape GetTransposedShape() const;
 
  private:
     std::vector<std::size_t> m_shapeVector;
