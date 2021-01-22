@@ -7,7 +7,6 @@
 #ifndef MOTUTAPU_TEST_TESTCUDAGEMM_HPP
 #define MOTUTAPU_TEST_TESTCUDAGEMM_HPP
 
-#include <cuda_fp16.hpp>
 #include <Motutapu/tensor/Tensor.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>

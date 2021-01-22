@@ -14,7 +14,6 @@
 
 namespace Motutapu::Cuda::Sparse
 {
-
 template <typename T>
 __device__ void DeepAllocateSparseMatrix(SparseMatrix<T>* dest)
 {
@@ -138,18 +137,53 @@ __host__ void DeepCopyHostToGpu(SparseMatrix<T>* deviceArray,
                                 SparseMatrix<T>* hostArray, uint32_t size)
 {
     cudaStream_t streamPool[size];
-    for (uint32_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < size; ++i)
     {
         SparseMatrix<T>* curDestPtr = deviceArray + i;
         SparseMatrix<T>* curSrcPtr = hostArray + i;
         cudaStreamCreate(&streamPool[i]);
+
         cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
                         (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
+                        cudaMemcpyHostToDevice,
                         streamPool[i]);
         cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
-                        (curSrcPtr->NNZ) * sizeof(uint32_t), streamPool[i]);
+                        (curSrcPtr->NNZ) * sizeof(uint32_t),
+                        cudaMemcpyHostToDevice,
+                        streamPool[i]);
         cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
-                        (curSrcPtr->NNZ) * sizeof(T), streamPool[i]);
+                        (curSrcPtr->NNZ) * sizeof(T),
+                        cudaMemcpyHostToDevice,
+                        streamPool[i]);
+    }
+
+    for (uint32_t i = 0; i < size; ++i)
+    {
+        cudaStreamSynchronize(streamPool[i]);
+        cudaStreamDestroy(streamPool[i]);
+    }
+}
+
+template <typename T>
+__host__ void DeepCopyGpuToHost(SparseMatrix<T>* deviceArray,
+                                SparseMatrix<T>* hostArray, uint32_t size)
+{
+    cudaStream_t streamPool[size];
+    for (size_t i = 0; i < size; ++i)
+    {
+        SparseMatrix<T>* curDestPtr = deviceArray + i;
+        SparseMatrix<T>* curSrcPtr = hostArray + i;
+        cudaStreamCreate(&streamPool[i]);
+
+        cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
+                        (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
+                        cudaMemcpyDeviceToHost, streamPool[i]);
+        cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
+                        (curSrcPtr->NNZ) * sizeof(uint32_t),
+                        cudaMemcpyDeviceToHost, streamPool[i]);
+        cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
+                        (curSrcPtr->NNZ) * sizeof(T),
+                        cudaMemcpyDeviceToHost, streamPool[i]);
     }
 
     for (uint32_t i = 0; i < size; ++i)

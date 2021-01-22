@@ -13,7 +13,5 @@ void PrintCudaVersion()
     int driver_ver;
     cudaDriverGetVersion(&driver_ver);
     std::cout << "CUDA Driver version: " << driver_ver << std::endl;
-
-    cudaStream_t stream;
 }
 #endif

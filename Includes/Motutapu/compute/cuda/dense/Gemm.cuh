@@ -8,6 +8,7 @@
 #define MOTUTAPU_CUDA_DENSE_GEMM_CUH
 
 #include <Motutapu/compute/cuda/CudaParams.hpp>
+#include <cuda_fp16.h>
 
 namespace Motutapu::Cuda::Dense
 {

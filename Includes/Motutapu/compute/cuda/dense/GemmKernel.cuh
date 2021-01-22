@@ -13,8 +13,8 @@
 #include <cuda_fp16.h>
 #include <mma.h>
 
-// namespace Motutapu::Compute::Cuda::Dense
-// {
+namespace Motutapu::Compute::Cuda::Dense
+{
 //! Computes Gemm operation on the chunk (Out = A x B + Out)
 //! Chunk represents sub matrix that can be computed using one block
 //! Each chunk is composed of tiles which contains 16x16 elements each
@@ -68,7 +68,7 @@ __global__ void GemmHalf(half* out, const half* A, const half* B,
                          const half* C, unsigned int paddedK,
                          unsigned int paddedN, unsigned int chunkIdxK,
                          unsigned int tileDim, unsigned int chunkSize);
-//}
+}
 
 
 #endif

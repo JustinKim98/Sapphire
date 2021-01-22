@@ -6,7 +6,8 @@
 
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 
-
+namespace Motutapu::Compute::Cuda::Dense
+{
 __host__ unsigned int Gcd(unsigned int a, unsigned int b)
 {
     if (!a)
@@ -226,4 +227,4 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
         cudaStreamDestroy(streams[batchIdx]);
     }
 }
-
+}

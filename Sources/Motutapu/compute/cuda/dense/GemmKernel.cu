@@ -9,8 +9,8 @@
 
 #define WARP_SIZE 32
 
-// namespace Motutapu::Compute::Cuda::Dense
-// {
+namespace Motutapu::Compute::Cuda::Dense
+{
 using namespace nvcuda;
 
 __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
@@ -179,4 +179,4 @@ __global__ void GemmFloat(float* out, const float* A, const float* B,
 
     *(chunkPtrOut + paddedK * rowIdx + colIdx) = output;
 }
-//} // namespace Motutapu::Cuda::Dense
+} // namespace Motutapu::Cuda::Dense

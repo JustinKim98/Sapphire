@@ -50,13 +50,22 @@ template <typename T>
 __global__ void DeepCopySparseMatrixOnGpu(SparseMatrix<T>* destArray,
                                           SparseMatrix<T>* srcArray,
                                           uint32_t size);
-//! Deep copies host matrix to GPU
+//! Deep copies host matrix to GPU from Host
 //! \tparam T : Data type of the sparse matrix
 //! \param deviceArray : Target device array to copy
 //! \param hostArray : Source device array to copy from
 //! \param size : Number of sparse matrices
 template <typename T>
 __host__ void DeepCopyHostToGpu(SparseMatrix<T>* deviceArray,
+                                SparseMatrix<T>* hostArray, uint32_t size);
+
+//! Deep copies host matrix to Host from Gpu
+//! \tparam T : Data type of the sparse matrix
+//! \param deviceArray : Target device array to copy
+//! \param hostArray : Source device array to copy from
+//! \param size : Number of sparse matrices
+template <typename T>
+__host__ void DeepCopyGpuToHost(SparseMatrix<T>* deviceArray,
                                 SparseMatrix<T>* hostArray, uint32_t size);
 
 //! Shallow Allocates Sparse matrix on the GPU 

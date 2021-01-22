@@ -47,7 +47,7 @@ class Device
         return m_padByteSize;
     }
 
-    [[nodiscard]] int Id() const
+    [[nodiscard]] int GetID() const
     {
         return m_id;
     }

@@ -4,11 +4,13 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_CUDA_MEMORY_CUH
-#define MOTUTAPU_CUDA_MEMORY_CUH
+#ifndef MOTUTAPU_COMPUTE_CUDA_MEMORY_CUH
+#define MOTUTAPU_COMPUTE_CUDA_MEMORY_CUH
 
 #include <Motutapu/compute/cuda/CudaParams.hpp>
 
+namespace Motutapu::Compute::Cuda
+{
 __host__ bool CudaSetDevice(int deviceId)
 {
     int deviceCount;
@@ -77,8 +79,8 @@ __host__ void MemcpyGpuToGpu(T* dest, T* src, size_t size)
         cudaStream_t stream0;
         cudaStreamCreate(&stream0);
         const auto requiredBlocks = size / MAX_THREAD_DIM_X;
-        CopyOnGpu<<<requiredBlocks, MAX_THREAD_DIM_X>>>
-        (dest, src, requiredBlocks * MAX_THREAD_DIM_X);
+        CopyOnGpu<<<requiredBlocks, MAX_THREAD_DIM_X>>>(
+            dest, src, requiredBlocks * MAX_THREAD_DIM_X);
 
         elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
     }
@@ -86,4 +88,5 @@ __host__ void MemcpyGpuToGpu(T* dest, T* src, size_t size)
     CopyOnGpu<<<1, size>>>(dest + elementsCopied, src + elementsCopied,
                            size - elementsCopied);
 }
+}  // namespace Motutapu::Compute::Cuda
 #endif
