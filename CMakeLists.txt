@@ -26,24 +26,28 @@ include_directories(Libraries/doctest/doctest)
 
 # Build library
 if(USE_CUDA)
-    #set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 	find_package(CUDA 11.0)
     set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
 	if(NOT CUDA_FOUND)
 		message(STATUS "CUDA not found")
 		set(USE_CUDA OFF)
     else()
-        if(NOT DEFINED ${CMAKE_CUDA_ARCHITECTURES})
-            #message(STATUS "Set arch")
-           #set(CMAKE_CUDA_ARCHITECTURES 52 60 61 75 86 CACHE STRING "CUDA architectures" FORCE)
-        endif()
         add_compile_definitions(WITH_CUDA)
         include_directories(${CUDA_INCLUDE_DIRS})
         message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
         message(STATUS "CUDA found")
         set(
         CUDA_NVCC_FLAGS
-        ${CUDA_NVCC_FLAGS}; -gencode arch=compute_86,code=sm_86
+        ${CUDA_NVCC_FLAGS}; 
+        -arch=sm_80 
+        -gencode=arch=compute_70,code=sm_70
+        -gencode=arch=compute_75,code=sm_75
+        -gencode=arch=compute_80,code=sm_80
+        -gencode=arch=compute_86,code=sm_86
+        -gencode=arch=compute_86,code=compute_86
+        --std=c++17
+        --default-stream per-thread
         )
 	endif()
 endif()

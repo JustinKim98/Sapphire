@@ -45,9 +45,6 @@ set_target_properties(${target}
 # Compile options
 target_compile_options(${target}
     PRIVATE
-    #$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_86,code=sm_86,--std=c++17
-
-    PUBLIC
     ${DEFAULT_COMPILE_OPTIONS}
 
     INTERFACE
