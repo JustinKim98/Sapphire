@@ -27,7 +27,7 @@ void TensorGemmTest()
 
     const auto batchSize = 2;
     auto* cudaA = Util::TensorData<half>::CreateTensorData(shapeA, CudaDevice,
-                                                           Util::Type::Dense, batchSize);
+        Util::Type::Dense, batchSize);
 
     auto* cudaB = Util::TensorData<half>::CreateTensorData(shapeB, CudaDevice,
         Util::Type::Dense, batchSize);
@@ -109,20 +109,21 @@ void FloatGemmTest()
     auto* Out = Util::TensorData<float>::CreateTensorData(shapeOut, CudaDevice,
         Util::Type::Dense, batchSize);
 
-    Util::TensorData<float>::m_copyHostToGpu(cudaA,);
-    Util::TensorData<float>::m_copyHostToGpu(cudaB,);
-    Util::TensorData<float>::m_copyHostToGpu(cudaC,);
+    Util::TensorData<float>::CopyHostToGpu(cudaA);
+    Util::TensorData<float>::CopyHostToGpu(cudaB);
+    Util::TensorData<float>::CopyHostToGpu(cudaC);
 
     Cuda::Dense::GemmNormalFloat(
         cudaOut->DenseMatCuda, cudaA->DenseMatCuda, cudaB->DenseMatCuda,
         cudaC->DenseMatCuda, cudaOut->PaddedRowSize, cudaOut->PaddedColumnSize,
-        cudaA->PaddedColumnSize, batchSize, Util::Type::Dense, Util::Type::Dense, Util::Type::Dense);
+        cudaA->PaddedColumnSize, batchSize, false, false, false);
 
-    Util::TensorData<float>::m_copyGpuToHost(cudaOut,);
+    Util::TensorData<float>::CopyGpuToHost(cudaOut);
 
     Naive::Gemm<float>(Out->DenseMatHost, A->DenseMatHost, B->DenseMatHost,
-                C->DenseMatHost, Out->PaddedRowSize, Out->PaddedColumnSize,
-                A->PaddedColumnSize, batchSize, Util::Type::Dense, Util::Type::Dense, Util::Type::Dense);
+                       C->DenseMatHost, Out->PaddedRowSize,
+                       Out->PaddedColumnSize, A->PaddedColumnSize, batchSize,
+                       false, false, false);
 
     auto maxDiff = 0.0f;
 

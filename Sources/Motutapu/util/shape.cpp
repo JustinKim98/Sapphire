@@ -8,12 +8,12 @@
 
 namespace Motutapu
 {
-Shape::Shape(std::initializer_list<std::size_t> shape)
+Shape::Shape(std::initializer_list<unsigned int> shape)
     : m_shapeVector(shape)
 {
 }
 
-Shape::Shape(std::vector<std::size_t> shape)
+Shape::Shape(std::vector<unsigned int> shape)
     : m_shapeVector(std::move(shape))
 {
 }
@@ -37,7 +37,7 @@ Shape& Shape::operator=(Shape&& shape) noexcept
     return *this;
 }
 
-std::size_t& Shape::operator[](std::size_t index)
+unsigned int& Shape::operator[](unsigned int index)
 {
     return m_shapeVector[index];
 }
@@ -66,19 +66,19 @@ std::string Shape::ToString() const
     return msg;
 }
 
-std::size_t Shape::At(std::size_t index) const
+unsigned int Shape::At(unsigned int index) const
 {
     return m_shapeVector.at(index);
 }
 
-std::size_t Shape::Dim() const
+unsigned int Shape::Dim() const
 {
     return m_shapeVector.size();
 }
 
-std::size_t Shape::Size() const noexcept
+unsigned int Shape::Size() const noexcept
 {
-    std::size_t size = 1;
+    unsigned int size = 1;
     for (auto i : m_shapeVector)
     {
         size *= i;

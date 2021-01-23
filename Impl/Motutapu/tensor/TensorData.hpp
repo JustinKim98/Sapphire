@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
@@ -13,23 +13,75 @@
 namespace Motutapu::Util
 {
 template <typename T>
+void TensorData<T>::AddOutputUnitHistory(int unitKey)
+{
+    m_history.emplace_back(History(unitKey));
+}
+
+template <typename T>
+void TensorData<T>::AddOperandUnitHistory(int unitKey)
+{
+    if (m_history.back().IsOutput())
+    {
+        m_history.emplace_back(History());
+    }
+    else
+    {
+        m_history.back().OperandUnitKeyList.emplace_back(unitKey);
+    }
+}
+
+template <typename T>
+void TensorData<T>::AcceptGrad(int unitKey)
+{
+    if (m_history.empty())
+    {
+        throw std::runtime_error("AcceptGrad - History is empty");
+    }
+    if (m_history.back().IsOutput())
+    {
+        throw std::runtime_error("AcceptGrad - Last history was output");
+    }
+
+    History& hist = m_history.back();
+    const auto resultItr = std::find(hist.OperandUnitKeyList.begin(),
+                                     hist.OperandUnitKeyList.end(), unitKey);
+
+    if (resultItr == hist.OperandUnitKeyList.end())
+    {
+        throw std::runtime_error(
+            "AcceptGrad - requested Operand history was not found");
+    }
+
+    hist.OperandUnitKeyList.erase(resultItr);
+}
+
+template <typename T>
 TensorData<T>* TensorData<T>::CreateTensorData(const Shape& shape,
                                                const Device& device,
                                                Type type, unsigned batchSize)
 {
+    auto success = true;
     auto* tensorData = new TensorData<T>(shape, type, device);
     if (device.Type() == DeviceType::CUDA)
     {
-        Compute::Cuda::CudaSetDevice(device.GetID());
-        tensorData->m_allocateGpu(batchSize);
+        success &= Compute::Cuda::CudaSetDevice(device.GetID());
+        success &= tensorData->m_allocateCuda(batchSize);
         tensorData->m_allocateCpu(batchSize);
     }
+
+    if (!success)
+    {
+        throw std::runtime_error("Tensor creation failed");
+    }
+
     return tensorData;
 }
 
 template <typename T>
 bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData)
 {
+    std::unique_lock<std::recursive_mutex> lock(tensorData->m_mtx);
     auto isSuccess = true;
 
     tensorData->m_freeCpu();
@@ -39,9 +91,168 @@ bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData)
         isSuccess &= tensorData->m_freeGpu();
     }
 
+    lock.release();
+
     delete tensorData;
 
     return isSuccess;
+}
+
+template <typename T>
+void TensorData<T>::DenseToSparse(TensorData<T>* tensorData)
+{
+    throw std::exception("DenseToSparse not implemented");
+}
+
+template <typename T>
+void TensorData<T>::SparseToDense(TensorData<T>* tensorData)
+{
+    throw std::exception("SparseToDense not implemented");
+}
+
+template <typename T>
+bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
+                                   const TensorData<T>* src)
+{
+    std::shared_lock<std::recursive_mutex> src_lock(src->m_mtx);
+    std::unique_lock<std::recursive_mutex> dest_lock(dest->m_mtx);
+
+    if (src->GetDevice() != dest->GetDevice())
+    {
+        throw std::invalid_argument("Device mismatch while copying tensorData");
+    }
+
+    if (dest->TensorShape != src->TensorShape)
+    {
+        throw std::invalid_argument("Shape mismatch while copying tensorData");
+    }
+
+    if (dest->GetType() != src->GetType())
+    {
+        throw std::invalid_argument("Type mismatch while copying tensorData");
+    }
+
+    const bool sparse = src->GetType() == Type::Sparse ? true : false;
+    bool success = true;
+    auto device = src->GetDevice();
+
+    const Shape shape = dest->TensorShape;
+
+    if (device.Type() == DeviceType::CPU)
+    {
+        if (sparse)
+        {
+            throw std::exception("CopyTensorData - sparse not implemented");
+        }
+        else
+        {
+            std::memcpy(dest->DenseMatHost, src->DenseMatHost,
+                        src->DenseTotalLength * sizeof(T));
+            dest->DenseTotalLength = src->DenseTotalLength;
+        }
+    }
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        success &= Compute::Cuda::CudaSetDevice(device.GetID());
+
+        if (sparse)
+        {
+            throw std::exception("CopyTensorData - sparse not implemented");
+        }
+        else
+        {
+            Compute::Cuda::MemcpyGpuToGpu(
+                static_cast<void**>(dest->DenseMatCuda),
+                static_cast<void**>(src->DenseMatCuda),
+                src->DenseTotalLength * sizeof(T));
+            dest->DenseTotalLength = src->DenseTotalLength;
+        }
+    }
+
+    dest_lock.release();
+    src_lock.release();
+
+    return success;
+}
+
+template <typename T>
+bool TensorData<T>::ChangeDevice(TensorData<T>* tensorData, Device device)
+{
+    std::lock_guard<std::recursive_mutex> lock(tensorData->m_mtx);
+    auto currentDevice = tensorData->GetDevice();
+    if (currentDevice == device)
+    {
+        return false;
+    }
+
+    if (currentDevice.Type() == DeviceType::CPU && device.Type() ==
+        DeviceType::CUDA)
+    {
+        tensorData->m_allocateCuda(tensorData->BatchSize);
+        TensorData<T>::CopyHostToGpu(tensorData);
+    }
+
+    if (currentDevice.Type() == DeviceType::CUDA && device.Type() ==
+        DeviceType::CPU)
+    {
+        TensorData<T>::CopyGpuToHost(tensorData);
+    }
+
+    if (currentDevice.Type() == DeviceType::CUDA &&
+        device.Type() == DeviceType::CUDA)
+    {
+        TensorData<T>::CopyGpuToHost(tensorData);
+        TensorData<T>::CopyHostToGpu(tensorData);
+    }
+
+    tensorData->m_device = device;
+
+    return true;
+}
+
+template <typename T>
+void TensorData<T>::CopyHostToGpu(TensorData<T>* tensorData)
+{
+    std::lock_guard<std::recursive_mutex> lock(tensorData->m_mtx);
+    if (tensorData->GetDevice().Type() != DeviceType::CUDA)
+    {
+        throw std::invalid_argument(
+            "CopyHostToGpu - Given tensor data is not GPU tensor");
+    }
+
+    if (tensorData->GetType() == Type::Sparse)
+    {
+        throw std::exception("Sparse matrix not implemented");
+    }
+    else
+    {
+        Compute::Cuda::CudaSetDevice(tensorData->m_device.GetID());
+        MemcpyHostToGpu(tensorData->DenseMatCuda, tensorData->DenseMatHost,
+                        tensorData->BatchSize);
+    }
+}
+
+template <typename T>
+void TensorData<T>::CopyGpuToHost(TensorData<T>* tensorData)
+{
+    std::lock_guard<std::recursive_mutex> lock(tensorData->m_mtx);
+    if (tensorData->GetDevice().Type() != DeviceType::CUDA)
+    {
+        throw std::invalid_argument(
+            "CopyHostToGpu - Given tensor data is not GPU tensor");
+    }
+
+    if (tensorData->GetType() == Type::Sparse)
+    {
+        throw std::exception("Sparse matrix not implemented");
+    }
+    else
+    {
+        Compute::Cuda::CudaSetDevice(tensorData->m_device.GetID());
+        MemcpyGpuToHost(tensorData->DenseMatHost, tensorData->DenseMatCuda,
+                        tensorData->BatchSize);
+    }
 }
 
 template <typename T>
@@ -82,17 +293,17 @@ void TensorData<T>::m_allocateCpu(unsigned int batchSize)
     const auto colSize = TensorShape.At(0);
     const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 0;
 
-    const auto padUnitSize = 32 / sizeof(T);
+    const auto padUnitSize = static_cast<unsigned int>(32 / sizeof(T));
 
-    const auto paddedColSize = colSize % padUnitSize == 0
-                                   ? colSize
-                                   : colSize / padUnitSize * padUnitSize +
-                                     padUnitSize;
+    const auto paddedColSize =
+        colSize % padUnitSize == 0
+            ? colSize
+            : colSize / padUnitSize * padUnitSize + padUnitSize;
 
-    const auto paddedRowSize = rowSize % padUnitSize == 0
-                                   ? rowSize
-                                   : rowSize / padUnitSize * padUnitSize +
-                                     padUnitSize;
+    const auto paddedRowSize =
+        rowSize % padUnitSize == 0
+            ? rowSize
+            : rowSize / padUnitSize * padUnitSize + padUnitSize;
 
     if (m_type == Type::Sparse)
     {
@@ -104,7 +315,6 @@ void TensorData<T>::m_allocateCpu(unsigned int batchSize)
         DenseMatHost = new T[DenseTotalLength];
     }
 }
-
 
 template <typename T>
 bool TensorData<T>::m_allocateCuda(unsigned int batchSize)
@@ -145,161 +355,6 @@ bool TensorData<T>::m_allocateCuda(unsigned int batchSize)
     }
 
     return isSuccess;
-}
-
-template <typename T>
-void TensorData<T>::DenseToSparse(TensorData<T>* tensorData)
-{
-    throw std::exception("DenseToSparse not implemented");
-}
-
-template <typename T>
-void TensorData<T>::SparseToDense(TensorData<T>* tensorData)
-{
-    throw std::exception("SparseToDense not implemented");
-}
-
-template <typename T>
-bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
-                                   const TensorData<T>* src)
-{
-    if (src->GetDevice() != dest->GetDevice())
-    {
-        throw std::invalid_argument("Device mismatch while copying tensorData");
-    }
-
-    if (dest->TensorShape != src->TensorShape)
-    {
-        throw std::invalid_argument("Shape mismatch while copying tensorData");
-    }
-
-    if (dest->GetType() != src->GetType())
-    {
-        throw std::invalid_argument("Type mismatch while copying tensorData");
-    }
-
-    if (src->IsBusy || dest->IsBusy)
-        return false;
-
-    const bool sparse = src->GetType() == Type::Sparse ? true : false;
-    bool success = true;
-    auto device = src->GetDevice();
-
-    src->IsBusy.exchange(true, std::memory_order_acquire);
-    dest->IsBusy.exchange(true, std::memory_order_acquire);
-
-    const Shape shape = dest->TensorShape;
-
-    if (device.Type() == DeviceType::CPU)
-    {
-        if (sparse)
-        {
-            throw std::exception("CopyTensorData - sparse not implemented");
-        }
-        else
-        {
-            std::memcpy(dest->DenseMatHost, src->DenseMatHost,
-                        src->DenseTotalLength * sizeof(T));
-            dest->DenseTotalLength = src->DenseTotalLength;
-        }
-    }
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        success &= Compute::Cuda::CudaSetDevice(device.GetID());
-
-        if (sparse)
-        {
-            throw std::exception("CopyTensorData - sparse not implemented");
-        }
-        else
-        {
-            MemcpyGpuToGpu(static_cast<void**>(dest->DenseMatCuda),
-                           static_cast<void**>(src->DenseMatCuda),
-                           src->DenseTotalLength * sizeof(T));
-            dest->DenseTotalLength = src->DenseTotalLength;
-        }
-    }
-
-    src->IsBusy.exchange(true, std::memory_order_release);
-    dest->IsBusy.exchange(true, std::memory_order_release);
-    return success;
-}
-
-template <typename T>
-bool TensorData<T>::ChangeDevice(TensorData<T>* tensorData, Device device)
-{
-    auto currentDevice = tensorData->GetDevice();
-    if (currentDevice == device)
-    {
-        return false;
-    }
-
-    if (currentDevice.Type() == DeviceType::CPU && device.Type() ==
-        DeviceType::CUDA)
-    {
-        tensorData->m_allocateCuda(tensorData->BatchSize);
-        TensorData<T>::CopyHostToGpu(tensorData);
-    }
-
-    if (currentDevice.Type() == DeviceType::CUDA && device.Type() ==
-        DeviceType::CPU)
-    {
-        TensorData<T>::CopyGpuToHost(tensorData);
-    }
-
-    if (currentDevice.Type() == DeviceType::CUDA &&
-        device.Type() == DeviceType::CUDA)
-    {
-        TensorData<T>::CopyGpuToHost(tensorData);
-        TensorData<T>::CopyHostToGpu(tensorData);
-    }
-
-    tensorData->m_device = device;
-
-    return true;
-}
-
-template <typename T>
-void TensorData<T>::CopyHostToGpu(TensorData<T>* tensorData)
-{
-    if (tensorData->GetDevice().Type() != DeviceType::CUDA)
-    {
-        throw std::invalid_argument(
-            "CopyHostToGpu - Given tensor data is not GPU tensor");
-    }
-
-    if (tensorData->GetType() == Type::Sparse)
-    {
-        throw std::exception("Sparse matrix not implemented");
-    }
-    else
-    {
-        Compute::Cuda::CudaSetDevice(tensorData->m_device.GetID());
-        MemcpyHostToGpu(tensorData->DenseMatCuda, tensorData->DenseMatHost,
-                        tensorData->BatchSize);
-    }
-}
-
-template <typename T>
-void TensorData<T>::CopyGpuToHost(TensorData<T>* tensorData)
-{
-    if (tensorData->GetDevice().Type() != DeviceType::CUDA)
-    {
-        throw std::invalid_argument(
-            "CopyHostToGpu - Given tensor data is not GPU tensor");
-    }
-
-    if (tensorData->GetType() == Type::Sparse)
-    {
-        throw std::exception("Sparse matrix not implemented");
-    }
-    else
-    {
-        Compute::Cuda::CudaSetDevice(tensorData->m_device.GetID());
-        MemcpyGpuToHost(tensorData->DenseMatHost, tensorData->DenseMatCuda,
-                        tensorData->BatchSize);
-    }
 }
 
 

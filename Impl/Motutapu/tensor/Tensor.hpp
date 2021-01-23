@@ -12,16 +12,14 @@
 namespace Motutapu
 {
 template <typename T>
-Tensor<T>::Tensor(Shape shape, Device device)
-    : m_shape(shape),
-      m_initialDevice(device)
+Tensor<T>::Tensor(Shape shape)
+    : m_shape(shape)
 {
 }
 
 template <typename T>
 Tensor<T>::Tensor(const Tensor<T>& tensor)
     : m_shape(tensor.m_shape),
-      m_initialDevice(tensor.m_initialDevice),
       m_tensorData(tensor.m_tensorData),
       m_functionTrajectory(tensor.m_functionTrajectory)
 {
@@ -34,7 +32,6 @@ Tensor<T>& Tensor<T>::operator=(const Tensor<T>& tensor)
         return this;
 
     m_shape = tensor.m_shape;
-    m_initialDevice = tensor.m_initialDevice;
     m_tensorData = tensor.m_tensorData;
     m_functionTrajectory = tensor.m_functionTrajectory;
 
@@ -50,7 +47,7 @@ Shape Tensor<T>::GetShape() const
 template <typename T>
 Device Tensor<T>::GetDevice() const
 {
-    return m_initialDevice;
+    return m_tensorData->GetDevice();
 }
 
 template <typename T>

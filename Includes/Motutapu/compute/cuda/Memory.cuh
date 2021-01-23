@@ -70,7 +70,7 @@ __host__ bool MemcpyGpuToHost(T* hostPtr, T* gpuPtr, size_t size)
 }
 
 template <typename T>
-__host__ void MemcpyGpuToGpu(T* dest, T* src, size_t size)
+__host__ void MemcpyGpuToGpu(T* dest, const T* src, size_t size)
 {
     unsigned int elementsCopied = 0;
 

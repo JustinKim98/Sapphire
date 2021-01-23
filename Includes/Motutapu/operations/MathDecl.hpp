@@ -7,7 +7,10 @@
 #ifndef MOTUTAPU_MATH_DECL_HPP
 #define MOTUTAPU_MATH_DECL_HPP
 
-#include <Motutapu/util/ResourceManager.hpp>
+#include <vector>
+
+#include "UnitDecl.hpp"
+#include "Motutapu/tensor/TensorDecl.hpp"
 
 namespace Motutapu
 {

@@ -14,7 +14,6 @@
 
 namespace Motutapu
 {
-
 //! \tparam T : data type of the tensor
 template <typename T>
 class Empty : Unit<T>
@@ -23,9 +22,10 @@ public:
     //! Creates Empty tensor
     //! \param shape : shape of the new tensor
     //! \param device : device to locate output tensor
-    //! \param sparse : true if sparse false otherwise
-    Empty(Shape shape, Device device, bool sparse);
+    //! \param type : Type of the data (Dense or Sparse)
+    Empty(Shape shape, Device device, Type type);
 
+    //! Computes forward propagation
     Tensor<T> Forward();
 
     size_t BatchSize = 0;
@@ -41,9 +41,10 @@ public:
     //! Creates Identity matrix
     //! \param size : row and column of the identity matrix
     //! \param device : device to locate output tensor
-    //! \param sparse : true if sparse false otherwise
-    Eye(int size, Device device, bool sparse);
+    //! \param type : Type of the data (Dense or Sparse)
+    Eye(int size, Device device, Type type);
 
+    //! Computes forward propagation
     Tensor<T> Forward();
 
     size_t BatchSize = 0;

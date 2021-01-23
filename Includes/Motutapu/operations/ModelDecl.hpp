@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
@@ -9,7 +9,7 @@
 
 #include <Motutapu/tensor/TensorDataDecl.hpp>
 #include <Motutapu/util/ConcurrentQueue.hpp>
-#include <Motutapu/operations/UnitDecl.hpp>
+#include <Motutapu/operations/Unit.hpp>
 #include <string>
 #include <unordered_map>
 #include <shared_mutex>
@@ -17,6 +17,15 @@
 
 namespace Motutapu
 {
+
+//! Descriptor storing unit key and its stream
+struct UnitKeyDescriptor
+{
+    int Key;
+    int StreamId;
+};
+
+
 class Model
 {
 public:
@@ -33,9 +42,20 @@ public:
     template <typename T>
     void Register(Unit<T>* unit);
 
+    //! Pushes unit key to operation order list
+    //! Should be called in forward propagation
+    void PushUnitKey(int key, int streamId);
+
+    //! Pops unit key to operation order  list
+    //! Should be called in back propagation
+    UnitKeyDescriptor PopUnitKey();
+
+    //! Initializes gradients before performing AutoGrad
+    void ZeroGrad();
+
     //! Automatically calculates gradient
     //! \tparam T : template type for the data
-    //! \param tensor : tensor to extract 
+    //! \param tensor : tensor to extract
     template <typename T>
     void AutoGrad(Tensor<T> tensor);
 
@@ -94,6 +114,9 @@ private:
         int Counter = 0;
     };
 
+
+    //! Order of the operation
+    std::list<int> m_operationOrder;
     TensorDataPool m_tensorDataPool;
     UnitPool m_unitPool;
     size_t m_batchSize;

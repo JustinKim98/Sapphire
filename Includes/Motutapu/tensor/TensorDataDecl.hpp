@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
@@ -10,17 +10,35 @@
 #include <Motutapu/util/Device.hpp>
 #include <Motutapu/util/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
-#include <atomic>
+#include <list>
 #include <shared_mutex>
 
 namespace Motutapu::Util
 {
-enum class Type
+//! This describes history of the tensorData
+//! As tensorData is used in unit function as an operand or input/output.
+//! It is stored using this struct
+struct History
 {
-    Sparse,
-    Dense,
+    History(int unitKey)
+        : UnitKey(unitKey)
+    {
+    }
+
+    History() = default;
+
+    bool IsOutput();
+
+    //! Key of the unit
+    int UnitKey = -1;
+    //! List of the units that was as operand
+    std::list<int> OperandUnitKeyList;
 };
 
+//! TensorData stores real tensor data of the tensor
+//! There can be more than one tensor that references to one tensorData
+//! All public functions in the TensorData is guaranteed to be thread safe
+//! TensorData should not be accessible from the user interface directly
 template <typename T>
 class TensorData
 {
@@ -44,12 +62,12 @@ public:
     SparseMatrix<T>* SparseMatCuda = nullptr;
     Shape TensorShape;
 
-    std::atomic<bool> IsBusy = false;
-
+    //! Key to identify tensor data
+    int Key = -1;
 
     //! Gets device descriptor (Sparse or Dense)
     //! \return : device descriptor
-    [[nodiscard]] Device GetDevice() const
+    [[nodiscard]] const Device& GetDevice() const
     {
         return m_device;
     }
@@ -61,21 +79,24 @@ public:
         return m_type;
     }
 
-    //! Gets key that represents this tensorData
-    //! \return : Key of the tensorData
-    [[nodiscard]] int GetKey() const
-    {
-        return m_key;
-    }
+    //! Add unit Key if unit was used as output or flow-through type
+    //! \param unitKey : unitKey to add
+    void AddOutputUnitHistory(int unitKey);
 
-    //! Sets key that represents this tensorData
-    //! \param key : key to set
-    void SetKey(int key)
-    {
-        m_key = key;
-    }
+    //! Add unit key if unit was used as operand only
+    //! \param unitKey : unitKey to add
+    void AddOperandUnitHistory(int unitKey);
+
+    //! Accept the gradient from the operand unit
+    //! \param unitKey : Key of the unit to accept gradient from
+    void AcceptGrad(int unitKey);
+
+    //! Helper static functions
+    //! These helper functions are used to control the tensorData from the
+    //! operation units
 
     //! Creates tensor data and allocates the space
+    //! throws runtime error if creation process was not successful
     //! \param shape : shape of the tensor data to create
     //! \param device : initial device to allocate tensorData
     //! \param type : Type of the tensor data (Dense or Sparse)
@@ -86,6 +107,7 @@ public:
 
     //! Frees and invalidates tensor data
     //! \param tensorData : tensorData to deallocate
+    //! \return : true if destruction was successful false otherwise
     static bool DestroyTensorData(TensorData<T>* tensorData);
 
     //! Converts tensor data from dense to sparse
@@ -107,15 +129,36 @@ public:
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
     static void CopyHostToGpu(TensorData<T>* tensorData);
+
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
     static void CopyGpuToHost(TensorData<T>* tensorData);
 
+    [[nodiscard]] bool IsNextBackPropFunctionReady();
+
+    bool IsBackPropReady()
+    {
+        if (m_history.empty())
+            return false;
+
+        if (m_history.back().IsOutput())
+            return true;
+
+        return false;
+    }
+
 private:
+
+    //! Allocates data on the CPU with given batchSize
     void m_allocateCpu(unsigned int batchSize);
+
+    //! Allocates data on the GPU with given batchSize
     bool m_allocateCuda(unsigned int batchSize);
 
+    //! Free space allocated on CPU memory
     void m_freeCpu() const;
+
+    //! Free space allocated on GPU memory
     bool m_freeGpu();
 
 
@@ -132,15 +175,14 @@ private:
 
     TensorData(Shape shape, Type type, Device device);
 
-private:
     ~TensorData() = default;
 
-    //! Key to identify tensor data
-    int m_key = -1;
+    std::list<History> m_history;
+
     Type m_type;
     Device m_device;
     //! mutex to make sure operations on the resources is synchronized
-    std::shared_mutex m_mtx;
+    std::recursive_mutex m_mtx;
 };
 } // namespace Motutapu::Util
 

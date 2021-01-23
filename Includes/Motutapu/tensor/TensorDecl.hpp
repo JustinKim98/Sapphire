@@ -20,9 +20,7 @@ template <typename T>
 class Tensor
 {
 public:
-    Tensor() = default;
-
-    Tensor(Shape shape, Device device);
+    Tensor(Shape shape);
 
     ~Tensor() = default;
 
@@ -45,17 +43,19 @@ public:
 
     void RegisterTensorData(Util::TensorData<T>* tensorData);
 
+    bool IsBackPropReady()
+    {
+        return m_tensorData->IsBackPropReady();
+    }
+
+    Util::TensorData<T>* TensorDataPtr();
+
 private:
     Shape m_shape;
 
-    //! Initial device when tensor was first created
-    Device m_initialDevice;
     //! Ptr to the tensorData
     Util::TensorData<T>* m_tensorData = nullptr;
 
-    //! List of IDs of the Units that has invoked
-    //! Ordered by invoked order from forward propagation
-    std::list<int> m_functionTrajectory;
 };
 }
 

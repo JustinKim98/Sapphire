@@ -8,53 +8,64 @@
 #define MOTUTAPU_UNIT_DECL_HPP
 
 #include <unordered_map>
+#include <optional>
 #include <Motutapu/tensor/TensorDecl.hpp>
 
 namespace Motutapu
 {
-    template <typename T>
-    class Unit
-    {
-     public:
-        Unit() = default;
-        virtual ~Unit() = default;
+template <typename T>
+struct TensorPlaceHolder
+{
+    TensorPlaceHolder(Shape shape, Device device, Type type,
+                      unsigned int batchSize);
 
-        Unit(const Unit<T>& unit) = default;
-        Unit<T>& operator=(const Unit& unit) = default;
+    Device TensorDevice;
+    unsigned int BatchSize;
+    Type TensorType;
+    Shape TensorShape;
+};
 
-        std::unordered_map<std::string, Tensor<T>> OutputTensorMap;
-        std::unordered_map<std::string, Tensor<T>> InputTensorMap;
-        std::unordered_map<std::string, Tensor<T>> InternalTensorMap;
+template <typename T>
+class Unit
+{
+public:
+    Unit() = default;
+    virtual ~Unit() = default;
 
-        std::unordered_map<std::string, std::string> StringLiterals;
-        std::unordered_map<std::string, T> ScalarLiterals;
-        std::unordered_map<std::string, int> IntegerLiterals;
+    Unit(const Unit<T>& unit) = default;
+    Unit<T>& operator=(const Unit& unit) = default;
 
-        //! Pushes tensor into ForwardInputTensorPool
-        //! Invokes forward propagation if tensor is ready
-        //! Returns output vector of tensors if it was invoked and execution was
-        //! finished successfully
-        //! Returns immediately if invocation did not occur.
-        //! Returns after computation if backward function was invoked
-        //! \param tensor : tensor to be used in backward propagation
-        //! \return : vector of output tensors if function was invoked
-        virtual std::optional<std::vector<Tensor<T>>> InvokeBackwardAsyncTensor(
-            Tensor<T> tensor) = 0;
+    std::unordered_map<std::string, Tensor<T>> OutputTensorMap;
+    std::unordered_map<std::string, Tensor<T>> InputTensorMap;
+    std::unordered_map<std::string, Tensor<T>> InternalTensorMap;
+    std::unordered_map<std::string, Tensor<T>> FlowThroughTensorMap;
 
-        //! Used in asynchronous backward execution
-        std::list<Tensor<T>> BackwardInputTensorPool;
+    std::unordered_map<std::string, std::string> StringLiterals;
+    std::unordered_map<std::string, T> ScalarLiterals;
+    std::unordered_map<std::string, int> IntegerLiterals;
 
-        Device Device;
-        std::string Name;
-        size_t BatchSize = 0;
+    //! Pushes tensor into ForwardInputTensorPool
+    //! Invokes forward propagation if tensor is ready
+    //! Returns output vector of tensors if it was invoked and execution was
+    //! finished successfully
+    //! Returns immediately if invocation did not occur.
+    //! Returns after computation if backward function was invoked
+    //! \param tensor : tensor to be used in backward propagation
+    //! \return : vector of output tensors if function was invoked
+    virtual std::optional<std::vector<Tensor<T>>> InvokeBackwardAsyncTensor(
+        Tensor<T> tensor) = 0;
 
-     protected:
-        bool m_checkBackwardReady();
+    //! Used in asynchronous backward execution
+    std::list<Tensor<T>> BackwardInputTensorPool;
 
-        std::mutex m_mtx;
-    };
+    std::string Name;
+    Device HostDevice;
+    int Key;
+
+protected:
+    bool m_checkBackwardReady();
+};
 }
-
 
 
 #endif

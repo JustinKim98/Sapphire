@@ -39,31 +39,37 @@ inline Model::~Model()
 template <typename T>
 void Model::Register(Unit<T>* unit)
 {
-    for (const auto& [name, tensor] : unit->OutputTensorMap)
+    for (auto& [name, tensor] : unit->OutputTensorMap)
     {
         auto* tensorData = Util::TensorData<T>::CreateTensorData(
-            tensor.GetShape(), tensor.GetDevice(), false, m_batchSize);
+            tensor.GetShape(), unit->HostDevice, false, m_batchSize);
 
         tensor.RegisterTensorData(tensorData);
-        tensorData->SetKey(m_tensorDataPool.Counter++);
         unit->BatchSize = m_batchSize;
 
+        const int tensorKey = m_tensorDataPool.Counter;
+        tensorData->Key = tensorKey;
+
+        const int unitKey = m_unitPool.Counter;
+        unit->Key = unitKey;
+
+        m_unitPool.Counter++;
         if constexpr (std::is_same_v<T, float>)
         {
-            m_unitPool.FloatUnitMap[m_unitPool.Counter++] = unit;
-            m_tensorDataPool.FloatTensorDataMap[m_tensorDataPool.Counter++] =
+            m_unitPool.FloatUnitMap[unitKey] = unit;
+            m_tensorDataPool.FloatTensorDataMap[tensorKey] =
                 tensorData;
         }
         else if constexpr (std::is_same_v<T, double>)
         {
-            m_unitPool.DoubleUnitMap[m_unitPool.Counter++] = unit;
-            m_tensorDataPool.DoubleTensorDataMap[m_tensorDataPool.Counter++] =
+            m_unitPool.DoubleUnitMap[unitKey] = unit;
+            m_tensorDataPool.DoubleTensorDataMap[tensorKey] =
                 tensorData;
         }
         else if constexpr (std::is_same_v<T, int>)
         {
-            m_unitPool.IntUnitMap[m_unitPool.Counter++] = unit;
-            m_tensorDataPool.IntTensorDataMap[m_tensorDataPool.Counter++] =
+            m_unitPool.IntUnitMap[unitKey] = unit;
+            m_tensorDataPool.IntTensorDataMap[tensorKey] =
                 tensorData;
         }
         else
@@ -80,22 +86,28 @@ void Model::Register(Unit<T>* unit)
         tensor.RegisterTensorData(tensorData);
         unit->BatchSize = m_batchSize;
 
+        const int tensorKey = m_tensorDataPool.Counter;
+        tensorData->Key = tensorKey;
+
+        const int unitKey = m_unitPool.Counter;
+        unit->Key = unitKey;
+
         if constexpr (std::is_same_v<T, float>)
         {
-            m_unitPool.FloatUnitMap[m_unitPool.Counter++] = unit;
-            m_tensorDataPool.FloatTensorDataMap[m_tensorDataPool.Counter++] =
+            m_unitPool.FloatUnitMap[unitKey] = unit;
+            m_tensorDataPool.FloatTensorDataMap[tensorKey] =
                 tensorData;
         }
         else if constexpr (std::is_same_v<T, double>)
         {
-            m_unitPool.DoubleUnitMap[m_unitPool.Counter++] = unit;
-            m_tensorDataPool.DoubleTensorDataMap[m_tensorDataPool.Counter++] =
+            m_unitPool.DoubleUnitMap[unitKey] = unit;
+            m_tensorDataPool.DoubleTensorDataMap[tensorKey] =
                 tensorData;
         }
         else if constexpr (std::is_same_v<T, int>)
         {
-            m_unitPool.IntUnitMap[m_unitPool.Counter++] = unit;
-            m_tensorDataPool.IntTensorDataMap[m_tensorDataPool.Counter++] =
+            m_unitPool.IntUnitMap[unitKey] = unit;
+            m_tensorDataPool.IntTensorDataMap[tensorKey] =
                 tensorData;
         }
         else
@@ -115,14 +127,18 @@ void Model::AutoGrad(Tensor<T> tensor)
         auto optionalTensorVector = unit->InvokeBackwardAsyncTensor(tensor);
         if (optionalTensorVector)
         {
-            for (auto& outputTensor : optionalTensorVector)
+            for (auto& outputTensor : optionalTensorVector.value())
             {
-                AutoGrad(outputTensor);
+                outputTensor.TensorDataPtr()->AcceptGrad(unit->Key);
+
+                if (outputTensor.IsBackPropReady())
+                {
+                    AutoGrad(outputTensor);
+                }
             }
         }
     }
 }
-
 }
 
 #endif
