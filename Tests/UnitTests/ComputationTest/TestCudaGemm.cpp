@@ -50,7 +50,7 @@ void TensorGemmTest()
     auto* Out = Util::TensorData<float>::CreateTensorData(shapeOut, CudaDevice,
         Type::Dense, batchSize);
 
-    Cuda::Dense::GemmTensor(
+    Compute::Cuda::Dense::GemmTensor(
         cudaOut->DenseMatCuda, cudaA->DenseMatCuda, cudaB->DenseMatCuda,
         cudaC->DenseMatCuda, cudaOut->PaddedRowSize, cudaOut->PaddedColumnSize,
         cudaA->PaddedColumnSize, batchSize, false, false, false);
@@ -115,7 +115,7 @@ void FloatGemmTest()
     Util::TensorData<float>::CopyHostToGpu(cudaB);
     Util::TensorData<float>::CopyHostToGpu(cudaC);
 
-    Cuda::Dense::GemmNormalFloat(
+    Compute::Cuda::Dense::GemmNormalFloat(
         cudaOut->DenseMatCuda, cudaA->DenseMatCuda, cudaB->DenseMatCuda,
         cudaC->DenseMatCuda, cudaOut->PaddedRowSize, cudaOut->PaddedColumnSize,
         cudaA->PaddedColumnSize, batchSize, false, false, false);

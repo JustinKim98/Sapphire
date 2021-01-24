@@ -5,6 +5,8 @@
 // property of any third parties.
 
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
+#include <Motutapu/compute/cuda/dense/Gemm.cuh>
+
 
 namespace Motutapu::Compute::Cuda::Dense
 {
@@ -211,9 +213,9 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
             GemmHalf<<<numBlocks, chunkSize * chunkSize * 32,
-                0, streams[batchIdx]>>>(
-                    ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN, chunkIdxK,
-                    tileDim, chunkSize);
+            0, streams[batchIdx]>>>(
+                ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                chunkIdxK);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)

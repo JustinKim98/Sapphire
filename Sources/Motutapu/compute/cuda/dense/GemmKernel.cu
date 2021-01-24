@@ -179,4 +179,51 @@ __global__ void GemmFloat(float* out, const float* A, const float* B,
 
     *(chunkPtrOut + paddedK * rowIdx + colIdx) = output;
 }
+
+__global__ void GemmHalf(half* out, const half* A, const half* B,
+                          const half* C, unsigned int paddedK,
+                          unsigned int paddedN, unsigned int chunkIdxK)
+{
+    constexpr unsigned int tileDim = 8;
+    constexpr unsigned int chunkSize = 4;
+    __shared__ half matrixA[tileDim * chunkSize][tileDim * chunkSize + 1];
+    __shared__ half matrixB[tileDim * chunkSize][tileDim * chunkSize + 1];
+    __shared__ half matrixC[tileDim * chunkSize][tileDim * chunkSize + 1];
+
+    const unsigned int chunkIdxM = blockIdx.x;
+    const unsigned int chunkIdxN = blockIdx.y;
+
+    const unsigned int rowIdx = threadIdx.x;
+    const unsigned int colIdx = threadIdx.y;
+
+    const unsigned int blockIdxA = chunkIdxM * paddedK * chunkSize * tileDim +
+                                   chunkIdxK * chunkSize * tileDim;
+    const unsigned int blockIdxB = chunkIdxK * paddedN * chunkSize * tileDim +
+                                   chunkIdxN * chunkSize * tileDim;
+    const unsigned int blockIdxC = chunkIdxM * paddedK * chunkSize * tileDim +
+                                   chunkIdxN * chunkSize * tileDim;
+    const unsigned int blockIdxOut = chunkIdxM * paddedK * chunkSize * tileDim +
+                                     chunkIdxN * chunkSize * tileDim;
+
+    const half* chunkPtrA = A + blockIdxA;
+    const half* chunkPtrB = B + blockIdxB;
+    const half* chunkPtrC = C + blockIdxC;
+
+    half* chunkPtrOut = out + blockIdxOut;
+
+    matrixA[rowIdx][colIdx] = *(chunkPtrA + paddedK * rowIdx + colIdx);
+    matrixB[rowIdx][colIdx] = *(chunkPtrB + paddedN * rowIdx + colIdx);
+    matrixC[rowIdx][colIdx] = *(chunkPtrC + paddedN * rowIdx + colIdx);
+
+    half output = 0.0f;
+
+#pragma unroll
+    for (unsigned int i = 0; i < tileDim * chunkSize; ++i)
+    {
+        output =
+            matrixC[rowIdx][colIdx] + matrixA[rowIdx][i] * matrixB[i][colIdx];
+    }
+
+    *(chunkPtrOut + paddedK * rowIdx + colIdx) = output;
+}
 } // namespace Motutapu::Cuda::Dense

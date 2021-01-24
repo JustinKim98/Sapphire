@@ -27,7 +27,7 @@ __host__ __device__ bool CudaMallocFloat(float** ptr, unsigned int size)
     return error == cudaSuccess;
 }
 
-__host__ __device__ bool CudaMallocHalf(float** ptr, unsigned int size)
+__host__ __device__ bool CudaMallocHalf(half** ptr, unsigned int size)
 {
     const cudaError_t error =
         cudaMalloc(reinterpret_cast<void**>(ptr), size * sizeof(float));

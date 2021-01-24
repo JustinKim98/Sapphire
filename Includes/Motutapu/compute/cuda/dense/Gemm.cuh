@@ -9,7 +9,7 @@
 
 #include <cuda_fp16.h>
 
-namespace Motutapu::Cuda::Dense
+namespace Motutapu::Compute::Cuda::Dense
 {
 __host__ void GemmTensor(half* out, half* A, half* B, half* C,
                              unsigned int paddedM, unsigned int paddedN,
