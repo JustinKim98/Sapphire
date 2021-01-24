@@ -20,8 +20,7 @@ Tensor<T>::Tensor(Shape shape)
 template <typename T>
 Tensor<T>::Tensor(const Tensor<T>& tensor)
     : m_shape(tensor.m_shape),
-      m_tensorData(tensor.m_tensorData),
-      m_functionTrajectory(tensor.m_functionTrajectory)
+      m_tensorData(tensor.m_tensorData)
 {
 }
 
@@ -33,7 +32,6 @@ Tensor<T>& Tensor<T>::operator=(const Tensor<T>& tensor)
 
     m_shape = tensor.m_shape;
     m_tensorData = tensor.m_tensorData;
-    m_functionTrajectory = tensor.m_functionTrajectory;
 
     return this;
 }
@@ -51,42 +49,9 @@ Device Tensor<T>::GetDevice() const
 }
 
 template <typename T>
-void Tensor<T>::PushTrajectory(int operationId)
+Util::TensorData<T>* Tensor<T>::TensorDataPtr()
 {
-    m_functionTrajectory.emplace_back(operationId);
-}
-
-template <typename T>
-std::optional<int> Tensor<T>::PopTrajectory()
-{
-    if (m_functionTrajectory.empty())
-        return {};
-
-    const int front = m_functionTrajectory.front();
-    m_functionTrajectory.pop_front();
-
-    return front;
-}
-
-template <typename T>
-std::optional<int> Tensor<T>::PeekTrajectory() const
-{
-    if (m_functionTrajectory.empty())
-        return {};
-
-    const int front = m_functionTrajectory.front();
-    return front;
-}
-
-template <typename T>
-std::optional<int> Tensor<T>::GetTensorDataKey() const
-{
-    if (!m_tensorData)
-    {
-        return {};
-    }
-
-    return m_tensorData->GetKey();
+    return m_tensorData;
 }
 
 template <typename T>

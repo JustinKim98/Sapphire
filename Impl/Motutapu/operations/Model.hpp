@@ -131,7 +131,7 @@ void Model::AutoGrad(Tensor<T> tensor)
             {
                 outputTensor.TensorDataPtr()->AcceptGrad(unit->Key);
 
-                if (outputTensor.IsBackPropReady())
+                if (outputTensor.TensorDataPtr()->IsBackPropReady())
                 {
                     AutoGrad(outputTensor);
                 }

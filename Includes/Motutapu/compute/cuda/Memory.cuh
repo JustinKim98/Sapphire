@@ -7,21 +7,12 @@
 #ifndef MOTUTAPU_COMPUTE_CUDA_MEMORY_CUH
 #define MOTUTAPU_COMPUTE_CUDA_MEMORY_CUH
 
+#include <cuda_fp16.h>
 #include <Motutapu/compute/cuda/CudaParams.hpp>
 
 namespace Motutapu::Compute::Cuda
 {
-__host__ bool CudaSetDevice(int deviceId)
-{
-    int deviceCount;
-    cudaGetDeviceCount(&deviceCount);
-    if (deviceId < deviceCount)
-    {
-        const cudaError_t error = cudaSetDevice(deviceId);
-        return error == cudaSuccess;
-    }
-    return false;
-}
+__host__ bool CudaSetDevice(int deviceId);
 
 template <typename T>
 __global__ void CopyOnGpu(T* dest, const T* const src, unsigned int size)
@@ -34,59 +25,28 @@ __global__ void CopyOnGpu(T* dest, const T* const src, unsigned int size)
     }
 }
 
-template <typename T>
-__host__ __device__ bool CudaMalloc(T** ptr, size_t size)
-{
-    const cudaError_t error =
-        cudaMalloc(reinterpret_cast<void**>(ptr), size * sizeof(T));
-    return error == cudaSuccess;
-}
+__host__ __device__ bool CudaMallocFloat(float** ptr, unsigned int size);
 
-template <typename T>
-__host__ __device__ bool CudaFree(T** ptr)
-{
-    const cudaError_t error = cudaFree(reinterpret_cast<void**>(ptr));
-    return error == cudaSuccess;
-}
+__host__ __device__ bool CudaMallocHalf(half** ptr, unsigned int size);
 
-template <typename T>
-__host__ bool MemcpyHostToGpu(T* gpuPtr, T* hostPtr, size_t size)
-{
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
-        size * sizeof(T), cudaMemcpyHostToDevice);
 
-    return error == cudaSuccess;
-}
+__host__ __device__ bool CudaFree(void** ptr);
 
-template <typename T>
-__host__ bool MemcpyGpuToHost(T* hostPtr, T* gpuPtr, size_t size)
-{
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(hostPtr), reinterpret_cast<void*>(gpuPtr),
-        size * sizeof(T), cudaMemcpyDeviceToHost);
+__host__ bool MemcpyHostToGpuFloat(float* gpuPtr, float* hostPtr, unsigned int size);
 
-    return error == cudaSuccess;
-}
+__host__ bool MemcpyHostToGpuHalf(half* gpuPtr, half* hostPtr,
+                                   unsigned int size);
 
-template <typename T>
-__host__ void MemcpyGpuToGpu(T* dest, const T* src, size_t size)
-{
-    unsigned int elementsCopied = 0;
+__host__ bool MemcpyGpuToHostFloat(float* hostPtr, float* gpuPtr,
+                                   unsigned int size);
 
-    if (size > MAX_THREAD_DIM_X)
-    {
-        cudaStream_t stream0;
-        cudaStreamCreate(&stream0);
-        const auto requiredBlocks = size / MAX_THREAD_DIM_X;
-        CopyOnGpu<<<requiredBlocks, MAX_THREAD_DIM_X>>>(
-            dest, src, requiredBlocks * MAX_THREAD_DIM_X);
+__host__ bool MemcpyGpuToHostHalf(half* hostPtr, half* gpuPtr,
+                                   unsigned int size);
 
-        elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
-    }
+__host__ void MemcpyGpuToGpuFloat(float* dest, const float* src, unsigned int size);
 
-    CopyOnGpu<<<1, size>>>(dest + elementsCopied, src + elementsCopied,
-                           size - elementsCopied);
-}
+__host__ void MemcpyGpuToGpuHalf(half* dest, const half* src,
+                                  unsigned int size);
+
 }  // namespace Motutapu::Compute::Cuda
 #endif

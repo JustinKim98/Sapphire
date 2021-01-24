@@ -73,7 +73,7 @@ unsigned int Shape::At(unsigned int index) const
 
 unsigned int Shape::Dim() const
 {
-    return m_shapeVector.size();
+    return static_cast<unsigned int>(m_shapeVector.size());
 }
 
 unsigned int Shape::Size() const noexcept

@@ -155,6 +155,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_SYSTEM_NAME MATCHES "Linux")
 		-pthread
 		-lstdc++fs
 		-fopenmp
+		-lcuda
+		-lcudart
 	)
 endif()
 

@@ -9,6 +9,10 @@
 
 #include <Motutapu/tensor/TensorDataDecl.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
+#include <mutex>
+#include <algorithm>
+#include <memory>
+#include <type_traits>
 
 namespace Motutapu::Util
 {
@@ -34,6 +38,8 @@ void TensorData<T>::AddOperandUnitHistory(int unitKey)
 template <typename T>
 void TensorData<T>::AcceptGrad(int unitKey)
 {
+    std::lock_guard<std::recursive_mutex> lock(m_mtx);
+
     if (m_history.empty())
     {
         throw std::runtime_error("AcceptGrad - History is empty");
@@ -47,6 +53,7 @@ void TensorData<T>::AcceptGrad(int unitKey)
     const auto resultItr = std::find(hist.OperandUnitKeyList.begin(),
                                      hist.OperandUnitKeyList.end(), unitKey);
 
+    //! Received gradient should be marked in the history
     if (resultItr == hist.OperandUnitKeyList.end())
     {
         throw std::runtime_error(
@@ -54,6 +61,12 @@ void TensorData<T>::AcceptGrad(int unitKey)
     }
 
     hist.OperandUnitKeyList.erase(resultItr);
+
+    //! Remove last history if OperandUnitKeyList was filled
+    if (hist.OperandUnitKeyList.empty())
+    {
+        m_history.pop_back();
+    }
 }
 
 template <typename T>
@@ -101,20 +114,20 @@ bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData)
 template <typename T>
 void TensorData<T>::DenseToSparse(TensorData<T>* tensorData)
 {
-    throw std::exception("DenseToSparse not implemented");
+    throw std::runtime_error("DenseToSparse not implemented");
 }
 
 template <typename T>
 void TensorData<T>::SparseToDense(TensorData<T>* tensorData)
 {
-    throw std::exception("SparseToDense not implemented");
+    throw std::runtime_error("SparseToDense not implemented");
 }
 
 template <typename T>
 bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
                                    const TensorData<T>* src)
 {
-    std::shared_lock<std::recursive_mutex> src_lock(src->m_mtx);
+    std::unique_lock<std::recursive_mutex> src_lock(src->m_mtx);
     std::unique_lock<std::recursive_mutex> dest_lock(dest->m_mtx);
 
     if (src->GetDevice() != dest->GetDevice())
@@ -142,7 +155,7 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
     {
         if (sparse)
         {
-            throw std::exception("CopyTensorData - sparse not implemented");
+            throw std::runtime_error("CopyTensorData - sparse not implemented");
         }
         else
         {
@@ -158,14 +171,14 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
 
         if (sparse)
         {
-            throw std::exception("CopyTensorData - sparse not implemented");
+            throw std::runtime_error("CopyTensorData - sparse not implemented");
         }
         else
         {
-            Compute::Cuda::MemcpyGpuToGpu(
-                static_cast<void**>(dest->DenseMatCuda),
-                static_cast<void**>(src->DenseMatCuda),
-                src->DenseTotalLength * sizeof(T));
+            Compute::Cuda::MemcpyGpuToGpuFloat(
+                dest->DenseMatCuda,
+                src->DenseMatCuda,
+                src->DenseTotalLength);
             dest->DenseTotalLength = src->DenseTotalLength;
         }
     }
@@ -179,6 +192,10 @@ bool TensorData<T>::CopyTensorData(TensorData<T>* dest,
 template <typename T>
 bool TensorData<T>::ChangeDevice(TensorData<T>* tensorData, Device device)
 {
+    static_assert(
+        std::disjunction_v<std::is_same<T, half>, std::is_same<T, float>>,
+        "CopyHostToGpu - Unsupported data type for GPU");
+
     std::lock_guard<std::recursive_mutex> lock(tensorData->m_mtx);
     auto currentDevice = tensorData->GetDevice();
     if (currentDevice == device)
@@ -214,6 +231,10 @@ bool TensorData<T>::ChangeDevice(TensorData<T>* tensorData, Device device)
 template <typename T>
 void TensorData<T>::CopyHostToGpu(TensorData<T>* tensorData)
 {
+    static_assert(
+        std::disjunction_v<std::is_same<T, half>, std::is_same<T, float>>,
+        "CopyHostToGpu - Unsupported data type for GPU");
+
     std::lock_guard<std::recursive_mutex> lock(tensorData->m_mtx);
     if (tensorData->GetDevice().Type() != DeviceType::CUDA)
     {
@@ -223,19 +244,29 @@ void TensorData<T>::CopyHostToGpu(TensorData<T>* tensorData)
 
     if (tensorData->GetType() == Type::Sparse)
     {
-        throw std::exception("Sparse matrix not implemented");
+        throw std::runtime_error("Sparse matrix not implemented");
     }
     else
     {
         Compute::Cuda::CudaSetDevice(tensorData->m_device.GetID());
-        MemcpyHostToGpu(tensorData->DenseMatCuda, tensorData->DenseMatHost,
-                        tensorData->BatchSize);
+        if constexpr (std::is_same_v<T, float>)
+            Compute::Cuda::MemcpyHostToGpuFloat(tensorData->DenseMatCuda,
+                                                tensorData->DenseMatHost,
+                                                tensorData->BatchSize);
+        else if constexpr (std::is_same_v<T, half>)
+            Compute::Cuda::MemcpyHostToGpuHalf(tensorData->DenseMatCuda,
+                                               tensorData->DenseMatHost,
+                                               tensorData->BatchSize);
     }
 }
 
 template <typename T>
 void TensorData<T>::CopyGpuToHost(TensorData<T>* tensorData)
 {
+    static_assert(
+        std::disjunction_v<std::is_same<T, half>, std::is_same<T, float>>,
+        "CopyHostToGpu - Unsupported data type for GPU");
+
     std::lock_guard<std::recursive_mutex> lock(tensorData->m_mtx);
     if (tensorData->GetDevice().Type() != DeviceType::CUDA)
     {
@@ -245,13 +276,20 @@ void TensorData<T>::CopyGpuToHost(TensorData<T>* tensorData)
 
     if (tensorData->GetType() == Type::Sparse)
     {
-        throw std::exception("Sparse matrix not implemented");
+        throw std::runtime_error("Sparse matrix not implemented");
     }
     else
     {
         Compute::Cuda::CudaSetDevice(tensorData->m_device.GetID());
-        MemcpyGpuToHost(tensorData->DenseMatHost, tensorData->DenseMatCuda,
-                        tensorData->BatchSize);
+
+        if constexpr (std::is_same_v<T, float>)
+            Compute::Cuda::MemcpyGpuToHostFloat(tensorData->DenseMatHost,
+                                                tensorData->DenseMatCuda,
+                                                tensorData->BatchSize);
+        else if constexpr (std::is_same_v<T, half>)
+            Compute::Cuda::MemcpyGpuToHostHalf(tensorData->DenseMatHost,
+                                               tensorData->DenseMatCuda,
+                                               tensorData->BatchSize);
     }
 }
 
@@ -277,11 +315,13 @@ bool TensorData<T>::m_freeGpu()
 
     if (m_type == Type::Sparse)
     {
-        isSuccess &= Compute::Cuda::CudaFree<T>(SparseMatCuda);
+        isSuccess &= Compute::Cuda::CudaFree(
+            reinterpret_cast<void**>(SparseMatCuda));
     }
     else
     {
-        isSuccess &= Compute::Cuda::CudaFree<T>(DenseMatCuda);
+        isSuccess &= Compute::Cuda::CudaFree(
+            reinterpret_cast<void**>(DenseMatCuda));
     }
 
     return isSuccess;
@@ -319,10 +359,14 @@ void TensorData<T>::m_allocateCpu(unsigned int batchSize)
 template <typename T>
 bool TensorData<T>::m_allocateCuda(unsigned int batchSize)
 {
+    static_assert(
+        std::disjunction_v<std::is_same<T, half>, std::is_same<T, float>>,
+        "CopyHostToGpu - Unsupported data type for GPU");
+
     const auto colSize = TensorShape.At(0);
     const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 0;
 
-    const auto padUnitSize = 32 / sizeof(T);
+    const unsigned int padUnitSize = 32 / sizeof(T);
 
     const auto paddedColSize =
         colSize % padUnitSize == 0
@@ -345,13 +389,18 @@ bool TensorData<T>::m_allocateCuda(unsigned int batchSize)
         }
         else
         {
-            isSuccess &= Compute::Cuda::CudaMalloc<T>(
-                &DenseMatCuda, batchSize * paddedRowSize * paddedColSize);
+            if constexpr (std::is_same_v<T, float>)
+                isSuccess &= Compute::Cuda::CudaMallocFloat(
+                    &DenseMatCuda, batchSize * paddedRowSize * paddedColSize);
+            else if constexpr (std::is_same_v<T, half>)
+                isSuccess &= Compute::Cuda::CudaMallocHalf(
+                    &DenseMatCuda, batchSize * paddedRowSize * paddedColSize);
         }
     }
     else
     {
-        std::runtime_error("m_allocateCuda - Tensor Data type is not CUDA");
+        throw std::runtime_error(
+            "m_allocateCuda - Tensor Data type is not CUDA");
     }
 
     return isSuccess;
@@ -364,7 +413,7 @@ unsigned long TensorData<T>::m_convertDenseToSparse(
     Shape shape, unsigned long paddedRowSize,
     Device device)
 {
-    throw std::exception("m_convertDenseToSparse not implemented");
+    throw std::runtime_error("m_convertDenseToSparse not implemented");
 }
 
 template <typename T>
@@ -373,7 +422,7 @@ unsigned long TensorData<T>::m_convertSparseToDense(
     Shape shape, unsigned long paddedRowSize,
     Device device)
 {
-    throw std::exception("m_convertSparseToDense not implemented");
+    throw std::runtime_error("m_convertSparseToDense not implemented");
 }
 
 template <typename T>

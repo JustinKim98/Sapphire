@@ -11,7 +11,7 @@
 #include <Motutapu/util/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
 #include <list>
-#include <shared_mutex>
+#include <mutex>
 
 namespace Motutapu::Util
 {
@@ -134,10 +134,12 @@ public:
     //! Only available for CUDA tensors
     static void CopyGpuToHost(TensorData<T>* tensorData);
 
-    [[nodiscard]] bool IsNextBackPropFunctionReady();
-
+    //! Checks if next operation is output unit in back propagation
+    //! \return : true if ready false otherwise
     bool IsBackPropReady()
     {
+        std::lock_guard<std::recursive_mutex> lock(m_mtx);
+
         if (m_history.empty())
             return false;
 

@@ -33,20 +33,7 @@ public:
     [[nodiscard]] Shape GetShape() const;
     [[nodiscard]] Device GetDevice() const;
 
-    void PushTrajectory(int operationId);
-
-    std::optional<int> PopTrajectory();
-
-    [[nodiscard]] std::optional<int> PeekTrajectory() const;
-
-    [[nodiscard]] std::optional<int> GetTensorDataKey() const;
-
     void RegisterTensorData(Util::TensorData<T>* tensorData);
-
-    bool IsBackPropReady()
-    {
-        return m_tensorData->IsBackPropReady();
-    }
 
     Util::TensorData<T>* TensorDataPtr();
 
