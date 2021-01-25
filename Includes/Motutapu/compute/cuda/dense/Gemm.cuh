@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_CUDA_DENSE_GEMM_CUH
-#define MOTUTAPU_CUDA_DENSE_GEMM_CUH
+#ifndef MOTUTAPU_COMPUTE_CUDA_DENSE_GEMM_CUH
+#define MOTUTAPU_COMPUTE_CUDA_DENSE_GEMM_CUH
 
 #include <cuda_fp16.h>
 

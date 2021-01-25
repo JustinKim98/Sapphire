@@ -26,28 +26,28 @@ void TensorGemmTest()
     const Device HostDevice(0, DeviceType::CPU, "device0");
 
     const auto batchSize = 2;
-    auto* cudaA = Util::TensorData<half>::CreateTensorData(shapeA, CudaDevice,
+    auto* cudaA = Util::TensorDescriptor<half>::CreateTensorData(shapeA, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* cudaB = Util::TensorData<half>::CreateTensorData(shapeB, CudaDevice,
+    auto* cudaB = Util::TensorDescriptor<half>::CreateTensorData(shapeB, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* cudaC = Util::TensorData<half>::CreateTensorData(shapeC, CudaDevice,
+    auto* cudaC = Util::TensorDescriptor<half>::CreateTensorData(shapeC, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* cudaOut = Util::TensorData<half>::CreateTensorData(
+    auto* cudaOut = Util::TensorDescriptor<half>::CreateTensorData(
         shapeOut, CudaDevice, Type::Dense, batchSize);
 
-    auto* A = Util::TensorData<float>::CreateTensorData(shapeA, CudaDevice,
+    auto* A = Util::TensorDescriptor<float>::CreateTensorData(shapeA, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* B = Util::TensorData<float>::CreateTensorData(shapeB, CudaDevice,
+    auto* B = Util::TensorDescriptor<float>::CreateTensorData(shapeB, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* C = Util::TensorData<float>::CreateTensorData(shapeC, CudaDevice,
+    auto* C = Util::TensorDescriptor<float>::CreateTensorData(shapeC, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* Out = Util::TensorData<float>::CreateTensorData(shapeOut, CudaDevice,
+    auto* Out = Util::TensorDescriptor<float>::CreateTensorData(shapeOut, CudaDevice,
         Type::Dense, batchSize);
 
     Compute::Cuda::Dense::GemmTensor(
@@ -87,40 +87,40 @@ void FloatGemmTest()
     const Device HostDevice(0, DeviceType::CPU, "device0");
 
     const auto batchSize = 2;
-    auto* cudaA = Util::TensorData<float>::CreateTensorData(shapeA, CudaDevice,
+    auto* cudaA = Util::TensorDescriptor<float>::CreateTensorData(shapeA, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* cudaB = Util::TensorData<float>::CreateTensorData(shapeB, CudaDevice,
+    auto* cudaB = Util::TensorDescriptor<float>::CreateTensorData(shapeB, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* cudaC = Util::TensorData<float>::CreateTensorData(shapeC, CudaDevice,
+    auto* cudaC = Util::TensorDescriptor<float>::CreateTensorData(shapeC, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* cudaOut = Util::TensorData<float>::CreateTensorData(
+    auto* cudaOut = Util::TensorDescriptor<float>::CreateTensorData(
         shapeOut, CudaDevice, Type::Dense, batchSize);
 
-    auto* A = Util::TensorData<float>::CreateTensorData(shapeA, CudaDevice,
+    auto* A = Util::TensorDescriptor<float>::CreateTensorData(shapeA, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* B = Util::TensorData<float>::CreateTensorData(shapeB, CudaDevice,
+    auto* B = Util::TensorDescriptor<float>::CreateTensorData(shapeB, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* C = Util::TensorData<float>::CreateTensorData(shapeC, CudaDevice,
+    auto* C = Util::TensorDescriptor<float>::CreateTensorData(shapeC, CudaDevice,
         Type::Dense, batchSize);
 
-    auto* Out = Util::TensorData<float>::CreateTensorData(shapeOut, CudaDevice,
+    auto* Out = Util::TensorDescriptor<float>::CreateTensorData(shapeOut, CudaDevice,
         Type::Dense, batchSize);
 
-    Util::TensorData<float>::CopyHostToGpu(cudaA);
-    Util::TensorData<float>::CopyHostToGpu(cudaB);
-    Util::TensorData<float>::CopyHostToGpu(cudaC);
+    Util::TensorDescriptor<float>::CopyHostToGpu(cudaA);
+    Util::TensorDescriptor<float>::CopyHostToGpu(cudaB);
+    Util::TensorDescriptor<float>::CopyHostToGpu(cudaC);
 
     Compute::Cuda::Dense::GemmNormalFloat(
         cudaOut->DenseMatCuda, cudaA->DenseMatCuda, cudaB->DenseMatCuda,
         cudaC->DenseMatCuda, cudaOut->PaddedRowSize, cudaOut->PaddedColumnSize,
         cudaA->PaddedColumnSize, batchSize, false, false, false);
 
-    Util::TensorData<float>::CopyGpuToHost(cudaOut);
+    Util::TensorDescriptor<float>::CopyGpuToHost(cudaOut);
 
     Naive::Gemm<float>(Out->DenseMatHost, A->DenseMatHost, B->DenseMatHost,
                        C->DenseMatHost, Out->PaddedRowSize,

@@ -4,14 +4,11 @@
 // personal capacity and are not conveying any rights to any unsigned intellectual
 // property of any third parties.
 
-
 #ifndef MOTUTAPU_COMPUTE_CUDA_DENSE_GEMMKERNEL_CUH
 #define MOTUTAPU_COMPUTE_CUDA_DENSE_GEMMKERNEL_CUH
 
-
 #include <Motutapu/compute/cuda/CudaParams.hpp>
 #include <cuda_fp16.h>
-#include <mma.h>
 
 namespace Motutapu::Compute::Cuda::Dense
 {

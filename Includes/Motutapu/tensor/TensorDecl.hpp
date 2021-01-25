@@ -9,19 +9,19 @@
 
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
-#include <Motutapu/tensor/TensorDataDecl.hpp>
+#include <Motutapu/tensor/TensorDescriptor.hpp>
+
 #include <list>
 
 namespace Motutapu
 {
-//! TensorData class contains data vector for processing
+//! TensorDescriptor class contains data vector for processing
 //! with attributes describing it
 template <typename T>
 class Tensor
 {
 public:
-    Tensor(Shape shape);
-
+    Tensor(Shape shape, int descKey);
     ~Tensor() = default;
 
     Tensor(const Tensor<T>& tensor);
@@ -32,17 +32,12 @@ public:
 
     [[nodiscard]] Shape GetShape() const;
     [[nodiscard]] Device GetDevice() const;
-
-    void RegisterTensorData(Util::TensorData<T>* tensorData);
-
-    Util::TensorData<T>* TensorDataPtr();
+    [[nodiscard]] int TensorDescriptorKey() const;
 
 private:
     Shape m_shape;
 
-    //! Ptr to the tensorData
-    Util::TensorData<T>* m_tensorData = nullptr;
-
+    int m_tensorDescriptorKey;
 };
 }
 

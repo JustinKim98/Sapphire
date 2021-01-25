@@ -60,7 +60,9 @@ __host__ void GemmTensor(half* out, half* A, half* B, half* C,
             chunkSize = 2;
     }
 
-    cudaStream_t streams[1000];
+    auto* streams =
+        static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
+
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         cudaStreamCreate(&streams[batchIdx]);
@@ -96,6 +98,8 @@ __host__ void GemmTensor(half* out, half* A, half* B, half* C,
     {
         cudaStreamDestroy(streams[batchIdx]);
     }
+
+    free(streams);
 }
 
 __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
@@ -125,7 +129,9 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
             chunkSize = 2;
     }
 
-    cudaStream_t streams[1000];
+    auto* streams =
+        static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
+
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         cudaStreamCreate(&streams[batchIdx]);
@@ -161,6 +167,8 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
     {
         cudaStreamDestroy(streams[batchIdx]);
     }
+
+    free(streams);
 }
 
 __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
@@ -192,7 +200,8 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
             chunkSize = 2;
     }
 
-    cudaStream_t streams[1000];
+    auto* streams =
+        static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         cudaStreamCreate(&streams[batchIdx]);
@@ -213,9 +222,9 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
             GemmHalf<<<numBlocks, chunkSize * chunkSize * 32,
-            0, streams[batchIdx]>>>(
-                ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
-                chunkIdxK);
+                0, streams[batchIdx]>>>(
+                    ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
+                    chunkIdxK);
         }
 
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -228,5 +237,7 @@ __host__ void GemmNormalHalf(half* out, const half* A, const half* B,
     {
         cudaStreamDestroy(streams[batchIdx]);
     }
+
+    free(streams);
 }
 }

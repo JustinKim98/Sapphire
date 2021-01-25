@@ -10,15 +10,16 @@
 #include <Motutapu/compute/ComputeDecl.hpp>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>
 
+#include <Motutapu/tensor/TensorData.hpp>
+
 namespace Motutapu::Compute
 {
-
 template <typename T>
-void Gemm(Util::TensorData<T>& out, const Util::TensorData<T>& a, const Util::TensorData<T>& b)
+void Gemm(Util::TensorData<T>& out, const Util::TensorData<T>& a,
+          const Util::TensorData<T>& b)
 {
-        
-}
 
+}
 }
 
 

@@ -14,7 +14,6 @@ namespace Motutapu::Compute
 //! Performs out = out + add
 template <typename T>
 void Add(Util::TensorData<T>& out, const Util::TensorData<T>& add);
-
 //! Performs out = a + b
 template <typename T>
 void Add(Util::TensorData<T>& out, const Util::TensorData<T>& a,
@@ -71,7 +70,6 @@ void Pow(Util::TensorData<T>& out, int factor);
 //! Performs out = a^factor for each element
 template <typename T>
 void Pow(Util::TensorData<T>& out, const Util::TensorData<T>& a);
-
 
 }
 

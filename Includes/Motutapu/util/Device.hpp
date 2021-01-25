@@ -8,6 +8,8 @@
 #define TAKION_DEVICE_HPP
 #include <string>
 
+#include <Motutapu/tensor/Shape.hpp>
+
 namespace Motutapu
 {
 enum class DeviceType
@@ -31,6 +33,9 @@ class Device
 
     bool operator==(const Device& device) const;
     bool operator!=(const Device& device) const;
+
+    template<typename T>
+    [[nodiscard]] size_t GetRequiredByteSize(Shape shape, unsigned int batchSize);
 
     [[nodiscard]] DeviceType Type() const
     {

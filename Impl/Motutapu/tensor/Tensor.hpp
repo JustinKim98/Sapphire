@@ -6,21 +6,22 @@
 
 #ifndef MOTUTAPU_TENSOR_HPP
 #define MOTUTAPU_TENSOR_HPP
-#include <optional>
 #include <Motutapu/tensor/TensorDecl.hpp>
+#include <Motutapu/Model.hpp>
 
 namespace Motutapu
 {
 template <typename T>
-Tensor<T>::Tensor(Shape shape)
-    : m_shape(shape)
+Tensor<T>::Tensor(Shape shape, int descKey)
+    : m_shape(shape),
+      m_tensorDescriptorKey(descKey)
 {
 }
 
 template <typename T>
 Tensor<T>::Tensor(const Tensor<T>& tensor)
     : m_shape(tensor.m_shape),
-      m_tensorData(tensor.m_tensorData)
+      m_tensorDescriptorKey(tensor.m_tensorDescriptorKey)
 {
 }
 
@@ -31,8 +32,7 @@ Tensor<T>& Tensor<T>::operator=(const Tensor<T>& tensor)
         return this;
 
     m_shape = tensor.m_shape;
-    m_tensorData = tensor.m_tensorData;
-
+    m_tensorDescriptorKey = tensor.m_tensorDescriptorKey;
     return this;
 }
 
@@ -45,21 +45,17 @@ Shape Tensor<T>::GetShape() const
 template <typename T>
 Device Tensor<T>::GetDevice() const
 {
-    return m_tensorData->GetDevice();
+    Model& model = ModelManager::GetCurrentModel();
+    Util::TensorDescriptor<T>& desc = model.GetDescriptor<T>(
+        m_tensorDescriptorKey);
+    return desc.ForwardData.GetDevice();
 }
 
 template <typename T>
-Util::TensorData<T>* Tensor<T>::TensorDataPtr()
+int Tensor<T>::TensorDescriptorKey() const
 {
-    return m_tensorData;
+    return m_tensorDescriptorKey;
 }
-
-template <typename T>
-void Tensor<T>::RegisterTensorData(Util::TensorData<T>* tensorData)
-{
-    m_tensorData = tensorData;
-}
-
 }
 
 #endif

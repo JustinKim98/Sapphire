@@ -17,98 +17,39 @@
 namespace Motutapu::Util
 {
 template <typename T>
-void TensorData<T>::AddOutputUnitHistory(int unitKey)
-{
-    m_history.emplace_back(History(unitKey));
-}
-
-template <typename T>
-void TensorData<T>::AddOperandUnitHistory(int unitKey)
-{
-    if (m_history.back().IsOutput())
-    {
-        m_history.emplace_back(History());
-    }
-    else
-    {
-        m_history.back().OperandUnitKeyList.emplace_back(unitKey);
-    }
-}
-
-template <typename T>
-void TensorData<T>::AcceptGrad(int unitKey)
-{
-    std::lock_guard<std::recursive_mutex> lock(m_mtx);
-
-    if (m_history.empty())
-    {
-        throw std::runtime_error("AcceptGrad - History is empty");
-    }
-    if (m_history.back().IsOutput())
-    {
-        throw std::runtime_error("AcceptGrad - Last history was output");
-    }
-
-    History& hist = m_history.back();
-    const auto resultItr = std::find(hist.OperandUnitKeyList.begin(),
-                                     hist.OperandUnitKeyList.end(), unitKey);
-
-    //! Received gradient should be marked in the history
-    if (resultItr == hist.OperandUnitKeyList.end())
-    {
-        throw std::runtime_error(
-            "AcceptGrad - requested Operand history was not found");
-    }
-
-    hist.OperandUnitKeyList.erase(resultItr);
-
-    //! Remove last history if OperandUnitKeyList was filled
-    if (hist.OperandUnitKeyList.empty())
-    {
-        m_history.pop_back();
-    }
-}
-
-template <typename T>
-TensorData<T>* TensorData<T>::CreateTensorData(const Shape& shape,
-                                               const Device& device,
-                                               Type type, unsigned batchSize)
+TensorData<T>::TensorData(Shape shape, Type type, Device device,
+                          unsigned int batchSize)
+    : BatchSize(batchSize),
+      TensorShape(std::move(shape)),
+      m_type(type),
+      m_device(std::move(device))
 {
     auto success = true;
-    auto* tensorData = new TensorData<T>(shape, type, device);
+
+    //! todo : Change this to use memory manager
+
     if (device.Type() == DeviceType::CUDA)
     {
         success &= Compute::Cuda::CudaSetDevice(device.GetID());
-        success &= tensorData->m_allocateCuda(batchSize);
-        tensorData->m_allocateCpu(batchSize);
+        success &= m_allocateCuda(batchSize);
+        m_allocateCpu(batchSize);
     }
 
     if (!success)
     {
         throw std::runtime_error("Tensor creation failed");
     }
-
-    return tensorData;
 }
 
 template <typename T>
-bool TensorData<T>::DestroyTensorData(TensorData<T>* tensorData)
+TensorData<T>::~TensorData()
 {
-    std::unique_lock<std::recursive_mutex> lock(tensorData->m_mtx);
-    auto isSuccess = true;
+    m_freeCpu();
 
-    tensorData->m_freeCpu();
-
-    if (tensorData->m_device.Type() == DeviceType::CUDA)
+    if (m_device.Type() == DeviceType::CUDA)
     {
-        isSuccess &= tensorData->m_freeGpu();
+        m_freeGpu();
     }
-
-    lock.release();
-
-    delete tensorData;
-
-    return isSuccess;
 }
 
 template <typename T>
@@ -423,14 +364,6 @@ unsigned long TensorData<T>::m_convertSparseToDense(
     Device device)
 {
     throw std::runtime_error("m_convertSparseToDense not implemented");
-}
-
-template <typename T>
-TensorData<T>::TensorData(Shape shape, Type type, Device device)
-    : TensorShape(std::move(shape)),
-      m_type(type),
-      m_device(std::move(device))
-{
 }
 } // namespace Motutapu::Util
 

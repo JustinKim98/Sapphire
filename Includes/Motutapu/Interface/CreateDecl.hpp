@@ -16,25 +16,6 @@ namespace Motutapu
 {
 //! \tparam T : data type of the tensor
 template <typename T>
-class Empty : Unit<T>
-{
-public:
-    //! Creates Empty tensor
-    //! \param shape : shape of the new tensor
-    //! \param device : device to locate output tensor
-    //! \param type : Type of the data (Dense or Sparse)
-    Empty(Shape shape, Device device, Type type);
-
-    //! Computes forward propagation
-    Tensor<T> Forward();
-
-    size_t BatchSize = 0;
-private:
-    Shape m_shape;
-};
-
-//! \tparam T : data type of the tensor
-template <typename T>
 class Eye : Unit<T>
 {
 public:
@@ -67,6 +48,9 @@ Tensor<T> Rand(Shape, T min, T max, Device device);
 
 template <typename T>
 Tensor<T> RandNormal(Shape, T mean, T sd, Device device);
+
+template <typename T>
+Tensor<T> HeNormal(Shape, T mean, T sd, Device device);
 }
 
 #endif

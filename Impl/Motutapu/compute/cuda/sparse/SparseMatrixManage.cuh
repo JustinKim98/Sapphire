@@ -4,15 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_CUDA_SPARSEMATRIXMANAGE_CUH
-#define MOTUTAPU_CUDA_SPARSEMATRIXMANAGE_CUH
+#ifndef MOTUTAPU_COMPUTE_CUDA_SPARSE_MATRIXMANAGE_CUH
+#define MOTUTAPU_COMPUTE_CUDA_SPARSE_MATRIXMANAGE_CUH
 
 #include <cstdint>
 #include <Motutapu/compute/cuda/CudaParams.hpp>
 #include <Motutapu/util/SparseMatrixDecl.hpp>
-#include <Motutapu/compute/cuda/sparse/SparseMatrixManageDecl.cuh>
+#include <Motutapu/compute/cuda/sparse/MatrixManageDecl.cuh>
 
-namespace Motutapu::Cuda::Sparse
+namespace Motutapu::Compute::Cuda::Sparse
 {
 template <typename T>
 __device__ void DeepAllocateSparseMatrix(SparseMatrix<T>* dest)
