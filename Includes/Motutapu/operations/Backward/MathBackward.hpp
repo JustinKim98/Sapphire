@@ -9,24 +9,19 @@
 #define MOTUTAPU_BACKWARD_MATHBACKWARD_DECL_HPP
 
 #include <Motutapu/operations/Backward/BackPropWrapper.hpp>
-#include <vector>
 
 namespace Motutapu::BackProp
 {
-template <typename T>
-class MulBackProp : public BackPropWrapper<T>
+class MulBackProp : public BackPropWrapper
 {
 public:
     MulBackProp(std::vector<int> outputTensorKeys)
-        : BackPropWrapper<T>(outputTensorKeys)
+        : BackPropWrapper(outputTensorKeys)
     {
     }
 
-    void Backward(std::vector<Util::TensorData<T>>& output,
-                  const Util::TensorData<T>& input) const override
-    {
-        //! todo : Implement backward function for MulBackProp
-    }
+    void Backward(std::vector<Util::TensorData>& output,
+                  const Util::TensorData& input) const override;
 };
 }
 

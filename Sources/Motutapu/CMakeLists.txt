@@ -29,7 +29,11 @@ if(USE_CUDA)
     
     CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
     message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 82)
+    
+    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 86)
+    set_property(TARGET motutapu PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+    set_property(TARGET motutapu PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+
     message(STATUS "CUDA enabled")
 
 else()

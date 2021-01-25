@@ -33,7 +33,7 @@ __device__ void ShallowFreeSparseMatrix(SparseMatrix* target)
     free(static_cast<void*>(target));
 }
 
-__device__ void DeepCopySparseMatrix(SparseMatrix* dest, SparseMatrix* src,
+__global__ void DeepCopySparseMatrix(SparseMatrix* dest, SparseMatrix* src,
                                      uint32_t rowOffset)
 {
     const uint32_t numRows = src->NumRows;
@@ -127,56 +127,39 @@ __global__ void DeepCopySparseMatrixOnGpu(SparseMatrix* destArray,
 __host__ void DeepCopyHostToGpu(SparseMatrix* deviceArray,
                                 SparseMatrix* hostArray, uint32_t size)
 {
-    cudaStream_t streamPool[size];
     for (size_t i = 0; i < size; ++i)
     {
         SparseMatrix* curDestPtr = deviceArray + i;
         SparseMatrix* curSrcPtr = hostArray + i;
-        cudaStreamCreate(&streamPool[i]);
 
         cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
                         (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
-                        cudaMemcpyHostToDevice, streamPool[i]);
+                        cudaMemcpyHostToDevice);
         cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
                         (curSrcPtr->NNZ) * sizeof(uint32_t),
-                        cudaMemcpyHostToDevice, streamPool[i]);
+                        cudaMemcpyHostToDevice);
         cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
-                        (curSrcPtr->NNZ) * sizeof(float), cudaMemcpyHostToDevice,
-                        streamPool[i]);
-    }
-
-    for (uint32_t i = 0; i < size; ++i)
-    {
-        cudaStreamSynchronize(streamPool[i]);
-        cudaStreamDestroy(streamPool[i]);
+                        (curSrcPtr->NNZ) * sizeof(float),
+                        cudaMemcpyHostToDevice);
     }
 }
 
 __host__ void DeepCopyGpuToHost(SparseMatrix* deviceArray,
                                 SparseMatrix* hostArray, uint32_t size)
 {
-    cudaStream_t streamPool[size];
     for (size_t i = 0; i < size; ++i)
     {
         SparseMatrix* curDestPtr = deviceArray + i;
         SparseMatrix* curSrcPtr = hostArray + i;
-        cudaStreamCreate(&streamPool[i]);
 
-        cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
-                        (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
-                        cudaMemcpyDeviceToHost, streamPool[i]);
-        cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
-                        (curSrcPtr->NNZ) * sizeof(uint32_t),
-                        cudaMemcpyDeviceToHost, streamPool[i]);
-        cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
-                        (curSrcPtr->NNZ) * sizeof(float), cudaMemcpyDeviceToHost,
-                        streamPool[i]);
-    }
-
-    for (uint32_t i = 0; i < size; ++i)
-    {
-        cudaStreamSynchronize(streamPool[i]);
-        cudaStreamDestroy(streamPool[i]);
+        cudaMemcpy(curDestPtr->RowIndex, curSrcPtr->RowIndex,
+                   (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(curDestPtr->ColIndex, curSrcPtr->ColIndex,
+                   (curSrcPtr->NNZ) * sizeof(uint32_t),
+                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(curDestPtr->V, curSrcPtr->V,
+                   (curSrcPtr->NNZ) * sizeof(float), cudaMemcpyDeviceToHost);
     }
 }
 
@@ -193,14 +176,11 @@ __host__ void DeepAllocateGpu(SparseMatrix* targetArray,
                reinterpret_cast<void**>(&hostRefArray),
                size * SPARSEMATRIX_PADDED_SIZE, cudaMemcpyHostToDevice);
 
-    cudaStream_t streamPool[size / DEFAULT_DIM_X];
-
     uint32_t idx = 0;
     uint32_t streamIdx = 0;
     for (; idx < size; idx += DEFAULT_DIM_X, streamIdx++)
     {
-        cudaStreamCreate(&streamPool[streamIdx]);
-        DeepAllocateKernel<<<1, DEFAULT_DIM_X, 0, streamPool[streamIdx]>>>(
+        DeepAllocateKernel<<<1, DEFAULT_DIM_X>>>(
             targetArray + idx, DEFAULT_DIM_X);
     }
 
@@ -208,11 +188,5 @@ __host__ void DeepAllocateGpu(SparseMatrix* targetArray,
         idx -= DEFAULT_DIM_X;
 
     DeepAllocateKernel<<<1, size - idx>>>(targetArray + idx, size - idx);
-
-    for (int i = 0; i < size / DEFAULT_DIM_X; i++)
-    {
-        cudaStreamSynchronize(streamPool[i]);
-        cudaStreamDestroy(streamPool[i]);
-    }
 }
 } // namespace Motutapu::Compute::Cuda::Sparse

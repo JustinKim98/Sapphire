@@ -16,6 +16,7 @@ class BackPropWrapper
 {
 public:
     BackPropWrapper() = default;
+   virtual ~BackPropWrapper() = default;
 
     BackPropWrapper(std::vector<int> outputTensorKeys)
         : m_outputTensorKeys(std::move(outputTensorKeys))

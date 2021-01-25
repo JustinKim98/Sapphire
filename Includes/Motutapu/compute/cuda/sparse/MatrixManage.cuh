@@ -20,7 +20,7 @@ __device__ void DeepFreeSparseMatrix(SparseMatrix* target);
 
 __device__ void ShallowFreeSparseMatrix(SparseMatrix* target);
 
-__device__ void DeepCopySparseMatrix(SparseMatrix* dest,
+__global__ void DeepCopySparseMatrix(SparseMatrix* dest,
                                      SparseMatrix* src, uint32_t rowOffset);
 
 //! Frees sparse matrix

@@ -72,7 +72,7 @@ public:
         if (m_history.empty())
             return false;
 
-        if (m_history.back().IsOutput())
+        if (m_history.back().IsOutput)
             return true;
 
         return false;

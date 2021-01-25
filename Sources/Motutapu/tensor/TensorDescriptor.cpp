@@ -22,7 +22,7 @@ void TensorDescriptor::AppendOperandHistory(int tensorKey)
     {
         History history;
         history.AddGradientInputTensorKey(tensorKey);
-        m_history.emplace_back(history);
+        m_history.emplace_back(std::move(history));
         return;
     }
 
@@ -38,7 +38,7 @@ void TensorDescriptor::RemoveGradientInputKey(int tensorKey)
     }
 
     auto& history = m_history.back();
-    auto it = std::find(history.GradientInputTensorKeys.begin(),
+    const auto it = std::find(history.GradientInputTensorKeys.begin(),
                         history.GradientInputTensorKeys.end(), tensorKey);
 
     if (it == history.GradientInputTensorKeys.end())

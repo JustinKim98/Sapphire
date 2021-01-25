@@ -7,14 +7,15 @@
 #ifndef MOTUTAPU_COMPUTE_CUDA_DENSE_GEMM_CUH
 #define MOTUTAPU_COMPUTE_CUDA_DENSE_GEMM_CUH
 
+#include <Motutapu/compute/cuda/CudaParams.hpp>
 #include <cuda_fp16.h>
 
 namespace Motutapu::Compute::Cuda::Dense
 {
-__host__ void GemmTensor(half* out, half* A, half* B, half* C,
-                             unsigned int paddedM, unsigned int paddedN,
-                             unsigned int paddedK, unsigned int batchSize,
-                             bool broadcastA, bool broadcastB, bool broadcastC);
+__host__ void GemmTensor(float* out, float* A, float* B, float* C,
+                         unsigned int paddedM, unsigned int paddedN,
+                         unsigned int paddedK, unsigned int batchSize,
+                         bool broadcastA, bool broadcastB, bool broadcastC);
 
 __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
                               unsigned int paddedM, unsigned int paddedN,
@@ -22,11 +23,6 @@ __host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
                               bool broadcastA, bool broadcastB,
                               bool broadcastC);
 
-__host__ void GemmNormalHalf(half* out, const half* A, const half* B,
-                             const half* C, unsigned int paddedM,
-                             unsigned int paddedN, unsigned int paddedK,
-                             unsigned int batchSize, bool broadcastA,
-                             bool broadcastB, bool broadcastC);
 } // namespace Motutapu::Cuda::Dense
 
 #endif

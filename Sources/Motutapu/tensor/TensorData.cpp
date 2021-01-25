@@ -290,21 +290,4 @@ bool TensorData::m_allocateCuda(unsigned int batchSize)
     return isSuccess;
 }
 
-unsigned long TensorData::m_convertDenseToSparse(SparseMatrix* sparse,
-                                                 const float* dense,
-                                                 Shape shape,
-                                                 unsigned long paddedRowSize,
-                                                 Device device)
-{
-    throw std::runtime_error("m_convertDenseToSparse not implemented");
-}
-
-unsigned long TensorData::m_convertSparseToDense(SparseMatrix* sparse,
-                                                 const float* dense,
-                                                 Shape shape,
-                                                 unsigned long paddedRowSize,
-                                                 Device device)
-{
-    throw std::runtime_error("m_convertSparseToDense not implemented");
-}
 }  // namespace Motutapu::Util

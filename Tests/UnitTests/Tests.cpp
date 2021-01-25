@@ -27,14 +27,14 @@ TEST_CASE("Check cuda")
 TEST_CASE("GPU GEMM with tensor cores")
 {
 #ifdef WITH_CUDA
-    TensorGemmTest();
+    //TensorGemmTest();
 #endif
 }
 
 TEST_CASE("GPU GEMM")
 {
 #ifdef WITH_CUDA
-    FloatGemmTest();
+    //FloatGemmTest();
 #endif
 }
 }

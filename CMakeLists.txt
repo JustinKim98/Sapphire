@@ -48,6 +48,7 @@ if(USE_CUDA)
         -gencode=arch=compute_86,code=compute_86
         --std=c++17
         --default-stream per-thread
+        --device-c
         )
 	endif()
 endif()
