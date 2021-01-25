@@ -4,25 +4,19 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_UTIL_TENSORDESCRIPTOR_HPP
-#define MOTUTAPU_UTIL_TENSORDESCRIPTOR_HPP
-
-#include <Motutapu/tensor/TensorDescriptorDecl.hpp>
+#include <Motutapu/tensor/TensorDescriptor.hpp>
 #include <algorithm>
 
 namespace Motutapu::Util
 {
-template <typename T>
-void TensorDescriptor<T>::AppendOutputHistory(
-    std::unique_ptr<BackProp::BackPropWrapper<T>> wrapper,
-    bool saveOutput)
+void TensorDescriptor::AppendOutputHistory(
+    std::unique_ptr<BackProp::BackPropWrapper> wrapper, bool saveOutput)
 {
     m_requireOutputSaving = saveOutput;
     m_history.emplace_back(History(std::move(wrapper)));
 }
 
-template <typename T>
-void TensorDescriptor<T>::AppendOperandHistory(int tensorKey)
+void TensorDescriptor::AppendOperandHistory(int tensorKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {
@@ -32,12 +26,10 @@ void TensorDescriptor<T>::AppendOperandHistory(int tensorKey)
         return;
     }
 
-    auto history&  = m_history.back();
-    history.AddGradientInputTensorKey(tensorKey);
+    m_history.back().AddGradientInputTensorKey(tensorKey);
 }
 
-template <typename T>
-void TensorDescriptor<T>::RemoveGradientInputKey(int tensorKey)
+void TensorDescriptor::RemoveGradientInputKey(int tensorKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {
@@ -52,19 +44,17 @@ void TensorDescriptor<T>::RemoveGradientInputKey(int tensorKey)
     if (it == history.GradientInputTensorKeys.end())
     {
         throw std::runtime_error(
-            "RemoveGradientInputKey - tensorKey not found in gradient input tensor key "
+            "RemoveGradientInputKey - tensorKey not found in gradient input "
+            "tensor key "
             "list");
     }
 
     history.GradientInputTensorKeys.erase(it);
 }
 
-template <typename T>
-void TensorDescriptor<T>::PopHistory()
+void TensorDescriptor::PopHistory()
 {
     if (!m_history.empty())
         m_history.pop_back();
 }
-}
-
-#endif
+} // namespace Motutapu::Util

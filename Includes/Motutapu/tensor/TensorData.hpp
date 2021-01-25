@@ -13,12 +13,15 @@
 
 namespace Motutapu::Util
 {
-template <typename T>
 class TensorData
 {
 public:
     TensorData() = default;
     TensorData(Shape shape, Type type, Device device, unsigned int batchSize);
+
+
+    TensorData(const TensorData& tensorData) = default;
+    TensorData& operator=(const TensorData& tensorData) = default;
 
     ~TensorData();
 
@@ -28,11 +31,11 @@ public:
     unsigned long PaddedRowSize = 0;
     unsigned long BatchSize = 0;
 
-    T* DenseMatHost = nullptr;
-    T* DenseMatCuda = nullptr;
+    float* DenseMatHost = nullptr;
+    float* DenseMatCuda = nullptr;
 
-    SparseMatrix<T>* SparseMatHost = nullptr;
-    SparseMatrix<T>* SparseMatCuda = nullptr;
+    SparseMatrix* SparseMatHost = nullptr;
+    SparseMatrix* SparseMatCuda = nullptr;
     Shape TensorShape;
 
     //! Gets device descriptor (Sparse or Dense)
@@ -59,40 +62,40 @@ public:
     //! operation units
 
     //! Converts tensor data from dense to sparse
-    static void DenseToSparse(TensorData<T>* tensorData);
+    static void DenseToSparse(TensorData tensorData);
     //! Converts tensor data  from sparse to dense
-    static void SparseToDense(TensorData<T>* tensorData);
+    static void SparseToDense(TensorData tensorData);
 
     //! Deep copies tensor data from src to dest
     //! Type of dest and src must be the same
-    static bool CopyTensorData(TensorData<T>* dest,
-                               const TensorData<T>* src);
+    static bool CopyTensorData(TensorData dest,
+                               const TensorData src);
 
     //! Changes device of the tensor
     //! Transfers data to target device from current device
     //! immediately returns false if change device is requested to same device
     //! \param tensorData : tensorData object to change device
     //! \param device : new device to set
-    static bool ChangeDevice(TensorData<T>* tensorData, Device device);
+    static bool ChangeDevice(TensorData tensorData, Device device);
 
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
-    static void CopyHostToGpu(TensorData<T>* tensorData);
+    static void CopyHostToGpu(TensorData tensorData);
 
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
-    static void CopyGpuToHost(TensorData<T>* tensorData);
+    static void CopyGpuToHost(TensorData tensorData);
 
 private:
 
 
-    static unsigned long m_convertDenseToSparse(SparseMatrix<T>* sparse,
-                                                const T* dense, Shape shape,
+    static unsigned long m_convertDenseToSparse(SparseMatrix* sparse,
+                                                const float* dense, Shape shape,
                                                 unsigned long paddedRowSize,
                                                 Device device);
 
-    static unsigned long m_convertSparseToDense(SparseMatrix<T>* sparse,
-                                                const T* dense, Shape shape,
+    static unsigned long m_convertSparseToDense(SparseMatrix* sparse,
+                                                const float* dense, Shape shape,
                                                 unsigned long paddedRowSize,
                                                 Device device);
     //! Allocates data on the CPU with given batchSize
@@ -108,7 +111,7 @@ private:
     bool m_freeGpu();
 
 
-    Type m_type;
+    Type m_type = Type::Dense;
     Device m_device;
 };
 }

@@ -18,17 +18,17 @@ namespace Motutapu::Util
 //! There can be more than one tensor that references to one tensorData
 //! All public functions in the TensorDescriptor is guaranteed to be thread safe
 //! TensorDescriptor should not be accessible from the user interface directly
-template <typename T>
 class TensorDescriptor
 {
 public:
 
     TensorDescriptor() = default;
-    ~TensorDescriptor() = default;
 
     //! Create and allocate the tensor descriptor
     TensorDescriptor(Shape shape, Type type, Device device,
                      unsigned int batchSize);
+
+    ~TensorDescriptor() = default;
 
     TensorDescriptor(const TensorDescriptor& tensorData) = delete;
     TensorDescriptor(TensorDescriptor&& tensorData) noexcept = default;
@@ -36,8 +36,8 @@ public:
     TensorDescriptor& operator=(TensorDescriptor&& tensorData) noexcept
     = default;
 
-    TensorData<T> ForwardData;
-    TensorData<T> BackwardData;
+    TensorData ForwardData;
+    TensorData BackwardData;
 
     //! Key to identify tensor data
     int Key = -1;
@@ -46,7 +46,7 @@ public:
     //! \param wrapper : Wrapper for starting back propagation on this tensor
     //! \param saveOutput : Forward output of this tensorDescriptor is preserved if true
     void AppendOutputHistory(
-        std::unique_ptr<BackProp::BackPropWrapper<T>> wrapper,
+        std::unique_ptr<BackProp::BackPropWrapper> wrapper,
         bool saveOutput);
 
     //! Add unit key if unit was used as operand only
@@ -54,6 +54,7 @@ public:
     void AppendOperandHistory(int tensorKey);
 
     void RemoveGradientInputKey(int tensorKey);
+
     //! Removes last history from the history list
     void PopHistory();
 
@@ -68,8 +69,6 @@ public:
     //! \return : true if ready false otherwise
     bool IsBackPropReady()
     {
-        std::lock_guard<std::recursive_mutex> lock(m_mtx);
-
         if (m_history.empty())
             return false;
 
@@ -79,7 +78,7 @@ public:
         return false;
     }
 
-    const std::unique_ptr<BackProp::BackPropWrapper<T>>& GetBackPropWrapper()
+    const std::unique_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
     {
         return m_history.back().Wrapper;
     }
@@ -91,7 +90,7 @@ private:
     //! It is stored using this struct
     struct History
     {
-        History(std::unique_ptr<BackProp::BackPropWrapper<T>> wrapper)
+        History(std::unique_ptr<BackProp::BackPropWrapper> wrapper)
             : IsOutput(true),
               Wrapper(std::move(wrapper))
         {
@@ -102,6 +101,7 @@ private:
         {
         }
 
+
         void AddGradientInputTensorKey(int key)
         {
             GradientInputTensorKeys.emplace_back(key);
@@ -109,7 +109,7 @@ private:
 
         bool IsOutput;
 
-        std::unique_ptr<BackProp::BackPropWrapper<T>> Wrapper;
+        std::unique_ptr<BackProp::BackPropWrapper> Wrapper;
         //! List of the units that was as operand
         std::list<int> GradientInputTensorKeys;
     };
@@ -117,8 +117,6 @@ private:
     bool m_requireOutputSaving = false;
 
     std::list<History> m_history;
-    //! mutex to make sure operations on the resources is synchronized
-    std::recursive_mutex m_mtx;
 };
 } // namespace Motutapu::Util
 

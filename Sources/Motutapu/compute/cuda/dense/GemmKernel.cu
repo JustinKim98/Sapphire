@@ -6,6 +6,7 @@
 
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 #include <mma.h>
+#include <cuda_fp16.h>
 
 #define WARP_SIZE 32
 
@@ -13,11 +14,11 @@ namespace Motutapu::Compute::Cuda::Dense
 {
 using namespace nvcuda;
 
-__global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
-                             const half* C, unsigned int paddedK,
-                             unsigned int paddedN,
-                             unsigned int chunkIdxK,
-                             const unsigned int chunkSize)
+__global__ void WmmaGemm(float* Out, const float* A, const float* B,
+                         const float* C, unsigned int paddedK,
+                         unsigned int paddedN,
+                         unsigned int chunkIdxK,
+                         const unsigned int chunkSize)
 {
     constexpr unsigned int tileDim = 16;
 
@@ -28,8 +29,9 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
 
     //! If chunk size is 4, and tile dimension is fixed to 16
     //! This makes each block hold 64 x 64 submatrix (chunk)
-    __shared__ half
-        sharedMemory[4 * tileDim * 3][shiftedSharedMemoryColSize];
+    __shared__ half sharedMemoryA[4 * tileDim][shiftedSharedMemoryColSize];
+    __shared__ half sharedMemoryB[4 * tileDim][shiftedSharedMemoryColSize];
+    __shared__ float sharedMemoryC[4 * tileDim][shiftedSharedMemoryColSize];
 
     //! Each block identifies its chunk to compute using 2 dimensional
     const unsigned int chunkIdxM = blockIdx.x;
@@ -42,62 +44,67 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     const unsigned int tileColIdx = warpIdx % 4;
 
     //! Pointer that indicates starting address of chunk
-    const half* chunkPtrA = A + paddedK * chunkIdxM * tileDim * chunkSize +
-                            chunkIdxK * tileDim * chunkSize;
-    const half* chunkPtrB = B + paddedN * chunkIdxK * tileDim * chunkSize +
-                            chunkIdxN * tileDim * chunkSize;
-    const half* chunkPtrC = C + paddedN * chunkIdxM * tileDim * chunkSize +
-                            chunkIdxN * tileDim * chunkSize;
+    const float* chunkPtrA = A + paddedK * chunkIdxM * tileDim * chunkSize +
+                             chunkIdxK * tileDim * chunkSize;
+    const float* chunkPtrB = B + paddedN * chunkIdxK * tileDim * chunkSize +
+                             chunkIdxN * tileDim * chunkSize;
+    const float* chunkPtrC = C + paddedN * chunkIdxM * tileDim * chunkSize +
+                             chunkIdxN * tileDim * chunkSize;
 
-    half* chunkPtrOut = Out + paddedN * chunkIdxM * tileDim * chunkSize +
-                        chunkIdxN * tileDim * chunkSize;
+    float* chunkPtrOut = Out + paddedN * chunkIdxM * tileDim * chunkSize +
+                         chunkIdxN * tileDim * chunkSize;
 
-    const half* tilePtrA = chunkPtrA + paddedK * tileRowIdx * tileDim;
-    const half* tilePtrB = chunkPtrB + tileColIdx * tileDim;
-    const half* tilePtrC =
+    const float* tilePtrA = chunkPtrA + paddedK * tileRowIdx * tileDim;
+    const float* tilePtrB = chunkPtrB + tileColIdx * tileDim;
+    const float* tilePtrC =
         chunkPtrC + paddedN * tileRowIdx * tileDim + tileColIdx * tileDim;
-    half* tilePtrOut =
+    float* tilePtrOut =
         chunkPtrOut + paddedN * tileRowIdx * tileDim + tileColIdx * tileDim;
 
-    const unsigned int matrixBOffset = chunkSize * tileDim;
-    const unsigned int matrixCOffset = chunkSize * tileDim * 2;
-
+    //! Load matrix onto shared memory
     //! For half of the warps, copy matrix A while other half copies B
-    const half* copyPtr;
-
+    const float* copyPtr;
     unsigned int sharedMemCopyRowIdx;
     if (laneIdx % 2)
     {
         copyPtr = tilePtrA + paddedK * (laneIdx / 2);
         sharedMemCopyRowIdx = tileRowIdx + laneIdx / 2;
 
-        const half* copyPtrC = tilePtrC + paddedN * (laneIdx / 2);
-        unsigned int sharedMemCopyRowIdxC =
-            matrixCOffset + tileRowIdx + laneIdx / 2;
+        const float* copyPtrC = tilePtrC + paddedN * (laneIdx / 2);
+        const unsigned int sharedMemCopyRowIdxC = tileRowIdx + laneIdx / 2;
 
 #pragma unroll
         for (unsigned int i = 0; i < tileDim; i++)
         {
             const unsigned int sharedMemCopyColIdx = tileColIdx * tileDim + i;
-            sharedMemory[sharedMemCopyRowIdxC][sharedMemCopyColIdx] =
+            sharedMemoryC[sharedMemCopyRowIdxC][sharedMemCopyColIdx] =
                 *(copyPtrC + i);
+        }
+
+#pragma unroll
+        for (unsigned int i = 0; i < tileDim; i++)
+        {
+            const unsigned int sharedMemCopyColIdx = tileColIdx * tileDim + i;
+            sharedMemoryA[sharedMemCopyRowIdx][sharedMemCopyColIdx + i] =
+                __float2half(*(copyPtr + i));
         }
     }
     else
     {
         copyPtr = tilePtrB + paddedN * (laneIdx / 2);
-        sharedMemCopyRowIdx = matrixBOffset + tileRowIdx + laneIdx / 2;
+        sharedMemCopyRowIdx = tileRowIdx + laneIdx / 2;
+
+#pragma unroll
+        for (unsigned int i = 0; i < tileDim; i++)
+        {
+            const unsigned int sharedMemCopyColIdx = tileColIdx * tileDim + i;
+            sharedMemoryB[sharedMemCopyRowIdx][sharedMemCopyColIdx + i] =
+                __float2half(*(copyPtr + i));
+        }
     }
 
     //! Load the matrix to shared memory
     //! each thread copies consecutive row from their src determined previously
-#pragma unroll
-    for (unsigned int i = 0; i < tileDim; i++)
-    {
-        const unsigned int sharedMemCopyColIdx = tileColIdx * tileDim + i;
-        sharedMemory[sharedMemCopyRowIdx][sharedMemCopyColIdx + i] =
-            *(copyPtr + i);
-    }
 
     //! Load shared memory to fragments and accumulate
     wmma::fragment<wmma::matrix_a, tileDim, tileDim, tileDim, half,
@@ -107,9 +114,9 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
                    wmma::row_major>
         fragB;
 
-    wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, half> fragAcc;
+    wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, float> fragAcc;
 
-    wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, half> fragOut;
+    wmma::fragment<wmma::accumulator, tileDim, tileDim, tileDim, float> fragOut;
 
     wmma::load_matrix_sync(fragAcc, tilePtrOut, paddedN, wmma::mem_row_major);
 
@@ -117,15 +124,16 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     for (unsigned int i = 0; i < chunkSize; ++i)
     {
         wmma::load_matrix_sync(fragA,
-                               &sharedMemory[tileDim * tileRowIdx][tileDim * i],
+                               &sharedMemoryA[tileDim * tileRowIdx][tileDim * i
+                               ],
                                shiftedSharedMemoryColSize);
         wmma::load_matrix_sync(
             fragB,
-            &sharedMemory[tileDim * i + matrixBOffset][tileDim * tileColIdx],
+            &sharedMemoryB[tileDim * i][tileDim * tileColIdx],
             shiftedSharedMemoryColSize);
         wmma::load_matrix_sync(
             fragAcc,
-            &sharedMemory[tileDim * i + matrixCOffset][tileDim * tileColIdx],
+            &sharedMemoryC[tileDim * i][tileDim * tileColIdx],
             shiftedSharedMemoryColSize, wmma::mem_row_major);
         wmma::mma_sync(fragOut, fragA, fragB, fragAcc);
     }
@@ -133,9 +141,9 @@ __global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
     wmma::store_matrix_sync(tilePtrOut, fragOut, paddedN, wmma::mem_row_major);
 }
 
-__global__ void GemmFloat(float* out, const float* A, const float* B,
-                          const float* C, unsigned int paddedK,
-                          unsigned int paddedN, unsigned int chunkIdxK)
+__global__ void Gemm(float* out, const float* A, const float* B,
+                     const float* C, unsigned int paddedK,
+                     unsigned int paddedN, unsigned int chunkIdxK)
 {
     constexpr unsigned int tileDim = 8;
     constexpr unsigned int chunkSize = 4;
@@ -169,53 +177,6 @@ __global__ void GemmFloat(float* out, const float* A, const float* B,
     matrixC[rowIdx][colIdx] = *(chunkPtrC + paddedN * rowIdx + colIdx);
 
     float output = 0.0f;
-
-#pragma unroll
-    for (unsigned int i = 0; i < tileDim * chunkSize; ++i)
-    {
-        output =
-            matrixC[rowIdx][colIdx] + matrixA[rowIdx][i] * matrixB[i][colIdx];
-    }
-
-    *(chunkPtrOut + paddedK * rowIdx + colIdx) = output;
-}
-
-__global__ void GemmHalf(half* out, const half* A, const half* B,
-                          const half* C, unsigned int paddedK,
-                          unsigned int paddedN, unsigned int chunkIdxK)
-{
-    constexpr unsigned int tileDim = 8;
-    constexpr unsigned int chunkSize = 4;
-    __shared__ half matrixA[tileDim * chunkSize][tileDim * chunkSize + 1];
-    __shared__ half matrixB[tileDim * chunkSize][tileDim * chunkSize + 1];
-    __shared__ half matrixC[tileDim * chunkSize][tileDim * chunkSize + 1];
-
-    const unsigned int chunkIdxM = blockIdx.x;
-    const unsigned int chunkIdxN = blockIdx.y;
-
-    const unsigned int rowIdx = threadIdx.x;
-    const unsigned int colIdx = threadIdx.y;
-
-    const unsigned int blockIdxA = chunkIdxM * paddedK * chunkSize * tileDim +
-                                   chunkIdxK * chunkSize * tileDim;
-    const unsigned int blockIdxB = chunkIdxK * paddedN * chunkSize * tileDim +
-                                   chunkIdxN * chunkSize * tileDim;
-    const unsigned int blockIdxC = chunkIdxM * paddedK * chunkSize * tileDim +
-                                   chunkIdxN * chunkSize * tileDim;
-    const unsigned int blockIdxOut = chunkIdxM * paddedK * chunkSize * tileDim +
-                                     chunkIdxN * chunkSize * tileDim;
-
-    const half* chunkPtrA = A + blockIdxA;
-    const half* chunkPtrB = B + blockIdxB;
-    const half* chunkPtrC = C + blockIdxC;
-
-    half* chunkPtrOut = out + blockIdxOut;
-
-    matrixA[rowIdx][colIdx] = *(chunkPtrA + paddedK * rowIdx + colIdx);
-    matrixB[rowIdx][colIdx] = *(chunkPtrB + paddedN * rowIdx + colIdx);
-    matrixC[rowIdx][colIdx] = *(chunkPtrC + paddedN * rowIdx + colIdx);
-
-    half output = 0.0f;
 
 #pragma unroll
     for (unsigned int i = 0; i < tileDim * chunkSize; ++i)

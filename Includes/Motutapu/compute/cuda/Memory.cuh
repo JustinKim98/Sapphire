@@ -14,39 +14,17 @@ namespace Motutapu::Compute::Cuda
 {
 __host__ bool CudaSetDevice(int deviceId);
 
-template <typename T>
-__global__ void CopyOnGpu(T* dest, const T* const src, unsigned int size)
-{
-    const auto index = blockDim.x * blockIdx.x + threadIdx.x;
 
-    if (index < size)
-    {
-        dest[index] = src[index];
-    }
-}
-
-__host__ __device__ bool CudaMallocFloat(float** ptr, unsigned int size);
-
-__host__ __device__ bool CudaMallocHalf(half** ptr, unsigned int size);
-
+__host__ __device__ bool CudaMalloc(float** ptr, unsigned int size);
 
 __host__ __device__ bool CudaFree(void** ptr);
 
-__host__ bool MemcpyHostToGpuFloat(float* gpuPtr, float* hostPtr, unsigned int size);
+__host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr, unsigned int size);
 
-__host__ bool MemcpyHostToGpuHalf(half* gpuPtr, half* hostPtr,
-                                   unsigned int size);
 
-__host__ bool MemcpyGpuToHostFloat(float* hostPtr, float* gpuPtr,
-                                   unsigned int size);
+__host__ bool MemcpyGpuToHost(float* hostPtr, float* gpuPtr,
+                              unsigned int size);
 
-__host__ bool MemcpyGpuToHostHalf(half* hostPtr, half* gpuPtr,
-                                   unsigned int size);
-
-__host__ void MemcpyGpuToGpuFloat(float* dest, const float* src, unsigned int size);
-
-__host__ void MemcpyGpuToGpuHalf(half* dest, const half* src,
-                                  unsigned int size);
-
-}  // namespace Motutapu::Compute::Cuda
+__host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size);
+} // namespace Motutapu::Compute::Cuda
 #endif

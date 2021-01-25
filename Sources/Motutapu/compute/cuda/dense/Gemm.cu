@@ -82,7 +82,7 @@ __host__ void GemmTensor(half* out, half* A, half* B, half* C,
 
             const dim3 numBlocks(chunkDimM, chunkDimN);
 
-            WmmaGemmHalf<<<numBlocks, chunkSize * chunkSize * 32, 0,
+            WmmaGemm<<<numBlocks, chunkSize * chunkSize * 32, 0,
                 streams[batchIdx]>>>(
                     ptrOut, ptrA, ptrB, ptrC, paddedK, paddedN,
                     chunkIdxK, chunkSize);

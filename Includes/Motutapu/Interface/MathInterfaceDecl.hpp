@@ -7,117 +7,81 @@
 #ifndef MOTUTAPU_MATHINTERFACE_DECL_HPP
 #define MOTUTAPU_MATHINTERFACE_DECL_HPP
 
-#include <Motutapu/tensor/TensorDecl.hpp>
+#include <Motutapu/tensor/Tensor.hpp>
 
 namespace Motutapu
 {
-template <typename T>
-Tensor<T> abs(const Tensor<T>& tensor);
+Tensor abs(const Tensor& tensor);
 
-template <typename T>
-void abs(Tensor<T>& tensor);
+void abs(Tensor& tensor);
 
-template <typename T>
-Tensor<T> cos(const Tensor<T>& tensor);
+Tensor cos(const Tensor& tensor);
 
-template <typename T>
-void cos(Tensor<T>& tensor);
+void cos(Tensor& tensor);
 
-template <typename T>
-Tensor<T> sin(const Tensor<T>& tensor);
+Tensor sin(const Tensor& tensor);
 
-template <typename T>
-void sin(Tensor<T>& tensor);
+void sin(Tensor& tensor);
 
-template <typename T>
-Tensor<T> tan(const Tensor<T>& tensor);
+Tensor tan(const Tensor& tensor);
 
-template <typename T>
-void tan(Tensor<T>& tensor);
+void tan(Tensor& tensor);
 
-template <typename T>
-Tensor<T> acos(const Tensor<T>& tensor);
+Tensor acos(const Tensor& tensor);
 
-template <typename T>
-void acos(Tensor<T>& tensor);
+void acos(Tensor& tensor);
 
-template <typename T>
-Tensor<T> asin(const Tensor<T>& tensor);
+Tensor asin(const Tensor& tensor);
 
-template <typename T>
-void asin(Tensor<T>& tensor);
+void asin(Tensor& tensor);
 
-template <typename T>
-Tensor<T> atan(const Tensor<T>& tensor);
+Tensor atan(const Tensor& tensor);
 
-template <typename T>
-void atan(Tensor<T>& tensor);
+void atan(Tensor& tensor);
 
-template <typename T>
-Tensor<T> cosh(const Tensor<T>& tensor);
+Tensor cosh(const Tensor& tensor);
 
-template <typename T>
-void cosh(Tensor<T>& tensor);
+void cosh(Tensor& tensor);
 
-template <typename T>
-Tensor<T> sinh(const Tensor<T>& tensor);
+Tensor sinh(const Tensor& tensor);
 
-template <typename T>
-void sinh(Tensor<T>& tensor);
+void sinh(Tensor& tensor);
 
-template <typename T>
-Tensor<T> tanh(const Tensor<T>& tensor);
+Tensor tanh(const Tensor& tensor);
 
-template <typename T>
-void tanh(Tensor<T>& tensor);
+void tanh(Tensor& tensor);
 
-template <typename T>
-Tensor<T> exp(const Tensor<T>& tensor);
+Tensor exp(const Tensor& tensor);
 
-template <typename T>
-void exp(Tensor<T>& tensor);
+void exp(Tensor& tensor);
 
-template <typename T>
-Tensor<T> log(const Tensor<T>& tensor);
+Tensor log(const Tensor& tensor);
 
-template <typename T>
-void log(Tensor<T>& tensor);
+void log(Tensor& tensor);
 
-template <typename T>
-Tensor<T> log10(const Tensor<T>& tensor);
+Tensor log10(const Tensor& tensor);
 
-template <typename T>
-void log10(Tensor<T>& tensor);
+void log10(Tensor& tensor);
 
-template <typename T>
-Tensor<T> log2(const Tensor<T>& tensor);
+Tensor log2(const Tensor& tensor);
 
-template <typename T>
-void log2(Tensor<T>& tensor);
+void log2(Tensor& tensor);
 
-template <typename T>
-Tensor<T> neg(const Tensor<T>& tensor);
+Tensor neg(const Tensor& tensor);
 
-template <typename T>
-void neg(Tensor<T>& tensor);
+void neg(Tensor& tensor);
 
-template <typename T>
-Tensor<T> add(const Tensor<T>& tensorA, const Tensor<T>& tensorB);
+Tensor add(const Tensor& tensorA, const Tensor& tensorB);
 
-template <typename T>
-void add(Tensor<T>& tensor, const Tensor<T>& other);
+void add(Tensor& tensor, const Tensor& other);
 
-template <typename T>
-Tensor<T> sub(const Tensor<T>& tensorA, const Tensor<T>& tensorB);
+Tensor sub(const Tensor& tensorA, const Tensor& tensorB);
 
-template <typename T>
-void sub(Tensor<T>& tensor, const Tensor<T>& other);
+void sub(Tensor& tensor, const Tensor& other);
 
-template <typename T>
-Tensor<T> mul(const Tensor<T>& tensorA, const Tensor<T>& tensorB);
+Tensor mul(const Tensor& tensorA, const Tensor& tensorB);
 
-template <typename T>
-void mul(Tensor<T>& tensor, const Tensor<T>& other);
+void mul(Tensor& tensor, const Tensor& other);
 }
 
 #endif

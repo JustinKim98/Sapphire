@@ -8,7 +8,6 @@
 #define MOTUTAPU_COMPUTE_CUDA_DENSE_GEMMKERNEL_CUH
 
 #include <Motutapu/compute/cuda/CudaParams.hpp>
-#include <cuda_fp16.h>
 
 namespace Motutapu::Compute::Cuda::Dense
 {
@@ -45,23 +44,16 @@ namespace Motutapu::Compute::Cuda::Dense
 //! \param paddedN : padded column size of B
 //! \param chunkIdxK : index of K
 //! \param chunkSize : size of the chunk
-__global__ void WmmaGemmHalf(half* Out, const half* A, const half* B,
-                             const half* C, unsigned int paddedK,
-                             unsigned int paddedN, unsigned int chunkIdxK,
-                             const unsigned int chunkSize);
+__global__ void WmmaGemm(float* Out, const float* A, const float* B,
+                         const float* C, unsigned int paddedK,
+                         unsigned int paddedN, unsigned int chunkIdxK,
+                         const unsigned int chunkSize);
 
-//! \param tileDim : dimension of the tile
-//! \param chunkSize : size of the chunk should be under 2 for float types
 //! Required thread dimension is (tileDim x chunkSize) x (tileDim x chunkSize)
 //! each thread computes each output entry in the chunk
 //! Required block size is chunkDimM x chunkDimN
-__global__ void GemmFloat(float* out, const float* A, const float* B,
-                          const float* C, unsigned int paddedK,
-                          unsigned int paddedN, unsigned int chunkIdxK);
-
-__global__ void GemmHalf(half* out, const half* A, const half* B, const half* C,
-                         unsigned int paddedK, unsigned int paddedN,
-                         unsigned int chunkIdxK);
-
+__global__ void Gemm(float* out, const float* A, const float* B,
+                     const float* C, unsigned int paddedK,
+                     unsigned int paddedN, unsigned int chunkIdxK);
 }
 #endif

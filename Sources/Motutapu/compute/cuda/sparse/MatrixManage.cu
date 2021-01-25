@@ -4,51 +4,45 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_COMPUTE_CUDA_SPARSE_MATRIXMANAGE_CUH
-#define MOTUTAPU_COMPUTE_CUDA_SPARSE_MATRIXMANAGE_CUH
-
-#include <cstdint>
 #include <Motutapu/compute/cuda/CudaParams.hpp>
-#include <Motutapu/util/SparseMatrixDecl.hpp>
-#include <Motutapu/compute/cuda/sparse/MatrixManageDecl.cuh>
+#include <Motutapu/compute/cuda/sparse/MatrixManage.cuh>
+#include <Motutapu/util/SparseMatrix.hpp>
+#include <cstdint>
 
 namespace Motutapu::Compute::Cuda::Sparse
 {
-template <typename T>
-__device__ void DeepAllocateSparseMatrix(SparseMatrix<T>* dest)
+__device__ void DeepAllocateSparseMatrix(SparseMatrix* dest)
 {
     const auto nnz = dest->NNZ;
     const auto rowArraySize = dest->NumRows + 1;
-    dest->ColIndex = static_cast<T*>(malloc(nnz * sizeof(T)));
-    dest->RowIndex = static_cast<T*>(malloc(rowArraySize * sizeof(T)));
-    dest->V = static_cast<T*>(malloc(nnz * sizeof(T)));
+    dest->ColIndex = static_cast<uint32_t*>(malloc(nnz * sizeof(uint32_t)));
+    dest->RowIndex =
+        static_cast<uint32_t*>(malloc(rowArraySize * sizeof(uint32_t)));
+    dest->V = static_cast<float*>(malloc(nnz * sizeof(float)));
 }
 
-template <typename T>
-__device__ void DeepFreeSparseMatrix(SparseMatrix<T>* target)
+__device__ void DeepFreeSparseMatrix(SparseMatrix* target)
 {
     free(static_cast<void*>(target->ColIndex));
-    free(static_cast<void*>(target->RowINdex));
+    free(static_cast<void*>(target->RowIndex));
     free(static_cast<void*>(target->V));
 }
 
-template <typename T>
-__device__ void ShallowFreeSparseMatrix(SparseMatrix<T>* target)
+__device__ void ShallowFreeSparseMatrix(SparseMatrix* target)
 {
     free(static_cast<void*>(target));
 }
 
-template <typename T>
-__device__ void DeepCopySparseMatrix(SparseMatrix<T>* dest,
-                                     SparseMatrix<T>* src, uint32_t rowOffset)
+__device__ void DeepCopySparseMatrix(SparseMatrix* dest, SparseMatrix* src,
+                                     uint32_t rowOffset)
 {
-    const auto numRows = src->NumRows;
-    const auto srcRowArray = src->RowIndex;
-    auto destRowArray = dest->RowIndex + rowOffset;
-    const auto srcColArray = src->ColIndex;
-    auto destColArray = dest->ColIndex;
-    const auto srcValue = src->V;
-    const auto destValue = dest->V;
+    const uint32_t numRows = src->NumRows;
+    const uint32_t* srcRowArray = src->RowIndex;
+    uint32_t* destRowArray = dest->RowIndex + rowOffset;
+    const uint32_t* srcColArray = src->ColIndex;
+    uint32_t* destColArray = dest->ColIndex;
+    const float* srcValue = src->V;
+    float* destValue = dest->V;
 
     const auto totalNumWorkers = gridDim.x * blockDim.x;
     auto index = blockDim.x * blockIdx.x + threadIdx.x;
@@ -63,43 +57,41 @@ __device__ void DeepCopySparseMatrix(SparseMatrix<T>* dest,
         {
             destColArray[cur] = srcColArray[cur];
             destValue[cur] = srcValue[cur];
+            cur++;
         }
         index += totalNumWorkers;
     }
 }
 
-template <typename T>
-__global__ void DeepFreeKernel(SparseMatrix<T>* targetArray, uint32_t size)
+__global__ void DeepFreeKernel(SparseMatrix* targetArray, uint32_t size)
 {
     const auto totalNumWorkers = gridDim.x * blockDim.x;
     auto index = blockDim.x * blockIdx.x + threadIdx.x;
     while (index < size)
 
     {
-        SparseMatrix<T>* destMatrix = targetArray + index;
-        DeepFreeSparseMatrix<T>(destMatrix);
+        SparseMatrix* destMatrix = targetArray + index;
+        DeepFreeSparseMatrix(destMatrix);
 
         index += totalNumWorkers;
     }
 }
 
-template <typename T>
-__global__ void DeepAllocateKernel(SparseMatrix<T>* targetArray, uint32_t size)
+__global__ void DeepAllocateKernel(SparseMatrix* targetArray, uint32_t size)
 {
     const auto totalNumWorkers = gridDim.x * blockDim.x;
     auto index = blockDim.x * blockIdx.x + threadIdx.x;
     while (index < size)
     {
-        SparseMatrix<T>* destMatrix = targetArray + index;
-        DeepAllocateSparseMatrix<T>(destMatrix);
+        SparseMatrix* destMatrix = targetArray + index;
+        DeepAllocateSparseMatrix(destMatrix);
 
         index += totalNumWorkers;
     }
 }
 
-template <typename T>
-__global__ void DeepCopySparseMatrixOnGpu(SparseMatrix<T>* destArray,
-                                          SparseMatrix<T>* srcArray,
+__global__ void DeepCopySparseMatrixOnGpu(SparseMatrix* destArray,
+                                          SparseMatrix* srcArray,
                                           uint32_t size)
 {
     const auto totalNumWorkers = gridDim.x * blockDim.x;
@@ -107,53 +99,49 @@ __global__ void DeepCopySparseMatrixOnGpu(SparseMatrix<T>* destArray,
 
     while (index < size)
     {
-        SparseMatrix<T>* destMatrix = destArray + index;
-        SparseMatrix<T>* srcMatrix = srcArray + index;
-        DeepFreeSparseMatrix<T>(destMatrix);
+        SparseMatrix* destMatrix = destArray + index;
+        SparseMatrix* srcMatrix = srcArray + index;
+        DeepFreeSparseMatrix(destMatrix);
 
         destMatrix->NNZ = srcMatrix->NNZ;
         destMatrix->NumRows = srcMatrix->NumRows;
-        DeepAllocateSparseMatrix<T>(destMatrix);
+        DeepAllocateSparseMatrix(destMatrix);
 
         uint32_t numCopied = 0;
         if (destMatrix->NumRows > DEFAULT_DIM_X)
         {
-            DeepCopySparseMatrix<T>
+            DeepCopySparseMatrix
                 <<<destMatrix->NumRows / DEFAULT_DIM_X, DEFAULT_DIM_X>>>(
                     destMatrix, srcMatrix, 0);
             numCopied += (destMatrix->NumRows / DEFAULT_DIM_X) * DEFAULT_DIM_X;
         }
 
         if (destMatrix->NumRows % DEFAULT_DIM_X > 0)
-            DeepCopySparseMatrix<T><<<1, destMatrix->NumRows % DEFAULT_DIM_X>>>(
+            DeepCopySparseMatrix<<<1, destMatrix->NumRows % DEFAULT_DIM_X>>>(
                 destMatrix, srcMatrix, numCopied);
 
         index += totalNumWorkers;
     }
 }
 
-template <typename T>
-__host__ void DeepCopyHostToGpu(SparseMatrix<T>* deviceArray,
-                                SparseMatrix<T>* hostArray, uint32_t size)
+__host__ void DeepCopyHostToGpu(SparseMatrix* deviceArray,
+                                SparseMatrix* hostArray, uint32_t size)
 {
     cudaStream_t streamPool[size];
     for (size_t i = 0; i < size; ++i)
     {
-        SparseMatrix<T>* curDestPtr = deviceArray + i;
-        SparseMatrix<T>* curSrcPtr = hostArray + i;
+        SparseMatrix* curDestPtr = deviceArray + i;
+        SparseMatrix* curSrcPtr = hostArray + i;
         cudaStreamCreate(&streamPool[i]);
 
         cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
                         (curSrcPtr->NumRows + 1) * sizeof(uint32_t),
-                        cudaMemcpyHostToDevice,
-                        streamPool[i]);
+                        cudaMemcpyHostToDevice, streamPool[i]);
         cudaMemcpyAsync(curDestPtr->ColIndex, curSrcPtr->ColIndex,
                         (curSrcPtr->NNZ) * sizeof(uint32_t),
-                        cudaMemcpyHostToDevice,
-                        streamPool[i]);
+                        cudaMemcpyHostToDevice, streamPool[i]);
         cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
-                        (curSrcPtr->NNZ) * sizeof(T),
-                        cudaMemcpyHostToDevice,
+                        (curSrcPtr->NNZ) * sizeof(float), cudaMemcpyHostToDevice,
                         streamPool[i]);
     }
 
@@ -164,15 +152,14 @@ __host__ void DeepCopyHostToGpu(SparseMatrix<T>* deviceArray,
     }
 }
 
-template <typename T>
-__host__ void DeepCopyGpuToHost(SparseMatrix<T>* deviceArray,
-                                SparseMatrix<T>* hostArray, uint32_t size)
+__host__ void DeepCopyGpuToHost(SparseMatrix* deviceArray,
+                                SparseMatrix* hostArray, uint32_t size)
 {
     cudaStream_t streamPool[size];
     for (size_t i = 0; i < size; ++i)
     {
-        SparseMatrix<T>* curDestPtr = deviceArray + i;
-        SparseMatrix<T>* curSrcPtr = hostArray + i;
+        SparseMatrix* curDestPtr = deviceArray + i;
+        SparseMatrix* curSrcPtr = hostArray + i;
         cudaStreamCreate(&streamPool[i]);
 
         cudaMemcpyAsync(curDestPtr->RowIndex, curSrcPtr->RowIndex,
@@ -182,8 +169,8 @@ __host__ void DeepCopyGpuToHost(SparseMatrix<T>* deviceArray,
                         (curSrcPtr->NNZ) * sizeof(uint32_t),
                         cudaMemcpyDeviceToHost, streamPool[i]);
         cudaMemcpyAsync(curDestPtr->V, curSrcPtr->V,
-                        (curSrcPtr->NNZ) * sizeof(T),
-                        cudaMemcpyDeviceToHost, streamPool[i]);
+                        (curSrcPtr->NNZ) * sizeof(float), cudaMemcpyDeviceToHost,
+                        streamPool[i]);
     }
 
     for (uint32_t i = 0; i < size; ++i)
@@ -193,16 +180,14 @@ __host__ void DeepCopyGpuToHost(SparseMatrix<T>* deviceArray,
     }
 }
 
-template <typename T>
-__host__ void ShallowAllocateGpu(SparseMatrix<T>* targetArray, uint32_t size)
+__host__ void ShallowAllocateGpu(SparseMatrix* targetArray, uint32_t size)
 {
     cudaMalloc(reinterpret_cast<void**>(&targetArray),
                size * SPARSEMATRIX_PADDED_SIZE);
 }
 
-template <typename T>
-__host__ void DeepAllocateGpu(SparseMatrix<T>* targetArray,
-                              SparseMatrix<T>* hostRefArray, uint32_t size)
+__host__ void DeepAllocateGpu(SparseMatrix* targetArray,
+                              SparseMatrix* hostRefArray, uint32_t size)
 {
     cudaMemcpy(reinterpret_cast<void**>(&targetArray),
                reinterpret_cast<void**>(&hostRefArray),
@@ -215,14 +200,14 @@ __host__ void DeepAllocateGpu(SparseMatrix<T>* targetArray,
     for (; idx < size; idx += DEFAULT_DIM_X, streamIdx++)
     {
         cudaStreamCreate(&streamPool[streamIdx]);
-        DeepAllocateKernel<T><<<1, DEFAULT_DIM_X, 0, streamPool[streamIdx]>>>(
+        DeepAllocateKernel<<<1, DEFAULT_DIM_X, 0, streamPool[streamIdx]>>>(
             targetArray + idx, DEFAULT_DIM_X);
     }
 
     if (idx > 0)
         idx -= DEFAULT_DIM_X;
 
-    DeepAllocateKernel<T><<<1, size - idx>>>(targetArray + idx, size - idx);
+    DeepAllocateKernel<<<1, size - idx>>>(targetArray + idx, size - idx);
 
     for (int i = 0; i < size / DEFAULT_DIM_X; i++)
     {
@@ -230,6 +215,4 @@ __host__ void DeepAllocateGpu(SparseMatrix<T>* targetArray,
         cudaStreamDestroy(streamPool[i]);
     }
 }
-}
-
-#endif
+} // namespace Motutapu::Compute::Cuda::Sparse

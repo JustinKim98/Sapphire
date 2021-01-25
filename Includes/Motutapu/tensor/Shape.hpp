@@ -12,7 +12,6 @@
 
 namespace Motutapu
 {
-
 enum class Type
 {
     Sparse,

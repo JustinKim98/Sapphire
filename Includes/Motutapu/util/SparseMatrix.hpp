@@ -19,14 +19,13 @@
 
 #include <cstdint>
 
-template <typename T>
 struct ALIGN(16) SparseMatrix
 {
     uint32_t NumRows;
     uint32_t NNZ;
     uint32_t* ColIndex;
     uint32_t* RowIndex;
-    T* V;
+    float* V;
 };
 
 #define SPARSEMATRIX_PADDED_SIZE 32

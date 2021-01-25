@@ -9,26 +9,22 @@
 
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
-#include <Motutapu/tensor/TensorDescriptor.hpp>
-
-#include <list>
 
 namespace Motutapu
 {
 //! TensorDescriptor class contains data vector for processing
 //! with attributes describing it
-template <typename T>
 class Tensor
 {
 public:
     Tensor(Shape shape, int descKey);
     ~Tensor() = default;
 
-    Tensor(const Tensor<T>& tensor);
-    Tensor(Tensor<T>&& tensor) noexcept = delete;
+    Tensor(const Tensor& tensor);
+    Tensor(Tensor&& tensor) noexcept = delete;
     /// move assignment operator
-    Tensor<T>& operator=(const Tensor<T>& tensor);
-    Tensor<T>& operator=(Tensor<T>&& tensor) noexcept = delete;
+    Tensor& operator=(const Tensor& tensor);
+    Tensor& operator=(Tensor&& tensor) noexcept = delete;
 
     [[nodiscard]] Shape GetShape() const;
     [[nodiscard]] Device GetDevice() const;

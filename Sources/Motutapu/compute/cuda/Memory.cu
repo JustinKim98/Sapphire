@@ -8,6 +8,17 @@
 
 namespace Motutapu::Compute::Cuda
 {
+__global__ void CopyOnGpuKernel(float* dest, const float* const src,
+                                unsigned int size)
+{
+    const auto index = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (index < size)
+    {
+        dest[index] = src[index];
+    }
+}
+
 __host__ bool CudaSetDevice(int deviceId)
 {
     int deviceCount;
@@ -20,14 +31,7 @@ __host__ bool CudaSetDevice(int deviceId)
     return false;
 }
 
-__host__ __device__ bool CudaMallocFloat(float** ptr, unsigned int size)
-{
-    const cudaError_t error =
-        cudaMalloc(reinterpret_cast<void**>(ptr), size * sizeof(float));
-    return error == cudaSuccess;
-}
-
-__host__ __device__ bool CudaMallocHalf(half** ptr, unsigned int size)
+__host__ __device__ bool CudaMalloc(float** ptr, unsigned int size)
 {
     const cudaError_t error =
         cudaMalloc(reinterpret_cast<void**>(ptr), size * sizeof(float));
@@ -51,7 +55,8 @@ __host__ bool MemcpyHostToGpu(T* gpuPtr, T* hostPtr, unsigned int size)
     return error == cudaSuccess;
 }
 
-__host__ bool MemcpyHostToGpuFloat(float* gpuPtr, float* hostPtr, unsigned int size)
+__host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr,
+                              unsigned int size)
 {
     const cudaError_t error = cudaMemcpy(
         reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
@@ -60,18 +65,8 @@ __host__ bool MemcpyHostToGpuFloat(float* gpuPtr, float* hostPtr, unsigned int s
     return error == cudaSuccess;
 }
 
-__host__ bool MemcpyHostToGpuHalf(half* gpuPtr, half* hostPtr,
-                                   unsigned int size)
-{
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
-        size * sizeof(half), cudaMemcpyHostToDevice);
-
-    return error == cudaSuccess;
-}
-
-__host__ bool MemcpyGpuToHostFloat(float* hostPtr, float* gpuPtr,
-                                   unsigned int size)
+__host__ bool MemcpyGpuToHost(float* hostPtr, float* gpuPtr,
+                              unsigned int size)
 {
     const cudaError_t error = cudaMemcpy(
         reinterpret_cast<void*>(hostPtr), reinterpret_cast<void*>(gpuPtr),
@@ -80,17 +75,8 @@ __host__ bool MemcpyGpuToHostFloat(float* hostPtr, float* gpuPtr,
     return error == cudaSuccess;
 }
 
-__host__ bool MemcpyGpuToHostHalf(half* hostPtr, half* gpuPtr,
-                                   unsigned int size)
-{
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(hostPtr), reinterpret_cast<void*>(gpuPtr),
-        size * sizeof(half), cudaMemcpyDeviceToHost);
-
-    return error == cudaSuccess;
-}
-
-__host__ void MemcpyGpuToGpuFloat(float* dest, const float* src, unsigned int size)
+__host__ void MemcpyGpuToGpu(float* dest, const float* src,
+                             unsigned int size)
 {
     unsigned int elementsCopied = 0;
 
@@ -99,33 +85,14 @@ __host__ void MemcpyGpuToGpuFloat(float* dest, const float* src, unsigned int si
         cudaStream_t stream0;
         cudaStreamCreate(&stream0);
         const auto requiredBlocks = size / MAX_THREAD_DIM_X;
-        CopyOnGpu<float><<<requiredBlocks, MAX_THREAD_DIM_X>>>(
+        CopyOnGpuKernel<<<requiredBlocks, MAX_THREAD_DIM_X>>>(
             dest, src, requiredBlocks * MAX_THREAD_DIM_X);
 
         elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
     }
 
-    CopyOnGpu<float><<<1, size>>>(dest + elementsCopied, src + elementsCopied,
-                                  size - elementsCopied);
-}
-
-__host__ void MemcpyGpuToGpuHalf(half* dest, const half* src,
-                                 unsigned int size)
-{
-    unsigned int elementsCopied = 0;
-
-    if (size > MAX_THREAD_DIM_X)
-    {
-        cudaStream_t stream0;
-        cudaStreamCreate(&stream0);
-        const auto requiredBlocks = size / MAX_THREAD_DIM_X;
-        CopyOnGpu<half><<<requiredBlocks, MAX_THREAD_DIM_X>>>(
-            dest, src, requiredBlocks * MAX_THREAD_DIM_X);
-
-        elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
-    }
-
-    CopyOnGpu<half><<<1, size>>>(dest + elementsCopied, src + elementsCopied,
-                                  size - elementsCopied);
+    CopyOnGpuKernel<<<1, size>>>(dest + elementsCopied,
+                                 src + elementsCopied,
+                                 size - elementsCopied);
 }
 }

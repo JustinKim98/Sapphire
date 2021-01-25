@@ -12,7 +12,6 @@
 
 namespace Motutapu::BackProp
 {
-template <typename T>
 class BackPropWrapper
 {
 public:
@@ -35,8 +34,8 @@ public:
         return m_outputTensorKeys;
     }
 
-    virtual void Backward(std::vector<Util::TensorData<T>>& output, const
-                          Util::TensorData<T>& input) const = 0;
+    virtual void Backward(std::vector<Util::TensorData>& output, const
+                          Util::TensorData& input) const = 0;
 
 protected :
     //! Vector of tensorData that should give its output
