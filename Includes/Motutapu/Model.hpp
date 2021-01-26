@@ -4,15 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_MODEL_DECL_HPP
-#define MOTUTAPU_MODEL_DECL_HPP
+#ifndef MOTUTAPU_MODEL_HPP
+#define MOTUTAPU_MODEL_HPP
 
 #include <Motutapu/operations/Unit.hpp>
 #include <Motutapu/tensor/TensorDescriptor.hpp>
 #include <Motutapu/tensor/Tensor.hpp>
-
 #include <string>
 #include <unordered_map>
+
 namespace Motutapu
 {
 //! Descriptor storing unit key and its stream

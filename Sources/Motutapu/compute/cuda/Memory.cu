@@ -38,25 +38,20 @@ __host__ __device__ bool CudaMalloc(float** ptr, unsigned int size)
     return error == cudaSuccess;
 }
 
-template <typename T>
-__host__ __device__ bool CudaFree(void** ptr)
+__host__ __device__ bool CudaFree(float* ptr)
+{
+    const cudaError_t error = cudaFree(reinterpret_cast<void*>(ptr));
+    return error == cudaSuccess;
+}
+
+__host__ __device__ bool CudaFree(void* ptr)
 {
     const cudaError_t error = cudaFree(ptr);
     return error == cudaSuccess;
 }
 
-template <typename T>
-__host__ bool MemcpyHostToGpu(T* gpuPtr, T* hostPtr, unsigned int size)
-{
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
-        size * sizeof(T), cudaMemcpyHostToDevice);
 
-    return error == cudaSuccess;
-}
-
-__host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr,
-                              unsigned int size)
+__host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr, unsigned int size)
 {
     const cudaError_t error = cudaMemcpy(
         reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
@@ -64,6 +59,7 @@ __host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr,
 
     return error == cudaSuccess;
 }
+
 
 __host__ bool MemcpyGpuToHost(float* hostPtr, float* gpuPtr,
                               unsigned int size)

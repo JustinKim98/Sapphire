@@ -5,10 +5,52 @@
 // property of any third parties.
 
 #include <Motutapu/tensor/TensorDescriptor.hpp>
+#include <Motutapu/util/MemoryManager.hpp>
 #include <algorithm>
 
 namespace Motutapu::Util
 {
+TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
+                                   const Device &device, unsigned int batchSize)
+    : ForwardData(shape, type, device, batchSize),
+      BackwardData(shape, type, device, batchSize),
+      m_requireOutputSaving(false),
+      m_requireGrad(false)
+{
+}
+
+TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
+                                   const Device &device, unsigned int batchSize,
+                                   bool requireOutputSaving)
+    : ForwardData(shape, type, device, batchSize),
+      BackwardData(shape, type, device, batchSize),
+      m_requireOutputSaving(requireOutputSaving),
+      m_requireGrad(true)
+{
+}
+
+TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
+    : ForwardData(tensorData.ForwardData),
+      BackwardData(tensorData.BackwardData),
+      m_requireOutputSaving(tensorData.m_requireOutputSaving),
+      m_requireGrad(tensorData.m_requireGrad),
+      m_history(std::move(tensorData.m_history))
+{
+}
+
+TensorDescriptor &TensorDescriptor::operator=(
+    TensorDescriptor &&tensorData) noexcept
+{
+
+    ForwardData = tensorData.ForwardData;
+    BackwardData = tensorData.BackwardData;
+    m_requireOutputSaving = tensorData.m_requireOutputSaving;
+    m_requireGrad = tensorData.m_requireGrad;
+
+    m_history = std::move(tensorData.m_history);
+    return *this;
+}
+
 void TensorDescriptor::AppendOutputHistory(
     std::unique_ptr<BackProp::BackPropWrapper> wrapper, bool saveOutput)
 {
@@ -37,9 +79,9 @@ void TensorDescriptor::RemoveGradientInputKey(int tensorKey)
             "RemoveGradientInputKey - Last history was empty or output");
     }
 
-    auto& history = m_history.back();
+    auto &history = m_history.back();
     const auto it = std::find(history.GradientInputTensorKeys.begin(),
-                        history.GradientInputTensorKeys.end(), tensorKey);
+                              history.GradientInputTensorKeys.end(), tensorKey);
 
     if (it == history.GradientInputTensorKeys.end())
     {
@@ -57,4 +99,4 @@ void TensorDescriptor::PopHistory()
     if (!m_history.empty())
         m_history.pop_back();
 }
-} // namespace Motutapu::Util
+}  // namespace Motutapu::Util

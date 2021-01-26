@@ -80,11 +80,11 @@ public:
 
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
-    static void CopyHostToGpu(TensorData tensorData);
+    static void CopyHostToGpu(const TensorData& tensorData);
 
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
-    static void CopyGpuToHost(TensorData tensorData);
+    static void CopyGpuToHost(const TensorData& tensorData);
 
 private:
 
@@ -102,7 +102,7 @@ private:
     void m_allocateCpu(unsigned int batchSize);
 
     //! Allocates data on the GPU with given batchSize
-    bool m_allocateCuda(unsigned int batchSize);
+    void m_allocateCuda(unsigned int batchSize);
 
     //! Free space allocated on CPU memory
     void m_freeCpu() const;

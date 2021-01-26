@@ -32,7 +32,7 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
 
     const auto outputShape = Shape({ shapeA.At(0), shapeB.At(1) });
 
-    Util::TensorDescriptor descOut(outputShape, type, device, batchSize);
+    Util::TensorDescriptor descOut(outputShape, type, device, batchSize, false);
     model.RegisterTensorDescriptor(descOut);
 
     Compute::Mul(descOut.ForwardData, descA.ForwardData, descB.ForwardData);

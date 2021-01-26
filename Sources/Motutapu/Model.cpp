@@ -45,7 +45,7 @@ void Model::AutoGrad(int tensorKey)
 
         std::vector<Util::TensorData> outputTensorDataVector(tensorKeys.size());
 
-        for (int i = 0; i < tensorKeys.size(); ++i)
+        for (size_t i = 0; i < tensorKeys.size(); ++i)
         {
             outputTensorDataVector.at(i) =
                 GetDescriptor(tensorKeys.at(i)).BackwardData;

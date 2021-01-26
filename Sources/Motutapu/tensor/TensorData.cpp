@@ -6,8 +6,8 @@
 
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/tensor/TensorData.hpp>
+#include <Motutapu/util/MemoryManager.hpp>
 #include <algorithm>
-#include <memory>
 #include <stdexcept>
 
 namespace Motutapu::Util
@@ -19,20 +19,10 @@ TensorData::TensorData(Shape shape, Type type, Device device,
       m_type(type),
       m_device(std::move(device))
 {
-    auto success = true;
-
-    //! todo : Change this to use memory manager
-
     if (device.Type() == DeviceType::CUDA)
     {
-        success &= Compute::Cuda::CudaSetDevice(device.GetID());
-        success &= m_allocateCuda(batchSize);
+        m_allocateCuda(batchSize);
         m_allocateCpu(batchSize);
-    }
-
-    if (!success)
-    {
-        throw std::runtime_error("Tensor creation failed");
     }
 }
 
@@ -44,16 +34,6 @@ TensorData::~TensorData()
     {
         m_freeGpu();
     }
-}
-
-void TensorData::DenseToSparse(TensorData tensorData)
-{
-    throw std::runtime_error("DenseToSparse not implemented");
-}
-
-void TensorData::SparseToDense(TensorData tensorData)
-{
-    throw std::runtime_error("SparseToDense not implemented");
 }
 
 bool TensorData::CopyTensorData(TensorData dest, const TensorData src)
@@ -73,7 +53,7 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData src)
         throw std::invalid_argument("Type mismatch while copying tensorData");
     }
 
-    const bool sparse = src.GetType() == Type::Sparse ? true : false;
+    const bool sparse = src.GetType() == Type::Sparse;
     bool success = true;
     const auto device = src.GetDevice();
 
@@ -145,7 +125,7 @@ bool TensorData::ChangeDevice(TensorData tensorData, Device device)
     return true;
 }
 
-void TensorData::CopyHostToGpu(TensorData tensorData)
+void TensorData::CopyHostToGpu(const TensorData &tensorData)
 {
     if (tensorData.GetDevice().Type() != DeviceType::CUDA)
     {
@@ -167,7 +147,7 @@ void TensorData::CopyHostToGpu(TensorData tensorData)
     }
 }
 
-void TensorData::CopyGpuToHost(TensorData tensorData)
+void TensorData::CopyGpuToHost(const TensorData &tensorData)
 {
     if (tensorData.GetDevice().Type() != DeviceType::CUDA)
     {
@@ -210,12 +190,11 @@ bool TensorData::m_freeGpu()
     if (m_type == Type::Sparse)
     {
         isSuccess &=
-            Compute::Cuda::CudaFree(reinterpret_cast<void**>(SparseMatCuda));
+            Compute::Cuda::CudaFree(reinterpret_cast<void*>(SparseMatCuda));
     }
     else
     {
-        isSuccess &=
-            Compute::Cuda::CudaFree(reinterpret_cast<void**>(DenseMatCuda));
+        isSuccess &= Compute::Cuda::CudaFree(DenseMatCuda);
     }
 
     return isSuccess;
@@ -224,7 +203,7 @@ bool TensorData::m_freeGpu()
 void TensorData::m_allocateCpu(unsigned int batchSize)
 {
     const auto colSize = TensorShape.At(0);
-    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 0;
+    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 1;
 
     const auto padUnitSize = static_cast<unsigned int>(32 / sizeof(float));
 
@@ -244,15 +223,29 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
     }
     else
     {
-        DenseTotalLength = batchSize * paddedRowSize * paddedColSize;
-        DenseMatHost = new float[DenseTotalLength];
+        size_t totalSize = paddedColSize * paddedRowSize * batchSize;
+
+        if(TensorShape.Dim() > 2)
+        {
+            for (auto i = 0; i < static_cast<int>(TensorShape.Dim()) - 1; ++i)
+                totalSize *= TensorShape.At(i);
+        }
+
+        DenseTotalLength = totalSize;
+        DenseMatHost = MemoryManager::GetMemoryHost(totalSize);
     }
 }
 
-bool TensorData::m_allocateCuda(unsigned int batchSize)
+void TensorData::m_allocateCuda(unsigned int batchSize)
 {
+    if (m_device.Type() != DeviceType::CUDA)
+    {
+        throw std::runtime_error(
+            "m_allocateCuda - Tensor Device type is not CUDA");
+    }
+
     const auto colSize = TensorShape.At(0);
-    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 0;
+    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 1;
 
     const unsigned int padUnitSize = 32 / sizeof(float);
 
@@ -266,28 +259,24 @@ bool TensorData::m_allocateCuda(unsigned int batchSize)
             ? rowSize
             : rowSize / padUnitSize * padUnitSize + padUnitSize;
 
-    auto isSuccess = true;
-
-    if (m_device.Type() == DeviceType::CUDA)
+    if (m_type == Type::Sparse)
     {
-        isSuccess &= Compute::Cuda::CudaSetDevice(m_device.GetID());
-        if (m_type == Type::Sparse)
-        {
-            throw std::runtime_error("m_allocate - Sparse not implemented");
-        }
-        else
-        {
-            isSuccess &= Compute::Cuda::CudaMalloc(
-                &DenseMatCuda, batchSize * paddedRowSize * paddedColSize);
-        }
+        throw std::runtime_error("m_allocate - Sparse not implemented");
     }
     else
     {
-        throw std::runtime_error(
-            "m_allocateCuda - Tensor Data type is not CUDA");
-    }
+        size_t totalSize = paddedColSize * paddedRowSize * batchSize;
 
-    return isSuccess;
+        if(TensorShape.Dim() > 2)
+        {
+            for (auto i = 0; i < static_cast<int>(TensorShape.Dim()) - 1; ++i)
+                totalSize *= TensorShape.At(i);
+        }
+
+        DenseTotalLength = totalSize;
+        DenseMatCuda =
+            MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
+    }
 }
 
 }  // namespace Motutapu::Util

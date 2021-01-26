@@ -7,11 +7,11 @@
 #ifndef MOTUTAPU_UTIL_TENSORDESCRIPTOR_DECL_HPP
 #define MOTUTAPU_UTIL_TENSORDESCRIPTOR_DECL_HPP
 
-#include <Motutapu/tensor/TensorData.hpp>
 #include <Motutapu/operations/Backward/BackPropWrapper.hpp>
+#include <Motutapu/tensor/TensorData.hpp>
 #include <list>
-#include <mutex>
 #include <memory>
+#include <mutex>
 
 namespace Motutapu::Util
 {
@@ -21,21 +21,22 @@ namespace Motutapu::Util
 //! TensorDescriptor should not be accessible from the user interface directly
 class TensorDescriptor
 {
-public:
-
+ public:
     TensorDescriptor() = default;
 
-    //! Create and allocate the tensor descriptor
-    TensorDescriptor(Shape shape, Type type, Device device,
+    TensorDescriptor(const Shape& shape, Type type, const Device& device,
                      unsigned int batchSize);
+
+    //! Create and allocate the tensor descriptor
+    TensorDescriptor(const Shape& shape, Type type, const Device& device,
+                     unsigned int batchSize, bool requireOutputSaving);
 
     ~TensorDescriptor() = default;
 
     TensorDescriptor(const TensorDescriptor& tensorData) = delete;
-    TensorDescriptor(TensorDescriptor&& tensorData) noexcept = default;
+    TensorDescriptor(TensorDescriptor&& tensorData) noexcept;
     TensorDescriptor& operator=(const TensorDescriptor& tensorData) = delete;
-    TensorDescriptor& operator=(TensorDescriptor&& tensorData) noexcept
-    = default;
+    TensorDescriptor& operator=(TensorDescriptor&& tensorData) noexcept;
 
     TensorData ForwardData;
     TensorData BackwardData;
@@ -45,13 +46,14 @@ public:
 
     //! Add unit Key if unit was used as output or flow-through type
     //! \param wrapper : Wrapper for starting back propagation on this tensor
-    //! \param saveOutput : Forward output of this tensorDescriptor is preserved if true
-    void AppendOutputHistory(
-        std::unique_ptr<BackProp::BackPropWrapper> wrapper,
-        bool saveOutput);
+    //! \param saveOutput : Forward output of this tensorDescriptor is preserved
+    //! if true
+    void AppendOutputHistory(std::unique_ptr<BackProp::BackPropWrapper> wrapper,
+                             bool saveOutput);
 
     //! Add unit key if unit was used as operand only
-    //! \param tensorKey : Key of the tensor that this tensor should receive gradient from
+    //! \param tensorKey : Key of the tensor that this tensor should receive
+    //! gradient from
     void AppendOperandHistory(int tensorKey);
 
     void RemoveGradientInputKey(int tensorKey);
@@ -63,6 +65,11 @@ public:
     [[nodiscard]] bool RequireOutputSaving() const
     {
         return m_requireOutputSaving;
+    }
+
+    [[nodiscard]] bool RequireGrad() const
+    {
+        return m_requireGrad;
     }
 
     //! Checks if next operation is output unit in back propagation
@@ -84,23 +91,25 @@ public:
         return m_history.back().Wrapper;
     }
 
-private:
-
+ private:
     //! This describes history of the tensorData
     //! As tensorData is used in unit function as an operand or input/output.
     //! It is stored using this struct
     struct History
     {
-        History(std::unique_ptr<BackProp::BackPropWrapper> wrapper)
-            : IsOutput(true),
-              Wrapper(std::move(wrapper))
+        explicit History(std::unique_ptr<BackProp::BackPropWrapper> wrapper)
+            : IsOutput(true), Wrapper(std::move(wrapper))
         {
         }
 
-        History()
-            : IsOutput(false)
+        History() : IsOutput(false)
         {
         }
+
+        History(History&& history) noexcept = default;
+        History(const History& history) = delete;
+        History& operator=(History&& history) noexcept = default;
+        History& operator=(const History& history) = delete;
 
 
         void AddGradientInputTensorKey(int key)
@@ -116,9 +125,10 @@ private:
     };
 
     bool m_requireOutputSaving = false;
+    bool m_requireGrad = true;
 
     std::list<History> m_history;
 };
-} // namespace Motutapu::Util
+}  // namespace Motutapu::Util
 
 #endif
