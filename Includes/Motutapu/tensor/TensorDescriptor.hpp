@@ -11,6 +11,7 @@
 #include <Motutapu/operations/Backward/BackPropWrapper.hpp>
 #include <list>
 #include <mutex>
+#include <memory>
 
 namespace Motutapu::Util
 {

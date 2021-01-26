@@ -27,8 +27,6 @@ __global__ void ScalarFloatKernel(float* data,
 
 __global__ void ScalarHalfKernel(half* data,
                                  half value, unsigned int size);
-
-
 }
 
 #endif

@@ -8,6 +8,7 @@
 #define MOTUTAPU_TEST_NAIVEGEMM_HPP
 
 #include <Motutapu/compute/naive/NaiveGemm.hpp>
+#include <cstdlib>
 
 namespace Motutapu::Test::Naive
 {

@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Motutapu/compute/cuda/dense/initializeKernel.cuh>
+#include <Motutapu/compute/cuda/dense/InitializeKernel.cuh>
 #include <Motutapu/compute/cuda/CudaParams.hpp>
 
 namespace Motutapu::Compute::Cuda::Dense

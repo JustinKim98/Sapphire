@@ -12,6 +12,7 @@
 
 namespace Motutapu::Functional
 {
+__attribute__((unused))
 static Tensor MulOp(const Tensor& a, const Tensor& b)
 {
     Model& model = ModelManager::GetCurrentModel();
