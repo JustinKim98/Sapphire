@@ -14,35 +14,44 @@ namespace Motutapu::BackProp
 {
 class BackPropWrapper
 {
-public:
+ public:
     BackPropWrapper() = default;
-   virtual ~BackPropWrapper() = default;
+    virtual ~BackPropWrapper() = default;
 
-    BackPropWrapper(std::vector<int> outputTensorKeys)
-        : m_outputTensorKeys(std::move(outputTensorKeys))
+    explicit BackPropWrapper(std::vector<unsigned int> gradientOutputKeys,
+                             bool inplace)
+        : m_gradientOutputKeys(std::move(gradientOutputKeys)),
+          m_inplace(inplace)
     {
     }
 
-
-    BackPropWrapper(std::vector<int> outputTensorKeys, int unitKey)
-        : m_outputTensorKeys(std::move(outputTensorKeys)),
+    BackPropWrapper(std::vector<unsigned int> gradientOutputKeys, bool inplace,
+                    int unitKey)
+        : m_gradientOutputKeys(std::move(gradientOutputKeys)),
+          m_inplace(inplace),
           m_unitKey(unitKey)
     {
     }
 
-    [[nodiscard]] const std::vector<int>& GetOutputTensorKeys() const
+    [[nodiscard]] bool IsInplace() const
     {
-        return m_outputTensorKeys;
+        return m_inplace;
     }
 
-    virtual void Backward(std::vector<Util::TensorData>& output, const
-                          Util::TensorData& input) const = 0;
+    [[nodiscard]] const std::vector<unsigned int>& GetOutputTensorKeys() const
+    {
+        return m_gradientOutputKeys;
+    }
 
-protected :
+    virtual void Backward(std::vector<Util::TensorData>& output,
+                          const Util::TensorData& input) const = 0;
+
+ protected:
     //! Vector of tensorData that should give its output
-    std::vector<int> m_outputTensorKeys;
+    std::vector<unsigned int> m_gradientOutputKeys;
+    bool m_inplace;
     int m_unitKey = -1;
 };
-}
+}  // namespace Motutapu::BackProp
 
 #endif

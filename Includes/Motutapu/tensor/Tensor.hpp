@@ -16,11 +16,11 @@ namespace Motutapu
 //! with attributes describing it
 class Tensor
 {
-public:
-    Tensor(Shape shape, int descKey);
+ public:
+    Tensor(Shape shape, unsigned int descKey);
     ~Tensor() = default;
 
-    Tensor(const Tensor& tensor);
+    Tensor(const Tensor& tensor) = default;
     Tensor(Tensor&& tensor) noexcept = delete;
     /// move assignment operator
     Tensor& operator=(const Tensor& tensor);
@@ -30,11 +30,10 @@ public:
     [[nodiscard]] Device GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
-private:
+ private:
     Shape m_shape;
-
-    int m_tensorDescriptorKey;
+    unsigned int m_tensorDescriptorKey;
 };
-}
+}  // namespace Motutapu
 
 #endif

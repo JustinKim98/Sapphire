@@ -9,14 +9,8 @@
 
 namespace Motutapu
 {
-Tensor::Tensor(Shape shape, int descKey)
-    : m_shape(shape), m_tensorDescriptorKey(descKey)
-{
-}
-
-Tensor::Tensor(const Tensor& tensor)
-    : m_shape(tensor.m_shape),
-      m_tensorDescriptorKey(tensor.m_tensorDescriptorKey)
+Tensor::Tensor(Shape shape, unsigned int descKey)
+    : m_shape(std::move(shape)), m_tensorDescriptorKey(descKey)
 {
 }
 

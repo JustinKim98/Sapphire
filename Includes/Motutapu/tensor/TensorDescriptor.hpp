@@ -42,7 +42,7 @@ class TensorDescriptor
     TensorData BackwardData;
 
     //! Key to identify tensor data
-    int Key = -1;
+    unsigned int Key = -1;
 
     //! Add unit Key if unit was used as output or flow-through type
     //! \param wrapper : Wrapper for starting back propagation on this tensor
@@ -54,11 +54,13 @@ class TensorDescriptor
     //! Add unit key if unit was used as operand only
     //! \param tensorKey : Key of the tensor that this tensor should receive
     //! gradient from
-    void AppendOperandHistory(int tensorKey);
+    void AppendOperandHistory(unsigned int tensorKey);
 
     void RemoveGradientInputKey(int tensorKey);
 
-    //! Removes last history from the history list
+    //! Removes last history from the history list if it is operand history
+    void PopIfOperandHistory();
+
     void PopHistory();
 
     //! Create new tensor if last tensor required output saving
@@ -73,18 +75,8 @@ class TensorDescriptor
     }
 
     //! Checks if next operation is output unit in back propagation
-    //! Removes operand history if it is full
     //! \return : true if ready false otherwise
-    bool IsBackPropReady()
-    {
-        if (m_history.empty())
-            return false;
-
-        if (m_history.back().IsOutput)
-            return true;
-
-        return false;
-    }
+    [[nodiscard]] bool IsBackPropReady() const;
 
     const std::unique_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
     {
@@ -110,7 +102,6 @@ class TensorDescriptor
         History(const History& history) = delete;
         History& operator=(History&& history) noexcept = default;
         History& operator=(const History& history) = delete;
-
 
         void AddGradientInputTensorKey(int key)
         {

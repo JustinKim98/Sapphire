@@ -8,24 +8,17 @@
 #define MOTUTAPU_MODEL_HPP
 
 #include <Motutapu/operations/Unit.hpp>
-#include <Motutapu/tensor/TensorDescriptor.hpp>
 #include <Motutapu/tensor/Tensor.hpp>
+#include <Motutapu/tensor/TensorDescriptor.hpp>
 #include <string>
 #include <unordered_map>
 
 namespace Motutapu
 {
-//! Descriptor storing unit key and its stream
-struct UnitKeyDescriptor
-{
-    int Key;
-    int StreamId;
-};
-
 class Model
 {
-public:
-    Model(size_t batchSize, std::string name);
+ public:
+    explicit Model(std::string name);
     ~Model() = default;
 
     Model(const Model& model) = delete;
@@ -39,82 +32,62 @@ public:
     //! Registers and assigns key to tensorDesc
     int RegisterTensorDescriptor(Util::TensorDescriptor& tensorDesc);
 
-    //! Initializes gradients before performing AutoGrad
-    void ZeroGrad();
-
     //! Automatically calculates gradient
-    //! \param tensorKey : tensor key to the descriptor to start back propagation
+    //! \param tensorKey : tensor key to the descriptor to start back
+    //! propagation
     void AutoGrad(int tensorKey);
 
+    //! Initializes gradients before training every epoch
+    void ZeroGrad();
+
+    //! Returns unitDataWrapper with given key
     UnitDataWrapper GetUnitDataWrapper(int key);
 
     //! Converts tensor into vector in 1 dimensional format
     //! \param tensor : tensor to extract data from
-    const std::vector<float>& GetData(Tensor tensor);
+    [[nodiscard]] const std::vector<float>& GetData(Tensor tensor);
 
     //! Sets data directly to the tensor
     void SetData(const std::vector<float>& data);
 
-    Util::TensorDescriptor& GetDescriptor(int key)
-    {
-        return m_tensorDescriptorPool.GetDescriptor(key);
-    }
+    Util::TensorDescriptor& GetDescriptor(int key);
 
-private:
-
+ private:
     class TensorDescriptorPool
     {
-    public:
-        Util::TensorDescriptor& GetDescriptor(int key)
-        {
-            return TensorDescMap[key];
-        }
-
+     public:
         std::unordered_map<int, Util::TensorDescriptor> TensorDescMap;
-
-
         int Counter = 0;
     };
 
     class UnitPool
     {
-    public:
-        UnitDataWrapper GetUnitDataWrapper(int key)
-        {
-            return UnitWrapperMap[key];
-        }
-
+     public:
         std::unordered_map<int, UnitDataWrapper> UnitWrapperMap;
-
-
         int Counter = 0;
     };
 
-
-    //! Order of the operation
-    std::list<int> m_operationOrder;
     TensorDescriptorPool m_tensorDescriptorPool;
     UnitPool m_unitPool;
-    size_t m_batchSize;
     std::string m_name;
 };
 
 //! Singleton class for model management
 class ModelManager
 {
-public:
+ public:
     static Model& GetModel(const std::string& name);
 
     static Model& GetCurrentModel();
 
-    static Model& SetModel(const std::string& name);
+    static void SetCurrentModel(const std::string& name);
 
     static void AddModel(const std::string& name);
 
-private:
+ private:
     static std::string currentModel;
     static std::unordered_map<std::string, Model> m_modelMap;
 };
-}
+}  // namespace Motutapu
 
 #endif

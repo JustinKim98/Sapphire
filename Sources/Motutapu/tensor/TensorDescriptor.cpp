@@ -41,7 +41,6 @@ TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
 TensorDescriptor &TensorDescriptor::operator=(
     TensorDescriptor &&tensorData) noexcept
 {
-
     ForwardData = tensorData.ForwardData;
     BackwardData = tensorData.BackwardData;
     m_requireOutputSaving = tensorData.m_requireOutputSaving;
@@ -58,7 +57,7 @@ void TensorDescriptor::AppendOutputHistory(
     m_history.emplace_back(History(std::move(wrapper)));
 }
 
-void TensorDescriptor::AppendOperandHistory(int tensorKey)
+void TensorDescriptor::AppendOperandHistory(unsigned int tensorKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {
@@ -94,9 +93,32 @@ void TensorDescriptor::RemoveGradientInputKey(int tensorKey)
     history.GradientInputTensorKeys.erase(it);
 }
 
+void TensorDescriptor::PopIfOperandHistory()
+{
+    if (!m_history.empty() && !m_history.back().IsOutput)
+        m_history.pop_back();
+}
+
 void TensorDescriptor::PopHistory()
 {
     if (!m_history.empty())
         m_history.pop_back();
+}
+
+bool TensorDescriptor::IsBackPropReady() const
+
+{
+    if (m_history.empty())
+        return false;
+    else if (m_history.back().IsOutput)
+        return true;
+    else
+    {
+        const auto &lastHistory = m_history.back();
+        if (lastHistory.GradientInputTensorKeys.empty())
+            return true;
+    }
+
+    return false;
 }
 }  // namespace Motutapu::Util
