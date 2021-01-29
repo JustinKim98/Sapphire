@@ -12,19 +12,19 @@ Model::Model(std::string name) : m_name(std::move(name))
 {
 }
 
-int Model::RegisterUnitWrapper(UnitDataWrapper& unitWrapper)
+int Model::RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
 {
-    const int unitKey = m_unitPool.Counter;
-    unitWrapper.Key = unitKey;
+    const int unitKey = m_unitPool.Counter++;
+    unitDataWrapper.Key = unitKey;
 
-    m_unitPool.UnitWrapperMap[unitKey] = unitWrapper;
+    m_unitPool.UnitWrapperMap[unitKey] = unitDataWrapper;
 
     return unitKey;
 }
 
 int Model::RegisterTensorDescriptor(Util::TensorDescriptor& tensorDesc)
 {
-    const int tensorDescKey = m_tensorDescriptorPool.Counter;
+    const int tensorDescKey = m_tensorDescriptorPool.Counter++;
     tensorDesc.Key = tensorDescKey;
 
     m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
@@ -47,7 +47,7 @@ void Model::AutoGrad(int tensorKey)
 
         for (size_t i = 0; i < outputTensorKeys.size(); ++i)
         {
-            outputTensorDataVector.at(i) =
+            outputTensorDataVector[i] =
                 GetDescriptor(outputTensorKeys.at(i)).BackwardData;
         }
 
@@ -68,7 +68,7 @@ void Model::AutoGrad(int tensorKey)
     }
 }
 
-UnitDataWrapper Model::GetUnitDataWrapper(int key)
+UnitDataWrapper Model::GetUnitDataWrapper(int key) const
 {
     return m_unitPool.UnitWrapperMap.at(key);
 }
@@ -78,6 +78,10 @@ Util::TensorDescriptor& Model::GetDescriptor(int key)
     return m_tensorDescriptorPool.TensorDescMap.at(key);
 }
 
+std::string ModelManager::m_currentModel;
+
+std::unordered_map<std::string, Model> ModelManager::m_modelMap;
+
 Model& ModelManager::GetModel(const std::string& name)
 {
     return m_modelMap.at(name);
@@ -85,12 +89,12 @@ Model& ModelManager::GetModel(const std::string& name)
 
 Model& ModelManager::GetCurrentModel()
 {
-    return m_modelMap.at(currentModel);
+    return m_modelMap.at(m_currentModel);
 }
 
 void ModelManager::SetCurrentModel(const std::string& name)
 {
-    currentModel = name;
+    m_currentModel = name;
 }
 
 void ModelManager::AddModel(const std::string& name)

@@ -26,10 +26,16 @@ class Model
     Model& operator=(const Model& model) = delete;
     Model& operator=(Model&& model) noexcept = default;
 
-    //! Registers module
-    int RegisterUnitWrapper(UnitDataWrapper& unitWrapper);
+    //! Registers unitDataWrapper to the unit
+    //! Assigns new key to the given unitDataWrapper
+    //! \param unitDataWrapper : unitDataWrapper to register
+    //! \return : Assigned key
+    int RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
 
     //! Registers and assigns key to tensorDesc
+    //! Assigns new key to the given tensorDesc
+    //! \param tensorDesc : tensor descriptor to register
+    //! \return : Assigned key
     int RegisterTensorDescriptor(Util::TensorDescriptor& tensorDesc);
 
     //! Automatically calculates gradient
@@ -41,7 +47,7 @@ class Model
     void ZeroGrad();
 
     //! Returns unitDataWrapper with given key
-    UnitDataWrapper GetUnitDataWrapper(int key);
+    UnitDataWrapper GetUnitDataWrapper(int key) const;
 
     //! Converts tensor into vector in 1 dimensional format
     //! \param tensor : tensor to extract data from
@@ -50,6 +56,9 @@ class Model
     //! Sets data directly to the tensor
     void SetData(const std::vector<float>& data);
 
+    //! Returns descriptor from the key
+    //! \param key : key of the descriptor
+    //! \return : tensor descriptor of given key
     Util::TensorDescriptor& GetDescriptor(int key);
 
  private:
@@ -85,7 +94,7 @@ class ModelManager
     static void AddModel(const std::string& name);
 
  private:
-    static std::string currentModel;
+    static std::string m_currentModel;
     static std::unordered_map<std::string, Model> m_modelMap;
 };
 }  // namespace Motutapu

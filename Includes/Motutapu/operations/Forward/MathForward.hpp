@@ -15,6 +15,7 @@ static Tensor MulOp(const Tensor& a, const Tensor& b);
 
 static Tensor AddOp(const Tensor& a, const Tensor& b);
 
+static void AddOpInplace(const Tensor& out, Tensor& a);
 }
 
 #endif

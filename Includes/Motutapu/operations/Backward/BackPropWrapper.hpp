@@ -49,7 +49,7 @@ class BackPropWrapper
  protected:
     //! Vector of tensorData that should give its output
     std::vector<unsigned int> m_gradientOutputKeys;
-    bool m_inplace;
+    bool m_inplace = false;
     int m_unitKey = -1;
 };
 }  // namespace Motutapu::BackProp

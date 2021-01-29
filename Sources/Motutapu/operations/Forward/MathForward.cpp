@@ -10,7 +10,7 @@
 #include <Motutapu/operations/Forward/MathForward.hpp>
 #include <vector>
 
-namespace Motutapu::Functional
+namespace Motutapu::NN::Functional
 {
 __attribute__((unused))
 static Tensor MulOp(const Tensor& a, const Tensor& b)
@@ -33,7 +33,7 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     const auto outputShape = Shape({ shapeA.At(0), shapeB.At(1) });
 
     Util::TensorDescriptor descOut(outputShape, type, device, batchSize, false);
-    model.RegisterTensorDescriptor(descOut);
+    const auto outputKey = model.RegisterTensorDescriptor(descOut);
 
     Compute::Mul(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
 
@@ -44,7 +44,7 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     descB.AppendOperandHistory(descOut.Key);
     descOut.AppendOutputHistory(std::move(backPropWrapper), false);
 
-    return Tensor(outputShape, descOut.Key);
+    return Tensor(outputShape, outputKey);
 }
 
 __attribute__((unused))
@@ -52,7 +52,7 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
 {
     Model& model = ModelManager::GetCurrentModel();
 
-    //! Perform out = a*b
+    //! Get descriptors
     Util::TensorDescriptor& descA =
         model.GetDescriptor(a.TensorDescriptorKey());
     Util::TensorDescriptor& descB =
@@ -87,17 +87,15 @@ static void AddOpInplace(const Tensor& out, Tensor& a)
 {
     Model& model = ModelManager::GetCurrentModel();
 
-    //! Perform out = a*b
+    //! Get descriptors
     Util::TensorDescriptor& descA =
         model.GetDescriptor(a.TensorDescriptorKey());
     Util::TensorDescriptor& descOut =
         model.GetDescriptor(out.TensorDescriptorKey());
 
+    //! Derive output shape
     auto shapeA = descA.ForwardData.TensorShape;
     const auto outputShape = descOut.ForwardData.TensorShape;
-
-
-    const auto batchSize = descA.ForwardData.BatchSize;
 
     Compute::Add(descOut.ForwardData, descA.ForwardData);
 
@@ -107,7 +105,5 @@ static void AddOpInplace(const Tensor& out, Tensor& a)
     descA.AppendOperandHistory(descOut.Key);
     descOut.AppendOperandHistory(descOut.Key);
     descOut.AppendOutputHistory(std::move(backPropWrapper), false);
-
-    return Tensor(outputShape, descOut.Key);
 }
 }  // namespace Motutapu::Functional
