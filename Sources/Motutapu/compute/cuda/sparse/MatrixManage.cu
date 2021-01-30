@@ -4,7 +4,7 @@
 //// personal capacity and are not conveying any rights to any intellectual
 //// property of any third parties.
 //
-//#include <Motutapu/compute/cuda/CudaParams.hpp>
+//#include <Motutapu/compute/cuda/CudaParams.cuh>
 //#include <Motutapu/compute/cuda/sparse/MatrixManage.cuh>
 //#include <Motutapu/util/SparseMatrix.hpp>
 //#include <cstdint>

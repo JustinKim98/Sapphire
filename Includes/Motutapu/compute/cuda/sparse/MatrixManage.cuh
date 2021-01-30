@@ -8,7 +8,7 @@
 #define MOTUTAPU_COMPUTE_CUDA_SPARSE_MATRIXMANAGE_CUH
 
 #include <cstdint>
-#include <Motutapu/compute/cuda/CudaParams.hpp>
+#include <Motutapu/compute/cuda/CudaParams.cuh>
 #include <Motutapu/util/SparseMatrix.hpp>
 
 
