@@ -1,10 +1,11 @@
 #ifdef WITH_CUDA
 
+#include <Motutapu/compute/cuda/Memory.cuh>
 #include <iostream>
-#include <Motutapu/Test.hpp>
-#include <cuda_runtime.h>
 #include "doctest.h"
 
+namespace Motutapu::Test
+{
 void PrintCudaVersion()
 {
     int runtime_ver;
@@ -18,5 +19,24 @@ void PrintCudaVersion()
     float* ptr;
     auto error = cudaMalloc((void**)&ptr, sizeof(float));
     CHECK(error == cudaSuccess);
+    error = cudaFree(ptr);
+    CHECK(error == cudaSuccess);
+
+    std::cout << "Cuda Malloc and free successful" << std::endl;
 }
+
+void MallocTest()
+{
+    float* ptr;
+    if (!Compute::Cuda::CudaMalloc(&ptr, 100))
+        throw std::runtime_error("CudaMalloc failed");
+
+    if (!Compute::Cuda::CudaFree(ptr))
+    {
+        throw std::runtime_error("CudaFree failed");
+    }
+}
+
+}  // namespace Motutapu::Test
+
 #endif
