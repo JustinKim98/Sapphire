@@ -38,12 +38,12 @@ void Mul(Util::TensorData& out, const Util::TensorData& a,
 void Mul(Util::TensorData& out, const Util::TensorData& a);
 
 //! Performs GEMM (out = a*b + c)
-
+[[maybe_unused]]
 void Gemm(Util::TensorData& out, const Util::TensorData& a,
-          const Util::TensorData& b, const Util::TensorData& c);
+                 const Util::TensorData& b, const Util::TensorData& c);
 
 //! Performs in place GEMM (out = a*b + out)
-
+[[maybe_unused]]
 void Gemm(Util::TensorData& out, const Util::TensorData& a,
           const Util::TensorData& b);
 
@@ -70,6 +70,6 @@ void Pow(Util::TensorData& out, int factor);
 //! Performs out = a^factor for each element
 
 void Pow(Util::TensorData& out, const Util::TensorData& a);
-}
+}  // namespace Motutapu::Compute
 
 #endif

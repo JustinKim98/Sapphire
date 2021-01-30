@@ -25,7 +25,7 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
     auto success = true;
-    float* cudaPtr;
+    float* cudaPtr = nullptr;
 
     auto key = std::make_pair(deviceId, size);
     const auto itr = m_cudaFreeMemoryPool.find(key);
@@ -39,8 +39,9 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
         return targetChunk.Data;
     }
 
+    float* otherPtr;
     success &= Compute::Cuda::CudaSetDevice(deviceId);
-    success &= Compute::Cuda::CudaMalloc(&cudaPtr, size);
+    success &= Compute::Cuda::CudaMalloc(&otherPtr, size);
     MemoryChunk memoryChunk(size, cudaPtr);
     memoryChunk.deviceId = deviceId;
 

@@ -23,7 +23,8 @@ class Device
  public:
     Device() = default;
 
-    Device(int id, DeviceType type, std::string name);
+    Device(std::string name);
+    Device(int id, std::string name);
     ~Device() = default;
 
     Device(const Device& device) = default;

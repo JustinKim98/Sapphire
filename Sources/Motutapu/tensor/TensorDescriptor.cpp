@@ -13,9 +13,8 @@ namespace Motutapu::Util
 TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
                                    const Device &device, unsigned int batchSize)
     : ForwardData(shape, type, device, batchSize),
-      BackwardData(shape, type, device, batchSize),
       m_requireOutputSaving(false),
-      m_requireGrad(false)
+      m_trainable(false)
 {
 }
 
@@ -25,7 +24,7 @@ TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
     : ForwardData(shape, type, device, batchSize),
       BackwardData(shape, type, device, batchSize),
       m_requireOutputSaving(requireOutputSaving),
-      m_requireGrad(true)
+      m_trainable(true)
 {
 }
 
@@ -33,7 +32,7 @@ TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
     : ForwardData(tensorData.ForwardData),
       BackwardData(tensorData.BackwardData),
       m_requireOutputSaving(tensorData.m_requireOutputSaving),
-      m_requireGrad(tensorData.m_requireGrad),
+      m_trainable(tensorData.m_trainable),
       m_history(std::move(tensorData.m_history))
 {
 }
@@ -44,7 +43,7 @@ TensorDescriptor &TensorDescriptor::operator=(
     ForwardData = tensorData.ForwardData;
     BackwardData = tensorData.BackwardData;
     m_requireOutputSaving = tensorData.m_requireOutputSaving;
-    m_requireGrad = tensorData.m_requireGrad;
+    m_trainable = tensorData.m_trainable;
 
     m_history = std::move(tensorData.m_history);
     return *this;

@@ -92,45 +92,43 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData src)
     return success;
 }
 
-bool TensorData::ChangeDevice(TensorData tensorData, Device device)
+bool TensorData::SendTo(const Device &device)
 {
-    const auto currentDevice = tensorData.GetDevice();
-    if (currentDevice == device)
+    if (m_device == device)
     {
         return false;
     }
 
-    if (currentDevice.Type() == DeviceType::CPU &&
+    if (m_device.Type() == DeviceType::CPU && device.Type() == DeviceType::CUDA)
+    {
+        m_device = device;
+        m_allocateCuda(BatchSize);
+        TensorData::m_toGpu(*this);
+    }
+
+    if (m_device.Type() == DeviceType::CUDA && device.Type() == DeviceType::CPU)
+    {
+        m_device = device;
+        TensorData::m_toHost(*this);
+    }
+
+    if (m_device.Type() == DeviceType::CUDA &&
         device.Type() == DeviceType::CUDA)
     {
-        tensorData.m_allocateCuda(tensorData.BatchSize);
-        TensorData::CopyHostToGpu(tensorData);
+        TensorData::m_toHost(*this);
+        m_device = device;
+        TensorData::m_toGpu(*this);
     }
-
-    if (currentDevice.Type() == DeviceType::CUDA &&
-        device.Type() == DeviceType::CPU)
-    {
-        TensorData::CopyGpuToHost(tensorData);
-    }
-
-    if (currentDevice.Type() == DeviceType::CUDA &&
-        device.Type() == DeviceType::CUDA)
-    {
-        TensorData::CopyGpuToHost(tensorData);
-        TensorData::CopyHostToGpu(tensorData);
-    }
-
-    tensorData.m_device = device;
 
     return true;
 }
 
-void TensorData::CopyHostToGpu(const TensorData &tensorData)
+void TensorData::m_toGpu(const TensorData &tensorData)
 {
     if (tensorData.GetDevice().Type() != DeviceType::CUDA)
     {
         throw std::invalid_argument(
-            "CopyHostToGpu - Given tensor data is not GPU tensor");
+            "m_toGpu - Given tensor data is not GPU tensor");
     }
 
     if (tensorData.GetType() == Type::Sparse)
@@ -147,12 +145,12 @@ void TensorData::CopyHostToGpu(const TensorData &tensorData)
     }
 }
 
-void TensorData::CopyGpuToHost(const TensorData &tensorData)
+void TensorData::m_toHost(const TensorData &tensorData)
 {
     if (tensorData.GetDevice().Type() != DeviceType::CUDA)
     {
         throw std::invalid_argument(
-            "CopyHostToGpu - Given tensor data is not GPU tensor");
+            "m_toGpu - Given tensor data is not GPU tensor");
     }
 
     if (tensorData.GetType() == Type::Sparse)
@@ -190,7 +188,7 @@ bool TensorData::m_freeGpu()
     if (m_type == Type::Sparse)
     {
         isSuccess &=
-            Compute::Cuda::CudaFree(reinterpret_cast<void*>(SparseMatCuda));
+            Compute::Cuda::CudaFree(reinterpret_cast<void *>(SparseMatCuda));
     }
     else
     {
@@ -225,7 +223,7 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
     {
         size_t totalSize = paddedColSize * paddedRowSize * batchSize;
 
-        if(TensorShape.Dim() > 2)
+        if (TensorShape.Dim() > 2)
         {
             for (auto i = 0; i < static_cast<int>(TensorShape.Dim()) - 1; ++i)
                 totalSize *= TensorShape.At(i);
@@ -267,7 +265,7 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
     {
         size_t totalSize = paddedColSize * paddedRowSize * batchSize;
 
-        if(TensorShape.Dim() > 2)
+        if (TensorShape.Dim() > 2)
         {
             for (auto i = 0; i < static_cast<int>(TensorShape.Dim()) - 1; ++i)
                 totalSize *= TensorShape.At(i);

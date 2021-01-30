@@ -40,4 +40,16 @@ int Tensor::TensorDescriptorKey() const
 {
     return m_tensorDescriptorKey;
 }
+
+void Tensor::SendTo(const Device& device) const
+{
+    Model& model = ModelManager::GetCurrentModel();
+    Util::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
+    desc.ForwardData.SendTo(device);
+    if (desc.IsTrainable())
+    {
+        desc.BackwardData.SendTo(device);
+    }
+}
+
 }  // namespace Motutapu

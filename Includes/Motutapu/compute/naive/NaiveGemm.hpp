@@ -4,15 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_TEST_NAIVEGEMM_HPP
-#define MOTUTAPU_TEST_NAIVEGEMM_HPP
+#ifndef MOTUTAPU_COMPUTE_NAIVEGEMM_HPP
+#define MOTUTAPU_COMPUTE_NAIVEGEMM_HPP
 
-namespace Motutapu::Test::Naive
+namespace Motutapu::Compute::Naive::Dense
 {
-static void Gemm(float* out, float* A, float* B, float* C, unsigned int paddedM,
-                 unsigned int paddedN, unsigned int paddedK,
-                 unsigned int batchSize,
-                 bool broadcastA, bool broadcastB, bool broadcastC);
-} // namespace Motutapu::Test::Naive
+void NaiveGemm(float* out, float* A, float* B, float* C,
+                      unsigned int paddedM, unsigned int paddedN,
+                      unsigned int paddedK, unsigned int batchSize,
+                      bool broadcastA, bool broadcastB, bool broadcastC);
+}  // namespace Motutapu::Compute::Naive::Dense
 
 #endif

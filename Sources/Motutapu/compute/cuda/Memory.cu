@@ -34,7 +34,7 @@ __host__ bool CudaSetDevice(int deviceId)
 __host__ __device__ bool CudaMalloc(float** ptr, unsigned int size)
 {
     const cudaError_t error =
-        cudaMalloc(reinterpret_cast<void**>(ptr), size * sizeof(float));
+        cudaMalloc((void**)ptr, size * sizeof(float));
     return error == cudaSuccess;
 }
 

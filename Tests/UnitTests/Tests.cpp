@@ -6,9 +6,10 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include "doctest.h"
-#include "ComputationTest/TestCudaGemm.hpp"
 #include <Motutapu/Test.hpp>
+#include <iostream>
+#include "ComputationTest/TestCudaGemm.hpp"
+#include "doctest.h"
 
 namespace Motutapu::Test
 {
@@ -24,17 +25,15 @@ TEST_CASE("Check cuda")
 #endif
 }
 
-TEST_CASE("GPU GEMM with tensor cores")
+TEST_CASE("Computation Test")
 {
+    SUBCASE("GPU GEMM with tensor cores")
+    {
 #ifdef WITH_CUDA
-    //TensorGemmTest();
+        std::cout << "test TensorGemm" << std::endl;
+        TensorGemmTest();
 #endif
+    }
 }
 
-TEST_CASE("GPU GEMM")
-{
-#ifdef WITH_CUDA
-    //FloatGemmTest();
-#endif
-}
-}
+}  // namespace Motutapu::Test

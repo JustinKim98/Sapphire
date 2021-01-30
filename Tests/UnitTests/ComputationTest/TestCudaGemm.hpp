@@ -7,16 +7,14 @@
 #ifndef MOTUTAPU_TEST_TESTCUDAGEMM_HPP
 #define MOTUTAPU_TEST_TESTCUDAGEMM_HPP
 
+#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/dense/Gemm.cuh>
 #include <Motutapu/tensor/Tensor.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
-#include <Motutapu/compute/cuda/dense/Gemm.cuh>
-#include <Motutapu/compute/cuda/Memory.cuh>
 
 namespace Motutapu::Test
 {
 void TensorGemmTest();
-
-void FloatGemmTest();
 }
 
 #endif

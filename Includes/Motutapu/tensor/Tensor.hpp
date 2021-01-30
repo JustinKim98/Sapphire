@@ -30,9 +30,12 @@ class Tensor
     [[nodiscard]] Device GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
+    //! Set Tensor device
+    void SendTo(const Device& device) const;
+
  private:
     Shape m_shape;
-    unsigned int m_tensorDescriptorKey;
+    int m_tensorDescriptorKey;
 };
 }  // namespace Motutapu
 

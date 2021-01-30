@@ -9,13 +9,21 @@
 
 namespace Motutapu
 {
-Device::Device(int id, DeviceType type, std::string name)
-    : m_id(id), m_type(type), m_name(std::move(name))
+Device::Device(std::string name)
+    : m_id(-1),
+      m_type(DeviceType::CPU),
+      m_name(std::move(name)),
+      m_padByteSize(32)
 {
-    if (type == DeviceType::CPU)
-        m_padByteSize = 32;
-    else if (type == DeviceType::CUDA)
-        m_padByteSize = 1;
+    //! Todo : change padByteSize according to hardware support
+}
+
+Device::Device(int id, std::string name)
+    : m_id(id),
+      m_type(DeviceType::CUDA),
+      m_name(std::move(name)),
+      m_padByteSize(32)
+{
 }
 
 bool Device::operator==(const Device& device) const
@@ -28,4 +36,4 @@ bool Device::operator!=(const Device& device) const
 {
     return !(*this == device);
 }
-}  // namespace Takion::Compute
+}  // namespace Motutapu

@@ -69,9 +69,11 @@ class TensorDescriptor
         return m_requireOutputSaving;
     }
 
-    [[nodiscard]] bool RequireGrad() const
+    //! Returns whether this tensorDescriptor is trainable
+    //! \return : True if gradient is required false otherwise
+    [[nodiscard]] bool IsTrainable() const
     {
-        return m_requireGrad;
+        return m_trainable;
     }
 
     //! Checks if next operation is output unit in back propagation
@@ -116,7 +118,7 @@ class TensorDescriptor
     };
 
     bool m_requireOutputSaving = false;
-    bool m_requireGrad = true;
+    bool m_trainable = true;
 
     std::list<History> m_history;
 };

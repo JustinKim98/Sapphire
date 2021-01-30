@@ -76,18 +76,18 @@ public:
     //! immediately returns false if change device is requested to same device
     //! \param tensorData : tensorData object to change device
     //! \param device : new device to set
-    static bool ChangeDevice(TensorData tensorData, Device device);
+    bool SendTo(const Device& device);
 
-    //! Copies data on the Host to Gpu
-    //! Only available for CUDA tensors
-    static void CopyHostToGpu(const TensorData& tensorData);
-
-    //! Copies data on the Host to Gpu
-    //! Only available for CUDA tensors
-    static void CopyGpuToHost(const TensorData& tensorData);
 
 private:
 
+    //! Copies data on the Host to Gpu
+    //! Only available for CUDA tensors
+    static void m_toGpu(const TensorData& tensorData);
+
+    //! Copies data on the Host to Gpu
+    //! Only available for CUDA tensors
+    static void m_toHost(const TensorData& tensorData);
 
     static unsigned long m_convertDenseToSparse(SparseMatrix* sparse,
                                                 const float* dense, Shape shape,

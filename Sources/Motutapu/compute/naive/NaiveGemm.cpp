@@ -4,17 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_TEST_NAIVEGEMM_HPP
-#define MOTUTAPU_TEST_NAIVEGEMM_HPP
-
 #include <Motutapu/compute/naive/NaiveGemm.hpp>
 #include <cstdlib>
 
-namespace Motutapu::Test::Naive
+namespace Motutapu::Compute::Naive::Dense
 {
-void Gemm(float* out, float* A, float* B, float* C, unsigned int paddedM,
-          unsigned int paddedN, unsigned int paddedK, unsigned int batchSize,
-          bool broadcastA, bool broadcastB, bool broadcastC)
+void NaiveGemm(float* out, float* A, float* B, float* C,
+                      unsigned int paddedM, unsigned int paddedN,
+                      unsigned int paddedK, unsigned int batchSize,
+                      bool broadcastA, bool broadcastB, bool broadcastC)
 {
     for (size_t batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
@@ -33,10 +31,7 @@ void Gemm(float* out, float* A, float* B, float* C, unsigned int paddedM,
 
                 batchPtrOut[paddedN * mIdx + nIdx] =
                     sum + batchPtrC[paddedM * mIdx + nIdx];
-                ;
             }
     }
 }
-}  // namespace Motutapu::Test::Naive
-
-#endif
+}  // namespace Motutapu::Compute::Naive::Dense
