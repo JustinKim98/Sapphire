@@ -42,7 +42,23 @@ if(USE_CUDA)
     CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
     message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 52 61 75)
+    add_compile_definitions(WITH_CUDA)
     message(STATUS "CUDA enabled")
+    set(
+            CUDA_NVCC_FLAGS
+            ${CUDA_NVCC_FLAGS};
+            -arch=sm_80
+            -gencode=arch=compute_70,code=sm_70
+            -gencode=arch=compute_75,code=sm_75
+            -gencode=arch=compute_80,code=sm_80
+            -gencode=arch=compute_86,code=sm_86
+            -gencode=arch=compute_86,code=compute_86
+            --std=c++17
+            --default-stream per-thread
+            --device-c
+            --cudart=static
+            --cudadevrt=static
+    )
 
 else()
     add_library(${target} ${sources})

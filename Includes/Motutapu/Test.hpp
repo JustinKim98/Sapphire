@@ -3,8 +3,8 @@
 
 int Add(int a, int b);
 
-#ifdef WITH_CUDA
+namespace Test::Cuda
+{
 void PrintCudaVersion();
-#endif
-
+}
 #endif 

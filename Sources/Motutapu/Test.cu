@@ -1,9 +1,12 @@
-#ifdef WITH_CUDA
+//#ifdef WITH_CUDA
 
 #include <iostream>
 #include <Motutapu/Test.hpp>
+#include <iostream>
 #include <cuda_runtime.h>
 
+namespace Test::Cuda
+{
 void PrintCudaVersion()
 {
     int runtime_ver;
@@ -13,5 +16,17 @@ void PrintCudaVersion()
     int driver_ver;
     cudaDriverGetVersion(&driver_ver);
     std::cout << "CUDA Driver version: " << driver_ver << std::endl;
+
+    float* toMalloc;
+    auto error = cudaMalloc((void**)&toMalloc, 100 * sizeof(float));
+    if (error != cudaSuccess)
+        throw std::runtime_error("Allocation failure");
+
+    error = cudaFree(toMalloc);
+    if (error != cudaSuccess)
+        throw std::runtime_error("Free failure");
+
+    std::cout << "CudaSuccess" << std::endl;
 }
-#endif
+}
+//#endif
