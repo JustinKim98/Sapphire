@@ -6,6 +6,7 @@
 
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>
+#include <Motutapu/compute/cuda/CudaParams.cuh>
 
 
 namespace Motutapu::Compute::Cuda::Dense

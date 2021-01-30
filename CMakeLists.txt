@@ -25,6 +25,24 @@ include_directories(Includes)
 include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
 
+# Find CUDA
+if (USE_CUDA)
+    find_package(CUDA 11.0 REQUIRED)
+    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
+    if (NOT CUDA_FOUND)
+        message(STATUS "CUDA not found")
+        set(USE_CUDA OFF)
+    else ()
+        add_definitions(-DUSE_CUDA)
+        enable_language("CUDA")
+        include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        set(CUDA_DEVICE_ORDER PCI_BUS_ID)
+        message(STATUS "CUDA Enabled")
+        add_compile_definitions(WITH_CUDA)
+    endif ()
+endif ()
+
 # Compile options
 include(CMake/CompileOptions.cmake)
 
@@ -33,42 +51,8 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
-# Build library
-if (USE_CUDA)
-    find_package(CUDA 11.0 REQUIRED)
-    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-    if (NOT CUDA_FOUND)
-        message(STATUS "CUDA not found")
-        set(USE_CUDA OFF)
-    else ()
-        add_compile_definitions(WITH_CUDA)
-        set(CUDA_DEVICE_ORDER PCI_BUS_ID)
-        message(STATUS "CUDA Enabled")
-    endif ()
-endif ()
-
 # Overrides
 set(CMAKE_MACOSX_RPATH ON)
-
-if (USE_CUDA)
-    add_definitions(-DUSE_CUDA)
-    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    enable_language("CUDA")
-    set(
-            CUDA_NVCC_FLAGS
-            ${CUDA_NVCC_FLAGS};
-            -arch=sm_80
-            -gencode=arch=compute_70,code=sm_70
-            -gencode=arch=compute_75,code=sm_75
-            -gencode=arch=compute_80,code=sm_80
-            -gencode=arch=compute_86,code=sm_86
-            -gencode=arch=compute_86,code=compute_86
-            --default-stream per-thread
-            #        --device-c
-            --cudart=shared
-            --cudadevrt=static
-    )
-endif ()
 
 # Project modules
 add_subdirectory(Libraries/doctest)

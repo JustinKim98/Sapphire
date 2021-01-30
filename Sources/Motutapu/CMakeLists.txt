@@ -23,8 +23,9 @@ file(GLOB_RECURSE sources
 file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 
 if(USE_CUDA)
-    enable_language("CUDA")
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
+    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 86)
 else()
     add_library(${target} ${sources})
 endif()

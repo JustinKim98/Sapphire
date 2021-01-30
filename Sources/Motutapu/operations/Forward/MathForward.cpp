@@ -46,7 +46,6 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     return Tensor(outputShape, outputKey);
 }
 
-__attribute__((unused))
 static Tensor AddOp(const Tensor& a, const Tensor& b)
 {
     Model& model = ModelManager::GetCurrentModel();
@@ -81,7 +80,6 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
     return Tensor(outputShape, descOut.Key);
 }
 
-__attribute__((unused))
 static void AddOpInplace(const Tensor& out, Tensor& a)
 {
     Model& model = ModelManager::GetCurrentModel();

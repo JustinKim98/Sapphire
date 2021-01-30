@@ -87,6 +87,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
             ${WARN_AS_ERROR_FLAGS}
 
             /wd4819       # -> disable warning: The file contains a character that cannot be represented in the current code page (949) (caused by pybind11)
+            /wd4505       # ->
+            /wd4267
+            /wd4100
+            /wd4245
 
             #$<$<CONFIG:Debug>:
             #/RTCc        # -> value is assigned to a smaller data type and results in a data loss
@@ -171,3 +175,23 @@ if (CMAKE_BUILD_TYPE MATCHES Debug AND (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR C
             -ftest-coverage
             )
 endif()
+
+# NVCC configurations in case of using CUDA
+if (USE_CUDA)
+
+    set(
+            CUDA_NVCC_FLAGS
+            ${CUDA_NVCC_FLAGS};
+            -arch=sm_80
+            -gencode=arch=compute_70,code=sm_70
+            -gencode=arch=compute_75,code=sm_75
+            -gencode=arch=compute_80,code=sm_80
+            -gencode=arch=compute_86,code=sm_86
+            -gencode=arch=compute_86,code=compute_86
+            --default-stream per-thread
+            #        --device-c
+            --cudart=shared
+            --cudadevrt=static
+            --std=c++17
+    )
+endif ()
