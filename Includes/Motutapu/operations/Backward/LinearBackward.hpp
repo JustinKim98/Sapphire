@@ -25,7 +25,6 @@ class LinearBackProp : public BackPropWrapper
     {
         auto& model = ModelManager::GetCurrentModel();
         const auto inputShape = input.GetShape();
-        const auto& device = input.GetDevice();
         auto unitDataWrapper = model.GetUnitDataWrapper(m_unitKey);
 
         Util::TensorData weight = unitDataWrapper.TensorDataMap["weight"];

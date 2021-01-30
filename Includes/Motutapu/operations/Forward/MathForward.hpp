@@ -9,12 +9,15 @@
 
 #include <Motutapu/tensor/Tensor.hpp>
 
-namespace Motutapu::Functional
+namespace Motutapu::NN::Functional
 {
+[[maybe_unused]]
 static Tensor MulOp(const Tensor& a, const Tensor& b);
 
+[[maybe_unused]]
 static Tensor AddOp(const Tensor& a, const Tensor& b);
 
+[[maybe_unused]]
 static void AddOpInplace(const Tensor& out, Tensor& a);
 }
 

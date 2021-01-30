@@ -34,7 +34,8 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     {
         auto targetChunk = itr->second;
         m_cudaFreeMemoryPool.erase(itr);
-        m_cudaBusyMemoryPool[std::make_pair(deviceId, cudaPtr)] = targetChunk;
+        m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, cudaPtr),
+                                     targetChunk);
         return targetChunk.Data;
     }
 
@@ -43,7 +44,8 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     MemoryChunk memoryChunk(size, cudaPtr);
     memoryChunk.deviceId = deviceId;
 
-    m_cudaBusyMemoryPool[std::make_pair(deviceId, cudaPtr)] = memoryChunk;
+    m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, cudaPtr),
+                                 memoryChunk);
 
     if (!success)
     {
@@ -63,13 +65,13 @@ float* MemoryManager::GetMemoryHost(size_t size)
     {
         auto targetChunk = itr->second;
         m_hostFreeMemoryPool.erase(itr);
-        m_hostBusyMemoryPool[targetChunk.Data] = targetChunk;
+        m_hostBusyMemoryPool.emplace(targetChunk.Data, targetChunk);
         return targetChunk.Data;
     }
 
     memory = new float[size];
     MemoryChunk memoryChunk(size, memory);
-    m_hostBusyMemoryPool[memory] = memoryChunk;
+    m_hostBusyMemoryPool.emplace(memory, memoryChunk);
 
     return memory;
 }

@@ -99,6 +99,6 @@ void ModelManager::SetCurrentModel(const std::string& name)
 
 void ModelManager::AddModel(const std::string& name)
 {
-    m_modelMap[name] = Model(name);
+    m_modelMap.emplace(name, Model(name));
 }
 }  // namespace Motutapu
