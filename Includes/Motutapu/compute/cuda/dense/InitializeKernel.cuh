@@ -7,26 +7,18 @@
 #ifndef MOTUTAPU_COMPUTE_CUDA_DENSE_INITIALIZE_KERNEL_CUH
 #define MOTUTAPU_COMPUTE_CUDA_DENSE_INITIALIZE_KERNEL_CUH
 
-#include <curand_kernel.h>
 #include <cuda_fp16.h>
+#include <curand_kernel.h>
 
 namespace Motutapu::Compute::Cuda::Dense
 {
-__global__ void initRandomKernel(curandState* state);
+__global__ void NormalKernel(float* data, float mean, float sd,
+                             unsigned int size, int seed);
 
-__global__ void NormalFloatKernel(float* data, float mean, float sd,
-                                  unsigned int size,
-                                  curandState* state);
+__global__ void UniformKernel(float* data, float min, float max,
+                              unsigned int size, int seed);
 
-__global__ void NormalHalfKernel(half* data, half mean, half sd,
-                                 unsigned int size,
-                                 curandState* state);
-
-__global__ void ScalarFloatKernel(float* data,
-                                  float value, unsigned int size);
-
-__global__ void ScalarHalfKernel(half* data,
-                                 half value, unsigned int size);
-}
+__global__ void ScalarKernel(float* data, float value, unsigned int size);
+}  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif

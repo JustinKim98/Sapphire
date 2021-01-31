@@ -8,12 +8,11 @@
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <Motutapu/util/Device.hpp>
-#include <iostream>
+#include "doctest.h"
 
 namespace Motutapu::Test
 {
-
-void TensorGemmTest()
+void TestGemm()
 {
     const auto M = 64;
     const auto N = 64;
@@ -36,7 +35,16 @@ void TensorGemmTest()
 
     TensorUtil::TensorData Out(shapeA, Type::Dense, host, batchSize);
 
+    //! TODO : Write initialize kernel
+
     Compute::Gemm(Out, A, B, C);
+
+    float cpuGemmResult[Out.DenseTotalLength];
+
+    for (size_t i = 0; i < Out.DenseTotalLength; ++i)
+    {
+        cpuGemmResult[i] = Out.DenseMatHost[i];
+    }
 
     A.SendTo(cuda);
     B.SendTo(cuda);
@@ -44,6 +52,14 @@ void TensorGemmTest()
     Out.SendTo(cuda);
 
     Compute::Gemm(Out, A, B, C);
+
+    Out.SendTo(host);
+
+    for (size_t i = 0; i < Out.DenseTotalLength; ++i)
+    {
+        CHECK(static_cast<int>(cpuGemmResult[i]) ==
+              static_cast<int>(Out.DenseMatHost[i]));
+    }
 }
 
 }  // namespace Motutapu::Test

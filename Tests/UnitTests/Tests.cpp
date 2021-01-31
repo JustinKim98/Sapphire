@@ -26,13 +26,17 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Computation Test")
 {
-    SUBCASE("Basic funtionality test")
+    SUBCASE("Basic functionality test")
     {
         MallocTest();
         std::cout << "Malloc test successful" << std::endl;
     }
 
-
+    SUBCASE("Gemm With Cuda")
+    {
+        TestGemm();
+        std::cout << "Gemm test successful" << std::endl;
+    }
 }
 
 }  // namespace Motutapu::Test

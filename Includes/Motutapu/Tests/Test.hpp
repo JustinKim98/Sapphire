@@ -10,6 +10,8 @@ void PrintCudaVersion();
 
 void MallocTest();
 
+void TestGemm();
+
 #endif
 }  // namespace Motutapu::Test
 

@@ -11,8 +11,7 @@
 
 namespace Motutapu::Compute
 {
-void NormalFloat(TensorUtil::TensorData data, float mean, float sd,
-                        unsigned int size);
+void Normal(TensorUtil::TensorData data, float mean, float sd);
 
 void Ones(TensorUtil::TensorData data);
 

@@ -105,7 +105,7 @@ private:
     void m_allocateCuda(unsigned int batchSize);
 
     //! Free space allocated on CPU memory
-    void m_freeCpu() const;
+    void m_freeHost() const;
 
     //! Free space allocated on GPU memory
     bool m_freeGpu();

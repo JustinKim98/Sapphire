@@ -28,7 +28,7 @@ TensorData::TensorData(Shape shape, Type type, Device device,
 
 TensorData::~TensorData()
 {
-    m_freeCpu();
+    m_freeHost();
 
     if (m_device.Type() == DeviceType::CUDA)
     {
@@ -160,14 +160,13 @@ void TensorData::m_toHost(const TensorData &tensorData)
     else
     {
         Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID());
-
         Compute::Cuda::MemcpyGpuToHost(tensorData.DenseMatHost,
                                        tensorData.DenseMatCuda,
                                        tensorData.BatchSize);
     }
 }
 
-void TensorData::m_freeCpu() const
+void TensorData::m_freeHost() const
 {
     if (m_type == Type::Sparse)
     {
@@ -175,7 +174,7 @@ void TensorData::m_freeCpu() const
     }
     else
     {
-        delete[] DenseMatHost;
+        Util::MemoryManager::UnAssignMemoryHost(DenseMatHost);
     }
 }
 
@@ -192,7 +191,7 @@ bool TensorData::m_freeGpu()
     }
     else
     {
-        isSuccess &= Compute::Cuda::CudaFree(DenseMatCuda);
+        Util::MemoryManager::UnAssignMemoryCuda(DenseMatCuda, m_device.GetID());
     }
 
     return isSuccess;

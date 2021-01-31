@@ -7,29 +7,18 @@
 #ifndef MOTUTAPU_COMPUTE_CUDA_DENSE_INITIALIZE_CUH
 #define MOTUTAPU_COMPUTE_CUDA_DENSE_INITIALIZE_CUH
 
+#include <Motutapu/compute/cuda/CudaParams.cuh>
 #include <Motutapu/compute/cuda/dense/InitializeKernel.cuh>
-#include <Motutapu/compute/cuda/CudaParams.hpp>
-
 
 namespace Motutapu::Compute::Cuda::Dense
 {
-__host__ bool InitRandom(curandState_t* state)
-{
-    auto successful = true;
+__host__ void Normal(float* data, float mean, float sd, unsigned int size,
+                     int seed);
 
-    successful &= cudaMalloc(&state, MAX_THREAD_DIM_X) == cudaSuccess;
-    initRandomKernel(state);
+__host__ void Uniform(float* data, float min, float max, unsigned int size,
+                      int seed);
 
-    return successful;
-}
-
-__host__ void NormalFloat(float* data, float mean, float sd, unsigned int size,
-                          curandState_t* state)
-{
-    const auto numThreads = (size < MAX_THREAD_DIM_X) ? size : MAX_THREAD_DIM_X;
-
-    NormalFloatKernel<<<1, numThreads>>>(data, mean, sd, size, state);
-}
-}
+__host__ void Scalar(float* data, float value, unsigned int size, int seed);
+}  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif

@@ -11,7 +11,7 @@ namespace Motutapu::Test
 {
 void MallocTest();
 
-void TensorGemmTest();
+void TestGemm();
 }  // namespace Motutapu::Test
 
 #endif
