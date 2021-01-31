@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
@@ -24,7 +24,7 @@ public:
     UnitDataWrapper& operator=(UnitDataWrapper&& unitDataWrapper) noexcept
     = default;
 
-    std::unordered_map<std::string, Util::TensorData> TensorDataMap;
+    std::unordered_map<std::string, TensorUtil::TensorData> TensorDataMap;
     std::unordered_map<std::string, std::string> StringLiterals;
     std::unordered_map<std::string, float> ScalarLiterals;
     std::unordered_map<std::string, int> IntegerLiterals;

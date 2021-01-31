@@ -11,16 +11,16 @@
 
 namespace Motutapu::Compute
 {
-void NormalFloat(Util::TensorData data, float mean, float sd,
+void NormalFloat(TensorUtil::TensorData data, float mean, float sd,
                         unsigned int size);
 
-void Ones(Util::TensorData data);
+void Ones(TensorUtil::TensorData data);
 
-void Zeros(Util::TensorData data);
+void Zeros(TensorUtil::TensorData data);
 
-void HeNormal(Util::TensorData data, int fanIn);
+void HeNormal(TensorUtil::TensorData data, int fanIn);
 
-void Xavier(Util::TensorData data, int fanIn, int fanOut);
+void Xavier(TensorUtil::TensorData data, int fanIn, int fanOut);
 
 }  // namespace Motutapu::Compute
 

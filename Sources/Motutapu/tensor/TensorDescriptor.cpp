@@ -8,7 +8,7 @@
 #include <Motutapu/util/MemoryManager.hpp>
 #include <algorithm>
 
-namespace Motutapu::Util
+namespace Motutapu::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
                                    const Device &device, unsigned int batchSize)

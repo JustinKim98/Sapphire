@@ -8,6 +8,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 project(motutapu)
 
 option(USE_CUDA "USE_CUDA" ON)
+option(USE_AVX2 "USE_AVX2" ON)
+option(USE_AVX512 "USE_AVX512" OFF)
 
 # Set output directories
 set(DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -24,7 +26,6 @@ include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
 
 # Compile options
-include(CMake/CheckAVX.cmake)
 include(CMake/CompileOptions.cmake)
 
 # Build type - Release by default
@@ -40,6 +41,8 @@ if (USE_CUDA)
         message(STATUS "CUDA not found")
         set(USE_CUDA OFF)
     else ()
+        add_compile_definitions(WITH_CUDA)
+        set(CUDA_DEVICE_ORDER PCI_BUS_ID)
         message(STATUS "CUDA Enabled")
     endif ()
 endif ()
@@ -49,10 +52,8 @@ set(CMAKE_MACOSX_RPATH ON)
 
 if (USE_CUDA)
     add_definitions(-DUSE_CUDA)
-    add_compile_definitions(WITH_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     enable_language("CUDA")
-
     set(
             CUDA_NVCC_FLAGS
             ${CUDA_NVCC_FLAGS};

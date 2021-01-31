@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-namespace Motutapu::Util
+namespace Motutapu::TensorUtil
 {
 TensorData::TensorData(Shape shape, Type type, Device device,
                        unsigned int batchSize)
@@ -230,7 +230,7 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
         }
 
         DenseTotalLength = totalSize;
-        DenseMatHost = MemoryManager::GetMemoryHost(totalSize);
+        DenseMatHost = Util::MemoryManager::GetMemoryHost(totalSize);
     }
 }
 
@@ -273,8 +273,8 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
 
         DenseTotalLength = totalSize;
         DenseMatCuda =
-            MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
+            Util::MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
     }
 }
 
-}  // namespace Motutapu::Util
+}  // namespace Motutapu::TensorUtil

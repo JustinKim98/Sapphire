@@ -11,7 +11,7 @@
 #include <Motutapu/util/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
 
-namespace Motutapu::Util
+namespace Motutapu::TensorUtil
 {
 class TensorData
 {

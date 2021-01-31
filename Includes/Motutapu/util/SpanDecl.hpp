@@ -129,6 +129,6 @@ class Span
     T* m_base;
     std::size_t m_length;
 };
-}  // namespace Takion::Util
+}  // namespace MOTUTAPU::Util
 
 #endif

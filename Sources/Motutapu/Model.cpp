@@ -22,7 +22,7 @@ int Model::RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
     return unitKey;
 }
 
-int Model::RegisterTensorDescriptor(Util::TensorDescriptor& tensorDesc)
+int Model::RegisterTensorDescriptor(TensorUtil::TensorDescriptor& tensorDesc)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
     tensorDesc.Key = tensorDescKey;
@@ -42,7 +42,7 @@ void Model::AutoGrad(int tensorKey)
         const auto& wrapper = descriptor.GetBackPropWrapper();
         const auto outputTensorKeys = wrapper->GetOutputTensorKeys();
 
-        std::vector<Util::TensorData> outputTensorDataVector(
+        std::vector<TensorUtil::TensorData> outputTensorDataVector(
             outputTensorKeys.size());
 
         for (size_t i = 0; i < outputTensorKeys.size(); ++i)
@@ -73,7 +73,7 @@ UnitDataWrapper Model::GetUnitDataWrapper(int key) const
     return m_unitPool.UnitWrapperMap.at(key);
 }
 
-Util::TensorDescriptor& Model::GetDescriptor(int key)
+TensorUtil::TensorDescriptor& Model::GetDescriptor(int key)
 {
     return m_tensorDescriptorPool.TensorDescMap.at(key);
 }

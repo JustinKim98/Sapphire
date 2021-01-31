@@ -1,14 +1,16 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef TAKION_DEVICE_HPP
-#define TAKION_DEVICE_HPP
-#include <string>
+#ifndef MOTUTAPU_DEVICE_HPP
+#define MOTUTAPU_DEVICE_HPP
 
+#include <cuda_runtime.h>
 #include <Motutapu/tensor/Shape.hpp>
+#include <stdexcept>
+#include <string>
 
 namespace Motutapu
 {
@@ -23,7 +25,7 @@ class Device
  public:
     Device() = default;
 
-    Device(std::string name);
+    explicit Device(std::string name);
     Device(int id, std::string name);
     ~Device() = default;
 
@@ -34,9 +36,6 @@ class Device
 
     bool operator==(const Device& device) const;
     bool operator!=(const Device& device) const;
-
-    template<typename T>
-    [[nodiscard]] size_t GetRequiredByteSize(Shape shape, unsigned int batchSize);
 
     [[nodiscard]] DeviceType Type() const
     {
@@ -58,12 +57,30 @@ class Device
         return m_id;
     }
 
+    [[nodiscard]] int GetCudaCapability() const
+    {
+        if (m_type != DeviceType::CUDA)
+        {
+            throw std::runtime_error(
+                "GetCudaCapability - Device is not set as CUDA");
+        }
+        return m_cudaCapability;
+    }
+
+    static int GetAvailableCudaDeviceCount()
+    {
+        int count;
+        cudaGetDeviceCount(&count);
+        return count;
+    }
+
  private:
     int m_id = -1;
     DeviceType m_type = DeviceType::CPU;
     std::string m_name = "Undefined";
     std::size_t m_padByteSize = 0;
+    int m_cudaCapability = 0;
 };
-}  // namespace Takion::Compute
+}  // namespace Motutapu
 
 #endif

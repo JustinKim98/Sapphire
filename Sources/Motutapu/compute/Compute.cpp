@@ -10,8 +10,10 @@
 
 namespace Motutapu::Compute
 {
-void Gemm(Util::TensorData& out, const Util::TensorData& a,
-          const Util::TensorData& b, const Util::TensorData& c)
+[[maybe_unused]] void Gemm(TensorUtil::TensorData& out,
+                           const TensorUtil::TensorData& a,
+                           const TensorUtil::TensorData& b,
+                           const TensorUtil::TensorData& c)
 {
     const auto device = out.GetDevice();
     const auto paddedM = out.PaddedRowSize;
@@ -23,10 +25,10 @@ void Gemm(Util::TensorData& out, const Util::TensorData& a,
     const auto broadCastC = c.BatchSize == 1;
 
     if (device.Type() == DeviceType::CUDA)
-        Cuda::Dense::GemmNormalFloat(out.DenseMatCuda, a.DenseMatCuda,
-                                     b.DenseMatCuda, c.DenseMatCuda, paddedM,
-                                     paddedN, paddedK, batchSize, broadCastA,
-                                     broadCastB, broadCastC);
+        Cuda::Dense::GemmTensor(out.DenseMatCuda, a.DenseMatCuda,
+                                b.DenseMatCuda, c.DenseMatCuda, paddedM,
+                                paddedN, paddedK, batchSize, broadCastA,
+                                broadCastB, broadCastC);
     else
         Naive::Dense::NaiveGemm(out.DenseMatCuda, a.DenseMatCuda,
                                 b.DenseMatCuda, c.DenseMatCuda, paddedM,
@@ -34,8 +36,9 @@ void Gemm(Util::TensorData& out, const Util::TensorData& a,
                                 broadCastB, broadCastC);
 }
 
-void Gemm(Util::TensorData& out, const Util::TensorData& a,
-          const Util::TensorData& b)
+[[maybe_unused]] void Gemm(TensorUtil::TensorData& out,
+                           const TensorUtil::TensorData& a,
+                           const TensorUtil::TensorData& b)
 {
     const auto device = out.GetDevice();
     const auto paddedM = out.PaddedRowSize;
@@ -46,10 +49,10 @@ void Gemm(Util::TensorData& out, const Util::TensorData& a,
     const auto broadCastB = b.BatchSize == 1;
 
     if (device.Type() == DeviceType::CUDA)
-        Cuda::Dense::GemmNormalFloat(out.DenseMatCuda, a.DenseMatCuda,
-                                     b.DenseMatCuda, out.DenseMatCuda, paddedM,
-                                     paddedN, paddedK, batchSize, broadCastA,
-                                     broadCastB, false);
+        Cuda::Dense::GemmTensor(out.DenseMatCuda, a.DenseMatCuda,
+                                b.DenseMatCuda, out.DenseMatCuda, paddedM,
+                                paddedN, paddedK, batchSize, broadCastA,
+                                broadCastB, false);
     else
         Naive::Dense::NaiveGemm(out.DenseMatCuda, a.DenseMatCuda,
                                 b.DenseMatCuda, out.DenseMatCuda, paddedM,

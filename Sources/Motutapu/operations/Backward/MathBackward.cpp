@@ -10,20 +10,20 @@
 
 namespace Motutapu::BackProp
 {
-void MulBackProp::Backward(std::vector<Util::TensorData>& outputs,
-                           const Util::TensorData& input) const
+void MulBackProp::Backward(std::vector<TensorUtil::TensorData>& outputs,
+                           const TensorUtil::TensorData& input) const
 {
     std::cout << "MulBackProp invoked" << std::endl;
 }
 
-void AddBackProp::Backward(std::vector<Util::TensorData>& outputs,
-                           const Util::TensorData& input) const
+void AddBackProp::Backward(std::vector<TensorUtil::TensorData>& outputs,
+                           const TensorUtil::TensorData& input) const
 {
     std::cout << "AddBackProp invoked" << std::endl;
 }
 
-void AddBackPropInplace::Backward(std::vector<Util::TensorData>& outputs,
-                                  const Util::TensorData& input) const
+void AddBackPropInplace::Backward(std::vector<TensorUtil::TensorData>& outputs,
+                                  const TensorUtil::TensorData& input) const
 
 {
     std::cout << "AddBackProp IsInplace invoked" << std::endl;

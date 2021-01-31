@@ -6,8 +6,7 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <ComputationTest/TestCudaGemm.hpp>
-#include <Motutapu/Test.hpp>
+#include <Motutapu/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
 

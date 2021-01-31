@@ -36,7 +36,7 @@ class Model
     //! Assigns new key to the given tensorDesc
     //! \param tensorDesc : tensor descriptor to register
     //! \return : Assigned key
-    int RegisterTensorDescriptor(Util::TensorDescriptor& tensorDesc);
+    int RegisterTensorDescriptor(TensorUtil::TensorDescriptor& tensorDesc);
 
     //! Automatically calculates gradient
     //! \param tensorKey : tensor key to the descriptor to start back
@@ -59,13 +59,13 @@ class Model
     //! Returns descriptor from the key
     //! \param key : key of the descriptor
     //! \return : tensor descriptor of given key
-    Util::TensorDescriptor& GetDescriptor(int key);
+    TensorUtil::TensorDescriptor& GetDescriptor(int key);
 
  private:
     class TensorDescriptorPool
     {
      public:
-        std::unordered_map<int, Util::TensorDescriptor> TensorDescMap;
+        std::unordered_map<int, TensorUtil::TensorDescriptor> TensorDescMap;
         int Counter = 0;
     };
 
