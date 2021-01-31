@@ -4,16 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include "TestCudaGemm.hpp"
-#include <cuda_fp16.h>
 #include <Motutapu/compute/Compute.hpp>
-#include <Motutapu/compute/naive/NaiveGemm.hpp>
+#include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
-#include <Motutapu/compute/cuda/CudaParams.hpp>
+#include <Motutapu/util/Device.hpp>
 #include <iostream>
 
 namespace Motutapu::Test
 {
+
 void TensorGemmTest()
 {
     const auto M = 64;
@@ -29,15 +28,13 @@ void TensorGemmTest()
 
     const auto batchSize = 2;
 
-    float* otherPtr;
+    TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
 
-    Util::TensorData A(shapeA, Type::Dense, host, batchSize);
+    TensorUtil::TensorData B(shapeA, Type::Dense, host, batchSize);
 
-    Util::TensorData B(shapeA, Type::Dense, host, batchSize);
+    TensorUtil::TensorData C(shapeA, Type::Dense, host, batchSize);
 
-    Util::TensorData C(shapeA, Type::Dense, host, batchSize);
-
-    Util::TensorData Out(shapeA, Type::Dense, host, batchSize);
+    TensorUtil::TensorData Out(shapeA, Type::Dense, host, batchSize);
 
     Compute::Gemm(Out, A, B, C);
 

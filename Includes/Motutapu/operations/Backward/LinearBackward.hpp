@@ -20,15 +20,15 @@ class LinearBackProp : public BackPropWrapper
     {
     }
 
-    void Backward(std::vector<Util::TensorData>& outputs,
-                  const Util::TensorData& input) const override
+    void Backward(std::vector<TensorUtil::TensorData>& outputs,
+                  const TensorUtil::TensorData& input) const override
     {
         auto& model = ModelManager::GetCurrentModel();
         const auto inputShape = input.GetShape();
         auto unitDataWrapper = model.GetUnitDataWrapper(m_unitKey);
 
-        Util::TensorData weight = unitDataWrapper.TensorDataMap["weight"];
-        Util::TensorData transposedWeight =
+        TensorUtil::TensorData weight = unitDataWrapper.TensorDataMap["weight"];
+        TensorUtil::TensorData transposedWeight =
             unitDataWrapper.TensorDataMap["TransposedWeight"];
 
         //! Calculate next gradient

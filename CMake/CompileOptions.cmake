@@ -3,31 +3,31 @@
 #
 
 # Set warnings as errors flag
-option(ROSETTASTONE_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
-if (ROSETTASTONE_WARNINGS_AS_ERRORS)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-        set(WARN_AS_ERROR_FLAGS "/WX")
-    else ()
+option(MOTUTAPU_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
+if(MOTUTAPU_WARNINGS_AS_ERRORS)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        set(WARN_AS_ERROR_FLAGS	"/WX")
+    else()
         set(WARN_AS_ERROR_FLAGS "-Werror")
-    endif ()
-endif ()
+    endif()
+endif()
 
 # Get upper case system name
 string(TOUPPER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_UPPER)
 
 # Determine architecture (32/64 bit)
 set(X64 OFF)
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(X64 ON)
-endif ()
+endif()
 
 #
 # Project options
 #
 
 set(DEFAULT_PROJECT_OPTIONS
-        CXX_STANDARD 17 # Not available before CMake 3.8.2; see below for manual command line argument addition
-        LINKER_LANGUAGE "CXX"
+        CXX_STANDARD              17 # Not available before CMake 3.8.2; see below for manual command line argument addition
+        LINKER_LANGUAGE           "CXX"
         POSITION_INDEPENDENT_CODE ON
         )
 
@@ -64,21 +64,20 @@ endif ()
 #
 
 set(DEFAULT_COMPILE_OPTIONS)
-CHECK_FOR_AVX()
 
 # MSVC compiler options
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     # remove default warning level from CMAKE_CXX_FLAGS
-    string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    if (HAVE_AVX_EXTENSIONS AND HAVE_AVX2_EXTENSIONS AND NOT MSVC_VERSION LESS 1800)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX /arch:AVX2 /FS")
+    string (REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    if(USE_AVX2 AND NOT MSVC_VERSION LESS 1800)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX /arch:AVX2")
         add_compile_definitions(WITH_AVX2)
-    endif ()
-    if (HAVE_AVX512_EXTENSIONS AND NOT MSVC_VERSION LESS 1800)
+    endif()
+    if(USE_AVX512 AND NOT MSVC_VERSION LESS 1800)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
         add_compile_definitions(WITH_AVX512)
-    endif ()
-endif ()
+    endif()
+endif()
 
 # MSVC compiler options
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -88,7 +87,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
             ${WARN_AS_ERROR_FLAGS}
 
             /wd4819       # -> disable warning: The file contains a character that cannot be represented in the current code page (949) (caused by pybind11)
-            /wd4505    # -> disable warning: 'function' : unreferenced local function has been removed
+            /wd4505       # ->
+            /wd4267
+            /wd4100
+            /wd4245
 
             #$<$<CONFIG:Debug>:
             #/RTCc        # -> value is assigned to a smaller data type and results in a data loss
@@ -112,21 +114,21 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"
     set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
             -Wall
             -Wno-missing-braces
-            -Wno-register   # -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
-            -Wno-error=register  # -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
+            -Wno-register			# -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
+            -Wno-error=register		# -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
 
             ${WARN_AS_ERROR_FLAGS}
             -std=c++1z
             )
 
-    if (HAVE_AVX_EXTENSIONS AND HAVE_AVX2_EXTENSIONS)
+    if(USE_AVX2)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2")
         add_compile_definitions(WITH_AVX2)
-    endif ()
-    if (HAVE_AVX512_EXTENSIONS)
+    endif()
+    if(USE_AVX512)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx512")
         add_compile_definitions(WITH_AVX512)
-    endif ()
+    endif()
 endif ()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -155,10 +157,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_SYSTEM_NAME MATCHES "Linux")
             -pthread
             -lstdc++fs
             -fopenmp
-            -lcuda
-            -lcudart
             )
-endif ()
+endif()
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading
@@ -174,5 +174,24 @@ if (CMAKE_BUILD_TYPE MATCHES Debug AND (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR C
             -fprofile-arcs
             -ftest-coverage
             )
-endif ()
+endif()
 
+# NVCC configurations in case of using CUDA
+if (USE_CUDA)
+
+    set(
+            CUDA_NVCC_FLAGS
+            ${CUDA_NVCC_FLAGS};
+            -arch=sm_80
+            -gencode=arch=compute_70,code=sm_70
+            -gencode=arch=compute_75,code=sm_75
+            -gencode=arch=compute_80,code=sm_80
+            -gencode=arch=compute_86,code=sm_86
+            -gencode=arch=compute_86,code=compute_86
+            --default-stream per-thread
+            #        --device-c
+            --cudart=shared
+            --cudadevrt=static
+            --std=c++17
+    )
+endif ()

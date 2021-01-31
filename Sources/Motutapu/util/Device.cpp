@@ -24,6 +24,18 @@ Device::Device(int id, std::string name)
       m_name(std::move(name)),
       m_padByteSize(32)
 {
+    if (id >= GetAvailableCudaDeviceCount())
+    {
+        throw std::runtime_error("Cuda device has not been detected");
+    }
+
+    int majorCapability;
+    int minorCapability;
+    cudaDeviceGetAttribute(&majorCapability, cudaDevAttrComputeCapabilityMajor,
+                           m_id);
+    cudaDeviceGetAttribute(&minorCapability, cudaDevAttrComputeCapabilityMinor,
+                           m_id);
+    m_cudaCapability = majorCapability * 10 + minorCapability;
 }
 
 bool Device::operator==(const Device& device) const

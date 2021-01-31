@@ -13,7 +13,7 @@
 #include <memory>
 #include <mutex>
 
-namespace Motutapu::Util
+namespace Motutapu::TensorUtil
 {
 //! TensorDescriptor stores real tensor data of the tensor
 //! There can be more than one tensor that references to one tensorData

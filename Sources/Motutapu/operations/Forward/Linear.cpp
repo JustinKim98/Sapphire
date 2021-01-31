@@ -20,14 +20,14 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
     auto& currentModel = ModelManager::GetCurrentModel();
     Type type = isSparse ? Type::Sparse : Type::Dense;
     UnitDataWrapper wrapper;
-    wrapper.TensorDataMap["weight"] = Util::TensorData(
+    wrapper.TensorDataMap["weight"] = TensorUtil::TensorData(
         Shape({ inputFeatureSize, outputFeatureSize }), type, device, 1);
 
-    wrapper.TensorDataMap["TransposedWeight"] = Util::TensorData(
+    wrapper.TensorDataMap["TransposedWeight"] = TensorUtil::TensorData(
         Shape({ outputFeatureSize, inputFeatureSize }), type, device, 1);
 
     wrapper.TensorDataMap["bias"] =
-        Util::TensorData(Shape({ outputFeatureSize }), type, device, 1);
+        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, device, 1);
 
     //! Initialize bias and weight
     m_unitKey = currentModel.RegisterUnitDataWrapper(wrapper);
@@ -38,7 +38,7 @@ Tensor Linear::operator()(const Tensor& tensor) const
     auto& currentModel = ModelManager::GetCurrentModel();
     auto unitDataWrapper = currentModel.GetUnitDataWrapper(m_unitKey);
 
-    Util::TensorDescriptor& descInput =
+    TensorUtil::TensorDescriptor& descInput =
         currentModel.GetDescriptor(tensor.TensorDescriptorKey());
 
     auto shapeInput = descInput.ForwardData.TensorShape;
@@ -46,8 +46,8 @@ Tensor Linear::operator()(const Tensor& tensor) const
     const auto device = descInput.ForwardData.GetDevice();
     const auto outputShape = Shape({ m_outputs });
 
-    Util::TensorDescriptor descOut(outputShape, m_type, device, batchSize,
-                                   true);
+    TensorUtil::TensorDescriptor descOut(outputShape, m_type, device, batchSize,
+                                         true);
     const auto outputKey = currentModel.RegisterTensorDescriptor(descOut);
 
     Compute::Gemm(descOut.ForwardData, descInput.ForwardData,

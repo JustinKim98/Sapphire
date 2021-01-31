@@ -8,6 +8,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 project(motutapu)
 
 option(USE_CUDA "USE_CUDA" ON)
+option(USE_AVX2 "USE_AVX2" ON)
+option(USE_AVX512 "USE_AVX512" OFF)
 
 # Set output directories
 set(DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -17,46 +19,31 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
 # Set enable output of compile commands during generation
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
+set(CMAKE_CXX_STANDARD 17)
 # Includes
 include_directories(Includes)
-include_directories(Impl)
 include_directories(Libraries)
 include_directories(Libraries/doctest/doctest)
 
-# Build library
+# Find CUDA
 if (USE_CUDA)
-    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-    find_package(CUDA 11.0)
+    find_package(CUDA 11.0 REQUIRED)
     set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
     if (NOT CUDA_FOUND)
         message(STATUS "CUDA not found")
         set(USE_CUDA OFF)
     else ()
+        add_definitions(-DUSE_CUDA)
+        enable_language("CUDA")
+        include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        set(CUDA_DEVICE_ORDER PCI_BUS_ID)
+        message(STATUS "CUDA Enabled")
         add_compile_definitions(WITH_CUDA)
-        include_directories(${CUDA_INCLUDE_DIRS})
-        message(STATUS "CUDA inculde path :  ${CUDA_INCLUDE_DIRS}")
-        message(STATUS "CUDA found")
-        set(
-                CUDA_NVCC_FLAGS
-                ${CUDA_NVCC_FLAGS};
-                -arch=sm_80
-                -gencode=arch=compute_70,code=sm_70
-                -gencode=arch=compute_75,code=sm_75
-                -gencode=arch=compute_80,code=sm_80
-                -gencode=arch=compute_86,code=sm_86
-                -gencode=arch=compute_86,code=compute_86
-                --std=c++17
-                --default-stream per-thread
-                --device-c
-                --cudart=static
-                --cudadevrt=static
-        )
     endif ()
 endif ()
 
 # Compile options
-include(CMake/CheckAVX.cmake)
 include(CMake/CompileOptions.cmake)
 
 # Build type - Release by default
@@ -72,7 +59,9 @@ add_subdirectory(Libraries/doctest)
 add_subdirectory(Sources/Motutapu)
 add_subdirectory(Tests/UnitTests)
 
-message(STATUS "FLAGS : ${CMAKE_NVCC_FLAGS}")
+if (USE_CUDA)
+    add_compile_definitions(WITH_CUDA)
+endif ()
 
 # Code coverage - Debug only
 # NOTE: Code coverage results with an optimized (non-Debug) build may be misleading

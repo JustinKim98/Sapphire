@@ -43,8 +43,8 @@ class BackPropWrapper
         return m_gradientOutputKeys;
     }
 
-    virtual void Backward(std::vector<Util::TensorData>& output,
-                          const Util::TensorData& input) const = 0;
+    virtual void Backward(std::vector<TensorUtil::TensorData>& output,
+                          const TensorUtil::TensorData& input) const = 0;
 
  protected:
     //! Vector of tensorData that should give its output

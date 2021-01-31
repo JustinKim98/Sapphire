@@ -19,8 +19,8 @@ class MulBackProp : public BackPropWrapper
     {
     }
 
-    void Backward(std::vector<Util::TensorData>& outputs,
-                  const Util::TensorData& input) const override;
+    void Backward(std::vector<TensorUtil::TensorData>& outputs,
+                  const TensorUtil::TensorData& input) const override;
 };
 
 class AddBackProp : public BackPropWrapper
@@ -31,8 +31,8 @@ class AddBackProp : public BackPropWrapper
     {
     }
 
-    void Backward(std::vector<Util::TensorData>& outputs,
-                  const Util::TensorData& input) const override;
+    void Backward(std::vector<TensorUtil::TensorData>& outputs,
+                  const TensorUtil::TensorData& input) const override;
 };
 
 class AddBackPropInplace : public BackPropWrapper
@@ -43,8 +43,8 @@ class AddBackPropInplace : public BackPropWrapper
     {
     }
 
-    void Backward(std::vector<Util::TensorData>& outputs,
-                  const Util::TensorData& input) const override;
+    void Backward(std::vector<TensorUtil::TensorData>& outputs,
+                  const TensorUtil::TensorData& input) const override;
 };
 
 }  // namespace Motutapu::BackProp

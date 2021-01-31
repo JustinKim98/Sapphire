@@ -17,9 +17,9 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     Model& model = ModelManager::GetCurrentModel();
 
     //! Perform out = a*b
-    Util::TensorDescriptor& descA =
+    TensorUtil::TensorDescriptor& descA =
         model.GetDescriptor(a.TensorDescriptorKey());
-    Util::TensorDescriptor& descB =
+    TensorUtil::TensorDescriptor& descB =
         model.GetDescriptor(b.TensorDescriptorKey());
 
     auto shapeA = descA.ForwardData.TensorShape;
@@ -31,7 +31,7 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
 
     const auto outputShape = Shape({ shapeA.At(0), shapeB.At(1) });
 
-    Util::TensorDescriptor descOut(outputShape, type, device, batchSize, false);
+    TensorUtil::TensorDescriptor descOut(outputShape, type, device, batchSize, false);
     const auto outputKey = model.RegisterTensorDescriptor(descOut);
 
     Compute::Mul(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
@@ -46,15 +46,14 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     return Tensor(outputShape, outputKey);
 }
 
-__attribute__((unused))
 static Tensor AddOp(const Tensor& a, const Tensor& b)
 {
     Model& model = ModelManager::GetCurrentModel();
 
     //! Get descriptors
-    Util::TensorDescriptor& descA =
+    TensorUtil::TensorDescriptor& descA =
         model.GetDescriptor(a.TensorDescriptorKey());
-    Util::TensorDescriptor& descB =
+    TensorUtil::TensorDescriptor& descB =
         model.GetDescriptor(b.TensorDescriptorKey());
 
     auto shapeA = descA.ForwardData.TensorShape;
@@ -66,7 +65,7 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
 
     const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
 
-    Util::TensorDescriptor descOut(outputShape, type, device, batchSize, false);
+    TensorUtil::TensorDescriptor descOut(outputShape, type, device, batchSize, false);
     model.RegisterTensorDescriptor(descOut);
 
     Compute::Add(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
@@ -81,15 +80,14 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
     return Tensor(outputShape, descOut.Key);
 }
 
-__attribute__((unused))
 static void AddOpInplace(const Tensor& out, Tensor& a)
 {
     Model& model = ModelManager::GetCurrentModel();
 
     //! Get descriptors
-    Util::TensorDescriptor& descA =
+    TensorUtil::TensorDescriptor& descA =
         model.GetDescriptor(a.TensorDescriptorKey());
-    Util::TensorDescriptor& descOut =
+    TensorUtil::TensorDescriptor& descOut =
         model.GetDescriptor(out.TensorDescriptorKey());
 
     //! Derive output shape

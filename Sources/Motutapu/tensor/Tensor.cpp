@@ -1,4 +1,4 @@
-// Copyright (c) 2020, Jaewoo Kim
+// Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
@@ -32,7 +32,7 @@ Shape Tensor::GetShape() const
 Device Tensor::GetDevice() const
 {
     Model& model = ModelManager::GetCurrentModel();
-    Util::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
     return desc.ForwardData.GetDevice();
 }
 
@@ -44,7 +44,7 @@ int Tensor::TensorDescriptorKey() const
 void Tensor::SendTo(const Device& device) const
 {
     Model& model = ModelManager::GetCurrentModel();
-    Util::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
     desc.ForwardData.SendTo(device);
     if (desc.IsTrainable())
     {

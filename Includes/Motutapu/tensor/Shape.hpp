@@ -48,6 +48,6 @@ public:
 private:
     std::vector<unsigned int> m_shapeVector;
 };
-} // namespace Takion
+} // namespace MOTUTAPU
 
 #endif
