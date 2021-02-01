@@ -25,13 +25,13 @@ namespace Motutapu::Compute
     const auto broadCastC = c.BatchSize == 1;
 
     if (device.Type() == DeviceType::CUDA)
-        Cuda::Dense::GemmTensor(out.DenseMatCuda, a.DenseMatCuda,
+        Cuda::Dense::GemmNormalFloat(out.DenseMatCuda, a.DenseMatCuda,
                                 b.DenseMatCuda, c.DenseMatCuda, paddedM,
                                 paddedN, paddedK, batchSize, broadCastA,
                                 broadCastB, broadCastC);
     else
-        Naive::Dense::NaiveGemm(out.DenseMatCuda, a.DenseMatCuda,
-                                b.DenseMatCuda, c.DenseMatCuda, paddedM,
+        Naive::Dense::NaiveGemm(out.DenseMatHost, a.DenseMatHost,
+                                b.DenseMatHost, c.DenseMatHost, paddedM,
                                 paddedN, paddedK, batchSize, broadCastA,
                                 broadCastB, broadCastC);
 }
@@ -49,13 +49,13 @@ namespace Motutapu::Compute
     const auto broadCastB = b.BatchSize == 1;
 
     if (device.Type() == DeviceType::CUDA)
-        Cuda::Dense::GemmTensor(out.DenseMatCuda, a.DenseMatCuda,
-                                b.DenseMatCuda, out.DenseMatCuda, paddedM,
+        Cuda::Dense::GemmTensor(out.DenseMatHost, a.DenseMatHost,
+                                b.DenseMatHost, out.DenseMatHost, paddedM,
                                 paddedN, paddedK, batchSize, broadCastA,
                                 broadCastB, false);
     else
-        Naive::Dense::NaiveGemm(out.DenseMatCuda, a.DenseMatCuda,
-                                b.DenseMatCuda, out.DenseMatCuda, paddedM,
+        Naive::Dense::NaiveGemm(out.DenseMatHost, a.DenseMatHost,
+                                b.DenseMatHost, out.DenseMatHost, paddedM,
                                 paddedN, paddedK, batchSize, broadCastA,
                                 broadCastB, false);
 }

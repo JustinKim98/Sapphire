@@ -32,21 +32,19 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
 
     if (itr != m_cudaFreeMemoryPool.end())
     {
-        auto targetChunk = itr->second;
+        MemoryChunk targetChunk = itr->second;
+        targetChunk.RefCount = 1;
         m_cudaFreeMemoryPool.erase(itr);
         m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, cudaPtr),
                                      targetChunk);
         return targetChunk.Data;
     }
 
-    float* otherPtr;
     success &= Compute::Cuda::CudaSetDevice(deviceId);
-    success &= Compute::Cuda::CudaMalloc(&otherPtr, size);
-    MemoryChunk memoryChunk(size, cudaPtr);
-    memoryChunk.deviceId = deviceId;
+    success &= Compute::Cuda::CudaMalloc(&cudaPtr, size);
 
     m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, cudaPtr),
-                                 memoryChunk);
+                                 MemoryChunk(size, cudaPtr, 1));
 
     if (!success)
     {
@@ -64,50 +62,86 @@ float* MemoryManager::GetMemoryHost(size_t size)
     const auto itr = m_hostFreeMemoryPool.find(size);
     if (itr != m_hostFreeMemoryPool.end())
     {
-        auto targetChunk = itr->second;
+        MemoryChunk targetChunk = itr->second;
+        targetChunk.RefCount = 1;
         m_hostFreeMemoryPool.erase(itr);
         m_hostBusyMemoryPool.emplace(targetChunk.Data, targetChunk);
         return targetChunk.Data;
     }
 
     memory = new float[size];
-    MemoryChunk memoryChunk(size, memory);
-    m_hostBusyMemoryPool.emplace(memory, memoryChunk);
+    m_hostBusyMemoryPool.emplace(memory, MemoryChunk(size, memory, 1));
 
     return memory;
 }
 
-void MemoryManager::UnAssignMemoryCuda(float* ptr, int deviceId)
+void MemoryManager::AddReferenceCuda(float* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+
     const auto itr = m_cudaBusyMemoryPool.find(std::make_pair(deviceId, ptr));
     if (itr == m_cudaBusyMemoryPool.end())
     {
-        throw std::runtime_error(
-            "UnAssignMemoryCuda - pointer has not been found in allocated "
-            "pool");
+        throw std::runtime_error("AddReferenceCuda - Reference was not found");
     }
 
-    auto targetChunk = itr->second;
-    m_cudaBusyMemoryPool.erase(itr);
-    m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, targetChunk.Size),
-                                 targetChunk);
+    auto& chunk = itr->second;
+    chunk.RefCount += 1;
 }
 
-void MemoryManager::UnAssignMemoryHost(float* ptr)
+void MemoryManager::AddReferenceHost(float* ptr)
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+
     const auto itr = m_hostBusyMemoryPool.find(ptr);
     if (itr == m_hostBusyMemoryPool.end())
     {
-        throw std::runtime_error(
-            "UnAssignMemoryHost - pointer has not been found in allocated "
-            "pool");
+        throw std::runtime_error("AddReferenceHost - Reference was not found");
     }
 
-    auto targetChunk = itr->second;
-    m_hostBusyMemoryPool.erase(itr);
-    m_hostFreeMemoryPool.emplace(targetChunk.Size, targetChunk);
+    auto& chunk = itr->second;
+    chunk.RefCount += 1;
+}
+
+void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
+{
+    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+
+    const auto itr = m_cudaBusyMemoryPool.find(std::make_pair(deviceId, ptr));
+    if (itr == m_cudaBusyMemoryPool.end())
+    {
+        throw std::runtime_error("DeReferenceCuda - Reference was not found");
+    }
+
+    auto& chunk = itr->second;
+    chunk.RefCount -= 1;
+
+    if (chunk.RefCount == 0)
+    {
+        m_cudaBusyMemoryPool.erase(itr);
+        m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.Size),
+                                     chunk);
+    }
+}
+
+void MemoryManager::DeReferenceHost(float* ptr)
+{
+    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+
+    const auto itr = m_hostBusyMemoryPool.find(ptr);
+    if (itr == m_hostBusyMemoryPool.end())
+    {
+        throw std::runtime_error("DeReferenceHost - Reference was not found");
+    }
+
+    auto& chunk = itr->second;
+    chunk.RefCount -= 1;
+
+    if (chunk.RefCount == 0)
+    {
+        m_hostBusyMemoryPool.erase(itr);
+        m_hostFreeMemoryPool.emplace(chunk.Size, chunk);
+    }
 }
 
 void MemoryManager::ClearUnusedCudaMemoryPool()

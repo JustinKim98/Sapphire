@@ -7,22 +7,23 @@
 #ifndef MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 #define MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 
-#include <Motutapu/util/Device.hpp>
-#include <Motutapu/util/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
+#include <Motutapu/util/Device.hpp>
+#include <Motutapu/util/SharedPtr.hpp>
+#include <Motutapu/util/SparseMatrix.hpp>
 
 namespace Motutapu::TensorUtil
 {
 class TensorData
 {
-public:
+ public:
     TensorData() = default;
     TensorData(Shape shape, Type type, Device device, unsigned int batchSize);
 
-
-    TensorData(const TensorData& tensorData) = default;
-    TensorData& operator=(const TensorData& tensorData) = default;
-
+    TensorData(const TensorData& tensorData);
+    TensorData(TensorData&& tensorData) noexcept;
+    TensorData& operator=(const TensorData& tensorData);
+    TensorData& operator=(TensorData&& tensorData) noexcept;
     ~TensorData();
 
     unsigned long DenseTotalLength = 0;
@@ -68,8 +69,7 @@ public:
 
     //! Deep copies tensor data from src to dest
     //! Type of dest and src must be the same
-    static bool CopyTensorData(TensorData dest,
-                               const TensorData src);
+    static bool CopyTensorData(TensorData dest, const TensorData src);
 
     //! Changes device of the tensor
     //! Transfers data to target device from current device
@@ -78,9 +78,7 @@ public:
     //! \param device : new device to set
     bool SendTo(const Device& device);
 
-
-private:
-
+ private:
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
     static void m_toGpu(const TensorData& tensorData);
@@ -110,11 +108,9 @@ private:
     //! Free space allocated on GPU memory
     bool m_freeGpu();
 
-
     Type m_type = Type::Dense;
     Device m_device;
 };
-}
-
+}  // namespace Motutapu::TensorUtil
 
 #endif

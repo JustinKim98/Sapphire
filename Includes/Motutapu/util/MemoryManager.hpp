@@ -34,15 +34,17 @@ struct pair_hash_busy
 
 struct MemoryChunk
 {
-    MemoryChunk(size_t size, float* data) : Size(size), Data(data)
+    MemoryChunk(size_t size, float* data, int refCount)
+        : Size(size), Data(data), RefCount(refCount)
     {
     }
 
     MemoryChunk(const MemoryChunk& chunk) = default;
 
     size_t Size = 0;
-    int deviceId = -1;  // -1 if host, >= 0 for device
     float* Data = nullptr;
+
+    int RefCount;
 };
 
 class MemoryManager
@@ -52,9 +54,13 @@ class MemoryManager
 
     static float* GetMemoryHost(size_t size);
 
-    static void UnAssignMemoryCuda(float* ptr, int deviceId);
+    static void AddReferenceCuda(float* ptr, int deviceId);
 
-    static void UnAssignMemoryHost(float* ptr);
+    static void AddReferenceHost(float* ptr);
+
+    static void DeReferenceCuda(float* ptr, int deviceId);
+
+    static void DeReferenceHost(float* ptr);
 
     static void ClearUnusedCudaMemoryPool();
 
@@ -67,6 +73,7 @@ class MemoryManager
     static size_t GetTotalAllocationByteSizeCuda();
 
     static size_t GetTotalAllocationByteSizeHost();
+
  private:
     static std::unordered_multimap<size_t, MemoryChunk> m_hostFreeMemoryPool;
     static std::unordered_map<float*, MemoryChunk> m_hostBusyMemoryPool;

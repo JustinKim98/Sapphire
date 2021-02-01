@@ -25,7 +25,7 @@ public:
     ~Shape() = default;
 
     Shape(std::initializer_list<unsigned int> shape);
-    Shape(std::vector<unsigned int> shape);
+    explicit Shape(std::vector<unsigned int> shape);
 
     Shape(const Shape& shape) = default;
     Shape(Shape&& shape) noexcept;

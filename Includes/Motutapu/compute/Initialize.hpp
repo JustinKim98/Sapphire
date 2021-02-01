@@ -9,7 +9,7 @@
 
 #include <Motutapu/tensor/TensorData.hpp>
 
-namespace Motutapu::Compute
+namespace Motutapu::Compute::Initialize
 {
 void Normal(TensorUtil::TensorData data, float mean, float sd);
 
@@ -21,6 +21,6 @@ void HeNormal(TensorUtil::TensorData data, int fanIn);
 
 void Xavier(TensorUtil::TensorData data, int fanIn, int fanOut);
 
-}  // namespace Motutapu::Compute
+}  // namespace Motutapu::Compute::Initialize
 
 #endif  // MOTUTAPU_INITIALIZE_HPP

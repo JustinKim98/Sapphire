@@ -33,7 +33,7 @@ void hostAllocationTest()
         {
             data[j] = static_cast<float>(i);
         }
-        Util::MemoryManager::UnAssignMemoryHost(data);
+        Util::MemoryManager::DeReferenceHost(data);
     }
 
     CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeHost(), totalSize);
@@ -45,7 +45,7 @@ void hostAllocationTest()
         {
             data[j] = static_cast<float>(i);
         }
-        Util::MemoryManager::UnAssignMemoryHost(data);
+        Util::MemoryManager::DeReferenceHost(data);
     }
 
     Util::MemoryManager::ClearUnusedHostMemoryPool();
@@ -70,7 +70,7 @@ void cudaAllocationTest()
         totalSize += size[i];
         float* data = Util::MemoryManager::GetMemoryCuda(size[i], 0);
 
-        Util::MemoryManager::UnAssignMemoryCuda(data, 0);
+        Util::MemoryManager::DeReferenceCuda(data, 0);
     }
 
     CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeCuda(), totalSize);
@@ -79,7 +79,7 @@ void cudaAllocationTest()
     {
         float* data = Util::MemoryManager::GetMemoryCuda(size[i], 0);
 
-        Util::MemoryManager::UnAssignMemoryCuda(data, 0);
+        Util::MemoryManager::DeReferenceCuda(data, 0);
     }
 
     Util::MemoryManager::ClearUnusedCudaMemoryPool();

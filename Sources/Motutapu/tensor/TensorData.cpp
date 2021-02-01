@@ -22,8 +22,109 @@ TensorData::TensorData(Shape shape, Type type, Device device,
     if (device.Type() == DeviceType::CUDA)
     {
         m_allocateCuda(batchSize);
-        m_allocateCpu(batchSize);
     }
+    m_allocateCpu(batchSize);
+}
+
+TensorData::TensorData(const TensorData &tensorData)
+    : DenseTotalLength(tensorData.DenseTotalLength),
+      SparseTotalLength(tensorData.SparseTotalLength),
+      PaddedColumnSize(tensorData.PaddedColumnSize),
+      PaddedRowSize(tensorData.PaddedRowSize),
+      BatchSize(tensorData.BatchSize),
+      DenseMatHost(tensorData.DenseMatHost),
+      DenseMatCuda(tensorData.DenseMatCuda),
+      SparseMatHost(tensorData.SparseMatHost),
+      SparseMatCuda(tensorData.SparseMatCuda),
+      TensorShape(tensorData.TensorShape),
+      m_type(tensorData.m_type),
+      m_device(tensorData.m_device)
+{
+    if (DenseMatHost)
+    {
+        Util::MemoryManager::AddReferenceHost(DenseMatHost);
+    }
+    if (DenseMatCuda)
+    {
+        Util::MemoryManager::AddReferenceCuda(DenseMatCuda, m_device.GetID());
+    }
+}
+
+TensorData::TensorData(TensorData &&tensorData) noexcept
+    : DenseTotalLength(tensorData.DenseTotalLength),
+      SparseTotalLength(tensorData.SparseTotalLength),
+      PaddedColumnSize(tensorData.PaddedColumnSize),
+      PaddedRowSize(tensorData.PaddedRowSize),
+      BatchSize(tensorData.BatchSize),
+      DenseMatHost(tensorData.DenseMatHost),
+      DenseMatCuda(tensorData.DenseMatCuda),
+      SparseMatHost(tensorData.SparseMatHost),
+      SparseMatCuda(tensorData.SparseMatCuda),
+      TensorShape(std::move(tensorData.TensorShape)),
+      m_type(tensorData.m_type),
+      m_device(std::move(tensorData.m_device))
+{
+    tensorData.DenseTotalLength = 0;
+    tensorData.SparseTotalLength = 0;
+    tensorData.DenseMatHost = nullptr;
+    tensorData.DenseMatCuda = nullptr;
+    tensorData.SparseMatHost = nullptr;
+    tensorData.SparseMatCuda = nullptr;
+}
+
+TensorData &TensorData::operator=(const TensorData &tensorData)
+{
+    if (this == &tensorData)
+        return *this;
+
+    DenseTotalLength = tensorData.DenseTotalLength;
+    SparseTotalLength = tensorData.SparseTotalLength;
+    PaddedColumnSize = tensorData.PaddedColumnSize;
+    PaddedRowSize = tensorData.PaddedRowSize;
+    BatchSize = tensorData.BatchSize;
+    DenseMatHost = tensorData.DenseMatHost;
+    DenseMatCuda = tensorData.DenseMatCuda;
+    SparseMatHost = tensorData.SparseMatHost;
+    SparseMatCuda = tensorData.SparseMatCuda;
+    TensorShape = tensorData.TensorShape;
+    m_type = tensorData.m_type;
+    m_device = tensorData.m_device;
+
+    if (DenseMatHost)
+    {
+        Util::MemoryManager::AddReferenceHost(DenseMatHost);
+    }
+    if (DenseMatCuda)
+    {
+        Util::MemoryManager::AddReferenceCuda(DenseMatCuda, m_device.GetID());
+    }
+
+    return *this;
+}
+
+TensorData &TensorData::operator=(TensorData &&tensorData) noexcept
+{
+    DenseTotalLength = tensorData.DenseTotalLength;
+    SparseTotalLength = tensorData.SparseTotalLength;
+    PaddedColumnSize = tensorData.PaddedColumnSize;
+    PaddedRowSize = tensorData.PaddedRowSize;
+    BatchSize = tensorData.BatchSize;
+    DenseMatHost = tensorData.DenseMatHost;
+    DenseMatCuda = tensorData.DenseMatCuda;
+    SparseMatHost = tensorData.SparseMatHost;
+    SparseMatCuda = tensorData.SparseMatCuda;
+    TensorShape = std::move(tensorData.TensorShape);
+    m_type = tensorData.m_type;
+    m_device = std::move(tensorData.m_device);
+
+    tensorData.DenseTotalLength = 0;
+    tensorData.SparseTotalLength = 0;
+    tensorData.DenseMatHost = nullptr;
+    tensorData.DenseMatCuda = nullptr;
+    tensorData.SparseMatHost = nullptr;
+    tensorData.SparseMatCuda = nullptr;
+
+    return *this;
 }
 
 TensorData::~TensorData()
@@ -105,15 +206,14 @@ bool TensorData::SendTo(const Device &device)
         m_allocateCuda(BatchSize);
         TensorData::m_toGpu(*this);
     }
-
-    if (m_device.Type() == DeviceType::CUDA && device.Type() == DeviceType::CPU)
+    else if (m_device.Type() == DeviceType::CUDA &&
+             device.Type() == DeviceType::CPU)
     {
-        m_device = device;
         TensorData::m_toHost(*this);
+        m_device = device;
     }
-
-    if (m_device.Type() == DeviceType::CUDA &&
-        device.Type() == DeviceType::CUDA)
+    else if (m_device.Type() == DeviceType::CUDA &&
+             device.Type() == DeviceType::CUDA)
     {
         TensorData::m_toHost(*this);
         m_device = device;
@@ -137,11 +237,16 @@ void TensorData::m_toGpu(const TensorData &tensorData)
     }
     else
     {
-        Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID());
-
-        Compute::Cuda::MemcpyHostToGpu(tensorData.DenseMatCuda,
-                                       tensorData.DenseMatHost,
-                                       tensorData.BatchSize);
+        if (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
+        {
+            throw std::runtime_error("m_toHost - illegalDeviceID");
+        }
+        if (!Compute::Cuda::MemcpyHostToGpu(tensorData.DenseMatCuda,
+                                            tensorData.DenseMatHost,
+                                            tensorData.DenseTotalLength))
+        {
+            throw std::runtime_error("m_toGpu - cudaMemCopy failed");
+        }
     }
 }
 
@@ -159,22 +264,28 @@ void TensorData::m_toHost(const TensorData &tensorData)
     }
     else
     {
-        Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID());
-        Compute::Cuda::MemcpyGpuToHost(tensorData.DenseMatHost,
-                                       tensorData.DenseMatCuda,
-                                       tensorData.BatchSize);
+        if (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
+        {
+            throw std::runtime_error("m_toHost - illegalDeviceID");
+        }
+        if (!Compute::Cuda::MemcpyGpuToHost(tensorData.DenseMatHost,
+                                            tensorData.DenseMatCuda,
+                                            tensorData.DenseTotalLength))
+        {
+            throw std::runtime_error("m_toHost : cudaMemCopy failed");
+        }
     }
 }
 
 void TensorData::m_freeHost() const
 {
-    if (m_type == Type::Sparse)
+    if (m_type == Type::Sparse && SparseMatHost)
     {
         delete[] SparseMatHost;
     }
-    else
+    else if (DenseMatHost)
     {
-        Util::MemoryManager::UnAssignMemoryHost(DenseMatHost);
+        Util::MemoryManager::DeReferenceHost(DenseMatHost);
     }
 }
 
@@ -184,14 +295,14 @@ bool TensorData::m_freeGpu()
 
     isSuccess &= Compute::Cuda::CudaSetDevice(m_device.GetID());
 
-    if (m_type == Type::Sparse)
+    if (m_type == Type::Sparse && SparseMatCuda)
     {
         isSuccess &=
             Compute::Cuda::CudaFree(reinterpret_cast<void *>(SparseMatCuda));
     }
-    else
+    else if (DenseMatCuda)
     {
-        Util::MemoryManager::UnAssignMemoryCuda(DenseMatCuda, m_device.GetID());
+        Util::MemoryManager::DeReferenceCuda(DenseMatCuda, m_device.GetID());
     }
 
     return isSuccess;
@@ -204,7 +315,7 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
 
     const auto padUnitSize = static_cast<unsigned int>(32 / sizeof(float));
 
-    const auto paddedColSize =
+    const auto paddedColumnSize =
         colSize % padUnitSize == 0
             ? colSize
             : colSize / padUnitSize * padUnitSize + padUnitSize;
@@ -220,7 +331,7 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
     }
     else
     {
-        size_t totalSize = paddedColSize * paddedRowSize * batchSize;
+        size_t totalSize = paddedColumnSize * paddedRowSize * batchSize;
 
         if (TensorShape.Dim() > 2)
         {
@@ -228,6 +339,8 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
                 totalSize *= TensorShape.At(i);
         }
 
+        PaddedRowSize = paddedRowSize;
+        PaddedColumnSize = paddedColumnSize;
         DenseTotalLength = totalSize;
         DenseMatHost = Util::MemoryManager::GetMemoryHost(totalSize);
     }
@@ -246,7 +359,7 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
 
     const unsigned int padUnitSize = 32 / sizeof(float);
 
-    const auto paddedColSize =
+    const auto paddedColumnSize =
         colSize % padUnitSize == 0
             ? colSize
             : colSize / padUnitSize * padUnitSize + padUnitSize;
@@ -262,7 +375,7 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
     }
     else
     {
-        size_t totalSize = paddedColSize * paddedRowSize * batchSize;
+        size_t totalSize = paddedColumnSize * paddedRowSize * batchSize;
 
         if (TensorShape.Dim() > 2)
         {
@@ -270,6 +383,8 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
                 totalSize *= TensorShape.At(i);
         }
 
+        PaddedRowSize = paddedRowSize;
+        PaddedColumnSize = paddedColumnSize;
         DenseTotalLength = totalSize;
         DenseMatCuda =
             Util::MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
