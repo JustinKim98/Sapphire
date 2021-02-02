@@ -6,6 +6,7 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
+#include <Motutapu/Tests/CudaFunctionalityTest.cuh>
 #include <Motutapu/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
@@ -21,17 +22,23 @@ TEST_CASE("Check cuda")
 {
 #ifdef WITH_CUDA
     PrintCudaVersion();
+
+    SUBCASE("Basic functionality test")
+    {
+        CHECK(EXIT_SUCCESS == MallocTest());
+        std::cout << "Malloc test successful" << std::endl;
+    }
+
+    SUBCASE("CublasTest")
+    {
+        CHECK(EXIT_SUCCESS == CublasTest());
+        std::cout << "Cublas test successful" << std::endl;
+    }
 #endif
 }
 
 TEST_CASE("Computation Test")
 {
-    SUBCASE("Basic functionality test")
-    {
-        MallocTest();
-        std::cout << "Malloc test successful" << std::endl;
-    }
-
     SUBCASE("Gemm With Cuda")
     {
         TestGemm();

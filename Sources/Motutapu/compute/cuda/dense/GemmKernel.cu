@@ -1,12 +1,12 @@
 // Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
-// personal capacity and are not conveying any rights to any unsigned intellectual
-// property of any third parties.
+// personal capacity and are not conveying any rights to any unsigned
+// intellectual property of any third parties.
 
-#include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
-#include <mma.h>
 #include <cuda_fp16.h>
+#include <mma.h>
+#include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 
 #define WARP_SIZE 32
 
@@ -16,8 +16,7 @@ using namespace nvcuda;
 
 __global__ void WmmaGemm(float* Out, const float* A, const float* B,
                          const float* C, unsigned int paddedK,
-                         unsigned int paddedN,
-                         unsigned int chunkIdxK,
+                         unsigned int paddedN, unsigned int chunkIdxK,
                          const unsigned int chunkSize)
 {
     constexpr unsigned int tileDim = 16;
@@ -123,17 +122,14 @@ __global__ void WmmaGemm(float* Out, const float* A, const float* B,
 #pragma unroll
     for (unsigned int i = 0; i < chunkSize; ++i)
     {
-        wmma::load_matrix_sync(fragA,
-                               &sharedMemoryA[tileDim * tileRowIdx][tileDim * i
-                               ],
-                               shiftedSharedMemoryColSize);
         wmma::load_matrix_sync(
-            fragB,
-            &sharedMemoryB[tileDim * i][tileDim * tileColIdx],
+            fragA, &sharedMemoryA[tileDim * tileRowIdx][tileDim * i],
             shiftedSharedMemoryColSize);
         wmma::load_matrix_sync(
-            fragAcc,
-            &sharedMemoryC[tileDim * i][tileDim * tileColIdx],
+            fragB, &sharedMemoryB[tileDim * i][tileDim * tileColIdx],
+            shiftedSharedMemoryColSize);
+        wmma::load_matrix_sync(
+            fragAcc, &sharedMemoryC[tileDim * i][tileDim * tileColIdx],
             shiftedSharedMemoryColSize, wmma::mem_row_major);
         wmma::mma_sync(fragOut, fragA, fragB, fragAcc);
     }
@@ -141,50 +137,74 @@ __global__ void WmmaGemm(float* Out, const float* A, const float* B,
     wmma::store_matrix_sync(tilePtrOut, fragOut, paddedN, wmma::mem_row_major);
 }
 
-__global__ void Gemm(float* out, const float* A, const float* B,
-                     const float* C, unsigned int paddedK,
-                     unsigned int paddedN, unsigned int chunkIdxK)
+__global__ void Gemm(float* out, const float* A, const float* B, const float* C,
+                     unsigned int paddedM, unsigned int paddedN,
+                     unsigned int paddedK, unsigned int chunkIdxK,
+                     const unsigned int chunkSize, const unsigned int chunkDimN)
 {
-    constexpr unsigned int tileDim = 8;
-    constexpr unsigned int chunkSize = 4;
-    __shared__ float matrixA[tileDim * chunkSize][tileDim * chunkSize + 1];
-    __shared__ float matrixB[tileDim * chunkSize][tileDim * chunkSize + 1];
-    __shared__ float matrixC[tileDim * chunkSize][tileDim * chunkSize + 1];
+    extern __shared__ float sharedMem[];
+    const unsigned int tileDim = 8;
 
-    const unsigned int chunkIdxM = blockIdx.x;
-    const unsigned int chunkIdxN = blockIdx.y;
+    const unsigned int sharedMemColSize = tileDim * chunkSize + 1;
+    const unsigned int matrixBOffset = (tileDim * chunkSize) * sharedMemColSize;
 
-    const unsigned int rowIdx = threadIdx.x;
-    const unsigned int colIdx = threadIdx.y;
+    const unsigned int chunkIdxM = blockIdx.x / chunkDimN;
+    const unsigned int chunkIdxN = blockIdx.x % chunkDimN;
 
-    const unsigned int blockIdxA = chunkIdxM * paddedK * chunkSize * tileDim +
-                                   chunkIdxK * chunkSize * tileDim;
-    const unsigned int blockIdxB = chunkIdxK * paddedN * chunkSize * tileDim +
-                                   chunkIdxN * chunkSize * tileDim;
-    const unsigned int blockIdxC = chunkIdxM * paddedK * chunkSize * tileDim +
-                                   chunkIdxN * chunkSize * tileDim;
-    const unsigned int blockIdxOut = chunkIdxM * paddedK * chunkSize * tileDim +
-                                     chunkIdxN * chunkSize * tileDim;
+    const unsigned int rowIdx = threadIdx.x / (chunkSize * tileDim);
+    const unsigned int colIdx = threadIdx.x % (chunkSize * tileDim);
+
+    const unsigned int blockIdxA = paddedM * chunkSize * tileDim * chunkIdxM +
+                                   chunkSize * tileDim * chunkIdxK;
+    const unsigned int blockIdxB = paddedK * chunkSize * tileDim * chunkIdxN +
+                                   chunkSize * tileDim * chunkSize;
+    const unsigned int blockIdxC = paddedM * chunkSize * tileDim * chunkIdxM +
+                                   chunkSize * tileDim * chunkIdxN;
+    const unsigned int blockIdxOut = paddedM * chunkSize * tileDim * chunkIdxM +
+                                     chunkSize * tileDim * chunkIdxN;
 
     const float* chunkPtrA = A + blockIdxA;
     const float* chunkPtrB = B + blockIdxB;
     const float* chunkPtrC = C + blockIdxC;
-
     float* chunkPtrOut = out + blockIdxOut;
 
-    matrixA[rowIdx][colIdx] = *(chunkPtrA + paddedK * rowIdx + colIdx);
-    matrixB[rowIdx][colIdx] = *(chunkPtrB + paddedN * rowIdx + colIdx);
-    matrixC[rowIdx][colIdx] = *(chunkPtrC + paddedN * rowIdx + colIdx);
+    sharedMem[rowIdx * sharedMemColSize + colIdx] =
+        *(chunkPtrA + paddedM * rowIdx + colIdx);
+    sharedMem[matrixBOffset + rowIdx * sharedMemColSize + colIdx] =
+        *(chunkPtrB + paddedK * rowIdx + colIdx);
 
-    float output = 0.0f;
+    __syncthreads();
 
-#pragma unroll
+    float output = *(chunkPtrC + paddedM * rowIdx + colIdx);
+
     for (unsigned int i = 0; i < tileDim * chunkSize; ++i)
     {
-        output =
-            matrixC[rowIdx][colIdx] + matrixA[rowIdx][i] * matrixB[i][colIdx];
+        output += sharedMem[rowIdx * sharedMemColSize + i] *
+                  sharedMem[matrixBOffset + i * sharedMemColSize + colIdx];
     }
 
-    *(chunkPtrOut + paddedK * rowIdx + colIdx) = output;
+    __syncthreads();
+
+    *(chunkPtrOut + paddedM * rowIdx + colIdx) = output;
 }
-} // namespace Motutapu::Cuda::Dense
+
+__global__ void GemmSimple(float* out, const float* A, const float* B,
+                           const float* C, unsigned int paddedM,
+                           unsigned int paddedN, unsigned int paddedK)
+{
+    const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    const unsigned int m = idx / paddedN;
+    const unsigned int n = idx % paddedN;
+
+    if (m < paddedM)
+    {
+        out[paddedN * m + n] = C[paddedN * m + n];
+
+        for (unsigned int k = 0; k < paddedK; k++)
+        {
+            out[paddedN * m + n] += A[paddedM * m + k] * B[paddedK * k + n];
+        }
+    }
+}
+}  // namespace Motutapu::Compute::Cuda::Dense

@@ -31,48 +31,35 @@ __host__ bool CudaSetDevice(int deviceId)
     return false;
 }
 
-__host__ __device__ bool CudaMalloc(float** ptr, unsigned int size)
+__host__ __device__ bool CudaMalloc(void** ptr, unsigned int size)
 {
-    const cudaError_t error =
-        cudaMalloc((void**)ptr, size * sizeof(float));
-    return error == cudaSuccess;
-}
-
-__host__ __device__ bool CudaFree(float* ptr)
-{
-    const cudaError_t error = cudaFree(reinterpret_cast<void*>(ptr));
+    const cudaError_t error = cudaMalloc((void**)ptr, size);
     return error == cudaSuccess;
 }
 
 __host__ __device__ bool CudaFree(void* ptr)
 {
-    const cudaError_t error = cudaFree(ptr);
+    const cudaError_t error = cudaFree((void*)(ptr));
     return error == cudaSuccess;
 }
 
-
-__host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr, unsigned int size)
+__host__ bool MemcpyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size)
 {
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(gpuPtr), reinterpret_cast<void*>(hostPtr),
-        size * sizeof(float), cudaMemcpyHostToDevice);
+    const cudaError_t error = cudaMemcpy((void*)(gpuPtr), (void*)(hostPtr),
+                                         size, cudaMemcpyHostToDevice);
 
     return error == cudaSuccess;
 }
 
-
-__host__ bool MemcpyGpuToHost(float* hostPtr, float* gpuPtr,
-                              unsigned int size)
+__host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size)
 {
-    const cudaError_t error = cudaMemcpy(
-        reinterpret_cast<void*>(hostPtr), reinterpret_cast<void*>(gpuPtr),
-        size * sizeof(float), cudaMemcpyDeviceToHost);
+    const cudaError_t error = cudaMemcpy((void*)(hostPtr), (void*)(gpuPtr),
+                                         size, cudaMemcpyDeviceToHost);
 
     return error == cudaSuccess;
 }
 
-__host__ void MemcpyGpuToGpu(float* dest, const float* src,
-                             unsigned int size)
+__host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size)
 {
     unsigned int elementsCopied = 0;
 
@@ -87,8 +74,7 @@ __host__ void MemcpyGpuToGpu(float* dest, const float* src,
         elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
     }
 
-    CopyOnGpuKernel<<<1, size>>>(dest + elementsCopied,
-                                 src + elementsCopied,
+    CopyOnGpuKernel<<<1, size>>>(dest + elementsCopied, src + elementsCopied,
                                  size - elementsCopied);
 }
-}
+}  // namespace Motutapu::Compute::Cuda

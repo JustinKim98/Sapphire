@@ -18,7 +18,7 @@ __host__ void Normal(float* data, float mean, float sd, unsigned int size,
 __host__ void Uniform(float* data, float min, float max, unsigned int size,
                       int seed);
 
-__host__ void Scalar(float* data, float value, unsigned int size, int seed);
+__host__ void Scalar(float* data, float value, unsigned int size);
 }  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif

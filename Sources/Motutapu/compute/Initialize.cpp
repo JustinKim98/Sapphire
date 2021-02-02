@@ -44,8 +44,7 @@ void Ones(TensorUtil::TensorData data)
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Scalar(data.DenseMatCuda, 1.0f, data.DenseTotalLength,
-                            static_cast<int>(std::clock()));
+        Cuda::Dense::Scalar(data.DenseMatCuda, 1.0f, data.DenseTotalLength);
     }
     else
     {
@@ -58,8 +57,7 @@ void Zeros(TensorUtil::TensorData data)
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Scalar(data.DenseMatCuda, 0.0f, data.DenseTotalLength,
-                            static_cast<int>(std::clock()));
+        Cuda::Dense::Scalar(data.DenseMatCuda, 0.0f, data.DenseTotalLength);
     }
     else
     {

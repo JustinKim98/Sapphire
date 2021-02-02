@@ -24,7 +24,7 @@ __host__ void Uniform(float* data, float min, float max, unsigned int size,
     UniformKernel<<<1, numThreads>>>(data, min, max, size, seed);
 }
 
-__host__ void Scalar(float* data, float value, unsigned int size, int seed)
+__host__ void Scalar(float* data, float value, unsigned int size)
 {
     const auto numThreads = (size < MAX_THREAD_DIM_X) ? size : MAX_THREAD_DIM_X;
 

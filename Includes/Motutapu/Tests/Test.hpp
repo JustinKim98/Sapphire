@@ -6,10 +6,6 @@ namespace Motutapu::Test
 int Add(int a, int b);
 
 #ifdef WITH_CUDA
-void PrintCudaVersion();
-
-void MallocTest();
-
 void TestGemm();
 
 #endif

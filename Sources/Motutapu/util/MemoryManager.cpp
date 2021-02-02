@@ -41,7 +41,7 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     }
 
     success &= Compute::Cuda::CudaSetDevice(deviceId);
-    success &= Compute::Cuda::CudaMalloc(&cudaPtr, size);
+    success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr, size);
 
     m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, cudaPtr),
                                  MemoryChunk(size, cudaPtr, 1));

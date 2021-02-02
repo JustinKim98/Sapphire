@@ -14,18 +14,16 @@ namespace Motutapu::Compute::Cuda
 {
 __host__ bool CudaSetDevice(int deviceId);
 
-__host__ __device__ bool CudaMalloc(float** ptr, unsigned int size);
-
-__host__ __device__ bool CudaFree(float* ptr);
+__host__ __device__ bool CudaMalloc(void** ptr, unsigned int size);
 
 __host__ __device__ bool CudaFree(void* ptr);
 
-__host__ bool MemcpyHostToGpu(float* gpuPtr, float* hostPtr, unsigned int size);
+__host__ __device__ bool CudaFree(void* ptr);
 
+__host__ bool MemcpyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size);
 
-__host__ bool MemcpyGpuToHost(float* hostPtr, float* gpuPtr,
-                              unsigned int size);
+__host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
 
 __host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size);
-} // namespace Motutapu::Compute::Cuda
+}  // namespace Motutapu::Compute::Cuda
 #endif

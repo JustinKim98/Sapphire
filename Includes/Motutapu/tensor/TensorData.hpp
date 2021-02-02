@@ -7,6 +7,7 @@
 #ifndef MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 #define MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 
+#include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
 #include <Motutapu/util/SharedPtr.hpp>
@@ -56,6 +57,14 @@ class TensorData
     [[nodiscard]] Shape GetShape() const
     {
         return TensorShape;
+    }
+
+    void Free()
+    {
+        if (DenseMatCuda)
+            Compute::Cuda::CudaFree(DenseMatCuda);
+        if (DenseMatHost)
+            delete[] DenseMatHost;
     }
 
     //! Helper static functions

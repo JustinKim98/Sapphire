@@ -17,12 +17,21 @@ __host__ void GemmTensor(float* out, float* A, float* B, float* C,
                          unsigned int paddedK, unsigned int batchSize,
                          bool broadcastA, bool broadcastB, bool broadcastC);
 
-__host__ void GemmNormalFloat(float* out, float* A, float* B, float* C,
-                              unsigned int paddedM, unsigned int paddedN,
-                              unsigned int paddedK, unsigned int batchSize,
-                              bool broadcastA, bool broadcastB,
-                              bool broadcastC);
+__host__ void GemmCublas(float* out, float* A, float* B, float* C,
+                         unsigned int paddedM, unsigned int paddedN,
+                         unsigned int paddedK, unsigned int batchSize,
+                         bool broadcastA, bool broadcastB, bool broadcastC);
 
-} // namespace Motutapu::Cuda::Dense
+__host__ void GemmCublas(float* out, float* A, float* B, unsigned int paddedM,
+                         unsigned int paddedN, unsigned int paddedK,
+                         unsigned int batchSize, bool broadcastA,
+                         bool broadcastB);
+
+__host__ void GemmNormal(float* out, float* A, float* B, float* C,
+                         unsigned int paddedM, unsigned int paddedN,
+                         unsigned int paddedK, unsigned int batchSize,
+                         bool broadcastA, bool broadcastB, bool broadcastC);
+
+}  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif

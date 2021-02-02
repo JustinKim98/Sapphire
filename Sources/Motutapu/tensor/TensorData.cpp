@@ -8,6 +8,7 @@
 #include <Motutapu/tensor/TensorData.hpp>
 #include <Motutapu/util/MemoryManager.hpp>
 #include <algorithm>
+#include <cassert>
 #include <stdexcept>
 
 namespace Motutapu::TensorUtil
@@ -42,11 +43,12 @@ TensorData::TensorData(const TensorData &tensorData)
 {
     if (DenseMatHost)
     {
-        Util::MemoryManager::AddReferenceHost(DenseMatHost);
+        // Util::MemoryManager::AddReferenceHost(DenseMatHost);
     }
     if (DenseMatCuda)
     {
-        Util::MemoryManager::AddReferenceCuda(DenseMatCuda, m_device.GetID());
+        // Util::MemoryManager::AddReferenceCuda(DenseMatCuda,
+        // m_device.GetID());
     }
 }
 
@@ -129,12 +131,12 @@ TensorData &TensorData::operator=(TensorData &&tensorData) noexcept
 
 TensorData::~TensorData()
 {
-    m_freeHost();
-
-    if (m_device.Type() == DeviceType::CUDA)
-    {
-        m_freeGpu();
-    }
+    //    m_freeHost();
+    //
+    //    if (m_device.Type() == DeviceType::CUDA)
+    //    {
+    //        m_freeGpu();
+    //    }
 }
 
 bool TensorData::CopyTensorData(TensorData dest, const TensorData src)
@@ -176,7 +178,7 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData src)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        success &= Compute::Cuda::CudaSetDevice(device.GetID());
+        // success &= Compute::Cuda::CudaSetDevice(device.GetID());
 
         if (sparse)
         {
@@ -237,13 +239,15 @@ void TensorData::m_toGpu(const TensorData &tensorData)
     }
     else
     {
-        if (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
-        {
-            throw std::runtime_error("m_toHost - illegalDeviceID");
-        }
-        if (!Compute::Cuda::MemcpyHostToGpu(tensorData.DenseMatCuda,
-                                            tensorData.DenseMatHost,
-                                            tensorData.DenseTotalLength))
+        //        if
+        //        (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
+        //        {
+        //            throw std::runtime_error("m_toHost - illegalDeviceID");
+        //        }
+        if (!Compute::Cuda::MemcpyHostToGpu(
+                (void *)tensorData.DenseMatCuda,
+                (void *)tensorData.DenseMatHost,
+                tensorData.DenseTotalLength * sizeof(float)))
         {
             throw std::runtime_error("m_toGpu - cudaMemCopy failed");
         }
@@ -264,13 +268,15 @@ void TensorData::m_toHost(const TensorData &tensorData)
     }
     else
     {
-        if (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
-        {
-            throw std::runtime_error("m_toHost - illegalDeviceID");
-        }
-        if (!Compute::Cuda::MemcpyGpuToHost(tensorData.DenseMatHost,
-                                            tensorData.DenseMatCuda,
-                                            tensorData.DenseTotalLength))
+        //        if
+        //        (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
+        //        {
+        //            throw std::runtime_error("m_toHost - illegalDeviceID");
+        //        }
+        if (!Compute::Cuda::MemcpyGpuToHost(
+                (void *)tensorData.DenseMatHost,
+                (void *)tensorData.DenseMatCuda,
+                tensorData.DenseTotalLength * sizeof(float)))
         {
             throw std::runtime_error("m_toHost : cudaMemCopy failed");
         }
@@ -285,7 +291,7 @@ void TensorData::m_freeHost() const
     }
     else if (DenseMatHost)
     {
-        Util::MemoryManager::DeReferenceHost(DenseMatHost);
+        // Util::MemoryManager::DeReferenceHost(DenseMatHost);
     }
 }
 
@@ -293,16 +299,15 @@ bool TensorData::m_freeGpu()
 {
     bool isSuccess = true;
 
-    isSuccess &= Compute::Cuda::CudaSetDevice(m_device.GetID());
+    // isSuccess &= Compute::Cuda::CudaSetDevice(m_device.GetID());
 
     if (m_type == Type::Sparse && SparseMatCuda)
     {
-        isSuccess &=
-            Compute::Cuda::CudaFree(reinterpret_cast<void *>(SparseMatCuda));
+        isSuccess &= Compute::Cuda::CudaFree((void *)(SparseMatCuda));
     }
     else if (DenseMatCuda)
     {
-        Util::MemoryManager::DeReferenceCuda(DenseMatCuda, m_device.GetID());
+        // Util::MemoryManager::DeReferenceCuda(DenseMatCuda, m_device.GetID());
     }
 
     return isSuccess;
@@ -310,8 +315,9 @@ bool TensorData::m_freeGpu()
 
 void TensorData::m_allocateCpu(unsigned int batchSize)
 {
-    const auto colSize = TensorShape.At(0);
-    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 1;
+    const auto colSize = TensorShape.At(TensorShape.Dim() - 1);
+    const auto rowSize =
+        TensorShape.Dim() > 1 ? TensorShape.At(TensorShape.Dim() - 2) : 1;
 
     const auto padUnitSize = static_cast<unsigned int>(32 / sizeof(float));
 
@@ -342,7 +348,8 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
         PaddedRowSize = paddedRowSize;
         PaddedColumnSize = paddedColumnSize;
         DenseTotalLength = totalSize;
-        DenseMatHost = Util::MemoryManager::GetMemoryHost(totalSize);
+        DenseMatHost = new float[totalSize];
+        // DenseMatHost = Util::MemoryManager::GetMemoryHost(totalSize);
     }
 }
 
@@ -354,8 +361,9 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
             "m_allocateCuda - Tensor Device type is not CUDA");
     }
 
-    const auto colSize = TensorShape.At(0);
-    const auto rowSize = TensorShape.Dim() > 1 ? TensorShape.At(1) : 1;
+    const auto colSize = TensorShape.At(TensorShape.Dim() - 1);
+    const auto rowSize =
+        TensorShape.Dim() > 1 ? TensorShape.At(TensorShape.Dim() - 2) : 1;
 
     const unsigned int padUnitSize = 32 / sizeof(float);
 
@@ -386,8 +394,11 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
         PaddedRowSize = paddedRowSize;
         PaddedColumnSize = paddedColumnSize;
         DenseTotalLength = totalSize;
-        DenseMatCuda =
-            Util::MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
+        Compute::Cuda::CudaMalloc((void **)&DenseMatCuda,
+                                  totalSize * sizeof(float));
+        //assert(false);
+        // DenseMatCuda = Util::MemoryManager::GetMemoryCuda(totalSize,
+        // m_device.GetID());
     }
 }
 

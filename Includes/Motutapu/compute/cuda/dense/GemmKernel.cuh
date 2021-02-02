@@ -1,8 +1,8 @@
 // Copyright (c) 2021, Justin Kim
 
 // We are making my contributions/submissions to this project solely in our
-// personal capacity and are not conveying any rights to any unsigned intellectual
-// property of any third parties.
+// personal capacity and are not conveying any rights to any unsigned
+// intellectual property of any third parties.
 
 #ifndef MOTUTAPU_COMPUTE_CUDA_DENSE_GEMMKERNEL_CUH
 #define MOTUTAPU_COMPUTE_CUDA_DENSE_GEMMKERNEL_CUH
@@ -52,8 +52,14 @@ __global__ void WmmaGemm(float* Out, const float* A, const float* B,
 //! Required thread dimension is (tileDim x chunkSize) x (tileDim x chunkSize)
 //! each thread computes each output entry in the chunk
 //! Required block size is chunkDimM x chunkDimN
-__global__ void Gemm(float* out, const float* A, const float* B,
-                     const float* C, unsigned int paddedK,
-                     unsigned int paddedN, unsigned int chunkIdxK);
-}
+__global__ void Gemm(float* out, const float* A, const float* B, const float* C,
+                     unsigned int paddedM, unsigned int paddedN,
+                     unsigned int paddedK, unsigned int chunkIdxK,
+                     const unsigned int chunkSize,
+                     const unsigned int chunkDimN);
+
+__global__ void GemmSimple(float* out, const float* A, const float* B, const float* C,
+                           unsigned int paddedM, unsigned int paddedN,
+                           unsigned int paddedK);
+}  // namespace Motutapu::Compute::Cuda::Dense
 #endif
