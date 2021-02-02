@@ -22,13 +22,18 @@ file(GLOB_RECURSE sources
 
 file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 
-if(USE_CUDA)
+if (USE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
-    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 86)
-else()
+    CUDA_ADD_LIBRARY(motutapu_cuda ${cuda_sources})
+    #CUDA_ADD_CUBLAS_TO_TARGET(motutapu_cuda)
+    set_property(TARGET motutapu_cuda PROPERTY CUDA_ARCHITECTURES 86)
+    add_library(motutapu ${sources})
+else ()
     add_library(${target} ${sources})
-endif()
+endif ()
+
+find_package(OpenMP REQUIRED)
+
 # Project options
 set_target_properties(${target}
         PROPERTIES
@@ -47,11 +52,12 @@ target_compile_options(${target}
 
 target_link_libraries(${target}
         PRIVATE
-
+        motutapu_cuda
+        cublas
         PUBLIC
         ${DEFAULT_LINKER_OPTIONS}
         ${DEFAULT_LIBRARIES}
-
+        OpenMP::OpenMP_CXX
 
         INTERFACE
         )
