@@ -7,7 +7,6 @@
 #include <Motutapu/compute/Compute.hpp>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>
 #include <Motutapu/compute/naive/NaiveGemm.hpp>
-#include <cassert>
 
 namespace Motutapu::Compute
 {

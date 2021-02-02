@@ -201,8 +201,6 @@ __host__ void GemmNormal(float* out, float* A, float* B, float* C,
                          unsigned int paddedK, unsigned int batchSize,
                          bool broadcastA, bool broadcastB, bool broadcastC)
 {
-    // GemmSimple<<<1, 1024>>>(out, A, B, C, paddedM, paddedN, paddedK);
-
     auto* streams =
         static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
     unsigned int blockSize = paddedM * paddedN / 1024 + 1;
@@ -226,54 +224,5 @@ __host__ void GemmNormal(float* out, float* A, float* B, float* C,
     }
 
     free(streams);
-
-    //    static constexpr unsigned int tileDim = 8;
-    //    const auto chunkDimM = paddedM / tileDim;
-    //    const auto chunkDimK = paddedK / tileDim;
-    //    const auto chunkDimN = paddedN / tileDim;
-    //
-    //    unsigned int arr[] = { chunkDimM, chunkDimK, chunkDimN };
-    //
-    //    const auto maxTileSize = FindGCD(arr, sizeof(arr) / sizeof(arr[0]));
-    //
-    //    unsigned int chunkSize;
-    //    if (maxTileSize % 2 == 1)
-    //    {
-    //        chunkSize = 1;
-    //    }
-    //    else
-    //    {
-    //        if (maxTileSize % 4 == 0)
-    //            chunkSize = 4;
-    //        else
-    //            chunkSize = 2;
-    //    }
-    //
-    //    for (unsigned int chunkIdxK = 0; chunkIdxK * chunkSize * tileDim <
-    //    paddedK;
-    //         ++chunkIdxK)
-    //    {
-    //        for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-    //        {
-    //            float* ptrOut = out + paddedM * paddedN * batchIdx;
-    //            const float* ptrA =
-    //                A + paddedM * paddedK * (broadcastA ? 0 : batchIdx);
-    //            const float* ptrB =
-    //                B + paddedK * paddedN * (broadcastB ? 0 : batchIdx);
-    //            const float* ptrC =
-    //                C + paddedM * paddedN * (broadcastC ? 0 : batchIdx);
-    //
-    //            const unsigned int numBlocks = chunkDimM * chunkDimN;
-    //            const unsigned int numThreads =
-    //                chunkSize * tileDim * chunkSize * tileDim;
-    //            const unsigned int sharedMemSize =
-    //                (tileDim * chunkSize) * (tileDim * chunkSize + 1) * 2;
-    //
-    //            Gemm<<<numBlocks, numThreads, sharedMemSize *
-    //            sizeof(float)>>>(
-    //                ptrOut, ptrA, ptrB, ptrC, paddedM, paddedN, paddedK,
-    //                chunkIdxK, chunkSize, chunkDimN);
-    //        }
-    //    }
 }
 }  // namespace Motutapu::Compute::Cuda::Dense

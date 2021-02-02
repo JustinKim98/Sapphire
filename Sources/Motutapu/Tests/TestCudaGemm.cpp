@@ -21,94 +21,75 @@ namespace Motutapu::Test
 {
 void TestGemm()
 {
-    const auto M = 240;
-    const auto N = 160;
-    const auto K = 480;
-    const Shape shapeA({ M, K });
-    const Shape shapeB({ K, N });
-    const Shape shapeC({ M, N });
-    const Shape shapeOut({ M, N });
+    {
+        std::random_device
+            rd;  // Will be used to obtain a seed for the random number engine
+        std::mt19937 gen(
+            rd());  // Standard mersenne_twister_engine seeded with rd()
+        std::uniform_int_distribution<> distrib(1, 50);
 
-    const Device cuda(0, "device0");
-    const Device host("host");
+        const unsigned int M = distrib(gen) % 30;
+        const unsigned int N = distrib(gen) % 30;
+        const unsigned int K = distrib(gen) % 30;
+        const Shape shapeA({ M, K });
+        const Shape shapeB({ K, N });
+        const Shape shapeC({ M, N });
+        const Shape shapeOut({ M, N });
 
-    const auto batchSize = 10;
+        const Device cuda(0, "device0");
+        const Device host("host");
 
-    TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
+        const auto batchSize = 3;
 
-    TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
 
-    TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
 
-    TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
 
-    std::random_device
-        rd;  // Will be used to obtain a seed for the random number engine
-    std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with
-                             // rd()
-    std::uniform_real_distribution<> distrib(1, 6);
+        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+
+        Compute::Initialize::Normal(A, 0, 5);
+        Compute::Initialize::Normal(B, 0, 5);
+        Compute::Initialize::Normal(C, 0, 5);
+        Compute::Initialize::Zeros(Out);
+
+        Compute::Gemm(Out, A, B, C);
+
+        float cpuGemmResult[Out.DenseTotalLength];
+
+        for (size_t i = 0; i < Out.DenseTotalLength; ++i)
+        {
+            cpuGemmResult[i] = Out.DenseMatHost[i];
+        }
+
+        Compute::Initialize::Zeros(Out);
+
+        A.SendTo(cuda);
+        B.SendTo(cuda);
+        C.SendTo(cuda);
+        Out.SendTo(cuda);
+
+        Compute::Gemm(Out, A, B, C);
+        Compute::Naive::Scalar(Out.DenseMatHost, 0.0f, Out.DenseTotalLength);
+
+        Out.SendTo(host);
+
+        std::atomic<float> largestError = 0.0f;
 
 #pragma omp parallel for default(shared) schedule(static)
-    for (size_t i = 0; i < A.DenseTotalLength; ++i)
-    {
-        A.DenseMatHost[i] = static_cast<float>(distrib(gen));
+        for (size_t i = 0; i < Out.DenseTotalLength; ++i)
+        {
+            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
+            if (largestError < error)
+                largestError = error;
+            CHECK(error < 1.0f);
+        }
+
+        std::cout << "Largest error : " << largestError << std::endl;
     }
-
-#pragma omp parallel for default(shared) schedule(static)
-    for (size_t i = 0; i < B.DenseTotalLength; ++i)
-    {
-        B.DenseMatHost[i] = static_cast<float>(distrib(gen));
-    }
-
-#pragma omp parallel for default(shared) schedule(static)
-    for (size_t i = 0; i < C.DenseTotalLength; ++i)
-    {
-        C.DenseMatHost[i] = static_cast<float>(distrib(gen));
-    }
-
-    Compute::Initialize::Zeros(Out);
-
-    Compute::Gemm(Out, A, B, C);
-
-    float cpuGemmResult[Out.DenseTotalLength];
-
-    for (size_t i = 0; i < Out.DenseTotalLength; ++i)
-    {
-        cpuGemmResult[i] = Out.DenseMatHost[i];
-    }
-
-    Compute::Initialize::Zeros(Out);
-
-    A.SendTo(cuda);
-    B.SendTo(cuda);
-    C.SendTo(cuda);
-    Out.SendTo(cuda);
-
-    Compute::Gemm(Out, A, B, C);
-    Compute::Naive::Scalar(Out.DenseMatHost, 0.0f, Out.DenseTotalLength);
-
-    Out.SendTo(host);
-
-    std::atomic<float> largestError = 0.0f;
-
-#pragma omp parallel for default(shared) schedule(static)
-    for (size_t i = 0; i < Out.DenseTotalLength; ++i)
-    {
-        auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
-        if (largestError < error)
-            largestError = error;
-        //CHECK(std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]) < 1.0f);
-    }
-
-    A.Free();
-    B.Free();
-    C.Free();
-    Out.Free();
-
-    std::cout << "Largest error : " << largestError << std::endl;
-
-    // Util::MemoryManager::ClearCudaMemoryPool();
-    // Util::MemoryManager::ClearHostMemoryPool();
+    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::MemoryManager::ClearHostMemoryPool();
 }
 
 }  // namespace Motutapu::Test

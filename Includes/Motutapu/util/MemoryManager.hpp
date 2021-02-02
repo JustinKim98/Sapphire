@@ -25,10 +25,10 @@ struct pair_hash_free
 
 struct pair_hash_busy
 {
-    std::size_t operator()(const std::pair<int, float*>& pair) const
+    std::size_t operator()(const std::pair<int, intptr_t>& pair) const
     {
         return std::hash<int>()(pair.first) ^
-               std::hash<size_t>()(reinterpret_cast<size_t>(pair.second));
+               std::hash<uintptr_t>()(pair.second);
     }
 };
 
@@ -76,11 +76,11 @@ class MemoryManager
 
  private:
     static std::unordered_multimap<size_t, MemoryChunk> m_hostFreeMemoryPool;
-    static std::unordered_map<float*, MemoryChunk> m_hostBusyMemoryPool;
+    static std::unordered_map<intptr_t, MemoryChunk> m_hostBusyMemoryPool;
     static std::unordered_multimap<std::pair<int, size_t>, MemoryChunk,
                                    pair_hash_free>
         m_cudaFreeMemoryPool;
-    static std::unordered_map<std::pair<int, float*>, MemoryChunk,
+    static std::unordered_map<std::pair<int, intptr_t>, MemoryChunk,
                               pair_hash_busy>
         m_cudaBusyMemoryPool;
 

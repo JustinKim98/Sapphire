@@ -59,14 +59,6 @@ class TensorData
         return TensorShape;
     }
 
-    void Free()
-    {
-        if (DenseMatCuda)
-            Compute::Cuda::CudaFree(DenseMatCuda);
-        if (DenseMatHost)
-            delete[] DenseMatHost;
-    }
-
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the
     //! operation units
