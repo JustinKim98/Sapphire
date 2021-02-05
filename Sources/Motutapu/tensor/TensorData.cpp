@@ -333,7 +333,7 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
 {
     const auto colSize = Cols();
 
-    const auto padUnitSize = m_device.GetPadUnitSize();
+    const auto padUnitSize = 32 / sizeof(float);
 
     const auto paddedColumnSize =
         colSize % padUnitSize == 0

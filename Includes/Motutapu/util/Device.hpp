@@ -47,13 +47,6 @@ class Device
         return m_name;
     }
 
-    [[nodiscard]] std::size_t GetPadUnitSize() const
-    {
-        if (m_type == DeviceType::CUDA)
-            return 1;
-        return static_cast<size_t>(32 / sizeof(float));
-    }
-
     [[nodiscard]] int GetID() const
     {
         return m_id;

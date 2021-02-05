@@ -21,7 +21,7 @@ namespace Motutapu::Test
 {
 void TestGemm1()
 {
-    for (int j = 0; j < 5; j++)
+    for (int j = 0; j < 3; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -97,7 +97,7 @@ void TestGemm1()
 
 void TestGemm2()
 {
-    for (int j = 0; j < 5; j++)
+    for (int j = 0; j < 3; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -169,7 +169,7 @@ void TestGemm2()
 
 void TestGemmBroadcast()
 {
-    for (int j = 0; j < 5; j++)
+    for (int j = 0; j < 3; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -192,7 +192,7 @@ void TestGemmBroadcast()
 
         TensorUtil::TensorData A(shapeA, Type::Dense, cuda, 1);
 
-        TensorUtil::TensorData B(shapeB, Type::Dense, cuda, 1);
+        TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
 
         TensorUtil::TensorData C(shapeC, Type::Dense, cuda, 1);
 
@@ -223,15 +223,16 @@ void TestGemmBroadcast()
 
         std::atomic<float> largestError = 0.0f;
 
-        //#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(shared) schedule(static)
         for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
 
-//            std::cout << "cuda : " << cudaGemmResult[i]
-//                      << " cpu : " << Out.DenseMatHost[i] << std::endl;
+            //            std::cout << "cuda : " << cudaGemmResult[i]
+            //                      << " cpu : " << Out.DenseMatHost[i] <<
+            //                      std::endl;
 
             CHECK(error < 1.5f);
         }

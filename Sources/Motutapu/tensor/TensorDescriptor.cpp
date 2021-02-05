@@ -29,8 +29,8 @@ TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
 }
 
 TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
-    : ForwardData(tensorData.ForwardData),
-      BackwardData(tensorData.BackwardData),
+    : ForwardData(std::move(tensorData.ForwardData)),
+      BackwardData(std::move(tensorData.BackwardData)),
       m_requireOutputSaving(tensorData.m_requireOutputSaving),
       m_trainable(tensorData.m_trainable),
       m_history(std::move(tensorData.m_history))
@@ -120,4 +120,4 @@ bool TensorDescriptor::IsBackPropReady() const
 
     return false;
 }
-}  // namespace Motutapu::Util
+}  // namespace Motutapu::TensorUtil

@@ -37,7 +37,7 @@ void Mul(TensorData& out, const TensorData& a, const TensorData& b);
 //! Performs out = a*factor
 void Scale(TensorData& out, const TensorData& a, float factor);
 
-//! Performs out = transpose(a)
+//! Performs out = transposeKernel(a)
 void Transpose(TensorData& out, const TensorData& a);
 
 //! Performs out = out^factor for each element

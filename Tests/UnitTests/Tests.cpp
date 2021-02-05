@@ -39,8 +39,7 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Computation Test")
 {
-    // todo : Fix pad Size when default is Cuda
-    const int testLoops = 5;
+    const int testLoops = 3;
     SUBCASE("Gemm With Cuda")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)

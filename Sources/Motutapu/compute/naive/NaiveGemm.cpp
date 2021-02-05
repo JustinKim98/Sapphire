@@ -18,7 +18,7 @@ void NaiveGemm(float* out, float* A, float* B, float* C, unsigned int M,
     const auto strideB = (broadcastB ? 0 : (K * paddedN));
     const auto strideC = (broadcastC ? 0 : (M * paddedN));
 
-    //#pragma omp parallel for collapse(3) schedule(static)
+#pragma omp parallel for collapse(3) schedule(static)
     for (size_t batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         for (size_t mIdx = 0; mIdx < M; ++mIdx)
             for (size_t nIdx = 0; nIdx < N; ++nIdx)
