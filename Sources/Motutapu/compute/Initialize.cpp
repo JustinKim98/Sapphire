@@ -11,78 +11,84 @@
 
 namespace Motutapu::Compute::Initialize
 {
-void Normal(TensorUtil::TensorData data, float mean, float sd)
+void Normal(const TensorUtil::TensorData& data, float mean, float sd)
 {
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Normal(data.DenseMatCuda, mean, sd, data.DenseTotalLength,
+        Cuda::Dense::Normal(data.DenseMatCuda, mean, sd,
+                            data.DenseTotalLengthCuda,
                             static_cast<int>(std::clock()));
     }
     else
     {
-        Naive::Normal(data.DenseMatHost, mean, sd, data.DenseTotalLength);
+        Naive::Normal(data.DenseMatHost, mean, sd, data.TensorShape,
+                      data.PaddedHostColSize, data.BatchSize);
     }
 }
 
-void Uniform(TensorUtil::TensorData data, float min, float max)
+void Uniform(const TensorUtil::TensorData& data, float min, float max)
 {
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Uniform(data.DenseMatCuda, min, max, data.DenseTotalLength,
+        Cuda::Dense::Uniform(data.DenseMatCuda, min, max,
+                             data.DenseTotalLengthCuda,
                              static_cast<int>(std::clock()));
     }
     else
     {
-        Naive::Uniform(data.DenseMatHost, min, max, data.DenseTotalLength);
+        Naive::Uniform(data.DenseMatHost, min, max, data.TensorShape,
+                       data.PaddedHostColSize, data.BatchSize);
     }
 }
 
-void Ones(TensorUtil::TensorData data)
+void Ones(const TensorUtil::TensorData& data)
 {
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Scalar(data.DenseMatCuda, 1.0f, data.DenseTotalLength);
+        Cuda::Dense::Scalar(data.DenseMatCuda, 1.0f, data.DenseTotalLengthCuda);
     }
     else
     {
-        Naive::Scalar(data.DenseMatHost, 1.0f, data.DenseTotalLength);
+        Naive::Scalar(data.DenseMatHost, 1.0f, data.TensorShape,
+                      data.PaddedHostColSize, data.BatchSize);
     }
 }
 
-void Zeros(TensorUtil::TensorData data)
+void Zeros(const TensorUtil::TensorData& data)
 {
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Scalar(data.DenseMatCuda, 0.0f, data.DenseTotalLength);
+        Cuda::Dense::Scalar(data.DenseMatCuda, 0.0f, data.DenseTotalLengthCuda);
     }
     else
     {
-        Naive::Scalar(data.DenseMatHost, 0.0f, data.DenseTotalLength);
+        Naive::Scalar(data.DenseMatHost, 0.0f, data.TensorShape,
+                      data.PaddedHostColSize, data.BatchSize);
     }
 }
 
-void HeNormal(TensorUtil::TensorData data, int fanIn)
+void HeNormal(const TensorUtil::TensorData& data, int fanIn)
 {
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
     {
         Cuda::Dense::Normal(
             data.DenseMatCuda, 0.0, 2.0f / std::sqrt(static_cast<float>(fanIn)),
-            data.DenseTotalLength, static_cast<int>(std::clock()));
+            data.DenseTotalLengthCuda, static_cast<int>(std::clock()));
     }
     else
     {
         Naive::Normal(data.DenseMatHost, 0.0,
                       2.0f / std::sqrt(static_cast<float>(fanIn)),
-                      data.DenseTotalLength);
+                      data.TensorShape, data.PaddedHostColSize, data.BatchSize);
     }
 }
 
-void Xavier(TensorUtil::TensorData data, int fanIn, int fanOut)
+void Xavier(const TensorUtil::TensorData& data, int fanIn, int fanOut)
 {
     const auto device = data.GetDevice();
     if (device.Type() == DeviceType::CUDA)
@@ -90,13 +96,13 @@ void Xavier(TensorUtil::TensorData data, int fanIn, int fanOut)
         Cuda::Dense::Normal(
             data.DenseMatCuda, 0.0,
             1.0f / std::sqrt(static_cast<float>(fanIn + fanOut)),
-            data.DenseTotalLength, static_cast<int>(std::clock()));
+            data.DenseTotalLengthCuda, static_cast<int>(std::clock()));
     }
     else
     {
         Naive::Normal(data.DenseMatHost, 0.0,
                       1.0f / std::sqrt(static_cast<float>(fanIn + fanOut)),
-                      data.DenseTotalLength);
+                      data.TensorShape, data.PaddedHostColSize, data.BatchSize);
     }
 }
 }  // namespace Motutapu::Compute::Initialize

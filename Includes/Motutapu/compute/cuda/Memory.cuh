@@ -7,7 +7,6 @@
 #ifndef MOTUTAPU_COMPUTE_CUDA_MEMORY_CUH
 #define MOTUTAPU_COMPUTE_CUDA_MEMORY_CUH
 
-#include <cuda_fp16.h>
 #include <Motutapu/compute/cuda/CudaParams.cuh>
 
 namespace Motutapu::Compute::Cuda
@@ -25,5 +24,9 @@ __host__ bool MemcpyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size);
 __host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
 
 __host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size);
+
+__host__ void MemcpyGpuToGpuBroadcast(float* dest, const float* src,
+                                      unsigned int size,
+                                      unsigned int srcStride);
 }  // namespace Motutapu::Compute::Cuda
 #endif

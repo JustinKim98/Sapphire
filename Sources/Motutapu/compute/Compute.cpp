@@ -16,9 +16,11 @@ namespace Motutapu::Compute
                            const TensorUtil::TensorData& c)
 {
     const auto device = out.GetDevice();
-    const auto paddedM = out.PaddedRowSize;
-    const auto paddedN = out.PaddedColumnSize;
-    const auto paddedK = a.PaddedColumnSize;
+    const auto M = out.Rows();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto K = a.Cols();
+    const auto paddedK = a.PaddedHostColSize;
     const auto batchSize = out.BatchSize;
     const auto broadCastA = a.BatchSize == 1;
     const auto broadCastB = b.BatchSize == 1;
@@ -27,15 +29,14 @@ namespace Motutapu::Compute
     if (device.Type() == DeviceType::CUDA)
     {
         Cuda::Dense::GemmCublas(out.DenseMatCuda, a.DenseMatCuda,
-                                b.DenseMatCuda, c.DenseMatCuda, paddedM,
-                                paddedN, paddedK, batchSize, broadCastA,
-                                broadCastB, broadCastC);
+                                b.DenseMatCuda, c.DenseMatCuda, M, N, K,
+                                batchSize, broadCastA, broadCastB, broadCastC);
     }
     else
         Naive::Dense::NaiveGemm(out.DenseMatHost, a.DenseMatHost,
-                                b.DenseMatHost, c.DenseMatHost, paddedM,
-                                paddedN, paddedK, batchSize, broadCastA,
-                                broadCastB, broadCastC);
+                                b.DenseMatHost, c.DenseMatHost, M, N, paddedN,
+                                K, paddedK, batchSize, broadCastA, broadCastB,
+                                broadCastC);
 }
 
 [[maybe_unused]] void Gemm(TensorUtil::TensorData& out,
@@ -43,22 +44,24 @@ namespace Motutapu::Compute
                            const TensorUtil::TensorData& b)
 {
     const auto device = out.GetDevice();
-    const auto paddedM = out.PaddedRowSize;
-    const auto paddedN = out.PaddedColumnSize;
-    const auto paddedK = a.PaddedColumnSize;
+    const auto M = out.Rows();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto K = a.Cols();
+    const auto paddedK = a.PaddedHostColSize;
     const auto batchSize = out.BatchSize;
     const auto broadCastA = a.BatchSize == 1;
     const auto broadCastB = b.BatchSize == 1;
 
     if (device.Type() == DeviceType::CUDA)
         Cuda::Dense::GemmCublas(out.DenseMatHost, a.DenseMatHost,
-                                b.DenseMatHost, paddedM, paddedN, paddedK,
-                                batchSize, broadCastA, broadCastB);
+                                b.DenseMatHost, M, N, K, batchSize, broadCastA,
+                                broadCastB);
     else
         Naive::Dense::NaiveGemm(out.DenseMatHost, a.DenseMatHost,
-                                b.DenseMatHost, out.DenseMatHost, paddedM,
-                                paddedN, paddedK, batchSize, broadCastA,
-                                broadCastB, false);
+                                b.DenseMatHost, out.DenseMatHost, M, N, paddedN,
+                                K, paddedK, batchSize, broadCastA, broadCastB,
+                                false);
 }
 
 }  // namespace Motutapu::Compute

@@ -11,23 +11,49 @@ namespace Motutapu::Compute::Cuda::Dense
 __host__ void Normal(float* data, float mean, float sd, unsigned int size,
                      int seed)
 {
-    const auto numThreads = (size < MAX_THREAD_DIM_X) ? size : MAX_THREAD_DIM_X;
+    const auto numLoops = 8;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
-    NormalKernel<<<1, numThreads>>>(data, mean, sd, size, seed);
+    const auto blockDim = size / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+
+    if (firstLaunchSize > 0)
+        NormalKernel<<<blockDim, threadDim>>>(data, mean, sd, firstLaunchSize,
+                                              seed);
+    if (size > firstLaunchSize)
+        NormalKernel<<<1, size - firstLaunchSize>>>(
+            data + firstLaunchSize, mean, sd, size - firstLaunchSize, seed);
 }
 
 __host__ void Uniform(float* data, float min, float max, unsigned int size,
                       int seed)
 {
-    const auto numThreads = (size < MAX_THREAD_DIM_X) ? size : MAX_THREAD_DIM_X;
+    const auto numLoops = 8;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
-    UniformKernel<<<1, numThreads>>>(data, min, max, size, seed);
+    const auto blockDim = size / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+
+    if (firstLaunchSize > 0)
+        UniformKernel<<<blockDim, threadDim>>>(data, min, max, firstLaunchSize,
+                                               seed);
+    if (size > firstLaunchSize)
+        UniformKernel<<<1, size - firstLaunchSize>>>(
+            data + firstLaunchSize, min, max, size - firstLaunchSize, seed);
 }
 
 __host__ void Scalar(float* data, float value, unsigned int size)
 {
-    const auto numThreads = (size < MAX_THREAD_DIM_X) ? size : MAX_THREAD_DIM_X;
+    const auto numLoops = 8;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
-    ScalarKernel<<<1, numThreads>>>(data, value, size);
+    const auto blockDim = size / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+
+    if (firstLaunchSize > 0)
+        ScalarKernel<<<blockDim, threadDim>>>(data, value, firstLaunchSize);
+    if (size > firstLaunchSize)
+        ScalarKernel<<<1, size - firstLaunchSize>>>(
+            data + firstLaunchSize, value, size - firstLaunchSize);
 }
 }  // namespace Motutapu::Compute::Cuda::Dense

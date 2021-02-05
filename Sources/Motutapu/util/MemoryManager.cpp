@@ -13,10 +13,9 @@ namespace Motutapu::Util
 std::unordered_multimap<size_t, MemoryChunk>
     MemoryManager::m_hostFreeMemoryPool;
 std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_hostBusyMemoryPool;
-std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, pair_hash_free>
+std::unordered_multimap<size_t, MemoryChunk>
     MemoryManager::m_cudaFreeMemoryPool;
-std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, pair_hash_busy>
-    MemoryManager::m_cudaBusyMemoryPool;
+std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_cudaBusyMemoryPool;
 
 std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
@@ -27,24 +26,25 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     auto success = true;
     float* cudaPtr = nullptr;
 
-    auto key = std::make_pair(deviceId, size);
+    auto key = size;
     const auto itr = m_cudaFreeMemoryPool.find(key);
 
     if (itr != m_cudaFreeMemoryPool.end())
     {
         MemoryChunk targetChunk = itr->second;
-        targetChunk.RefCount = 1;
+        cudaPtr = targetChunk.Data;
+        targetChunk.RefCount += 1;
         m_cudaFreeMemoryPool.erase(itr);
-        m_cudaBusyMemoryPool.emplace(
-            std::make_pair(deviceId, intptr_t(cudaPtr)), targetChunk);
-        return targetChunk.Data;
+        m_cudaBusyMemoryPool.emplace(intptr_t(cudaPtr), targetChunk);
+
+        return cudaPtr;
     }
 
     success &= Compute::Cuda::CudaSetDevice(deviceId);
     success &=
         Compute::Cuda::CudaMalloc((void**)&cudaPtr, size * sizeof(float));
 
-    m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
+    m_cudaBusyMemoryPool.emplace(intptr_t(cudaPtr),
                                  MemoryChunk(size, cudaPtr, 1));
 
     if (!success)
@@ -64,13 +64,15 @@ float* MemoryManager::GetMemoryHost(size_t size)
     if (itr != m_hostFreeMemoryPool.end())
     {
         MemoryChunk targetChunk = itr->second;
-        targetChunk.RefCount = 1;
+        targetChunk.RefCount += 1;
+        dataPtr = targetChunk.Data;
         m_hostFreeMemoryPool.erase(itr);
-        m_hostBusyMemoryPool.emplace(intptr_t(targetChunk.Data), targetChunk);
-        return targetChunk.Data;
+        m_hostBusyMemoryPool.emplace(intptr_t(dataPtr), targetChunk);
+        return dataPtr;
     }
 
     dataPtr = new float[size];
+    std::fill(dataPtr, dataPtr + size, 0);
     m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
                                  MemoryChunk(size, dataPtr, 1));
 
@@ -81,8 +83,7 @@ void MemoryManager::AddReferenceCuda(float* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
-    const auto itr =
-        m_cudaBusyMemoryPool.find(std::make_pair(deviceId, intptr_t(ptr)));
+    const auto itr = m_cudaBusyMemoryPool.find(intptr_t(ptr));
     if (itr == m_cudaBusyMemoryPool.end())
     {
         throw std::runtime_error("AddReferenceCuda - Reference was not found");
@@ -110,8 +111,8 @@ void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
-    const auto itr =
-        m_cudaBusyMemoryPool.find(std::make_pair(deviceId, intptr_t(ptr)));
+    const auto itr = m_cudaBusyMemoryPool.find(intptr_t(ptr));
+
     if (itr == m_cudaBusyMemoryPool.end())
     {
         throw std::runtime_error("DeReferenceCuda - Reference was not found");
@@ -123,8 +124,7 @@ void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
     if (chunk.RefCount == 0)
     {
         m_cudaBusyMemoryPool.erase(itr);
-        m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.Size),
-                                     chunk);
+        m_cudaFreeMemoryPool.emplace(chunk.Size, chunk);
     }
 }
 

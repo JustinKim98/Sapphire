@@ -27,10 +27,10 @@ class TensorData
     TensorData& operator=(TensorData&& tensorData) noexcept;
     ~TensorData();
 
-    unsigned long DenseTotalLength = 0;
+    unsigned long DenseTotalLengthHost = 0;
+    unsigned long DenseTotalLengthCuda = 0;
     unsigned long SparseTotalLength = 0;
-    unsigned long PaddedColumnSize = 0;
-    unsigned long PaddedRowSize = 0;
+    unsigned long PaddedHostColSize = 0;
     unsigned long BatchSize = 0;
 
     float* DenseMatHost = nullptr;
@@ -39,6 +39,17 @@ class TensorData
     SparseMatrix* SparseMatHost = nullptr;
     SparseMatrix* SparseMatCuda = nullptr;
     Shape TensorShape;
+
+    [[nodiscard]] size_t Rows() const
+    {
+        return TensorShape.Dim() > 1 ? TensorShape.At(TensorShape.Dim() - 2)
+                                     : 1;
+    }
+
+    [[nodiscard]] size_t Cols() const
+    {
+        return TensorShape.At(TensorShape.Dim() - 1);
+    }
 
     //! Gets device descriptor (Sparse or Dense)
     //! \return : device descriptor
@@ -70,7 +81,7 @@ class TensorData
 
     //! Deep copies tensor data from src to dest
     //! Type of dest and src must be the same
-    static bool CopyTensorData(TensorData dest, const TensorData src);
+    static bool CopyTensorData(TensorData dest, const TensorData& src);
 
     //! Changes device of the tensor
     //! Transfers data to target device from current device
@@ -104,10 +115,10 @@ class TensorData
     void m_allocateCuda(unsigned int batchSize);
 
     //! Free space allocated on CPU memory
-    void m_freeHost() const;
+    void m_freeHost();
 
     //! Free space allocated on GPU memory
-    bool m_freeGpu();
+    bool m_freeCuda();
 
     Type m_type = Type::Dense;
     Device m_device;

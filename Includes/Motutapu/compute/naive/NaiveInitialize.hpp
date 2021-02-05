@@ -6,14 +6,19 @@
 
 #ifndef MOTUTAPU_NAIVEINITIALIZE_HPP
 #define MOTUTAPU_NAIVEINITIALIZE_HPP
+#include <Motutapu/tensor/Shape.hpp>
+#include <cstdlib>
 
 namespace Motutapu::Compute::Naive
 {
-void Normal(float* data, float mean, float sd, unsigned int size);
+void Normal(float* data, float mean, float sd, const Shape& shape,
+            size_t paddedCols, size_t batchSize);
 
-void Uniform(float* data, float min, float max, unsigned int size);
+void Uniform(float* data, float min, float max, const Shape& shape,
+             size_t paddedCols, size_t batchSize);
 
-void Scalar(float* data, float value, unsigned int size);
-}  // namespace Motutapu::Compute
+void Scalar(float* data, float value, const Shape& shape, size_t paddedCols,
+            size_t batchSize);
+}  // namespace Motutapu::Compute::Naive
 
 #endif  // MOTUTAPU_NAIVEINITIALIZE_HPP

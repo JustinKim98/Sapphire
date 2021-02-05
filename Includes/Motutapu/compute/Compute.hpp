@@ -16,57 +16,35 @@ namespace Motutapu::Compute
 using namespace TensorUtil;
 
 void Add(TensorData& out, const TensorData& add);
-//! Performs out = a + b
 
+//! Performs out = a + b
 void Add(TensorData& out, const TensorData& a, const TensorData& b);
 
 //! Performs out = out - sub
-
 void Sub(TensorData& out, const TensorData& sub);
 
 //! Performs out = a - b
 
 void Sub(TensorData& out, const TensorData& a, const TensorData& b);
 
-//! Performs out = a * b
-
+//! Performs out = a * b + out
 void Mul(TensorData& out, const TensorData& a, const TensorData& b);
-
-//! Performs out = out * a
-
-void Mul(TensorData& out, const TensorData& a);
 
 //! Performs GEMM (out = a*b + c)
 [[maybe_unused]] void Gemm(TensorData& out, const TensorData& a,
                            const TensorData& b, const TensorData& c);
 
-//! Performs in place GEMM (out = a*b + out)
-[[maybe_unused]] void Gemm(TensorData& out, const TensorData& a,
-                           const TensorData& b);
-
-//! Performs out = out * factor
-
-void Scale(TensorData& out, float factor);
-
 //! Performs out = a*factor
-
 void Scale(TensorData& out, const TensorData& a, float factor);
 
-//! Performs out = transpose(out)
-
-void Transpose(TensorData& out);
-
 //! Performs out = transpose(a)
-
 void Transpose(TensorData& out, const TensorData& a);
 
 //! Performs out = out^factor for each element
-
 void Pow(TensorData& out, int factor);
 
 //! Performs out = a^factor for each element
-
-void Pow(TensorData& out, const TensorData& a);
+void Pow(TensorData& out, const TensorData& a, int factor);
 }  // namespace Motutapu::Compute
 
 #endif

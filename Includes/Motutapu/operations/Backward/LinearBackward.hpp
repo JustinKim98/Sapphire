@@ -37,11 +37,6 @@ class LinearBackProp : public BackPropWrapper
     }
 };
 
-//!
-class LinearOptimize
-{
-    void Optimize();
-};
 }  // namespace Motutapu::BackProp
 
 #endif  // MOTUTAPU_LINEARBACKWARD_HPP

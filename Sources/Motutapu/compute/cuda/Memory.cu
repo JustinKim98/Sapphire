@@ -8,14 +8,32 @@
 
 namespace Motutapu::Compute::Cuda
 {
+__global__ void CopyOnGpuKernelBroadcast(float* dest, const float* const src,
+                                         unsigned int srcStride,
+                                         unsigned int size)
+{
+    const auto sizePerBlock = size / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        dest[blockOffset + blockDim.x * i + threadIdx.x] =
+            src[(blockOffset + blockDim.x * i + threadIdx.x) % srcStride];
+    }
+}
+
 __global__ void CopyOnGpuKernel(float* dest, const float* const src,
                                 unsigned int size)
 {
-    const auto index = blockDim.x * blockIdx.x + threadIdx.x;
+    const auto sizePerBlock = size / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
 
-    if (index < size)
+    for (unsigned int i = 0; i < numLoops; i++)
     {
-        dest[index] = src[index];
+        dest[blockOffset + blockDim.x * i + threadIdx.x] =
+            src[blockOffset + blockDim.x * i + threadIdx.x];
     }
 }
 
@@ -61,20 +79,35 @@ __host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size)
 
 __host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size)
 {
-    unsigned int elementsCopied = 0;
+    const auto numLoops = 16;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
-    if (size > MAX_THREAD_DIM_X)
-    {
-        cudaStream_t stream0;
-        cudaStreamCreate(&stream0);
-        const auto requiredBlocks = size / MAX_THREAD_DIM_X;
-        CopyOnGpuKernel<<<requiredBlocks, MAX_THREAD_DIM_X>>>(
-            dest, src, requiredBlocks * MAX_THREAD_DIM_X);
+    const auto blockDim = size / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
-        elementsCopied += requiredBlocks * MAX_THREAD_DIM_X;
-    }
-
-    CopyOnGpuKernel<<<1, size>>>(dest + elementsCopied, src + elementsCopied,
-                                 size - elementsCopied);
+    if (firstLaunchSize > 0)
+        CopyOnGpuKernel<<<blockDim, threadDim>>>(dest, src, firstLaunchSize);
+    if (size > firstLaunchSize)
+        CopyOnGpuKernel<<<1, size - firstLaunchSize>>>(dest + firstLaunchSize,
+                                                       src + firstLaunchSize,
+                                                       size - firstLaunchSize);
 }
+
+__host__ void MemcpyGpuToGpuBroadcast(float* dest, const float* src,
+                                      unsigned int size, unsigned int srcStride)
+{
+    const auto numLoops = 8;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+
+    const auto blockDim = size / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+
+    if (firstLaunchSize > 0)
+        CopyOnGpuKernelBroadcast<<<blockDim, threadDim>>>(dest, src, srcStride,
+                                                          firstLaunchSize);
+    if (size > firstLaunchSize)
+        CopyOnGpuKernelBroadcast<<<1, size - firstLaunchSize>>>(
+            dest + firstLaunchSize, src, srcStride, size - firstLaunchSize);
+}
+
 }  // namespace Motutapu::Compute::Cuda

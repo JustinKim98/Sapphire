@@ -18,8 +18,8 @@ __host__ void GemmTensor(float* out, float* A, float* B, float* C,
                          bool broadcastA, bool broadcastB, bool broadcastC);
 
 __host__ void GemmCublas(float* out, float* A, float* B, float* C,
-                         unsigned int paddedM, unsigned int paddedN,
-                         unsigned int paddedK, unsigned int batchSize,
+                         unsigned int M, unsigned int N,
+                         unsigned int K, unsigned int batchSize,
                          bool broadcastA, bool broadcastB, bool broadcastC);
 
 __host__ void GemmCublas(float* out, float* A, float* B, unsigned int paddedM,

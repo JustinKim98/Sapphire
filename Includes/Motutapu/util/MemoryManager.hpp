@@ -77,11 +77,9 @@ class MemoryManager
  private:
     static std::unordered_multimap<size_t, MemoryChunk> m_hostFreeMemoryPool;
     static std::unordered_map<intptr_t, MemoryChunk> m_hostBusyMemoryPool;
-    static std::unordered_multimap<std::pair<int, size_t>, MemoryChunk,
-                                   pair_hash_free>
+    static std::unordered_multimap<size_t, MemoryChunk>
         m_cudaFreeMemoryPool;
-    static std::unordered_map<std::pair<int, intptr_t>, MemoryChunk,
-                              pair_hash_busy>
+    static std::unordered_map<intptr_t, MemoryChunk>
         m_cudaBusyMemoryPool;
 
     static std::mutex m_hostPoolMtx;

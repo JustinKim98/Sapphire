@@ -39,10 +39,33 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Computation Test")
 {
+    // todo : Fix pad Size when default is Cuda
+    const int testLoops = 5;
     SUBCASE("Gemm With Cuda")
     {
-        TestGemm();
-        std::cout << "Gemm test successful" << std::endl;
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
+            TestGemm1();
+        }
+    }
+
+    SUBCASE("Initialize test With Cuda")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
+            TestGemm2();
+        }
+    }
+
+    SUBCASE("Gemm Broadcast")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
+            TestGemmBroadcast();
+        }
     }
 }
 

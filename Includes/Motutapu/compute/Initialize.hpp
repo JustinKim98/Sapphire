@@ -11,15 +11,15 @@
 
 namespace Motutapu::Compute::Initialize
 {
-void Normal(TensorUtil::TensorData data, float mean, float sd);
+void Normal(const TensorUtil::TensorData& data, float mean, float sd);
 
-void Ones(TensorUtil::TensorData data);
+void Ones(const TensorUtil::TensorData& data);
 
-void Zeros(TensorUtil::TensorData data);
+void Zeros(const TensorUtil::TensorData& data);
 
-void HeNormal(TensorUtil::TensorData data, int fanIn);
+void HeNormal(const TensorUtil::TensorData& data, int fanIn);
 
-void Xavier(TensorUtil::TensorData data, int fanIn, int fanOut);
+void Xavier(const TensorUtil::TensorData& data, int fanIn, int fanOut);
 
 }  // namespace Motutapu::Compute::Initialize
 

@@ -6,6 +6,7 @@
 
 #include <cublas_v2.h>
 #include <Motutapu/compute/cuda/CudaParams.cuh>
+#include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 #include <cassert>
@@ -105,22 +106,41 @@ __host__ void GemmTensor(float* out, float* A, float* B, float* C,
 //! M, N, K should be multiple of 8
 //!
 __host__ void GemmCublas(float* out, float* A, float* B, float* C,
-                         unsigned int paddedM, unsigned int paddedN,
-                         unsigned int paddedK, unsigned int batchSize,
-                         bool broadcastA, bool broadcastB, bool broadcastC)
+                         unsigned int M, unsigned int N, unsigned int K,
+                         unsigned int batchSize, bool broadcastA,
+                         bool broadcastB, bool broadcastC)
 {
-    assert(intptr_t(A) % 16 == 0);
-    assert(intptr_t(B) % 16 == 0);
-    assert(intptr_t(out) % 16 == 0);
-    assert(intptr_t(A + paddedK) % 16 == 0);
-    assert(intptr_t(B + paddedN) % 16 == 0);
-    assert(intptr_t(out + paddedN) % 16 == 0);
-    assert(paddedM % 8 == 0);
-    assert(paddedN % 8 == 0);
-    assert(paddedK % 8 == 0);
+    cublasHandle_t handle;
+    cublasStatus_t stat = cublasCreate(&handle);
 
-    auto* streams =
-        static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
+    cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH);
+
+    const float alpha = 1.0f;
+    const float beta = 1.0f;
+
+    const auto strideA = (broadcastA ? 0 : (M * K));
+    const auto strideB = (broadcastB ? 0 : (K * N));
+    const auto strideOut = M * N;
+
+    if (broadcastC)
+        MemcpyGpuToGpuBroadcast(out, C, M * N * batchSize, M * N);
+    else
+        MemcpyGpuToGpu(out, C, M * N * batchSize);
+
+    cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
+                               &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
+                               K, strideA, &beta, out, CUDA_R_32F, N, strideOut,
+                               batchSize, CUBLAS_COMPUTE_32F_FAST_TF32,
+                               CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+
+    cublasDestroy(handle);
+}
+
+__host__ void GemmCublas(float* out, float* A, float* B, unsigned int paddedM,
+                         unsigned int paddedN, unsigned int paddedK,
+                         unsigned int batchSize, bool broadcastA,
+                         bool broadcastB)
+{
     cublasHandle_t handle;
     cublasStatus_t stat = cublasCreate(&handle);
 
@@ -131,68 +151,17 @@ __host__ void GemmCublas(float* out, float* A, float* B, float* C,
 
     const auto strideA = (broadcastA ? 0 : (paddedM * paddedK));
     const auto strideB = (broadcastB ? 0 : (paddedK * paddedN));
-    const auto strideC = (broadcastC ? 0 : (paddedM * paddedN));
 
     for (unsigned int batchIdx = 0; batchIdx < batchSize; batchIdx++)
     {
-        cudaStreamCreate(&streams[batchIdx]);
         float* ptrOut = out + paddedM * paddedN * batchIdx;
         const float* ptrA = A + batchIdx * strideA;
         const float* ptrB = B + batchIdx * strideB;
-        const float* ptrC = C + batchIdx * strideC;
-        cudaMemcpyAsync(ptrOut, ptrC, paddedM * paddedN * sizeof(float),
-                        cudaMemcpyDeviceToDevice, streams[batchIdx]);
-        cublasSetStream(handle, streams[batchIdx]);
         cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, paddedN, paddedM, paddedK,
                     &alpha, ptrB, paddedN, ptrA, paddedK, &beta, ptrOut,
                     paddedN);
     }
 
-    for (unsigned int batchIdx = 0; batchIdx < batchSize; batchIdx++)
-    {
-        cudaStreamSynchronize(streams[batchIdx]);
-        cudaStreamDestroy(streams[batchIdx]);
-    }
-
-    free(streams);
-    cublasDestroy(handle);
-}
-
-__host__ void GemmCublas(float* out, float* A, float* B, unsigned int paddedM,
-                         unsigned int paddedN, unsigned int paddedK,
-                         unsigned int batchSize, bool broadcastA,
-                         bool broadcastB)
-{
-    auto* streams =
-        static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-
-    const float alpha = 1.0f;
-    const float beta = 1.0f;
-
-    const auto strideA = (broadcastA ? 0 : (paddedM * paddedK));
-    const auto strideB = (broadcastB ? 0 : (paddedK * paddedN));
-
-    for (unsigned int batchIdx = 0; batchIdx < batchSize; batchIdx++)
-    {
-        cudaStreamCreate(&streams[batchIdx]);
-        float* ptrOut = out + paddedM * paddedN * batchIdx;
-        const float* ptrA = A + batchIdx * strideA;
-        const float* ptrB = B + batchIdx * strideB;
-        cublasSetStream(handle, streams[batchIdx]);
-        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, paddedN, paddedM, paddedK,
-                    &alpha, ptrB, paddedN, ptrA, paddedK, &beta, ptrOut,
-                    paddedN);
-    }
-
-    for (unsigned int batchIdx = 0; batchIdx < batchSize; batchIdx++)
-    {
-        cudaStreamSynchronize(streams[batchIdx]);
-        cudaStreamDestroy(streams[batchIdx]);
-    }
-
-    free(streams);
     cublasDestroy(handle);
 }
 

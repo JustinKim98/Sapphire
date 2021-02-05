@@ -9,10 +9,10 @@
 
 namespace Motutapu::Compute::Naive::Dense
 {
-void NaiveGemm(float* out, float* A, float* B, float* C,
-                      unsigned int paddedM, unsigned int paddedN,
-                      unsigned int paddedK, unsigned int batchSize,
-                      bool broadcastA, bool broadcastB, bool broadcastC);
+void NaiveGemm(float* out, float* A, float* B, float* C, unsigned int M,
+               unsigned int N, unsigned int paddedN, unsigned int K,
+               unsigned int paddedK, unsigned int batchSize, bool broadcastA,
+               bool broadcastB, bool broadcastC);
 }  // namespace Motutapu::Compute::Naive::Dense
 
 #endif
