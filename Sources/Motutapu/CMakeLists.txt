@@ -4,6 +4,30 @@ set(target motutapu)
 # Define
 set(root_dir ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
+set(cudnn_lib
+        libcudnn.so
+        libcudnn.so.8
+        libcudnn.so.8.1.0
+        libcudnn_adv_infer.so
+        libcudnn_adv_infer.so.8
+        libcudnn_adv_infer.so.8.1.0
+        libcudnn_adv_train.so
+        libcudnn_adv_train.so.8
+        libcudnn_adv_train.so.8.1.0
+        libcudnn_cnn_infer.so
+        libcudnn_cnn_infer.so.8
+        libcudnn_cnn_infer.so.8.1.0
+        libcudnn_cnn_train.so
+        libcudnn_cnn_train.so.8
+        libcudnn_cnn_train.so.8.1.0
+        libcudnn_ops_infer.so
+        libcudnn_ops_infer.so.8
+        libcudnn_ops_infer.so.8.1.0
+        libcudnn_ops_train.so
+        libcudnn_ops_train.so.8
+        libcudnn_ops_train.so.8.1.0
+        )
+
 # Includes
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
@@ -25,9 +49,10 @@ file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 if (USE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     CUDA_ADD_LIBRARY(motutapu_cuda ${cuda_sources})
-    #CUDA_ADD_CUBLAS_TO_TARGET(motutapu_cuda)
     set_property(TARGET motutapu_cuda PROPERTY CUDA_ARCHITECTURES 86)
     add_library(motutapu ${sources})
+    find_library(mycublas NAMES libcublas.so HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+    find_library(cudnn NAMES ${cudnn_lib} HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 else ()
     add_library(${target} ${sources})
 endif ()
@@ -53,7 +78,8 @@ target_compile_options(${target}
 target_link_libraries(${target}
         PRIVATE
         motutapu_cuda
-        cublas
+        ${mycublas}
+        ${cudnn}
         PUBLIC
         ${DEFAULT_LINKER_OPTIONS}
         ${DEFAULT_LIBRARIES}

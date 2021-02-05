@@ -116,6 +116,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"
             -Wno-missing-braces
             -Wno-register   # -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
             -Wno-error=register  # -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
+            -fPIC
 
             ${WARN_AS_ERROR_FLAGS}
             -std=c++1z
@@ -200,6 +201,6 @@ if (USE_CUDA)
             --cudart=shared
             --cudadevrt=static
             --std=c++17
-            -lcublas
+            #-lcublas
     )
 endif ()
