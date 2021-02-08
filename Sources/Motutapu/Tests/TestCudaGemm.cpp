@@ -58,9 +58,9 @@ void TestGemm1()
 
         TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
 
-        Compute::Initialize::Normal(A, 0, 5);
-        Compute::Initialize::Normal(B, 0, 5);
-        Compute::Initialize::Normal(C, 0, 5);
+        Compute::Initialize::Normal(A, 10, 5);
+        Compute::Initialize::Normal(B, 10, 5);
+        Compute::Initialize::Normal(C, 10, 5);
         Compute::Initialize::Zeros(C);
 
         Compute::Gemm(Out, A, B, C);
@@ -97,7 +97,7 @@ void TestGemm1()
             //                      << " cuda : " << Out.DenseMatHost[i] <<
             //                      std::endl;
 
-            CHECK(error < 1.5f);
+            CHECK(error <= 2.0f);
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -136,45 +136,45 @@ void TestGemm2()
         TensorUtil::TensorData A(shapeA, Type::Dense, cuda, batchSize);
         TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
         TensorUtil::TensorData C(shapeC, Type::Dense, cuda, batchSize);
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda, batchSize);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
         Compute::Initialize::Normal(C, 10, 5);
-        Compute::Initialize::Zeros(Out);
+        Compute::Initialize::Zeros(out);
 
-        Compute::Gemm(Out, A, B, C);
+        Compute::Gemm(out, A, B, C);
 
         A.SendTo(host);
         B.SendTo(host);
         C.SendTo(host);
-        Out.SendTo(host);
+        out.SendTo(host);
 
-        float cudaGemmResult[Out.DenseTotalLengthHost];
+        float cudaGemmResult[out.DenseTotalLengthHost];
 
         //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
-            cudaGemmResult[i] = Out.DenseMatHost[i];
+            cudaGemmResult[i] = out.DenseMatHost[i];
         }
 
-        Compute::Initialize::Zeros(Out);
-        Compute::Gemm(Out, A, B, C);
+        Compute::Initialize::Zeros(out);
+        Compute::Gemm(out, A, B, C);
 
         std::atomic<float> largestError = 0.0f;
 
         //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
             //
             //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << Out.DenseMatHost[i] <<
+            //                      << " cpu : " << out.DenseMatHost[i] <<
             //                      std::endl;
 
-            CHECK(error < 1.5f);
+            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -215,44 +215,45 @@ void TestGemmBroadcast()
 
         TensorUtil::TensorData C(shapeC, Type::Dense, cuda, 1);
 
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda, batchSize);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
 
         Compute::Initialize::Normal(A, 100, 1);
         Compute::Initialize::Normal(B, 100, 4);
         Compute::Initialize::Normal(C, 100, 1);
-        Compute::Initialize::Zeros(Out);
+        Compute::Initialize::Zeros(out);
 
-        Compute::Gemm(Out, A, B, C);
+        Compute::Gemm(out, A, B, C);
 
         A.SendTo(host);
         B.SendTo(host);
         C.SendTo(host);
-        Out.SendTo(host);
+        out.SendTo(host);
 
-        float cudaGemmResult[Out.DenseTotalLengthHost];
+        float cudaGemmResult[out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
-            cudaGemmResult[i] = Out.DenseMatHost[i];
+            cudaGemmResult[i] = out.DenseMatHost[i];
         }
 
-        Compute::Initialize::Zeros(Out);
-        Compute::Gemm(Out, A, B, C);
+        Compute::Initialize::Zeros(out);
+        Compute::Gemm(out, A, B, C);
 
         std::atomic<float> largestError = 0.0f;
 
         //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
 
-            std::cout << "cuda : " << cudaGemmResult[i]
-                      << " cpu : " << Out.DenseMatHost[i] << std::endl;
+            //            std::cout << "cuda : " << cudaGemmResult[i]
+            //                      << " cpu : " << out.DenseMatHost[i] <<
+            //                      std::endl;
 
-            // CHECK(error < 1.5f);
+            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;

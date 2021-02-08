@@ -15,14 +15,11 @@ namespace Motutapu::Compute::Cuda::Dense
 {
 //! All size parameters should be at least 1
 //! batch sizes must be multiple of each other
-__host__ void Gemm(unsigned int offsetOut, unsigned int offsetA,
-                   unsigned int offsetB, unsigned int offsetC, float* out,
-                   float* A, float* B, float* C, unsigned int M, unsigned int N,
-                   unsigned int K, unsigned int totalSize,
-                   unsigned int batchIdx, cublasHandle_t* handle,
-                   cudaStream_t* streams)
+__host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
+                   float* C, unsigned int M, unsigned int N, unsigned int K,
+                   cublasHandle_t* handle, cudaStream_t* streams)
 {
-    cublasSetStream(*handle, streams[batchIdx]);
+    // cublasSetStream(*handle, streams[batchIdx]);
     cublasSetMathMode(*handle, CUBLAS_TF32_TENSOR_OP_MATH);
 
     const float alpha = 1.0f;
@@ -32,13 +29,14 @@ __host__ void Gemm(unsigned int offsetOut, unsigned int offsetA,
     const auto strideB = K * N;
     const auto strideOut = M * N;
 
-    float* ptrA = A + offsetA;
-    float* ptrB = B + offsetB;
-    float* ptrC = C + offsetC;
-    float* ptrOut = out + offsetOut;
+    float* ptrA = A;
+    float* ptrB = B;
+    float* ptrC = C;
+    float* ptrOut = out;
 
-    MemcpyGpuToGpuAsync(ptrOut, ptrC, totalSize, streams[batchIdx]);
-    // MemcpyGpuToGpu(ptrOut, ptrC, totalSize);
+    // MemcpyGpuToGpuAsync(ptrOut, ptrC, totalSize, streams[batchIdx]);
+    MemcpyGpuToGpu(ptrOut, ptrC, totalSize);
+
     auto status = cublasGemmStridedBatchedEx(
         *handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, ptrB, CUDA_R_32F, N,
         strideB, ptrA, CUDA_R_32F, K, strideA, &beta, ptrOut, CUDA_R_32F, N,

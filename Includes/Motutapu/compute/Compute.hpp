@@ -53,22 +53,21 @@ template <typename Func, typename... Params>
 void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
                           Shape shapeC, unsigned int totalSizeOut,
                           unsigned int totalSizeA, unsigned int totalSizeB,
-                          unsigned int totalSizeC, unsigned int offsetOut,
-                          unsigned int offsetA, unsigned int offsetB,
-                          unsigned int offsetC, unsigned int shapeIdx,
+                          unsigned int totalSizeC, float* out, float* A,
+                          float* B, float* C, unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
                           Params... params)
 {
     if (shapeIdx == 0)
     {
         shapeA.Expand(shapeOut.Dim());
-        shapeB.Expand(shapeB.Dim());
-        shapeC.Expand(shapeC.Dim());
+        shapeB.Expand(shapeOut.Dim());
+        shapeC.Expand(shapeOut.Dim());
     }
 
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
-        func(offsetOut, offsetA, offsetB, offsetC, params...);
+        func(totalSizeOut, out, A, B, C, params...);
         return;
     }
 
@@ -95,11 +94,12 @@ void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
     for (unsigned int chunkIdx = 0; chunkIdx < chunkSizeOut; chunkIdx++)
     {
         broadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, strideOut,
-                             strideA, strideB, strideC, chunkIdx * strideOut,
-                             (chunkIdx % chunkSizeA) * strideA,
-                             (chunkIdx % chunkSizeB) * strideB,
-                             (chunkIdx % chunkSizeC) * strideC, shapeIdx - 1,
-                             minimumRequiredDim, func, params...);
+                             strideA, strideB, strideC,
+                             out + chunkIdx * strideOut,
+                             A + (chunkIdx % chunkSizeA) * strideA,
+                             B + (chunkIdx % chunkSizeB) * strideB,
+                             C + (chunkIdx % chunkSizeC) * strideC,
+                             shapeIdx + 1, minimumRequiredDim, func, params...);
     }
 }
 }  // namespace Motutapu::Compute

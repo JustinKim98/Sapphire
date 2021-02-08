@@ -6,6 +6,7 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
+#include <Motutapu/Tests/BroadcastTest.hpp>
 #include <Motutapu/Tests/CudaFunctionalityTest.cuh>
 #include <Motutapu/Tests/Test.hpp>
 #include <iostream>
@@ -39,33 +40,46 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Computation Test")
 {
-    const int testLoops = 1;
-//    SUBCASE("Gemm With Cuda")
-//    {
-//        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-//        {
-//            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-//            TestGemm1();
-//        }
-//    }
-//
-//    SUBCASE("Initialize test With Cuda")
-//    {
-//        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-//        {
-//            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
-//            TestGemm2();
-//        }
-//    }
-
-        SUBCASE("Gemm Broadcast")
+    const int testLoops = 2;
+    SUBCASE("Gemm With Cuda")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
-            for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-            {
-                std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
-                TestGemmBroadcast();
-            }
+            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
+            TestGemm1();
         }
+    }
+
+    SUBCASE("Initialize test With Cuda")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
+            TestGemm2();
+        }
+    }
+
+    SUBCASE("Gemm Broadcast")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
+            TestGemmBroadcast();
+        }
+    }
+}
+
+TEST_CASE("Broadcast Test")
+{
+    SUBCASE("Broadcast test with 1 dimension")
+    {
+        BroadcastWithOneDimension();
+    }
+
+    SUBCASE("Broadcast test with Missing dimension")
+    {
+        BroadcastWithMissingDimension();
+    }
 }
 
 }  // namespace Motutapu::Test

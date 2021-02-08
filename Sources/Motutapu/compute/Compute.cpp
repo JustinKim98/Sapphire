@@ -133,21 +133,36 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
     const auto sizeB = b.TensorShape.Size();
     const auto sizeC = c.TensorShape.Size();
 
-    if (out.TensorShape.Dim() == 2 && a.TensorShape.Dim() == 2 &&
-        b.TensorShape.Dim() == 2 && c.TensorShape.Dim() == 2)
-    {
-        if (device.Type() == DeviceType::CUDA)
-        {
-            Cuda::Dense::GemmMatrixWiseBroadcast(
-                out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                c.DenseMatCuda, M, N, K, batchSize, a.BatchSize == 1,
-                b.BatchSize == 1, c.BatchSize == 1);
-            return;
-        }
-        else
-        {
-        }
-    }
+    //    if (out.TensorShape.Dim() == 2 && a.TensorShape.Dim() == 2 &&
+    //        b.TensorShape.Dim() == 2 && c.TensorShape.Dim() == 2)
+    //    {
+    //        if (device.Type() == DeviceType::CUDA)
+    //        {
+    //            Cuda::Dense::GemmMatrixWiseBroadcast(
+    //                out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
+    //                c.DenseMatCuda, M, N, K, batchSize, a.BatchSize == 1,
+    //                b.BatchSize == 1, c.BatchSize == 1);
+    //            return;
+    //        }
+    //        else
+    //        {
+    //        }
+    //    }
+    //! Unify batch with given tensor shape??
+    //    auto shapeOut = out.TensorShape;
+    //    auto shapeA = a.TensorShape;
+    //    auto shapeB = b.TensorShape;
+    //    auto shapeC = c.TensorShape;
+    //
+    //    shapeOut.Expand(sizeOut + 1);
+    //    shapeA.Expand(sizeOut + 1);
+    //    shapeB.Expand(sizeOut + 1);
+    //    shapeC.Expand(sizeOut + 1);
+    //
+    //    shapeOut.Set(0, out.BatchSize);
+    //    shapeA.Set(0, a.BatchSize);
+    //    shapeB.Set(0, b.BatchSize);
+    //    shapeC.Set(0, c.BatchSize);
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -158,19 +173,16 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
             cudaStreamCreate(&streams[batchIdx]);
 
-        //! TODO : consider unifying batch into the shape
-
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             broadcastWith3Inputs(
                 out.TensorShape, a.TensorShape, b.TensorShape, c.TensorShape,
-                sizeOut, sizeA, sizeB, sizeC, batchIdx * sizeOut,
-                (batchIdx % a.BatchSize) * sizeA,
-                (batchIdx % b.BatchSize) * sizeB,
-                (batchIdx % c.BatchSize) * sizeC, 0, 2, Cuda::Dense::Gemm,
-                out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                c.DenseMatCuda, M, N, K, sizeOut, batchIdx, &cublasHandle,
-                streams);
+                sizeOut, sizeA, sizeB, sizeC,
+                out.DenseMatCuda + batchIdx * sizeOut,
+                a.DenseMatCuda + (batchIdx % a.BatchSize) * sizeA,
+                b.DenseMatCuda + (batchIdx % b.BatchSize) * sizeB,
+                c.DenseMatCuda + (batchIdx % c.BatchSize) * sizeC, 0, 2,
+                Cuda::Dense::Gemm, M, N, K, &cublasHandle, streams);
         }
         cudaDeviceSynchronize();
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
@@ -182,20 +194,19 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
         const auto paddedSizeOut = (sizeOut / N) * paddedN;
         const auto paddedSizeA = (sizeA / K) * paddedK;
         const auto paddedSizeB = (sizeB / N) * paddedN;
-        const auto paddedSizeC = (sizeOut / N) * paddedN;
+        const auto paddedSizeC = (sizeC / N) * paddedN;
 
+        //#pragma omp parallel for schedule(static)
         for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
-            broadcastWith3Inputs(out.TensorShape, a.TensorShape, b.TensorShape,
-                                 c.TensorShape, paddedSizeOut, paddedSizeA,
-                                 paddedSizeB, paddedSizeC,
-                                 batchIdx * paddedSizeOut,
-                                 (batchIdx % a.BatchSize) * paddedSizeA,
-                                 (batchIdx % b.BatchSize) * paddedSizeB,
-                                 (batchIdx % c.BatchSize) * paddedSizeC, 0, 2,
-                                 Naive::Dense::NaiveGemm, out.DenseMatHost,
-                                 a.DenseMatHost, b.DenseMatHost, c.DenseMatHost,
-                                 M, N, paddedN, K, paddedK, paddedSizeOut);
+            broadcastWith3Inputs(
+                out.TensorShape, a.TensorShape, b.TensorShape, c.TensorShape,
+                paddedSizeOut, paddedSizeA, paddedSizeB, paddedSizeC,
+                out.DenseMatHost + batchIdx * paddedSizeOut,
+                a.DenseMatHost + (batchIdx % a.BatchSize) * paddedSizeA,
+                b.DenseMatHost + (batchIdx % b.BatchSize) * paddedSizeB,
+                c.DenseMatHost + (batchIdx % c.BatchSize) * paddedSizeC, 0, 2,
+                Naive::Dense::NaiveGemm, M, N, paddedN, K, paddedK);
         }
     }
 }
