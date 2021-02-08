@@ -14,38 +14,18 @@ namespace Motutapu::BackProp
 class MulBackProp : public BackPropWrapper
 {
  public:
-    explicit MulBackProp(unsigned int tensorKeyA, unsigned int tensorKeyB)
-        : BackPropWrapper({ tensorKeyA, tensorKeyB }, false)
-    {
-    }
+    explicit MulBackProp(TensorUtil::TensorData forwardA,
+                         TensorUtil::TensorData backwardA,
+                         TensorUtil::TensorData forwardB,
+                         TensorUtil::TensorData backwardB,
+                         TensorUtil::TensorData backwardOutput);
 
-    void Backward(std::vector<TensorUtil::TensorData>& outputs,
-                  const TensorUtil::TensorData& input) const override;
+    bool InvokeBackProp(const TensorUtil::TensorData& input) override;
+
+ private:
+    void m_backProp() override;
 };
 
-class AddBackProp : public BackPropWrapper
-{
- public:
-    explicit AddBackProp(unsigned int tensorKeyA, unsigned int tensorKeyB)
-        : BackPropWrapper({ tensorKeyA, tensorKeyB }, false)
-    {
-    }
-
-    void Backward(std::vector<TensorUtil::TensorData>& outputs,
-                  const TensorUtil::TensorData& input) const override;
-};
-
-class AddBackPropInplace : public BackPropWrapper
-{
- public:
-    explicit AddBackPropInplace(unsigned int tensorKeyA)
-        : BackPropWrapper({ tensorKeyA }, true)
-    {
-    }
-
-    void Backward(std::vector<TensorUtil::TensorData>& outputs,
-                  const TensorUtil::TensorData& input) const override;
-};
 
 }  // namespace Motutapu::BackProp
 

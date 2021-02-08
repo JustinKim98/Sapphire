@@ -11,27 +11,18 @@
 namespace Motutapu::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
-                                   const Device &device, unsigned int batchSize)
-    : ForwardData(shape, type, device, batchSize),
-      m_requireOutputSaving(false),
-      m_trainable(false)
-{
-}
-
-TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
                                    const Device &device, unsigned int batchSize,
-                                   bool requireOutputSaving)
+                                   int key)
     : ForwardData(shape, type, device, batchSize),
-      BackwardData(shape, type, device, batchSize),
-      m_requireOutputSaving(requireOutputSaving),
-      m_trainable(true)
+      m_key(key),
+      m_trainable(false)
 {
 }
 
 TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
     : ForwardData(std::move(tensorData.ForwardData)),
       BackwardData(std::move(tensorData.BackwardData)),
-      m_requireOutputSaving(tensorData.m_requireOutputSaving),
+      m_key(tensorData.m_key),
       m_trainable(tensorData.m_trainable),
       m_history(std::move(tensorData.m_history))
 {
@@ -42,9 +33,8 @@ TensorDescriptor &TensorDescriptor::operator=(
 {
     ForwardData = tensorData.ForwardData;
     BackwardData = tensorData.BackwardData;
-    m_requireOutputSaving = tensorData.m_requireOutputSaving;
+    m_key = tensorData.m_key;
     m_trainable = tensorData.m_trainable;
-
     m_history = std::move(tensorData.m_history);
     return *this;
 }
@@ -52,11 +42,10 @@ TensorDescriptor &TensorDescriptor::operator=(
 void TensorDescriptor::AppendOutputHistory(
     std::unique_ptr<BackProp::BackPropWrapper> wrapper, bool saveOutput)
 {
-    m_requireOutputSaving = saveOutput;
     m_history.emplace_back(History(std::move(wrapper)));
 }
 
-void TensorDescriptor::AppendOperandHistory(unsigned int tensorKey)
+void TensorDescriptor::AppendOperandHistory(int tensorKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {

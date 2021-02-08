@@ -25,11 +25,7 @@ class TensorDescriptor
     TensorDescriptor() = default;
 
     TensorDescriptor(const Shape& shape, Type type, const Device& device,
-                     unsigned int batchSize);
-
-    //! Create and allocate the tensor descriptor
-    TensorDescriptor(const Shape& shape, Type type, const Device& device,
-                     unsigned int batchSize, bool requireOutputSaving);
+                     unsigned int batchSize, int key);
 
     ~TensorDescriptor() = default;
 
@@ -41,10 +37,7 @@ class TensorDescriptor
     TensorData ForwardData;
     TensorData BackwardData;
 
-    //! Key to identify tensor data
-    unsigned int Key = -1;
-
-    //! Add unit Key if unit was used as output or flow-through type
+    //! Add unit m_key if unit was used as output or flow-through type
     //! \param wrapper : Wrapper for starting back propagation on this tensor
     //! \param saveOutput : Forward output of this tensorDescriptor is preserved
     //! if true
@@ -52,9 +45,9 @@ class TensorDescriptor
                              bool saveOutput);
 
     //! Add unit key if unit was used as operand only
-    //! \param tensorKey : Key of the tensor that this tensor should receive
+    //! \param tensorKey : m_key of the tensor that this tensor should receive
     //! gradient from
-    void AppendOperandHistory(unsigned int tensorKey);
+    void AppendOperandHistory(int tensorKey);
 
     void RemoveGradientInputKey(int tensorKey);
 
@@ -62,12 +55,6 @@ class TensorDescriptor
     void PopIfOperandHistory();
 
     void PopHistory();
-
-    //! Create new tensor if last tensor required output saving
-    [[nodiscard]] bool RequireOutputSaving() const
-    {
-        return m_requireOutputSaving;
-    }
 
     //! Returns whether this tensorDescriptor is trainable
     //! \return : True if gradient is required false otherwise
@@ -83,6 +70,11 @@ class TensorDescriptor
     const std::unique_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
     {
         return m_history.back().Wrapper;
+    }
+
+    [[nodiscard]] int GetKey() const
+    {
+        return m_key;
     }
 
  private:
@@ -117,11 +109,12 @@ class TensorDescriptor
         std::list<int> GradientInputTensorKeys;
     };
 
-    bool m_requireOutputSaving = false;
+    //! m_key to identify tensor data
+    int m_key = -1;
     bool m_trainable = true;
 
     std::list<History> m_history;
 };
-}  // namespace Motutapu::Util
+}  // namespace Motutapu::TensorUtil
 
 #endif

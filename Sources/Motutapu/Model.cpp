@@ -22,49 +22,37 @@ int Model::RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
     return unitKey;
 }
 
-int Model::RegisterTensorDescriptor(TensorUtil::TensorDescriptor& tensorDesc)
+int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
+                                    const Device& device,
+                                    unsigned int batchSize)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
-    tensorDesc.Key = tensorDescKey;
-
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, batchSize,
+                                            tensorDescKey);
     m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
 
     return tensorDescKey;
 }
 
-void Model::AutoGrad(int tensorKey)
+void Model::m_autoGrad(int tensorKey)
 {
     auto& descriptor = GetDescriptor(tensorKey);
-
     if (descriptor.IsBackPropReady())
     {
         descriptor.PopIfOperandHistory();
         const auto& wrapper = descriptor.GetBackPropWrapper();
-        const auto outputTensorKeys = wrapper->GetOutputTensorKeys();
+        const auto outputTensorDataVector = wrapper->GetOutputTensorKeys();
 
-        std::vector<TensorUtil::TensorData> outputTensorDataVector(
-            outputTensorKeys.size());
-
-        for (size_t i = 0; i < outputTensorKeys.size(); ++i)
-        {
-            outputTensorDataVector[i] =
-                GetDescriptor(outputTensorKeys.at(i)).BackwardData;
-        }
-
-        if (wrapper->IsInplace())
-            outputTensorDataVector.emplace_back(descriptor.BackwardData);
-
-        wrapper->Backward(outputTensorDataVector, descriptor.BackwardData);
+        bool isInvoked = wrapper->InvokeBackProp(descriptor.BackwardData);
         descriptor.PopHistory();  //! Pop output history
 
-        if (wrapper->IsInplace())
-            descriptor.RemoveGradientInputKey(tensorKey);
-
-        for (const auto key : outputTensorKeys)
-        {
-            GetDescriptor(key).RemoveGradientInputKey(tensorKey);
-            AutoGrad(key);
-        }
+        if (isInvoked)
+            for (auto& tensorData : outputTensorDataVector)
+            {
+                GetDescriptor(tensorData.GetParentDescKey())
+                    .RemoveGradientInputKey(tensorKey);
+                m_autoGrad(tensorData.GetParentDescKey());
+            }
     }
 }
 

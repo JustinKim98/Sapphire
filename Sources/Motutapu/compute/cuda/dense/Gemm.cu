@@ -13,6 +13,74 @@
 
 namespace Motutapu::Compute::Cuda::Dense
 {
+//! All size parameters should be at least 1
+//! batch sizes must be multiple of each other
+__host__ void Gemm(unsigned int offsetOut, unsigned int offsetA,
+                   unsigned int offsetB, unsigned int offsetC, float* out,
+                   float* A, float* B, float* C, unsigned int M, unsigned int N,
+                   unsigned int K, unsigned int totalSize,
+                   unsigned int batchIdx, cublasHandle_t* handle,
+                   cudaStream_t* streams)
+{
+    cublasSetStream(*handle, streams[batchIdx]);
+    cublasSetMathMode(*handle, CUBLAS_TF32_TENSOR_OP_MATH);
+
+    const float alpha = 1.0f;
+    const float beta = 1.0f;
+
+    const auto strideA = M * K;
+    const auto strideB = K * N;
+    const auto strideOut = M * N;
+
+    float* ptrA = A + offsetA;
+    float* ptrB = B + offsetB;
+    float* ptrC = C + offsetC;
+    float* ptrOut = out + offsetOut;
+
+    MemcpyGpuToGpuAsync(ptrOut, ptrC, totalSize, streams[batchIdx]);
+    // MemcpyGpuToGpu(ptrOut, ptrC, totalSize);
+    auto status = cublasGemmStridedBatchedEx(
+        *handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, ptrB, CUDA_R_32F, N,
+        strideB, ptrA, CUDA_R_32F, K, strideA, &beta, ptrOut, CUDA_R_32F, N,
+        strideOut, totalSize / strideOut, CUBLAS_COMPUTE_32F_FAST_TF32,
+        CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+
+    assert(status == CUBLAS_STATUS_SUCCESS);
+}
+
+//! Broadcasts operations matrix-wise
+__host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
+                                      unsigned int M, unsigned int N,
+                                      unsigned int K, unsigned int batchSize,
+                                      bool broadcastA, bool broadcastB,
+                                      bool broadcastC)
+{
+    cublasHandle_t handle;
+    cublasStatus_t stat = cublasCreate(&handle);
+
+    cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH);
+
+    const float alpha = 1.0f;
+    const float beta = 1.0f;
+
+    const auto strideA = (broadcastA ? 0 : (M * K));
+    const auto strideB = (broadcastB ? 0 : (K * N));
+    const auto strideOut = M * N;
+
+    if (broadcastC)
+        MemcpyGpuToGpuBroadcast(out, C, M * N * batchSize, M * N);
+    else
+        MemcpyGpuToGpu(out, C, M * N * batchSize);
+
+    cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
+                               &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
+                               K, strideA, &beta, out, CUDA_R_32F, N, strideOut,
+                               batchSize, CUBLAS_COMPUTE_32F_FAST_TF32,
+                               CUBLAS_GEMM_DEFAULT_TENSOR_OP);
+
+    cublasDestroy(handle);
+}
+
 __host__ unsigned int Gcd(unsigned int a, unsigned int b)
 {
     if (!a)
@@ -101,68 +169,6 @@ __host__ void GemmTensor(float* out, float* A, float* B, float* C,
     }
 
     free(streams);
-}
-
-//! M, N, K should be multiple of 8
-//!
-__host__ void GemmCublas(float* out, float* A, float* B, float* C,
-                         unsigned int M, unsigned int N, unsigned int K,
-                         unsigned int batchSize, bool broadcastA,
-                         bool broadcastB, bool broadcastC)
-{
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-
-    cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH);
-
-    const float alpha = 1.0f;
-    const float beta = 1.0f;
-
-    const auto strideA = (broadcastA ? 0 : (M * K));
-    const auto strideB = (broadcastB ? 0 : (K * N));
-    const auto strideOut = M * N;
-
-    if (broadcastC)
-        MemcpyGpuToGpuBroadcast(out, C, M * N * batchSize, M * N);
-    else
-        MemcpyGpuToGpu(out, C, M * N * batchSize);
-
-    cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
-                               &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
-                               K, strideA, &beta, out, CUDA_R_32F, N, strideOut,
-                               batchSize, CUBLAS_COMPUTE_32F_FAST_TF32,
-                               CUBLAS_GEMM_DEFAULT_TENSOR_OP);
-
-    cublasDestroy(handle);
-}
-
-__host__ void GemmCublas(float* out, float* A, float* B, unsigned int paddedM,
-                         unsigned int paddedN, unsigned int paddedK,
-                         unsigned int batchSize, bool broadcastA,
-                         bool broadcastB)
-{
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
-
-    cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH);
-
-    const float alpha = 1.0f;
-    const float beta = 1.0f;
-
-    const auto strideA = (broadcastA ? 0 : (paddedM * paddedK));
-    const auto strideB = (broadcastB ? 0 : (paddedK * paddedN));
-
-    for (unsigned int batchIdx = 0; batchIdx < batchSize; batchIdx++)
-    {
-        float* ptrOut = out + paddedM * paddedN * batchIdx;
-        const float* ptrA = A + batchIdx * strideA;
-        const float* ptrB = B + batchIdx * strideB;
-        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, paddedN, paddedM, paddedK,
-                    &alpha, ptrB, paddedN, ptrA, paddedK, &beta, ptrOut,
-                    paddedN);
-    }
-
-    cublasDestroy(handle);
 }
 
 __host__ void GemmNormal(float* out, float* A, float* B, float* C,

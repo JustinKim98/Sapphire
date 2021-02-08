@@ -7,6 +7,7 @@
 #ifndef MOTUTAPU_UTIL_SHAPE_DECL_HPP
 #define MOTUTAPU_UTIL_SHAPE_DECL_HPP
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,7 @@ enum class Type
 
 class Shape
 {
-public:
+ public:
     Shape() = default;
     ~Shape() = default;
 
@@ -45,9 +46,22 @@ public:
 
     [[nodiscard]] unsigned int Size() const noexcept;
 
-private:
+    [[nodiscard]] std::vector<unsigned int> GetShapeVector() const
+    {
+        return m_shapeVector;
+    }
+
+    void Set(unsigned int dim, unsigned int value);
+
+    void Expand(unsigned int dim);
+
+    Shape GetReverse() const;
+
+    [[nodiscard]] Shape GetTranspose() const;
+
+ private:
     std::vector<unsigned int> m_shapeVector;
 };
-} // namespace MOTUTAPU
+}  // namespace Motutapu
 
 #endif

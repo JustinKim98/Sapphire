@@ -9,48 +9,51 @@
 
 #include <Motutapu/tensor/TensorData.hpp>
 #include <functional>
+#include <list>
 
 namespace Motutapu::BackProp
 {
+//! todo : BackPropWrapper can be shared between objects and should backProp
+//! when it is available only
+
+//! This class is responsible for
+//! 1. Storing the required data for back propagation
+//! 2. Checking availability and invoking back propagation
+//! This class is shared between tensorDescriptors that has been created from
+//! the same operation
 class BackPropWrapper
 {
  public:
     BackPropWrapper() = default;
     virtual ~BackPropWrapper() = default;
 
-    explicit BackPropWrapper(std::vector<unsigned int> gradientOutputKeys,
-                             bool inplace)
-        : m_gradientOutputKeys(std::move(gradientOutputKeys)),
-          m_inplace(inplace)
+    explicit BackPropWrapper(
+        std::vector<TensorUtil::TensorData> gradientOutputs,
+        std::vector<TensorUtil::TensorData> gradientInputs)
+        : m_gradientOutputs(std::move(gradientOutputs)),
+          m_gradientInputs(std::move(gradientInputs))
     {
     }
 
-    BackPropWrapper(std::vector<unsigned int> gradientOutputKeys, bool inplace,
-                    int unitKey)
-        : m_gradientOutputKeys(std::move(gradientOutputKeys)),
-          m_inplace(inplace),
-          m_unitKey(unitKey)
+    [[nodiscard]] const std::vector<TensorUtil::TensorData>&
+    GetOutputTensorKeys() const
     {
+        return m_gradientOutputs;
     }
 
-    [[nodiscard]] bool IsInplace() const
-    {
-        return m_inplace;
-    }
-
-    [[nodiscard]] const std::vector<unsigned int>& GetOutputTensorKeys() const
-    {
-        return m_gradientOutputKeys;
-    }
-
-    virtual void Backward(std::vector<TensorUtil::TensorData>& output,
-                          const TensorUtil::TensorData& input) const = 0;
+    //! todo : Copy required save data inside BackPropWrapper
+    //! todo : Backward will only do its job when all inputs are provided
+    //! Invokes back propagation if ready
+    virtual bool InvokeBackProp(const TensorUtil::TensorData& input) = 0;
 
  protected:
+    virtual void m_backProp() = 0;
+
     //! Vector of tensorData that should give its output
-    std::vector<unsigned int> m_gradientOutputKeys;
-    bool m_inplace = false;
-    int m_unitKey = -1;
+    std::vector<TensorUtil::TensorData> m_gradientOutputs;
+    std::vector<TensorUtil::TensorData> m_gradientInputs;
+    std::list<TensorUtil::TensorData> m_receivedInputs;
+    std::unordered_map<std::string, TensorUtil::TensorData> m_savedTensorMap;
 };
 }  // namespace Motutapu::BackProp
 

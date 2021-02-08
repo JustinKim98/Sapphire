@@ -11,19 +11,30 @@
 
 namespace Motutapu::Compute::Cuda::Dense
 {
-
 //! out = A + B
-__host__ void Add(float* out, float* A, float* B);
-//! out = out + A
-__host__ void Add(float* out, float* A);
+__host__ void Add(float* output, const float* inputA, const float* inputB,
+                  unsigned int totalSize, unsigned int inputStride,
+                  bool broadcastInputA, bool broadcastInputB);
+
 //! out = A - B
-__host__ void Sub(float* out, float* A, float* B);
-//! out = out - A
-__host__ void Sub(float* out, float* A);
+__host__ void Sub(float* output, const float* inputA, const float* inputB,
+                  unsigned int totalSize, unsigned int inputStride,
+                  bool broadcastInputA, bool broadcastInputB);
 
-__host__ void Scale(float* out, float* A, float factor);
+//! out = inner_product(inputA, inputB)
+__host__ void Dot(float* output, const float* inputA, const float* inputB,
+                  unsigned int totalSize, unsigned int inputStride,
+                  bool broadcastInputA, bool broadcastInputB);
 
-__host__ void Transpose(float* out, float* A, float factor);
-}
+//! out = input*scaleFactor
+__host__ void Scale(float* output, const float* input, const float scaleFactor,
+                    unsigned int totalSize, unsigned int inputStride,
+                    bool broadcastInput);
+
+//! out = input^T
+__host__ void Transpose(float* output, const float* input,
+                        unsigned int inputNumRows, unsigned int inputNumCols,
+                        unsigned int batchSize, bool broadcastInput);
+}  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif  // MOTUTAPU_BASIC_CUH

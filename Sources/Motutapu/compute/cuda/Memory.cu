@@ -93,6 +93,26 @@ __host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size)
                                                        size - firstLaunchSize);
 }
 
+__host__ void MemcpyGpuToGpuAsync(float* dest, const float* src,
+                                  unsigned int size, cudaStream_t stream)
+{
+    const auto numLoops = 16;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+
+    const auto blockDim = size / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+
+    if (firstLaunchSize > 0)
+        CopyOnGpuKernel<<<blockDim, threadDim, 0, stream>>>(dest, src,
+                                                            firstLaunchSize);
+    cudaStreamSynchronize(stream);
+
+    if (size > firstLaunchSize)
+        CopyOnGpuKernel<<<1, size - firstLaunchSize, 0, stream>>>(
+            dest + firstLaunchSize, src + firstLaunchSize,
+            size - firstLaunchSize);
+}
+
 __host__ void MemcpyGpuToGpuBroadcast(float* dest, const float* src,
                                       unsigned int size, unsigned int srcStride)
 {

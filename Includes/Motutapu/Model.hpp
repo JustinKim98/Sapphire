@@ -32,16 +32,10 @@ class Model
     //! \return : Assigned key
     int RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
 
-    //! Registers and assigns key to tensorDesc
+    //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
-    //! \param tensorDesc : tensor descriptor to register
-    //! \return : Assigned key
-    int RegisterTensorDescriptor(TensorUtil::TensorDescriptor& tensorDesc);
-
-    //! Automatically calculates gradient
-    //! \param tensorKey : tensor key to the descriptor to start back
-    //! propagation
-    void AutoGrad(int tensorKey);
+    int RegisterTensorDescriptor(const Shape& shape, Type type,
+                                 const Device& device, unsigned int batchSize);
 
     //! Initializes gradients before training every epoch
     void ZeroGrad();
@@ -62,6 +56,11 @@ class Model
     TensorUtil::TensorDescriptor& GetDescriptor(int key);
 
  private:
+    //! Automatically calculates gradient
+    //! \param tensorKey : tensor key to the descriptor to start back
+    //! propagation
+    void m_autoGrad(int tensorKey);
+
     class TensorDescriptorPool
     {
      public:

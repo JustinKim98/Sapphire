@@ -27,6 +27,21 @@ TensorData::TensorData(Shape shape, Type type, Device device,
     m_allocateCpu(batchSize);
 }
 
+TensorData::TensorData(Shape shape, Type type, Device device,
+                       unsigned int batchSize, int parentDescKey)
+    : BatchSize(batchSize),
+      TensorShape(std::move(shape)),
+      m_parentDescKey(parentDescKey),
+      m_type(type),
+      m_device(std::move(device))
+{
+    if (device.Type() == DeviceType::CUDA)
+    {
+        m_allocateCuda(batchSize);
+    }
+    m_allocateCpu(batchSize);
+}
+
 TensorData::TensorData(const TensorData &tensorData)
     : DenseTotalLengthHost(tensorData.DenseTotalLengthHost),
       DenseTotalLengthCuda(tensorData.DenseTotalLengthCuda),
@@ -191,6 +206,12 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
     }
 
     return success;
+}
+
+TensorData TensorData::CreateCopy() const
+{
+    return TensorData(TensorShape, GetType(), GetDevice(), BatchSize,
+                      m_parentDescKey);
 }
 
 bool TensorData::SendTo(const Device &device)

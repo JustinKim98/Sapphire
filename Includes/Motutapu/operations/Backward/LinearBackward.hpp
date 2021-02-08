@@ -14,27 +14,27 @@ namespace Motutapu::BackProp
 {
 class LinearBackProp : public BackPropWrapper
 {
- public:
-    explicit LinearBackProp(unsigned int gradientOutputTensorKey, int unitKey)
-        : BackPropWrapper({ gradientOutputTensorKey }, false, unitKey)
-    {
-    }
-
-    void Backward(std::vector<TensorUtil::TensorData>& outputs,
-                  const TensorUtil::TensorData& input) const override
-    {
-        auto& model = ModelManager::GetCurrentModel();
-        const auto inputShape = input.GetShape();
-        auto unitDataWrapper = model.GetUnitDataWrapper(m_unitKey);
-
-        TensorUtil::TensorData weight = unitDataWrapper.TensorDataMap["weight"];
-        TensorUtil::TensorData transposedWeight =
-            unitDataWrapper.TensorDataMap["TransposedWeight"];
-
-        //! Calculate next gradient
-        Compute::Transpose(transposedWeight, input);
-        Compute::Mul(outputs[0], input, transposedWeight);
-    }
+// public:
+//    explicit LinearBackProp(unsigned int gradientOutputTensorKey, int unitKey)
+//        : BackPropWrapper({ gradientOutputTensorKey }, false, unitKey)
+//    {
+//    }
+//
+//    void Backward(std::vector<TensorUtil::TensorData>& outputs,
+//                  const TensorUtil::TensorData& input) const override
+//    {
+//        auto& model = ModelManager::GetCurrentModel();
+//        const auto inputShape = input.GetShape();
+//        auto unitDataWrapper = model.GetUnitDataWrapper(m_unitKey);
+//
+//        TensorUtil::TensorData weight = unitDataWrapper.TensorDataMap["weight"];
+//        TensorUtil::TensorData transposedWeight =
+//            unitDataWrapper.TensorDataMap["TransposedWeight"];
+//
+//        //! Calculate next gradient
+//        Compute::Transpose(transposedWeight, input);
+//        Compute::Mul(outputs[0], input, transposedWeight);
+//    }
 };
 
 }  // namespace Motutapu::BackProp

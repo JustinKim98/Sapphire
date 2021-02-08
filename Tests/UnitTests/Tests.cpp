@@ -39,33 +39,33 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Computation Test")
 {
-    const int testLoops = 3;
-    SUBCASE("Gemm With Cuda")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-            TestGemm1();
-        }
-    }
+    const int testLoops = 1;
+//    SUBCASE("Gemm With Cuda")
+//    {
+//        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+//        {
+//            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
+//            TestGemm1();
+//        }
+//    }
+//
+//    SUBCASE("Initialize test With Cuda")
+//    {
+//        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+//        {
+//            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
+//            TestGemm2();
+//        }
+//    }
 
-    SUBCASE("Initialize test With Cuda")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        SUBCASE("Gemm Broadcast")
         {
-            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
-            TestGemm2();
+            for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+            {
+                std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
+                TestGemmBroadcast();
+            }
         }
-    }
-
-    SUBCASE("Gemm Broadcast")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
-            TestGemmBroadcast();
-        }
-    }
 }
 
 }  // namespace Motutapu::Test

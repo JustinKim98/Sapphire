@@ -25,6 +25,9 @@ __host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
 
 __host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size);
 
+__host__ void MemcpyGpuToGpuAsync(float* dest, const float* src,
+                                  unsigned int size, cudaStream_t stream);
+
 __host__ void MemcpyGpuToGpuBroadcast(float* dest, const float* src,
                                       unsigned int size,
                                       unsigned int srcStride);

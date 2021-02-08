@@ -21,6 +21,9 @@ class TensorData
     TensorData() = default;
     TensorData(Shape shape, Type type, Device device, unsigned int batchSize);
 
+    TensorData(Shape shape, Type type, Device device, unsigned int batchSize,
+               int parentDescKey);
+
     TensorData(const TensorData& tensorData);
     TensorData(TensorData&& tensorData) noexcept;
     TensorData& operator=(const TensorData& tensorData);
@@ -35,6 +38,11 @@ class TensorData
 
     float* DenseMatHost = nullptr;
     float* DenseMatCuda = nullptr;
+
+    [[nodiscard]] int GetParentDescKey() const
+    {
+        return m_parentDescKey;
+    }
 
     SparseMatrix* SparseMatHost = nullptr;
     SparseMatrix* SparseMatCuda = nullptr;
@@ -83,6 +91,9 @@ class TensorData
     //! Type of dest and src must be the same
     static bool CopyTensorData(TensorData dest, const TensorData& src);
 
+    //! Creates and returns same copy as this tensorData
+    [[nodiscard]] TensorData CreateCopy() const;
+
     //! Changes device of the tensor
     //! Transfers data to target device from current device
     //! immediately returns false if change device is requested to same device
@@ -120,7 +131,10 @@ class TensorData
     //! Free space allocated on GPU memory
     bool m_freeCuda();
 
+    int m_parentDescKey = -1;
+
     Type m_type = Type::Dense;
+
     Device m_device;
 };
 }  // namespace Motutapu::TensorUtil
