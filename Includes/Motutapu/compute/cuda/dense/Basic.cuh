@@ -12,13 +12,13 @@
 namespace Motutapu::Compute::Cuda::Dense
 {
 //! out = A + B
-__host__ void Add(float* output, const float* inputA, const float* inputB,
-                  unsigned int totalSize, unsigned int inputStride,
+__host__ void Add(unsigned int totalSize, float* output, const float* inputA,
+                  const float* inputB, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB);
 
 //! out = A - B
-__host__ void Sub(float* output, const float* inputA, const float* inputB,
-                  unsigned int totalSize, unsigned int inputStride,
+__host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
+                  const float* inputB, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB);
 
 //! out = inner_product(inputA, inputB)

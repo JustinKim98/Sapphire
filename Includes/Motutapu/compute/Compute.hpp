@@ -50,7 +50,7 @@ void Pow(TensorData& out, const TensorData& a, int factor);
 //! totalSize parameters should contain actual total size of the whole array
 //! including batch size
 template <typename Func, typename... Params>
-void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
+void BroadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
                           Shape shapeC, unsigned int totalSizeOut,
                           unsigned int totalSizeA, unsigned int totalSizeB,
                           unsigned int totalSizeC, float* out, float* A,
@@ -71,28 +71,28 @@ void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
         return;
     }
 
-    unsigned int batchSize = 1;
+    unsigned int chunkSize = 1;
     while (!((shapeA[shapeIdx] == 1 || shapeB[shapeIdx] == 1 ||
               shapeC[shapeIdx] == 1) &&
              shapeOut[shapeIdx] != 1) &&
            shapeIdx < shapeOut.Dim() - minimumRequiredDim)
     {
-        batchSize *= shapeOut[shapeIdx];
+        chunkSize *= shapeOut[shapeIdx];
         shapeIdx += 1;
     }
 
+    //! If given shapes all match together up to minimumRequiredDim, invoke the
+    //! kernel directly to improve throughput
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
-        broadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, totalSizeOut,
-                             totalSizeA, totalSizeB, totalSizeC, out, A, B, C,
-                             shapeIdx + 1, minimumRequiredDim, func, params...);
+        func(totalSizeOut, out, A, B, C, params...);
         return;
     }
 
-    const auto chunkSizeA = batchSize * shapeA[shapeIdx];
-    const auto chunkSizeB = batchSize * shapeB[shapeIdx];
-    const auto chunkSizeC = batchSize * shapeC[shapeIdx];
-    const auto chunkSizeOut = batchSize * shapeOut[shapeIdx];
+    const auto chunkSizeA = chunkSize * shapeA[shapeIdx];
+    const auto chunkSizeB = chunkSize * shapeB[shapeIdx];
+    const auto chunkSizeC = chunkSize * shapeC[shapeIdx];
+    const auto chunkSizeOut = chunkSize * shapeOut[shapeIdx];
 
     const auto strideA = totalSizeA / chunkSizeA;
     const auto strideB = totalSizeB / chunkSizeB;
@@ -101,7 +101,7 @@ void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
 
     for (unsigned int chunkIdx = 0; chunkIdx < chunkSizeOut; chunkIdx++)
     {
-        broadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, strideOut,
+        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, strideOut,
                              strideA, strideB, strideC,
                              out + chunkIdx * strideOut,
                              A + (chunkIdx % chunkSizeA) * strideA,
@@ -110,6 +110,61 @@ void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
                              shapeIdx + 1, minimumRequiredDim, func, params...);
     }
 }
+
+template <typename Func, typename... Params>
+void BroadcastWith2Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
+                          unsigned int totalSizeOut, unsigned int totalSizeA,
+                          unsigned int totalSizeB, float* out, float* A,
+                          float* B, unsigned int shapeIdx,
+                          unsigned int minimumRequiredDim, Func func,
+                          Params... params)
+{
+    if (shapeIdx == 0)
+    {
+        shapeA.Expand(shapeOut.Dim());
+        shapeB.Expand(shapeOut.Dim());
+    }
+
+    if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
+    {
+        func(totalSizeOut, out, A, B, params...);
+    }
+
+    unsigned int chunkSize = 1;
+    while (!((shapeA[shapeIdx] == 1 || shapeB[shapeIdx] == 1) &&
+             shapeOut[shapeIdx] != 1) &&
+           shapeIdx < shapeOut.Dim() - minimumRequiredDim)
+    {
+        chunkSize *= shapeOut[shapeIdx];
+        shapeIdx += 1;
+    }
+
+    //! If given shapes all match together up to minimumRequiredDim, invoke the
+    //! kernel directly to improve throughput
+    if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
+    {
+        func(totalSizeOut, out, A, B, params...);
+        return;
+    }
+
+    const auto chunkSizeA = chunkSize * shapeA[shapeIdx];
+    const auto chunkSizeB = chunkSize * shapeB[shapeIdx];
+    const auto chunkSizeOut = chunkSize * shapeOut[shapeIdx];
+
+    const auto strideA = totalSizeA / chunkSizeA;
+    const auto strideB = totalSizeB / chunkSizeB;
+    const auto strideOut = totalSizeOut / chunkSizeOut;
+
+    for (unsigned int chunkIdx = 0; chunkIdx < chunkSizeOut; chunkIdx++)
+    {
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, strideOut, strideA,
+                             strideB, out + chunkIdx * strideOut,
+                             A + (chunkIdx % chunkSizeA) * strideA,
+                             B + (chunkIdx % chunkSizeB) * strideB,
+                             shapeIdx + 1, minimumRequiredDim, func, params...);
+    }
+}
+
 }  // namespace Motutapu::Compute
 
 #endif

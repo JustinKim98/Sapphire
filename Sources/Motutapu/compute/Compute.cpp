@@ -15,7 +15,75 @@
 
 namespace Motutapu::Compute
 {
-// void Add(TensorData& out, const TensorData& add)
+void Add(TensorData& out, const TensorData& a, const TensorData& b)
+{
+    const auto device = out.GetDevice();
+    // const auto M = out.Rows();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    // const auto stride = M * N;
+    //    const auto broadcastA = a.BatchSize == 1;
+    //    const auto broadcastB = b.BatchSize == 1;
+    //
+    //    if ((broadcastA || broadcastB) &&
+    //        (out.TensorShape.Dim() == a.TensorShape.Dim() &&
+    //         out.TensorShape.Dim() == b.TensorShape.Dim()))
+    //    {
+    //                if (device.Type() == DeviceType::CUDA)
+    //                {
+    //                    Cuda::Dense::Add(out.TensorShape.Size() *
+    //                    out.BatchSize,
+    //                                     out.DenseMatCuda, a.DenseMatCuda,
+    //                                     b.DenseMatCuda, stride, broadcastA,
+    //                                     broadcastB);
+    //                    return;
+    //                }
+    //                if (device.Type() == DeviceType::CPU)
+    //                {
+    //                    Naive::Dense::Add(
+    //                        (out.TensorShape.Size() / N) * paddedN *
+    //                        out.BatchSize, out.DenseMatHost, a.DenseMatHost,
+    //                        b.DenseMatHost, M * paddedN, broadcastA,
+    //                        broadcastB);
+    //                    return;
+    //                }
+    //    }
+
+    auto shapeOut = out.TensorShape;
+    auto shapeA = a.TensorShape;
+    auto shapeB = b.TensorShape;
+
+    shapeOut.Expand(out.TensorShape.Dim() + 1);
+    shapeA.Expand(out.TensorShape.Dim() + 1);
+    shapeB.Expand(out.TensorShape.Dim() + 1);
+
+    shapeOut.Set(0, out.BatchSize);
+    shapeA.Set(0, a.BatchSize);
+    shapeB.Set(0, b.BatchSize);
+
+    const auto sizeOut = shapeOut.Size();
+    const auto sizeA = shapeA.Size();
+    const auto sizeB = shapeB.Size();
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
+                             out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
+                             0, 1, Cuda::Dense::Add, 0, false, false);
+    }
+    else
+    {
+        const auto paddedSizeOut = (sizeOut / N) * paddedN;
+        const auto paddedSizeA = (sizeA / N) * paddedN;
+        const auto paddedSizeB = (sizeB / N) * paddedN;
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
+                             paddedSizeA, paddedSizeB, out.DenseMatHost,
+                             a.DenseMatHost, b.DenseMatHost, 0, 1,
+                             Naive::Dense::Add, 0, false, false);
+    }
+}
+
+// void Sub(TensorData& out, const TensorData& sub)
 //{
 //    const auto device = out.GetDevice();
 //    const auto M = out.Rows();
@@ -25,23 +93,23 @@ namespace Motutapu::Compute
 //    const auto strideWithPadding = M * paddedN;
 //    const auto totalSize = out.TensorShape.Size() * out.BatchSize;
 //    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-//    const auto broadcast = add.BatchSize == 1;
+//    const auto broadcast = sub.BatchSize == 1;
 //
 //    if (device.Type() == DeviceType::CUDA)
 //    {
-//        Cuda::Dense::Add(out.DenseMatCuda, out.DenseMatCuda, add.DenseMatCuda,
+//        Cuda::Dense::Sub(out.DenseMatCuda, out.DenseMatCuda, sub.DenseMatCuda,
 //                         totalSize, stride, false, broadcast);
 //    }
 //    else
 //    {
-//        Naive::Dense::Add(out.DenseMatHost, out.DenseMatHost,
-//        add.DenseMatHost,
+//        Naive::Dense::Sub(out.DenseMatHost, out.DenseMatHost,
+//        sub.DenseMatHost,
 //                          totalSizeWithPadding, strideWithPadding, false,
 //                          broadcast);
 //    }
 //}
 
-// void Add(TensorData& out, const TensorData& a, const TensorData& b)
+// void Sub(TensorData& out, const TensorData& a, const TensorData& b)
 //{
 //    const auto device = out.GetDevice();
 //    const auto M = out.Rows();
@@ -56,67 +124,16 @@ namespace Motutapu::Compute
 //
 //    if (device.Type() == DeviceType::CUDA)
 //    {
-//        Cuda::Dense::Add(out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
+//        Cuda::Dense::Sub(out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
 //                         totalSize, stride, broadcastA, broadcastB);
 //    }
 //    else
 //    {
-//        Naive::Dense::Add(out.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
+//        Naive::Dense::Sub(out.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
 //                          totalSizeWithPadding, strideWithPadding, broadcastA,
 //                          broadcastB);
 //    }
 //}
-
-void Sub(TensorData& out, const TensorData& sub)
-{
-    const auto device = out.GetDevice();
-    const auto M = out.Rows();
-    const auto N = out.Cols();
-    const auto paddedN = out.PaddedHostColSize;
-    const auto stride = M * N;
-    const auto strideWithPadding = M * paddedN;
-    const auto totalSize = out.TensorShape.Size() * out.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-    const auto broadcast = sub.BatchSize == 1;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Cuda::Dense::Sub(out.DenseMatCuda, out.DenseMatCuda, sub.DenseMatCuda,
-                         totalSize, stride, false, broadcast);
-    }
-    else
-    {
-        Naive::Dense::Sub(out.DenseMatHost, out.DenseMatHost, sub.DenseMatHost,
-                          totalSizeWithPadding, strideWithPadding, false,
-                          broadcast);
-    }
-}
-
-void Sub(TensorData& out, const TensorData& a, const TensorData& b)
-{
-    const auto device = out.GetDevice();
-    const auto M = out.Rows();
-    const auto N = out.Cols();
-    const auto paddedN = out.PaddedHostColSize;
-    const auto stride = M * N;
-    const auto strideWithPadding = M * paddedN;
-    const auto totalSize = out.TensorShape.Size() * out.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-    const auto broadcastA = a.BatchSize == 1;
-    const auto broadcastB = b.BatchSize == 1;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Cuda::Dense::Sub(out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                         totalSize, stride, broadcastA, broadcastB);
-    }
-    else
-    {
-        Naive::Dense::Sub(out.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
-                          totalSizeWithPadding, strideWithPadding, broadcastA,
-                          broadcastB);
-    }
-}
 
 void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
           const TensorUtil::TensorData& b, const TensorUtil::TensorData& c)
@@ -146,6 +163,7 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
         {
         }
     }
+
     //! Treat batch size as part of tensor shape
     auto shapeOut = out.TensorShape;
     auto shapeA = a.TensorShape;
@@ -172,7 +190,7 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
         cublasHandle_t cublasHandle;
         cublasCreate(&cublasHandle);
 
-        broadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
+        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
                              sizeB, sizeC, out.DenseMatCuda, a.DenseMatCuda,
                              b.DenseMatCuda, c.DenseMatCuda, 0, 2,
                              Cuda::Dense::Gemm, M, N, K, &cublasHandle);
@@ -186,7 +204,7 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
         const auto paddedSizeB = (sizeB / N) * paddedN;
         const auto paddedSizeC = (sizeC / N) * paddedN;
 
-        broadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, paddedSizeOut,
+        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, paddedSizeOut,
                              paddedSizeA, paddedSizeB, paddedSizeC,
                              out.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
                              c.DenseMatHost, 0, 2, Naive::Dense::NaiveGemm, M,

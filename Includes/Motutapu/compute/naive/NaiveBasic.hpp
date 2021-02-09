@@ -9,12 +9,12 @@
 
 namespace Motutapu::Compute::Naive::Dense
 {
-void Add(float* output, const float* inputA, const float* inputB,
-         unsigned int totalSize, unsigned int inputStride, bool broadcastInputA,
+void Add(unsigned int totalSize, float* output, const float* inputA,
+         const float* inputB, unsigned int inputStride, bool broadcastInputA,
          bool broadcastInputB);
 
-void Sub(float* output, const float* inputA, const float* inputB,
-         unsigned int totalSize, unsigned int inputStride, bool broadcastInputA,
+void Sub(unsigned int totalSize, float* output, const float* inputA,
+         const float* inputB, unsigned int inputStride, bool broadcastInputA,
          bool broadcastInputB);
 
 void Dot(float* output, const float* inputA, const float* inputB,

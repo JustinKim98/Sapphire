@@ -10,37 +10,42 @@
 
 namespace Motutapu::Compute::Cuda::Dense
 {
-__host__ void Add(float* output, const float* inputA, const float* inputB,
-                  unsigned int totalSize, unsigned int outputBatchSize,
-                  unsigned int unitBatchSize)
+__host__ void Add(unsigned int totalSize, float* output, const float* inputA,
+                  const float* inputB, unsigned int inputStride,
+                  bool broadcastInputA, bool broadcastInputB)
 {
-//    const auto numLoops = 8;
-//    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
-//
-//    const auto blockDim = totalSize / (threadDim * numLoops);
-//    const auto firstLaunchSize = blockDim * threadDim * numLoops;
-//
-//    if (firstLaunchSize > 0)
-//        AddKernel<<<blockDim, threadDim>>>(output, inputA, inputB,
-//                                           firstLaunchSize, inputStride,
-//                                           broadcastInputA, broadcastInputB);
-//    if (totalSize > firstLaunchSize)
-//    {
-//        const float* inputAOffset =
-//            broadcastInputA ? inputA : inputA + firstLaunchSize;
-//        const float* inputBOffset =
-//            broadcastInputB ? inputB : inputB + firstLaunchSize;
-//        float* outputOffset = output + firstLaunchSize;
-//
-//        AddKernel<<<1, totalSize - firstLaunchSize>>>(
-//            outputOffset, inputAOffset, inputBOffset,
-//            totalSize - firstLaunchSize, inputStride, broadcastInputA,
-//            broadcastInputB);
-//    }
+    const auto numLoops = 8;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+
+    const auto blockDim = totalSize / MAX_THREAD_DIM_X;
+    const auto firstLaunchSize = blockDim * MAX_THREAD_DIM_X;
+
+    //    cudaStream_t stream;
+    //    cudaStreamCreate(&stream);
+
+    if (firstLaunchSize > 0)
+        AddKernel<<<blockDim, threadDim>>>(
+            output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
+            broadcastInputA, broadcastInputB);
+
+    // cudaStreamSynchronize(stream);
+    cudaDeviceSynchronize();
+
+    if (totalSize > firstLaunchSize)
+    {
+        const unsigned int offset = firstLaunchSize;
+
+        AddKernel<<<1, totalSize - firstLaunchSize>>>(
+            output, inputA, inputB, offset, totalSize - firstLaunchSize,
+            totalSize, inputStride, broadcastInputA, broadcastInputB);
+    }
+
+    // cudaStreamDestroy(stream);
+    cudaDeviceSynchronize();
 }
 
-__host__ void Sub(float* output, const float* inputA, const float* inputB,
-                  unsigned int totalSize, unsigned int inputStride,
+__host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
+                  const float* inputB, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB)
 {
     const auto numLoops = 8;

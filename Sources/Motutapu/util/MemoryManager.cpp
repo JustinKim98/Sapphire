@@ -178,6 +178,8 @@ void MemoryManager::ClearCudaMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
+    cudaDeviceSynchronize();
+
     for (auto itr = m_cudaFreeMemoryPool.begin();
          itr != m_cudaFreeMemoryPool.end(); ++itr)
     {
@@ -199,6 +201,8 @@ void MemoryManager::ClearCudaMemoryPool()
         if (itr == m_cudaBusyMemoryPool.end())
             break;
     }
+
+    cudaDeviceSynchronize();
 }
 
 void MemoryManager::ClearHostMemoryPool()

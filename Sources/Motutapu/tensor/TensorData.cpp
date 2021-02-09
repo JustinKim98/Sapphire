@@ -259,6 +259,8 @@ void TensorData::m_toGpu(const TensorData &tensorData)
     }
     else
     {
+        cudaDeviceSynchronize();
+
         if (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
         {
             throw std::runtime_error("m_toHost - illegalDeviceID");
@@ -281,6 +283,7 @@ void TensorData::m_toGpu(const TensorData &tensorData)
                 throw std::runtime_error("m_toGpu - cudaMemCopy failed");
             }
         }
+        cudaDeviceSynchronize();
     }
 }
 
@@ -298,6 +301,7 @@ void TensorData::m_toHost(const TensorData &tensorData)
     }
     else
     {
+        cudaDeviceSynchronize();
         const auto colSize = tensorData.Cols();
         const auto totalSize =
             tensorData.TensorShape.Size() * tensorData.BatchSize;
@@ -315,6 +319,7 @@ void TensorData::m_toHost(const TensorData &tensorData)
                 throw std::runtime_error("m_toGpu - cudaMemCopy failed");
             }
         }
+        cudaDeviceSynchronize();
     }
 }
 

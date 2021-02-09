@@ -6,6 +6,7 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
+#include <Motutapu/Tests/BasicComputationTest.hpp>
 #include <Motutapu/Tests/BroadcastTest.hpp>
 #include <Motutapu/Tests/ComputationTest.hpp>
 #include <Motutapu/Tests/CudaFunctionalityTest.cuh>
@@ -39,7 +40,7 @@ TEST_CASE("Check cuda")
 #endif
 }
 
-TEST_CASE("Computation Test")
+TEST_CASE("Gemm Test")
 {
     const int testLoops = 3;
     SUBCASE("Gemm With Cuda")
@@ -70,9 +71,9 @@ TEST_CASE("Computation Test")
     }
 }
 
-TEST_CASE("Broadcast Test")
+TEST_CASE("Gemm Broadcast Test")
 {
-    const int testLoops = 3;
+    const int testLoops = 100;
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
@@ -89,6 +90,34 @@ TEST_CASE("Broadcast Test")
     {
         for (int i = 0; i < testLoops; i++)
             BroadcastMixed();
+    }
+}
+
+TEST_CASE("Basic computation test")
+{
+    const int testLoops = 100;
+    SUBCASE("Add1")
+    {
+        for (int i = 0; i < testLoops; i++)
+            TestAdd();
+    }
+
+    SUBCASE("Add2")
+    {
+        for (int i = 0; i < testLoops; i++)
+            TestAdd2();
+    }
+
+    SUBCASE("AddWithBroadcast1")
+    {
+        for (int i = 0; i < testLoops; i++)
+            TestAddBroadcast1();
+    }
+
+    SUBCASE("AddWithBroadcast2")
+    {
+        for (int i = 0; i < testLoops; i++)
+            TestAddBroadcast2();
     }
 }
 

@@ -47,11 +47,12 @@ __global__ void TransposeKernel(float* output, const float* input,
 }
 
 __global__ void AddKernel(float* output, const float* inputA,
-                          const float* inputB, unsigned int totalSize,
+                          const float* inputB, unsigned int offset,
+                          unsigned int launchSize, unsigned int totalSize,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB)
 {
-    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto sizePerBlock = launchSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
     const auto blockOffset = sizePerBlock * blockIdx.x;
 
@@ -60,9 +61,11 @@ __global__ void AddKernel(float* output, const float* inputA,
 
     for (unsigned int i = 0; i < numLoops; i++)
     {
-        output[blockOffset + blockDim.x * i + threadIdx.x] =
-            inputA[(blockOffset + blockDim.x * i + threadIdx.x) % leftOverA] +
-            inputB[(blockOffset + blockDim.x * i + threadIdx.x) % leftOverB];
+        output[offset + blockOffset + blockDim.x * i + threadIdx.x] =
+            inputA[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                   leftOverA] +
+            inputB[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                   leftOverB];
     }
 }
 

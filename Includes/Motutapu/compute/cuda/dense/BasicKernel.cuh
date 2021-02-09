@@ -12,7 +12,8 @@
 namespace Motutapu::Compute::Cuda::Dense
 {
 __global__ void AddKernel(float* output, const float* inputA,
-                          const float* inputB, unsigned int totalSize,
+                          const float* inputB, unsigned int offset,
+                          unsigned int launchSize, unsigned int totalSize,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB);
 
