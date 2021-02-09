@@ -81,6 +81,14 @@ void broadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
         shapeIdx += 1;
     }
 
+    if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
+    {
+        broadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, totalSizeOut,
+                             totalSizeA, totalSizeB, totalSizeC, out, A, B, C,
+                             shapeIdx + 1, minimumRequiredDim, func, params...);
+        return;
+    }
+
     const auto chunkSizeA = batchSize * shapeA[shapeIdx];
     const auto chunkSizeB = batchSize * shapeB[shapeIdx];
     const auto chunkSizeC = batchSize * shapeC[shapeIdx];

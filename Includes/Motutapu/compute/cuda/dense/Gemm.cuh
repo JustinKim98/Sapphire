@@ -14,7 +14,7 @@ namespace Motutapu::Compute::Cuda::Dense
 {
 __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
                    float* C, unsigned int M, unsigned int N, unsigned int K,
-                   cublasHandle_t* handle, cudaStream_t* streams);
+                   cublasHandle_t* handle);
 
 __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
                                       unsigned int M, unsigned int N,

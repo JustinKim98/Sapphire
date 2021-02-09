@@ -17,9 +17,8 @@ namespace Motutapu::Compute::Cuda::Dense
 //! batch sizes must be multiple of each other
 __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
                    float* C, unsigned int M, unsigned int N, unsigned int K,
-                   cublasHandle_t* handle, cudaStream_t* streams)
+                   cublasHandle_t* handle)
 {
-    // cublasSetStream(*handle, streams[batchIdx]);
     cublasSetMathMode(*handle, CUBLAS_TF32_TENSOR_OP_MATH);
 
     const float alpha = 1.0f;
@@ -34,7 +33,6 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
     float* ptrC = C;
     float* ptrOut = out;
 
-    // MemcpyGpuToGpuAsync(ptrOut, ptrC, totalSize, streams[batchIdx]);
     MemcpyGpuToGpu(ptrOut, ptrC, totalSize);
 
     auto status = cublasGemmStridedBatchedEx(

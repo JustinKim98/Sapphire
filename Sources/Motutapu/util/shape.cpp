@@ -97,6 +97,9 @@ void Shape::Set(unsigned int dim, unsigned int value)
 
 void Shape::Expand(unsigned int dim)
 {
+    if (dim <= Dim())
+        return;
+
     std::vector<unsigned int> newShapeVector(dim);
     for (unsigned int i = 0; i < dim; i++)
     {

@@ -7,6 +7,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
 #include <Motutapu/Tests/BroadcastTest.hpp>
+#include <Motutapu/Tests/ComputationTest.hpp>
 #include <Motutapu/Tests/CudaFunctionalityTest.cuh>
 #include <Motutapu/Tests/Test.hpp>
 #include <iostream>
@@ -40,7 +41,7 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Computation Test")
 {
-    const int testLoops = 2;
+    const int testLoops = 3;
     SUBCASE("Gemm With Cuda")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
@@ -71,14 +72,23 @@ TEST_CASE("Computation Test")
 
 TEST_CASE("Broadcast Test")
 {
+    const int testLoops = 3;
     SUBCASE("Broadcast test with 1 dimension")
     {
-        BroadcastWithOneDimension();
+        for (int i = 0; i < testLoops; i++)
+            BroadcastWithOneDimension();
     }
 
     SUBCASE("Broadcast test with Missing dimension")
     {
-        BroadcastWithMissingDimension();
+        for (int i = 0; i < testLoops; i++)
+            BroadcastWithMissingDimension();
+    }
+
+    SUBCASE("Broadcast test mixed")
+    {
+        for (int i = 0; i < testLoops; i++)
+            BroadcastMixed();
     }
 }
 
