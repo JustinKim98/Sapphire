@@ -6,6 +6,7 @@
 
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/util/MemoryManager.hpp>
+#include <cassert>
 #include <utility>
 
 namespace Motutapu::Util
@@ -186,10 +187,8 @@ void MemoryManager::ClearCudaMemoryPool()
         if (!Compute::Cuda::CudaFree(itr->second.Data))
             throw std::runtime_error(
                 "ClearUnusedCudaMemoryPool - CudaFree(Busy) failed");
-        itr = m_cudaFreeMemoryPool.erase(itr);
-        if (itr == m_cudaFreeMemoryPool.end())
-            break;
     }
+    m_cudaFreeMemoryPool.clear();
 
     for (auto itr = m_cudaBusyMemoryPool.begin();
          itr != m_cudaBusyMemoryPool.end(); ++itr)
@@ -197,10 +196,12 @@ void MemoryManager::ClearCudaMemoryPool()
         if (!Compute::Cuda::CudaFree(itr->second.Data))
             throw std::runtime_error(
                 "ClearUnusedCudaMemoryPool - CudaFree(Unused) failed");
-        itr = m_cudaBusyMemoryPool.erase(itr);
-        if (itr == m_cudaBusyMemoryPool.end())
-            break;
     }
+
+    m_cudaBusyMemoryPool.clear();
+
+    assert(m_cudaBusyMemoryPool.empty() && m_cudaFreeMemoryPool.empty() &&
+           "CudaPool Not empty!");
 
     cudaDeviceSynchronize();
 }
@@ -213,19 +214,16 @@ void MemoryManager::ClearHostMemoryPool()
          itr != m_hostFreeMemoryPool.end(); ++itr)
     {
         delete[] itr->second.Data;
-        itr = m_hostFreeMemoryPool.erase(itr);
-        if (itr == m_hostFreeMemoryPool.end())
-            break;
     }
+    m_hostFreeMemoryPool.clear();
 
     for (auto itr = m_hostBusyMemoryPool.begin();
          itr != m_hostBusyMemoryPool.end(); ++itr)
     {
         delete[] itr->second.Data;
-        itr = m_hostBusyMemoryPool.erase(itr);
-        if (itr == m_hostBusyMemoryPool.end())
-            break;
     }
+
+    m_hostBusyMemoryPool.clear();
 }
 
 size_t MemoryManager::GetTotalAllocationByteSizeCuda()
