@@ -96,16 +96,21 @@ TEST_CASE("Gemm Broadcast Test")
 TEST_CASE("Basic computation test")
 {
     const int testLoops = 10;
+    SUBCASE("General")
+    {
+        for (int i = 0; i < testLoops; i++)
+            TestTranspose(false);
+    }
     SUBCASE("Add1")
     {
         for (int i = 0; i < testLoops; i++)
-            TestAdd();
+            TestBasics1();
     }
 
     SUBCASE("Add2")
     {
         for (int i = 0; i < testLoops; i++)
-            TestAdd2();
+            TestBasics2();
     }
 
     SUBCASE("AddWithBroadcast1")

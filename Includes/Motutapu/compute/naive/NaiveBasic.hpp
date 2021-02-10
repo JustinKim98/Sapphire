@@ -24,8 +24,9 @@ void Dot(unsigned int totalSize, float* output, const float* inputA,
 void Scale(float* output, const float* input, float scaleFactor,
            unsigned int totalSize);
 
-void Transpose(float* output, const float* input, unsigned int inputNumRows,
-               unsigned int inputNumCols, unsigned int batchSize,
+void Transpose(float* output, const float* input, unsigned int inputRows,
+               unsigned int paddedInputRows, unsigned int inputCols,
+               unsigned int paddedInputCols, unsigned int batchSize,
                bool broadcast);
 
 }  // namespace Motutapu::Compute::Naive::Dense

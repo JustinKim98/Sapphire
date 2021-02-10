@@ -151,6 +151,8 @@ __host__ void Transpose(float* output, const float* input,
                         unsigned int inputNumRows, unsigned int inputNumCols,
                         unsigned int batchSize, bool broadcastInput)
 {
+    cudaDeviceSynchronize();
+
     unsigned int blockDimX = (inputNumCols % TILE_DIM == 0)
                                  ? inputNumCols / TILE_DIM
                                  : inputNumCols / TILE_DIM + 1;
@@ -163,6 +165,7 @@ __host__ void Transpose(float* output, const float* input,
     dim3 threadDim(TILE_DIM, 8);
     TransposeKernel<<<blockDim, threadDim>>>(output, input, inputNumRows,
                                              inputNumCols, broadcastInput);
+    cudaDeviceSynchronize();
 }
 
 //__global__ void ConvInputToFeatureMatrix(

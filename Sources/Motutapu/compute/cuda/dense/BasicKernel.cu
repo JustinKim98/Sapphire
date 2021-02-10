@@ -8,6 +8,18 @@
 
 namespace Motutapu::Compute::Cuda::Dense
 {
+//__global__ void transposeNaive(float* output, const float* input,
+//                               unsigned int inputNumRows,
+//                               unsigned int inputNumCols, bool broadcastInput)
+//{
+//    int x = blockIdx.x * TILE_DIM + threadIdx.x;
+//    int y = blockIdx.y * TILE_DIM + threadIdx.y;
+//    int width = gridDim.x * TILE_DIM;
+//
+//    for (int j = 0; j < TILE_DIM; j += BLOCK_ROWS)
+//        output[x * width + (y + j)] = input[(y + j) * width + x];
+//}
+
 //! (x,y) : (TILE_DIM*8) threads per block
 //! Assuming input is M x N, (nx, ny, nz) : (N/TILE_DIM, M/TILE_DIM, batchSize)
 //! blocks required
@@ -30,17 +42,19 @@ __global__ void TransposeKernel(float* output, const float* input,
     const float* inputOffset =
         input + (broadcastInput ? 0 : inputNumRows * inputNumCols * blockIdx.z);
 
-    if (inputColIdx < inputNumCols && outputColIdx < outputNumCols)
+    for (int i = 0; (i < TILE_DIM) && (inputRowIdx * i < inputNumRows); i += 8)
     {
-        for (int i = 0; (i < TILE_DIM) && (inputRowIdx * i < inputNumRows);
-             i += 8)
+        if (inputRowIdx + i < inputNumRows && inputColIdx < inputNumCols)
             tile[threadIdx.y + i][threadIdx.x] =
                 inputOffset[(inputRowIdx + i) * inputNumCols + inputColIdx];
+    }
 
-        __syncthreads();
+    __syncthreads();
 
-        for (int i = 0; (i < TILE_DIM) && (outputRowIdx * i < outputNumRows);
-             i += 8)
+    for (int i = 0; (i < TILE_DIM) && (outputRowIdx * i < outputNumRows);
+         i += 8)
+    {
+        if (outputRowIdx + i < outputNumRows && outputColIdx < outputNumCols)
             outputOffset[(outputRowIdx + i) * outputNumCols + outputColIdx] =
                 tile[threadIdx.x][threadIdx.y + i];
     }
@@ -186,8 +200,8 @@ __global__ void DotKernel(float* output, const float* inputA,
     }
 }
 
-__global__ void ScaleKernel(float* output, const float* input, const float scaleFactor,
-                            unsigned int totalSize)
+__global__ void ScaleKernel(float* output, const float* input,
+                            const float scaleFactor, unsigned int totalSize)
 {
     const auto sizePerBlock = totalSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;

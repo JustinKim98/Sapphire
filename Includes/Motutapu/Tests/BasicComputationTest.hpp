@@ -9,9 +9,11 @@
 
 namespace Motutapu::Test
 {
-void TestAdd();
+void TestTranspose(bool printResult);
 
-void TestAdd2();
+void TestBasics1();
+
+void TestBasics2();
 
 void TestAddBroadcast1();
 

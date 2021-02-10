@@ -298,20 +298,23 @@ void Scale(TensorData& output, const TensorData& input, const float factor)
 void Transpose(TensorData& output, const TensorData& input)
 {
     const auto device = output.GetDevice();
-    const auto M = output.Rows();
-    const auto N = output.Cols();
-    const auto paddedN = output.PaddedHostColSize;
+    const auto inputM = input.Rows();
+    const auto inputN = input.Cols();
+    const auto paddedM = output.PaddedHostColSize;
+    const auto paddedN = input.PaddedHostColSize;
     const auto broadcast = input.BatchSize == 1;
+    const auto chunkSize =
+        output.BatchSize * output.TensorShape.Size() / (inputM * inputN);
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Cuda::Dense::Transpose(output.DenseMatCuda, input.DenseMatCuda, M, N,
-                               output.BatchSize, broadcast);
+        Cuda::Dense::Transpose(output.DenseMatCuda, input.DenseMatCuda, inputM,
+                               inputN, chunkSize, broadcast);
     }
     else
     {
-        Naive::Dense::Transpose(output.DenseMatHost, input.DenseMatHost, M,
-                                paddedN, output.BatchSize, broadcast);
+        Naive::Dense::Transpose(output.DenseMatHost, input.DenseMatHost, inputM,
+                                paddedM, inputN, paddedN, chunkSize, broadcast);
     }
 }
 

@@ -56,21 +56,23 @@ void Scale(float* output, const float* input, const float scaleFactor,
     }
 }
 
-void Transpose(float* output, const float* input, unsigned int inputNumRows,
-               unsigned int inputNumCols, unsigned int batchSize,
+void Transpose(float* output, const float* input, unsigned int inputRows,
+               unsigned int paddedInputRows, unsigned int inputCols,
+               unsigned int paddedInputCols, unsigned int batchSize,
                bool broadcast)
 {
+    const auto leftOver = broadcast ? inputRows * paddedInputCols
+                                    : batchSize * inputRows * paddedInputCols;
     for (unsigned int batchIdx = 0; batchIdx < batchSize; batchIdx++)
-        for (unsigned int i = 0; i < inputNumRows; i++)
-            for (unsigned int j = 0; j < inputNumCols; j++)
+        for (unsigned int i = 0; i < inputRows; i++)
+            for (unsigned int j = 0; j < inputCols; j++)
             {
                 float* outputOffset =
-                    output + batchIdx * inputNumRows * inputNumCols;
+                    output + batchIdx * inputCols * paddedInputRows;
                 const float* inputOffset =
-                    input +
-                    (broadcast ? 0 : batchIdx * inputNumRows * inputNumCols);
-                outputOffset[j * inputNumRows + i] =
-                    inputOffset[i * inputNumCols + j];
+                    input + batchIdx * inputRows * paddedInputCols;
+                outputOffset[j * paddedInputRows + i] =
+                    inputOffset[(i * paddedInputCols + j) % leftOver];
             }
 }
 }  // namespace Motutapu::Compute::Naive::Dense

@@ -7,7 +7,7 @@
 #ifndef MOTUTAPU_BASICKERNEL_CUH
 #define MOTUTAPU_BASICKERNEL_CUH
 
-#define TILE_DIM 16
+#define TILE_DIM 8
 
 namespace Motutapu::Compute::Cuda::Dense
 {

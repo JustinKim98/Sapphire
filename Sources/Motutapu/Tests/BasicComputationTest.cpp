@@ -19,20 +19,154 @@
 
 namespace Motutapu::Test
 {
-void TestAdd()
+void TestTranspose(bool printResult)
 {
     for (int j = 0; j < 10; j++)
     {
-        std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
-        std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+        std::random_device rd;
+        std::mt19937 gen(rd());
         std::uniform_int_distribution<> distrib(1, 100);
 
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
         const auto batchSize = distrib(gen) % 5 + 1;
-        //
+
+        //        const unsigned int M = 1;  // distrib(gen);
+        //        const unsigned int N = 7;  // distrib(gen);
+        //        const auto batchSize = 3;  // distrib(gen) % 5 + 1;
+
+        const Shape shapeA({ M, N });
+        const Shape shapeB({ M, N });
+        const Shape shapeOut({ M, N });
+
+        std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
+                  << std::endl;
+
+        const Device cuda(0, "device0");
+        const Device host("host");
+
+        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, host, batchSize);
+        TensorUtil::TensorData transposedOut(shapeOut.GetTranspose(),
+                                             Type::Dense, host, batchSize);
+
+        Compute::Initialize::Normal(A, 10, 5);
+        Compute::Initialize::Normal(B, 10, 5);
+        //        Compute::Initialize::Ones(A);
+        //        Compute::Initialize::Ones(B);
+
+        Compute::Add(out, A, B);
+        Compute::Scale(out, out, 2);
+        Compute::Transpose(transposedOut, out);
+
+        float cpuResult[transposedOut.DenseTotalLengthHost];
+
+#pragma omp parallel for default(shared) schedule(static)
+        for (size_t i = 0; i < transposedOut.DenseTotalLengthHost; ++i)
+        {
+            cpuResult[i] = transposedOut.DenseMatHost[i];
+        }
+
+        A.SendTo(cuda);
+        B.SendTo(cuda);
+        out.SendTo(cuda);
+        transposedOut.SendTo(cuda);
+
+        Compute::Initialize::Zeros(transposedOut);
+
+        Compute::Add(out, A, B);
+        Compute::Scale(out, out, 2);
+        Compute::Transpose(transposedOut, out);
+
+        out.SendTo(host);
+        transposedOut.SendTo(host);
+
+        std::atomic<float> largestError = 0.0f;
+
+        const size_t offset = 1 * out.Rows() * out.PaddedHostColSize;
+        const size_t offsetTransposed =
+            1 * transposedOut.Rows() * transposedOut.PaddedHostColSize;
+
+        if (printResult)
+        {
+            std::cout << "\nOriginal result" << std::endl;
+
+            for (size_t rowIdx = 0; rowIdx < out.Rows(); ++rowIdx)
+            {
+                for (size_t colIdx = 0; colIdx < out.Cols(); ++colIdx)
+                {
+                    std::cout
+                        << out.DenseMatHost[offset +
+                                            rowIdx * out.PaddedHostColSize +
+                                            colIdx]
+                        << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+
+            std::cout << "\nHost Result" << std::endl;
+            for (size_t rowIdx = 0; rowIdx < transposedOut.Rows(); ++rowIdx)
+            {
+                for (size_t colIdx = 0; colIdx < transposedOut.Cols(); ++colIdx)
+                {
+                    std::cout
+                        << cpuResult[offsetTransposed +
+                                     rowIdx * transposedOut.PaddedHostColSize +
+                                     colIdx]
+                        << " ";
+                }
+                std::cout << std::endl;
+            }
+            std::cout << "\nCuda Result" << std::endl;
+            for (size_t rowIdx = 0; rowIdx < transposedOut.Rows(); ++rowIdx)
+            {
+                for (size_t colIdx = 0; colIdx < transposedOut.Cols(); ++colIdx)
+                {
+                    std::cout << transposedOut.DenseMatHost
+                                     [offsetTransposed +
+                                      rowIdx * transposedOut.PaddedHostColSize +
+                                      colIdx]
+                              << " ";
+                }
+                std::cout << std::endl;
+            }
+        }
+
+#pragma omp parallel for default(shared) schedule(static)
+        for (size_t i = 0; i < transposedOut.DenseTotalLengthHost; ++i)
+        {
+            auto error = std::abs(cpuResult[i] - transposedOut.DenseMatHost[i]);
+            if (largestError < error)
+                largestError = error;
+
+            CHECK(error <= 1.0f);
+            if (error > 1.0f)
+                std::cout << i / (transposedOut.Rows() *
+                                  transposedOut.PaddedHostColSize)
+                          << std::endl;
+        }
+
+        std::cout << "Largest error : " << largestError << std::endl;
+    }
+
+    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::MemoryManager::ClearHostMemoryPool();
+}
+
+void TestBasics1()
+{
+    for (int j = 0; j < 10; j++)
+    {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> distrib(1, 100);
+
+        const unsigned int M = distrib(gen);
+        const unsigned int N = distrib(gen);
+        const auto batchSize = distrib(gen) % 5 + 1;
+
         //        const unsigned int M = 10;   // distrib(gen);
         //        const unsigned int N = 235;  // distrib(gen);
         //        const auto batchSize = 2;    // distrib(gen) % 5 + 1;
@@ -55,6 +189,8 @@ void TestAdd()
         Compute::Initialize::Normal(B, 10, 5);
 
         Compute::Add(Out, A, B);
+        Compute::Scale(Out, Out, 3);
+        Compute::Sub(Out, Out, A);
 
         float cpuGemmResult[Out.DenseTotalLengthHost];
 
@@ -71,6 +207,8 @@ void TestAdd()
         Out.SendTo(cuda);
 
         Compute::Add(Out, A, B);
+        Compute::Scale(Out, Out, 3);
+        Compute::Sub(Out, Out, A);
 
         Out.SendTo(host);
 
@@ -97,7 +235,7 @@ void TestAdd()
     Util::MemoryManager::ClearHostMemoryPool();
 }
 
-void TestAdd2()
+void TestBasics2()
 {
     for (int j = 0; j < 10; j++)
     {
@@ -133,7 +271,9 @@ void TestAdd2()
         Compute::Initialize::Normal(B, 10, 5);
         Compute::Initialize::Zeros(out);
 
-        Compute::Add(out, A, B);
+        Compute::Dot(out, A, B);
+        Compute::Add(out, out, A);
+        Compute::Sub(out, out, B);
 
         A.SendTo(host);
         B.SendTo(host);
@@ -148,7 +288,9 @@ void TestAdd2()
         }
 
         Compute::Initialize::Zeros(out);
-        Compute::Add(out, A, B);
+        Compute::Dot(out, A, B);
+        Compute::Add(out, out, A);
+        Compute::Sub(out, out, B);
 
         std::atomic<float> largestError = 0.0f;
 

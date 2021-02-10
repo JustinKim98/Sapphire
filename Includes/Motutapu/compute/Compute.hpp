@@ -19,11 +19,7 @@ using namespace TensorUtil;
 //! Performs out = a + b
 void Add(TensorData& out, const TensorData& a, const TensorData& b);
 
-//! Performs out = out - sub
-void Sub(TensorData& out, const TensorData& sub);
-
 //! Performs out = a - b
-
 void Sub(TensorData& out, const TensorData& a, const TensorData& b);
 
 //! Performs GEMM (out = a*b + c)
@@ -35,6 +31,9 @@ void Scale(TensorData& output, const TensorData& input, float factor);
 
 //! Performs output = TransposeKernel(input)
 void Transpose(TensorData& output, const TensorData& input);
+
+//! Performs Element-wise multiply
+void Dot(TensorData& out, const TensorData& a, const TensorData& b);
 
 //! Performs out = out^factor for each element
 void Pow(TensorData& out, int factor);
