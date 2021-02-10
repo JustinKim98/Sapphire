@@ -69,12 +69,84 @@ __global__ void AddKernel(float* output, const float* inputA,
     }
 }
 
+__global__ void AddKernelShared(float* output, const float* inputA,
+                                const float* inputB, unsigned int offset,
+                                unsigned int launchSize, unsigned int totalSize,
+                                unsigned int inputStride, unsigned int numLoops,
+                                bool broadcastInputA, bool broadcastInputB)
+{
+    __shared__ extern float temp[];
+
+    const auto sizePerBlock = blockDim.x * numLoops;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    unsigned int leftOverA = broadcastInputA ? inputStride : totalSize;
+    unsigned int leftOverB = broadcastInputB ? inputStride : totalSize;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        if (offset + blockOffset + blockDim.x * i + threadIdx.x < totalSize)
+        {
+            temp[blockDim.x * i + threadIdx.x] =
+                inputA[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                       leftOverA];
+
+            temp[sizePerBlock + blockDim.x * i + threadIdx.x] =
+                inputB[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                       leftOverB];
+        }
+    }
+
+    __syncthreads();
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        if (offset + blockOffset + blockDim.x * i + threadIdx.x < totalSize)
+        {
+            output[offset + blockOffset + blockDim.x * i + threadIdx.x] =
+                temp[blockDim.x * i + threadIdx.x] +
+                temp[sizePerBlock + blockDim.x * i + threadIdx.x];
+        }
+    }
+}
+
+__global__ void AddKernelBroadcast(float* output, const float* inputA,
+                                   const float* inputB, unsigned int offset,
+                                   unsigned int totalSize,
+                                   unsigned int inputStride,
+                                   bool broadcastInputA, bool broadcastInputB)
+{
+    __shared__ extern float temp[];
+    const auto id = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (id < inputStride)
+    {
+        if (broadcastInputA)
+            temp[id % blockDim.x] = inputA[offset + id];
+
+        if (broadcastInputB)
+            temp[blockDim.x + id % blockDim.x] = inputB[offset + id];
+
+        __syncthreads();
+
+        for (int i = 0; i < totalSize; i += inputStride)
+        {
+            auto aValue = broadcastInputA ? temp[id % blockDim.x]
+                                          : inputA[offset + id + i];
+            auto bValue = broadcastInputB ? temp[blockDim.x + id % blockDim.x]
+                                          : inputB[offset + id + i];
+            output[offset + id + i] = aValue + bValue;
+        }
+    }
+}
+
 __global__ void SubKernel(float* output, const float* inputA,
-                          const float* inputB, unsigned int totalSize,
+                          const float* inputB, unsigned int offset,
+                          unsigned int launchSize, unsigned int totalSize,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB)
 {
-    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto sizePerBlock = launchSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
     const auto blockOffset = sizePerBlock * blockIdx.x;
 
@@ -83,18 +155,21 @@ __global__ void SubKernel(float* output, const float* inputA,
 
     for (unsigned int i = 0; i < numLoops; i++)
     {
-        output[blockOffset + blockDim.x * i + threadIdx.x] =
-            inputA[(blockOffset + blockDim.x * i + threadIdx.x) % leftOverA] -
-            inputB[(blockOffset + blockDim.x * i + threadIdx.x) % leftOverB];
+        output[offset + blockOffset + blockDim.x * i + threadIdx.x] =
+            inputA[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                   leftOverA] -
+            inputB[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                   leftOverB];
     }
 }
 
 __global__ void DotKernel(float* output, const float* inputA,
-                          const float* inputB, unsigned int totalSize,
+                          const float* inputB, unsigned int offset,
+                          unsigned int launchSize, unsigned int totalSize,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB)
 {
-    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto sizePerBlock = launchSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
     const auto blockOffset = sizePerBlock * blockIdx.x;
 
@@ -103,27 +178,25 @@ __global__ void DotKernel(float* output, const float* inputA,
 
     for (unsigned int i = 0; i < numLoops; i++)
     {
-        output[blockOffset + blockDim.x * i + threadIdx.x] =
-            inputA[(blockOffset + blockDim.x * i + threadIdx.x) % leftOverA] *
-            inputB[(blockOffset + blockDim.x * i + threadIdx.x) % leftOverB];
+        output[offset + blockOffset + blockDim.x * i + threadIdx.x] =
+            inputA[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                   leftOverA] *
+            inputB[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
+                   leftOverB];
     }
 }
 
-__global__ void ScaleKernel(float* output, const float* input,
-                            const float scaleFactor, unsigned int totalSize,
-                            unsigned int inputStride, bool broadcastInput)
+__global__ void ScaleKernel(float* output, const float* input, const float scaleFactor,
+                            unsigned int totalSize)
 {
     const auto sizePerBlock = totalSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
     const auto blockOffset = sizePerBlock * blockIdx.x;
 
-    unsigned int leftOver = broadcastInput ? inputStride : totalSize;
-
     for (unsigned int i = 0; i < numLoops; i++)
     {
         output[blockOffset + blockDim.x * i + threadIdx.x] =
-            input[(blockOffset + blockDim.x * i + threadIdx.x) % leftOver] *
-            scaleFactor;
+            input[blockOffset + blockDim.x * i + threadIdx.x] * scaleFactor;
     }
 }
 

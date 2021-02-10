@@ -128,6 +128,7 @@ void BroadcastWith2Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
         func(totalSizeOut, out, A, B, params...);
+        return;
     }
 
     unsigned int chunkSize = 1;

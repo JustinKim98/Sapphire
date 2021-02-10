@@ -20,6 +20,7 @@ std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_cudaBusyMemoryPool;
 
 std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
+unsigned int MemoryManager::m_allocationUnitSize = 256;
 
 float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
 {
@@ -27,7 +28,11 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     auto success = true;
     float* cudaPtr = nullptr;
 
-    auto key = size;
+    auto allocationSize =
+        (size / m_allocationUnitSize) * m_allocationUnitSize +
+        ((size % m_allocationUnitSize) ? m_allocationUnitSize : 0);
+
+    auto key = allocationSize;
     const auto itr = m_cudaFreeMemoryPool.find(key);
 
     if (itr != m_cudaFreeMemoryPool.end())
@@ -42,11 +47,11 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     }
 
     success &= Compute::Cuda::CudaSetDevice(deviceId);
-    success &=
-        Compute::Cuda::CudaMalloc((void**)&cudaPtr, size * sizeof(float));
+    success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr,
+                                         allocationSize * sizeof(float));
 
     m_cudaBusyMemoryPool.emplace(intptr_t(cudaPtr),
-                                 MemoryChunk(size, cudaPtr, 1));
+                                 MemoryChunk(allocationSize, cudaPtr, 1));
 
     if (!success)
     {
@@ -159,8 +164,9 @@ void MemoryManager::ClearUnusedCudaMemoryPool()
         if (!Compute::Cuda::CudaFree(itr->second.Data))
             throw std::runtime_error(
                 "ClearUnusedCudaMemoryPool - CudaFree failed");
-        m_cudaFreeMemoryPool.erase(itr);
     }
+
+    m_cudaFreeMemoryPool.clear();
 }
 
 void MemoryManager::ClearUnusedHostMemoryPool()
@@ -171,8 +177,9 @@ void MemoryManager::ClearUnusedHostMemoryPool()
          itr != m_hostFreeMemoryPool.end(); ++itr)
     {
         delete[] itr->second.Data;
-        m_hostFreeMemoryPool.erase(itr);
     }
+
+    m_hostFreeMemoryPool.clear();
 }
 
 void MemoryManager::ClearCudaMemoryPool()

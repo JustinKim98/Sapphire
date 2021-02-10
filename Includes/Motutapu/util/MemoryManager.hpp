@@ -77,13 +77,13 @@ class MemoryManager
  private:
     static std::unordered_multimap<size_t, MemoryChunk> m_hostFreeMemoryPool;
     static std::unordered_map<intptr_t, MemoryChunk> m_hostBusyMemoryPool;
-    static std::unordered_multimap<size_t, MemoryChunk>
-        m_cudaFreeMemoryPool;
-    static std::unordered_map<intptr_t, MemoryChunk>
-        m_cudaBusyMemoryPool;
+    static std::unordered_multimap<size_t, MemoryChunk> m_cudaFreeMemoryPool;
+    static std::unordered_map<intptr_t, MemoryChunk> m_cudaBusyMemoryPool;
 
     static std::mutex m_hostPoolMtx;
     static std::mutex m_cudaPoolMtx;
+
+    static unsigned int m_allocationUnitSize;
 };
 }  // namespace Motutapu::Util
 

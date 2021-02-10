@@ -34,8 +34,8 @@ void Sub(unsigned int totalSize, float* output, const float* inputA,
     }
 }
 
-void Dot(float* output, const float* inputA, const float* inputB,
-         unsigned int totalSize, unsigned int inputStride, bool broadcastInputA,
+void Dot(unsigned int totalSize, float* output, const float* inputA,
+         const float* inputB, unsigned int inputStride, bool broadcastInputA,
          bool broadcastInputB)
 {
     unsigned int leftOverA = broadcastInputA ? inputStride : totalSize;
@@ -48,14 +48,11 @@ void Dot(float* output, const float* inputA, const float* inputB,
 }
 
 void Scale(float* output, const float* input, const float scaleFactor,
-           unsigned int totalSize, unsigned int inputStride,
-           bool broadcastInput)
+           unsigned int totalSize)
 {
-    unsigned int leftOver = broadcastInput ? inputStride : totalSize;
-
     for (unsigned int i = 0; i < totalSize; i++)
     {
-        output[i] = input[i % leftOver] * scaleFactor;
+        output[i] = input[i] * scaleFactor;
     }
 }
 

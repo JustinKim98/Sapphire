@@ -3,6 +3,7 @@
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
+
 #include <Motutapu/Tests/BasicComputationTest.hpp>
 #include <Motutapu/compute/Compute.hpp>
 #include <Motutapu/compute/Initialize.hpp>
@@ -20,7 +21,7 @@ namespace Motutapu::Test
 {
 void TestAdd()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 10; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -30,7 +31,11 @@ void TestAdd()
 
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
-        const auto batchSize = distrib(gen) % 10 + 1;
+        const auto batchSize = distrib(gen) % 5 + 1;
+        //
+        //        const unsigned int M = 10;   // distrib(gen);
+        //        const unsigned int N = 235;  // distrib(gen);
+        //        const auto batchSize = 2;    // distrib(gen) % 5 + 1;
 
         const Shape shapeA({ M, N });
         const Shape shapeB({ M, N });
@@ -43,15 +48,11 @@ void TestAdd()
         const Device host("host");
 
         TensorUtil::TensorData A(shapeA, Type::Dense, host, 1);
-
         TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
-
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, 1);
+        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
-        //        Compute::Initialize::Ones(A);
-        //        Compute::Initialize::Ones(B);
 
         Compute::Add(Out, A, B);
 
@@ -98,7 +99,7 @@ void TestAdd()
 
 void TestAdd2()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 10; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -106,9 +107,13 @@ void TestAdd2()
             rd());  // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(8, 16);
 
-        const unsigned int M = 16;  // distrib(gen);
-        const unsigned int N = 11;  // distrib(gen);
-        const auto batchSize = 3;   // distrib(gen) % 3 + 1;
+        const unsigned int M = distrib(gen);
+        const unsigned int N = distrib(gen);
+        const auto batchSize = 3;  // distrib(gen) % 3 + 1;
+
+        //        const unsigned int M = distrib(gen);
+        //        const unsigned int N = distrib(gen);
+        //        const auto batchSize = distrib(gen) % 5 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
                   << std::endl;
@@ -120,7 +125,7 @@ void TestAdd2()
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, cuda, batchSize);
+        TensorUtil::TensorData A(shapeA, Type::Dense, cuda, 1);
         TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
         TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
 
@@ -169,12 +174,10 @@ void TestAdd2()
 
 void TestAddBroadcast1()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 10; j++)
     {
-        std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
-        std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+        std::random_device rd;
+        std::mt19937 gen(rd());
         std::uniform_int_distribution<> distrib(1, 32);
 
         const unsigned int M = distrib(gen);
@@ -191,17 +194,44 @@ void TestAddBroadcast1()
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, cuda, 1);
-
+        TensorUtil::TensorData A(shapeA, Type::Dense, cuda, batchSize);
         TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
-
         TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
 
         Compute::Initialize::Normal(A, 100, 1);
         Compute::Initialize::Normal(B, 100, 4);
         Compute::Initialize::Zeros(out);
 
+        const unsigned int M2 = distrib(gen);
+        const unsigned int N2 = distrib(gen);
+        const auto batchSize2 = distrib(gen) % 5 + 1;
+
+        std::cout << "M2 : " << M2 << " N2: " << N2
+                  << " batchSize : " << batchSize2 << std::endl;
+
+        const Shape shapeA2({ N2, 1, M2, N2 });
+        const Shape shapeB2({ M2, N2 });
+        const Shape shapeOut2({ N2, M2, M2, N2 });
+
+        TensorUtil::TensorData A2(shapeA, Type::Dense, cuda, batchSize2);
+        TensorUtil::TensorData B2(shapeB, Type::Dense, cuda, batchSize2);
+        TensorUtil::TensorData out2(shapeOut, Type::Dense, cuda, batchSize2);
+
+        Compute::Initialize::Normal(A2, 100, 1);
+        Compute::Initialize::Normal(B2, 100, 4);
+        Compute::Initialize::Zeros(out2);
+
+        Compute::Add(out2, A2, B2);
+        Compute::Add(out2, A2, out2);
+        Compute::Add(out2, B2, out2);
+
         Compute::Add(out, A, B);
+        Compute::Add(out, A, out);
+        Compute::Add(out, B, out);
+
+        A2.SendTo(host);
+        B2.SendTo(host);
+        out2.SendTo(host);
 
         A.SendTo(host);
         B.SendTo(host);
@@ -209,7 +239,20 @@ void TestAddBroadcast1()
 
         float cudaGemmResult[out.DenseTotalLengthHost];
 
-        //#pragma omp parallel for default(shared) schedule(static)
+        float cudaGemmResult2[out2.DenseTotalLengthHost];
+
+#pragma omp parallel for default(shared) schedule(static)
+        for (size_t i = 0; i < out2.DenseTotalLengthHost; ++i)
+        {
+            cudaGemmResult2[i] = out2.DenseMatHost[i];
+        }
+
+        Compute::Initialize::Zeros(out2);
+        Compute::Add(out2, A2, B2);
+        Compute::Add(out2, A2, out2);
+        Compute::Add(out2, B2, out2);
+
+#pragma omp parallel for default(shared) schedule(static)
         for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
             cudaGemmResult[i] = out.DenseMatHost[i];
@@ -217,10 +260,12 @@ void TestAddBroadcast1()
 
         Compute::Initialize::Zeros(out);
         Compute::Add(out, A, B);
+        Compute::Add(out, A, out);
+        Compute::Add(out, B, out);
 
         std::atomic<float> largestError = 0.0f;
 
-        //#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(shared) schedule(static)
         for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
@@ -234,6 +279,24 @@ void TestAddBroadcast1()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+
+        std::atomic<float> largestError2 = 0.0f;
+
+#pragma omp parallel for default(shared) schedule(static)
+        for (size_t i = 0; i < out2.DenseTotalLengthHost; ++i)
+        {
+            auto error = std::abs(cudaGemmResult2[i] - out2.DenseMatHost[i]);
+            if (largestError < error)
+                largestError = error;
+
+            //            std::cout << "cuda : " << cudaGemmResult[i]
+            //                      << " cpu : " << out.DenseMatHost[i] <<
+            //                      std::endl;
+
+            CHECK(error <= std::abs(out2.DenseMatHost[i] / 100.0f));
+        }
+
+        std::cout << "Largest error : " << largestError << std::endl;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
@@ -241,39 +304,36 @@ void TestAddBroadcast1()
 
 void TestAddBroadcast2()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 10; j++)
     {
-        std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
-        std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
-        std::uniform_int_distribution<> distrib(1, 16);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> distrib(1, 32);
 
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
-        const auto batchSize = distrib(gen) % 5 + 1;
+        const auto batchSize = distrib(gen) % 10 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
                   << std::endl;
 
-        const Shape shapeA({ N, 1, M, N });
-        const Shape shapeB({ M, N });
-        const Shape shapeOut({ N, M, M, N });
+        const Shape shapeA({ 1, M, N });
+        const Shape shapeB({ N, M, N });
+        const Shape shapeOut({ 1, M, N });
 
         const Device cuda(0, "device0");
         const Device host("host");
 
         TensorUtil::TensorData A(shapeA, Type::Dense, cuda, 1);
-
         TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
-
         TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
 
-        Compute::Initialize::Normal(A, 100, 1);
-        Compute::Initialize::Normal(B, 100, 4);
-        Compute::Initialize::Zeros(out);
+        Compute::Initialize::Normal(A, 10, 1);
+        Compute::Initialize::Normal(B, 10, 4);
 
         Compute::Add(out, A, B);
+        Compute::Add(out, A, out);
+        Compute::Add(out, B, out);
 
         A.SendTo(host);
         B.SendTo(host);
@@ -289,10 +349,11 @@ void TestAddBroadcast2()
 
         Compute::Initialize::Zeros(out);
         Compute::Add(out, A, B);
+        Compute::Add(out, A, out);
+        Compute::Add(out, B, out);
 
         std::atomic<float> largestError = 0.0f;
 
-        //#pragma omp parallel for default(shared) schedule(static)
         for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
@@ -304,6 +365,8 @@ void TestAddBroadcast2()
             //                      std::endl;
 
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
+            if (error > std::abs(out.DenseMatHost[i] / 100.0f))
+                break;
         }
 
         std::cout << "Largest error : " << largestError << std::endl;

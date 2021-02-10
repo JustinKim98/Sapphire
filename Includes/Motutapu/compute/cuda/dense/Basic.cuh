@@ -22,14 +22,13 @@ __host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
                   bool broadcastInputA, bool broadcastInputB);
 
 //! out = inner_product(inputA, inputB)
-__host__ void Dot(float* output, const float* inputA, const float* inputB,
-                  unsigned int totalSize, unsigned int inputStride,
+__host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
+                  const float* inputB, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB);
 
 //! out = input*scaleFactor
 __host__ void Scale(float* output, const float* input, const float scaleFactor,
-                    unsigned int totalSize, unsigned int inputStride,
-                    bool broadcastInput);
+                    unsigned int totalSize);
 
 //! out = input^T
 __host__ void Transpose(float* output, const float* input,

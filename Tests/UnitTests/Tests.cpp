@@ -95,7 +95,7 @@ TEST_CASE("Gemm Broadcast Test")
 
 TEST_CASE("Basic computation test")
 {
-    const int testLoops = 100;
+    const int testLoops = 10;
     SUBCASE("Add1")
     {
         for (int i = 0; i < testLoops; i++)

@@ -17,19 +17,32 @@ __global__ void AddKernel(float* output, const float* inputA,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB);
 
+__global__ void AddKernelShared(float* output, const float* inputA,
+                                const float* inputB, unsigned int offset,
+                                unsigned int launchSize, unsigned int totalSize,
+                                unsigned int inputStride, unsigned int numLoops,
+                                bool broadcastInputA, bool broadcastInputB);
+
+__global__ void AddKernelBroadcast(float* output, const float* inputA,
+                                   const float* inputB, unsigned int offset,
+                                   unsigned int totalSize,
+                                   unsigned int inputStride,
+                                   bool broadcastInputA, bool broadcastInputB);
+
 __global__ void SubKernel(float* output, const float* inputA,
-                          const float* inputB, unsigned int size,
+                          const float* inputB, unsigned int offset,
+                          unsigned int launchSize, unsigned int totalSize,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB);
 
 __global__ void DotKernel(float* output, const float* inputA,
-                          const float* inputB, unsigned int totalSize,
+                          const float* inputB, unsigned int offset,
+                          unsigned int launchSize, unsigned int totalSize,
                           unsigned int inputStride, bool broadcastInputA,
                           bool broadcastInputB);
 
 __global__ void ScaleKernel(float* output, const float* input,
-                            const float scaleFactor, unsigned int totalSize,
-                            unsigned int inputStride, bool broadcastInput);
+                            const float scaleFactor, unsigned int totalSize);
 
 __global__ void TransposeKernel(float* output, const float* input,
                                 unsigned int inputNumRows,

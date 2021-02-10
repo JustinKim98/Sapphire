@@ -17,13 +17,12 @@ void Sub(unsigned int totalSize, float* output, const float* inputA,
          const float* inputB, unsigned int inputStride, bool broadcastInputA,
          bool broadcastInputB);
 
-void Dot(float* output, const float* inputA, const float* inputB,
-         unsigned int totalSize, unsigned int inputStride, bool broadcastInputA,
+void Dot(unsigned int totalSize, float* output, const float* inputA,
+         const float* inputB, unsigned int inputStride, bool broadcastInputA,
          bool broadcastInputB);
 
-void Scale(float* output, const float* input, const float scaleFactor,
-           unsigned int totalSize, unsigned int inputStride,
-           bool broadcastInput);
+void Scale(float* output, const float* input, float scaleFactor,
+           unsigned int totalSize);
 
 void Transpose(float* output, const float* input, unsigned int inputNumRows,
                unsigned int inputNumCols, unsigned int batchSize,
