@@ -396,6 +396,63 @@ void tan(TensorData& out, const TensorData& input)
     }
 }
 
+void cosh(TensorData& out, const TensorData& input)
+{
+    const auto device = out.GetDevice();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto totalSize = out.TensorShape.Size() * out.BatchSize;
+    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        Cuda::Dense::cosh(out.DenseMatCuda, input.DenseMatCuda, totalSize);
+    }
+    else
+    {
+        Naive::Dense::cosh(out.DenseMatHost, input.DenseMatHost,
+                           totalSizeWithPadding);
+    }
+}
+
+void sinh(TensorData& out, const TensorData& input)
+{
+    const auto device = out.GetDevice();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto totalSize = out.TensorShape.Size() * out.BatchSize;
+    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        Cuda::Dense::sinh(out.DenseMatCuda, input.DenseMatCuda, totalSize);
+    }
+    else
+    {
+        Naive::Dense::sinh(out.DenseMatHost, input.DenseMatHost,
+                           totalSizeWithPadding);
+    }
+}
+
+void tanh(TensorData& out, const TensorData& input)
+{
+    const auto device = out.GetDevice();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto totalSize = out.TensorShape.Size() * out.BatchSize;
+    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        Cuda::Dense::tanh(out.DenseMatCuda, input.DenseMatCuda, totalSize);
+    }
+    else
+    {
+        Naive::Dense::tanh(out.DenseMatHost, input.DenseMatHost,
+                           totalSizeWithPadding);
+    }
+}
+
 void log(TensorData& out, const TensorData& input)
 {
     const auto device = out.GetDevice();

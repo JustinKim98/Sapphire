@@ -31,10 +31,6 @@ void TestTranspose(bool printResult)
         const unsigned int N = distrib(gen);
         const auto batchSize = distrib(gen) % 5 + 1;
 
-        //        const unsigned int M = 1;  // distrib(gen);
-        //        const unsigned int N = 7;  // distrib(gen);
-        //        const auto batchSize = 3;  // distrib(gen) % 5 + 1;
-
         const Shape shapeA({ M, N });
         const Shape shapeB({ M, N });
         const Shape shapeOut({ M, N });
@@ -191,6 +187,7 @@ void TestBasics1()
         Compute::Add(Out, A, B);
         Compute::Scale(Out, Out, 3);
         Compute::Sub(Out, Out, A);
+        Compute::tanh(Out, Out);
 
         float cpuGemmResult[Out.DenseTotalLengthHost];
 
@@ -209,6 +206,7 @@ void TestBasics1()
         Compute::Add(Out, A, B);
         Compute::Scale(Out, Out, 3);
         Compute::Sub(Out, Out, A);
+        Compute::tanh(Out, Out);
 
         Out.SendTo(host);
 
@@ -274,6 +272,8 @@ void TestBasics2()
         Compute::Dot(out, A, B);
         Compute::Add(out, out, A);
         Compute::Sub(out, out, B);
+        Compute::ReLU(out, out);
+        Compute::sin(out, out);
 
         A.SendTo(host);
         B.SendTo(host);
@@ -291,6 +291,8 @@ void TestBasics2()
         Compute::Dot(out, A, B);
         Compute::Add(out, out, A);
         Compute::Sub(out, out, B);
+        Compute::ReLU(out, out);
+        Compute::sin(out, out);
 
         std::atomic<float> largestError = 0.0f;
 

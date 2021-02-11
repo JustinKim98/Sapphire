@@ -44,6 +44,12 @@ void sin(TensorData& out, const TensorData& input);
 
 void tan(TensorData& out, const TensorData& input);
 
+void cosh(TensorData& out, const TensorData& input);
+
+void sinh(TensorData& out, const TensorData& input);
+
+void tanh(TensorData& out, const TensorData& input);
+
 void log(TensorData& out, const TensorData& input);
 
 void log10(TensorData& out, const TensorData& input);
