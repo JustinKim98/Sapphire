@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_BASIC_CUH
-#define MOTUTAPU_BASIC_CUH
+#ifndef MOTUTAPU_COMPUTE_CUDA_BASIC_CUH
+#define MOTUTAPU_COMPUTE_CUDA_BASIC_CUH
 
 #include <Motutapu/compute/cuda/CudaParams.cuh>
 

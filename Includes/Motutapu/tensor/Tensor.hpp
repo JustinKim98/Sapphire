@@ -11,6 +11,8 @@
 
 namespace Motutapu
 {
+
+
 //! TensorDescriptor class contains data vector for processing
 //! with attributes describing it
 class Tensor
