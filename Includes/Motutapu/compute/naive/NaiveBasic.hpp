@@ -29,6 +29,37 @@ void Transpose(float* output, const float* input, unsigned int inputRows,
                unsigned int paddedInputCols, unsigned int batchSize,
                bool broadcast);
 
+void Pow(float* output, const float* input, float scaleFactor,
+         unsigned int totalSize);
+
+void cos(float* output, const float* input, unsigned int totalSize);
+
+void sin(float* output, const float* input, unsigned int totalSize);
+
+void tan(float* output, const float* input, unsigned int totalSize);
+
+void cosh(float* output, const float* input, unsigned int totalSize);
+
+void sinh(float* output, const float* input, unsigned int totalSize);
+
+void tanh(float* output, const float* input, unsigned int totalSize);
+
+void log(float* output, const float* input, unsigned int totalSize);
+
+void log10(float* output, const float* input, unsigned int totalSize);
+
+void ReLU(float* output, const float* input, unsigned int totalSize);
+
+void ReLUDerivative(float* output, const float* input, unsigned int totalSize);
+
+void LeakyReLU(float* output, const float* input, float a,
+               unsigned int totalSize);
+
+void LeakyReLUDerivative(float* output, const float* input, float a,
+                         unsigned int totalSize);
+
+void Inverse(float* output, const float* input, unsigned int totalSize);
+
 }  // namespace Motutapu::Compute::Naive::Dense
 
 #endif  // MOTUTAPU_NAIVEBASIC_HPP

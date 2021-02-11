@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Motutapu/compute/naive/NaiveBasic.hpp>
+#include <cmath>
 
 namespace Motutapu::Compute::Naive::Dense
 {
@@ -74,5 +75,120 @@ void Transpose(float* output, const float* input, unsigned int inputRows,
                 outputOffset[j * paddedInputRows + i] =
                     inputOffset[(i * paddedInputCols + j) % leftOver];
             }
+}
+
+void Pow(float* output, const float* input, const float scaleFactor,
+         unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::pow(input[i], scaleFactor);
+    }
+}
+
+void cos(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::cos(input[i]);
+    }
+}
+
+void sin(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::sin(input[i]);
+    }
+}
+
+void tan(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::tan(input[i]);
+    }
+}
+
+void cosh(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::cosh(input[i]);
+    }
+}
+
+void sinh(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::sinh(input[i]);
+    }
+}
+
+void tanh(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::tanh(input[i]);
+    }
+}
+
+void log(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::log(input[i]);
+    }
+}
+
+void log10(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = std::log10(input[i]);
+    }
+}
+
+void ReLU(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = input[i] > 0 ? input[i] : 0;
+    }
+}
+
+void ReLUDerivative(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = input[i] > 0 ? 1 : 0;
+    }
+}
+
+void LeakyReLU(float* output, const float* input, float a,
+               unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = input[i] > 0 ? input[i] : a * input[i];
+    }
+}
+
+void LeakyReLUDerivative(float* output, const float* input, float a,
+                         unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = input[i] > 0 ? 1 : a;
+    }
+}
+
+void Inverse(float* output, const float* input, unsigned int totalSize)
+{
+    for (unsigned int i = 0; i < totalSize; i++)
+    {
+        output[i] = 1 / input[i];
+    }
 }
 }  // namespace Motutapu::Compute::Naive::Dense

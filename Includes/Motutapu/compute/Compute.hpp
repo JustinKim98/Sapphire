@@ -35,11 +35,28 @@ void Transpose(TensorData& output, const TensorData& input);
 //! Performs Element-wise multiply
 void Dot(TensorData& out, const TensorData& a, const TensorData& b);
 
-//! Performs out = out^factor for each element
-void Pow(TensorData& out, int factor);
+//! Performs out = input^factor for each element
+void Pow(TensorData& out, const TensorData& input, float factor);
 
-//! Performs out = a^factor for each element
-void Pow(TensorData& out, const TensorData& a, int factor);
+void cos(TensorData& out, const TensorData& input);
+
+void sin(TensorData& out, const TensorData& input);
+
+void tan(TensorData& out, const TensorData& input);
+
+void log(TensorData& out, const TensorData& input);
+
+void log10(TensorData& out, const TensorData& input);
+
+void ReLU(TensorData& out, const TensorData& input);
+
+void ReLUDerivative(TensorData& out, const TensorData& input);
+
+void LeakyReLU(TensorData& out, const TensorData& input, float a);
+
+void LeakyReluDerivative(TensorData& out, const TensorData& input, float a);
+
+void Inverse(TensorData& out, const TensorData& input);
 
 //! Broadcasts given shape and invokes the function
 //! Each shape variable are required to be same size in reversed order

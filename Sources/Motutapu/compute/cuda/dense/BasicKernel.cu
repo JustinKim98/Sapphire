@@ -214,4 +214,204 @@ __global__ void ScaleKernel(float* output, const float* input,
     }
 }
 
+__global__ void PowKernel(float* output, const float* input, const float factor,
+                          unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            powf(input[blockOffset + blockDim.x * i + threadIdx.x], factor);
+    }
+}
+
+__global__ void cosKernel(float* output, const float* input,
+                          unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            cosf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void sinKernel(float* output, const float* input,
+                          unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            sinf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void tanKernel(float* output, const float* input,
+                          unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            tanf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void coshKernel(float* output, const float* input,
+                           unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            coshf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void sinhKernel(float* output, const float* input,
+                           unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            sinhf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void tanhKernel(float* output, const float* input,
+                           unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            tanhf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void logKernel(float* output, const float* input,
+                          unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            logf(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void log10Kernel(float* output, const float* input,
+                            unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            log10f(input[blockOffset + blockDim.x * i + threadIdx.x]);
+    }
+}
+
+__global__ void ReLUKernel(float* output, const float* input,
+                           unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            input[blockOffset + blockDim.x * i + threadIdx.x] > 0.0f
+                ? input[blockOffset + blockDim.x * i + threadIdx.x]
+                : 0.0f;
+    }
+}
+
+__global__ void ReLUDerivativeKernel(float* output, const float* input,
+                                     unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            input[blockOffset + blockDim.x * i + threadIdx.x] > 0.0f ? 1.0f
+                                                                     : 0.0f;
+    }
+}
+
+__global__ void LeakyReLUKernel(float* output, const float* input, float a,
+                                unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            input[blockOffset + blockDim.x * i + threadIdx.x] > 0
+                ? input[blockOffset + blockDim.x * i + threadIdx.x]
+                : a * input[blockOffset + blockDim.x * i + threadIdx.x];
+    }
+}
+
+__global__ void LeakyReLUDerivativeKernel(float* output, const float* input,
+                                          const float a, unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            input[blockOffset + blockDim.x * i + threadIdx.x] > 0.0f ? 1.0f : a;
+    }
+}
+
+__global__ void InverseKernel(float* output, const float* input,
+                              unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        output[blockOffset + blockDim.x * i + threadIdx.x] =
+            1 / input[blockOffset + blockDim.x * i + threadIdx.x];
+    }
+}
 }  // namespace Motutapu::Compute::Cuda::Dense

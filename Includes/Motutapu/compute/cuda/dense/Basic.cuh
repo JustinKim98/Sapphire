@@ -34,6 +34,40 @@ __host__ void Scale(float* output, const float* input, const float scaleFactor,
 __host__ void Transpose(float* output, const float* input,
                         unsigned int inputNumRows, unsigned int inputNumCols,
                         unsigned int batchSize, bool broadcastInput);
+//! out = pow(input, factor)
+__host__ void Pow(float* output, const float* input, const float factor,
+                  unsigned int totalSize);
+
+__host__ void cos(float* output, const float* input, unsigned int totalSize);
+
+__host__ void sin(float* output, const float* input, unsigned int totalSize);
+
+__host__ void tan(float* output, const float* input, unsigned int totalSize);
+
+__host__ void cosh(float* output, const float* input, unsigned int totalSize);
+
+__host__ void sinh(float* output, const float* input, unsigned int totalSize);
+
+__host__ void tanh(float* output, const float* input, unsigned int totalSize);
+
+__host__ void log(float* output, const float* input, unsigned int totalSize);
+
+__host__ void log10(float* output, const float* input, unsigned int totalSize);
+
+__host__ void ReLU(float* output, const float* input, unsigned int totalSize);
+
+__host__ void ReLUDerivative(float* output, const float* input,
+                             unsigned int totalSize);
+
+__host__ void LeakyReLU(float* output, const float* input, float a,
+                        unsigned int totalSize);
+
+__host__ void LeakyReLUDerivative(float* output, const float* input, float a,
+                                  unsigned int totalSize);
+
+__host__ void Inverse(float* output, const float* input,
+                      unsigned int totalSize);
+
 }  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif  // MOTUTAPU_BASIC_CUH
