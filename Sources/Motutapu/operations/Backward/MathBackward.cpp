@@ -10,23 +10,21 @@
 
 namespace Motutapu::BackProp
 {
-MulBackProp::MulBackProp(TensorUtil::TensorData forwardA,
-                         TensorUtil::TensorData backwardA,
-                         TensorUtil::TensorData forwardB,
-                         TensorUtil::TensorData backwardB,
-                         TensorUtil::TensorData backwardOutput)
-    : BackPropWrapper({ std::move(backwardA), std::move(backwardB) },
-                      { std::move(backwardOutput) })
+MulBackProp::MulBackProp(TensorUtil::TensorData A,
+                         TensorUtil::TensorData gradientA,
+                         TensorUtil::TensorData B,
+                         TensorUtil::TensorData gradientB,
+                         TensorUtil::TensorData gradientIn)
+    : BackPropWrapper({ std::move(gradientA), std::move(gradientB) },
+                      { std::move(gradientIn) })
 {
-    TensorUtil::TensorData transposedA(forwardA.TensorShape.GetTranspose(),
-                                       forwardA.GetType(), forwardA.GetDevice(),
-                                       forwardA.BatchSize);
-    TensorUtil::TensorData transposedB(forwardB.TensorShape.GetTranspose(),
-                                       forwardB.GetType(), forwardB.GetDevice(),
-                                       forwardB.BatchSize);
+    TensorUtil::TensorData transposedA(A.TensorShape.GetTranspose(),
+                                       A.GetType(), A.GetDevice(), A.BatchSize);
+    TensorUtil::TensorData transposedB(B.TensorShape.GetTranspose(),
+                                       B.GetType(), B.GetDevice(), B.BatchSize);
 
-    m_savedTensorMap["forwardA"] = forwardA.CreateCopy();
-    m_savedTensorMap["forwardB"] = forwardB.CreateCopy();
+    m_savedTensorMap["A"] = A.CreateCopy();
+    m_savedTensorMap["B"] = B.CreateCopy();
     m_savedTensorMap["transposedA"] = transposedA;
     m_savedTensorMap["transposedB"] = transposedB;
 }

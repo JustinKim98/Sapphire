@@ -243,9 +243,9 @@ void TestBasics2()
             rd());  // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(8, 16);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const auto batchSize = 3;  // distrib(gen) % 3 + 1;
+        const unsigned int M = 16;  // distrib(gen);
+        const unsigned int N = 7;   // distrib(gen);
+        const auto batchSize = 3;   // distrib(gen) % 3 + 1;
 
         //        const unsigned int M = distrib(gen);
         //        const unsigned int N = distrib(gen);
@@ -454,9 +454,9 @@ void TestAddBroadcast2()
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> distrib(1, 32);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const auto batchSize = distrib(gen) % 10 + 1;
+        const unsigned int M = 8;   // distrib(gen);
+        const unsigned int N = 24;  // distrib(gen);
+        const auto batchSize = 3;   // distrib(gen) % 10 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
                   << std::endl;

@@ -14,16 +14,16 @@ namespace Motutapu::BackProp
 class MulBackProp : public BackPropWrapper
 {
  public:
-    explicit MulBackProp(TensorUtil::TensorData forwardA,
-                         TensorUtil::TensorData backwardA,
-                         TensorUtil::TensorData forwardB,
-                         TensorUtil::TensorData backwardB,
-                         TensorUtil::TensorData backwardOutput);
+    explicit MulBackProp(TensorUtil::TensorData A,
+                         TensorUtil::TensorData gradientA,
+                         TensorUtil::TensorData B,
+                         TensorUtil::TensorData gradientB,
+                         TensorUtil::TensorData gradientIn);
 
     bool InvokeBackProp(const TensorUtil::TensorData& input) override;
 
  private:
-    void m_backProp() override;
+    void m_backProp();
 };
 
 

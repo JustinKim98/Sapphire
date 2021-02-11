@@ -140,10 +140,21 @@ void Sub(TensorData& out, const TensorData& a, const TensorData& b)
 void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
           const TensorUtil::TensorData& b, const TensorUtil::TensorData& c)
 {
+    auto shapeOut = out.TensorShape;
+    auto shapeA = a.TensorShape;
+    auto shapeB = b.TensorShape;
+    auto shapeC = c.TensorShape;
+
+    //! treat Make inputs, outputs to have at least 2 dimension
+    shapeOut.Expand(2);
+    shapeA.Expand(2);
+    shapeB.Expand(2);
+    shapeC.Expand(2);
+
     const auto device = out.GetDevice();
-    const auto M = out.Rows();
-    const auto N = out.Cols();
-    const auto K = a.Cols();
+    const auto M = shapeOut.Rows();
+    const auto N = shapeOut.Cols();
+    const auto K = shapeA.Cols();
     const auto paddedN = out.PaddedHostColSize;
     const auto paddedK = a.PaddedHostColSize;
     const auto batchSize = out.BatchSize;
@@ -167,11 +178,6 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
     }
 
     //! Treat batch size as part of tensor shape
-    auto shapeOut = out.TensorShape;
-    auto shapeA = a.TensorShape;
-    auto shapeB = b.TensorShape;
-    auto shapeC = c.TensorShape;
-
     shapeOut.Expand(out.TensorShape.Dim() + 1);
     shapeA.Expand(out.TensorShape.Dim() + 1);
     shapeB.Expand(out.TensorShape.Dim() + 1);

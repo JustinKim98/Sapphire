@@ -15,8 +15,8 @@ namespace Motutapu::NN
 class Linear
 {
  public:
-    Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize, const Device& device,
-           bool bias = true, bool isSparse = false);
+    Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
+           const Device& device, bool bias = true, bool isSparse = false);
 
     Tensor operator()(const Tensor& tensor) const;
 

@@ -53,6 +53,23 @@ class Shape
 
     void Set(unsigned int dim, unsigned int value);
 
+    [[nodiscard]] unsigned int Rows() const
+    {
+        return m_shapeVector.size() > 1
+                   ? m_shapeVector.at(m_shapeVector.size() - 2)
+                   : 1;
+    }
+
+    [[nodiscard]] unsigned int Cols() const
+    {
+        return !m_shapeVector.empty()
+                   ? m_shapeVector.at(m_shapeVector.size() - 1)
+                   : 0;
+    }
+
+    //! Expands the shape to dim
+    //! If shape has already equal or higher dimension than requested dimension,
+    //! returns immediately
     void Expand(unsigned int dim);
 
     Shape GetReverse() const;

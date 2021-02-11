@@ -42,7 +42,7 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Gemm Test")
 {
-    const int testLoops = 3;
+ const int testLoops = 10;
     SUBCASE("Gemm With Cuda")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)

@@ -21,7 +21,7 @@ namespace Motutapu::Test
 {
 void TestGemm1()
 {
-    for (int j = 0; j < 3; j++)
+    for (int j = 0; j < 10; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -104,7 +104,7 @@ void TestGemm1()
 
 void TestGemm2()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 10; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -128,14 +128,20 @@ void TestGemm2()
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, cuda, batchSize);
-        TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
-        TensorUtil::TensorData C(shapeC, Type::Dense, cuda, batchSize);
-        TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, host, batchSize);
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
         Compute::Initialize::Normal(C, 10, 5);
+
+        A.SendTo(cuda);
+        B.SendTo(cuda);
+        C.SendTo(cuda);
+        out.SendTo(cuda);
+
         Compute::Initialize::Zeros(out);
 
         Compute::Gemm(out, A, B, C);
@@ -165,8 +171,9 @@ void TestGemm2()
             if (largestError < error)
                 largestError = error;
 
-//            std::cout << "cuda : " << cudaGemmResult[i]
-//                      << " cpu : " << out.DenseMatHost[i] << std::endl;
+            //            std::cout << "cuda : " << cudaGemmResult[i]
+            //                      << " cpu : " << out.DenseMatHost[i] <<
+            //                      std::endl;
 
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
@@ -179,7 +186,7 @@ void TestGemm2()
 
 void TestGemmBroadcast()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 10; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -203,17 +210,23 @@ void TestGemmBroadcast()
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, cuda, 1);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host, 1);
 
-        TensorUtil::TensorData B(shapeB, Type::Dense, cuda, batchSize);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
 
-        TensorUtil::TensorData C(shapeC, Type::Dense, cuda, 1);
+        TensorUtil::TensorData C(shapeC, Type::Dense, host, 1);
 
-        TensorUtil::TensorData out(shapeOut, Type::Dense, cuda, batchSize);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, host, batchSize);
 
-        Compute::Initialize::Normal(A, 100, 1);
-        Compute::Initialize::Normal(B, 100, 4);
-        Compute::Initialize::Normal(C, 100, 1);
+        Compute::Initialize::Normal(A, 10, 1);
+        Compute::Initialize::Normal(B, 10, 1);
+        Compute::Initialize::Normal(C, 10, 1);
+
+        A.SendTo(cuda);
+        B.SendTo(cuda);
+        C.SendTo(cuda);
+        out.SendTo(cuda);
+
         Compute::Initialize::Zeros(out);
 
         Compute::Gemm(out, A, B, C);

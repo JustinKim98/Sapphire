@@ -21,16 +21,16 @@ static Tensor Mul(const Tensor& a, const Tensor& b)
     TensorUtil::TensorDescriptor& descB =
         model.GetDescriptor(b.TensorDescriptorKey());
 
-    auto shapeA = descA.ForwardData.TensorShape;
-    auto shapeB = descB.ForwardData.TensorShape;
+    Shape shapeA = descA.ForwardData.TensorShape;
+    Shape shapeB = descB.ForwardData.TensorShape;
 
     const auto batchSize = descA.ForwardData.BatchSize;
     Type type = descA.ForwardData.GetType();
     Device device = descA.ForwardData.GetDevice();
 
-    const auto outputShape = Shape({ shapeA.At(0), shapeB.At(1) });
+    const Shape outputShape({ shapeA.At(0), shapeB.At(1) });
 
-    const auto outputKey =
+    const int outputKey =
         model.RegisterTensorDescriptor(outputShape, type, device, batchSize);
 
     auto& descOut = model.GetDescriptor(outputKey);
@@ -42,8 +42,10 @@ static Tensor Mul(const Tensor& a, const Tensor& b)
         descA.ForwardData, descA.BackwardData, descB.ForwardData,
         descB.BackwardData, descOut.BackwardData);
 
+    //! Append operand history to the descriptors of A and B
     descA.AppendOperandHistory(descOut.GetKey());
     descB.AppendOperandHistory(descOut.GetKey());
+    //! Append output history to the descriptor A and associated backPropWrapper
     descOut.AppendOutputHistory(std::move(backPropWrapper), false);
 
     return Tensor(outputShape, outputKey);

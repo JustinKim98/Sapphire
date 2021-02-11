@@ -48,15 +48,14 @@ class TensorData
     SparseMatrix* SparseMatCuda = nullptr;
     Shape TensorShape;
 
-    [[nodiscard]] size_t Rows() const
+    [[nodiscard]] unsigned int Rows() const
     {
-        return TensorShape.Dim() > 1 ? TensorShape.At(TensorShape.Dim() - 2)
-                                     : 1;
+        return TensorShape.Rows();
     }
 
-    [[nodiscard]] size_t Cols() const
+    [[nodiscard]] unsigned int Cols() const
     {
-        return TensorShape.At(TensorShape.Dim() - 1);
+        return TensorShape.Cols();
     }
 
     //! Gets device descriptor (Sparse or Dense)

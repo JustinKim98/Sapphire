@@ -35,6 +35,15 @@ class BackPropWrapper
     {
     }
 
+    explicit BackPropWrapper(
+        std::vector<TensorUtil::TensorData> gradientOutputs,
+        std::vector<TensorUtil::TensorData> gradientInputs, int unitKey)
+        : m_unitKey(unitKey),
+          m_gradientOutputs(std::move(gradientOutputs)),
+          m_gradientInputs(std::move(gradientInputs))
+    {
+    }
+
     [[nodiscard]] const std::vector<TensorUtil::TensorData>&
     GetOutputTensorKeys() const
     {
@@ -47,8 +56,7 @@ class BackPropWrapper
     virtual bool InvokeBackProp(const TensorUtil::TensorData& input) = 0;
 
  protected:
-    virtual void m_backProp() = 0;
-
+    int m_unitKey = -1;
     //! Vector of tensorData that should give its output
     std::vector<TensorUtil::TensorData> m_gradientOutputs;
     std::vector<TensorUtil::TensorData> m_gradientInputs;

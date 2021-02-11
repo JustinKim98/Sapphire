@@ -21,7 +21,7 @@ struct Shape4D
     int Width;     // W
 };
 
-struct CudnnConvMetaData
+struct CudnnMetaData
 {
     cudnnHandle_t Handle;
 
@@ -52,13 +52,13 @@ __host__ void checkCuda(cudaError_t status)
     assert(status == cudaSuccess);
 }
 
-__host__ void CreateConvDescriptors(CudnnConvMetaData* metadata,
-                                    Shape4D inputShape, Shape4D filterShape,
-                                    int strideRow, int strideCol,
-                                    int dilationRow, int dilationCol,
-                                    int paddingRow, int paddingCol);
+__host__ void CreateConvDescriptors(CudnnMetaData* metadata, Shape4D inputShape,
+                                    Shape4D filterShape, int strideRow,
+                                    int strideCol, int dilationRow,
+                                    int dilationCol, int paddingRow,
+                                    int paddingCol);
 
-__host__ void ConvolutionForward2D(CudnnConvMetaData* metadata, float* output,
+__host__ void ConvolutionForward2D(CudnnMetaData* metadata, float* output,
                                    float* input, float* filter,
                                    Shape4D inputShape, Shape4D filterShape,
                                    int strideRow, int strideCol,
@@ -66,7 +66,7 @@ __host__ void ConvolutionForward2D(CudnnConvMetaData* metadata, float* output,
                                    int paddingRow, int paddingCol);
 
 __host__ void ConvolutionBackward2D(
-    CudnnConvMetaData* descriptors, float* dataGradientOut, float* filter,
+    CudnnMetaData* descriptors, float* dataGradientOut, float* filter,
     float* filterGradientOut, float* input, float* gradientInput,
     Shape4D inputShape, Shape4D filterShape, int strideRow, int strideCol,
     int dilationRow, int dilationCol, int paddingRow, int paddingCol);
