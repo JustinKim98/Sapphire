@@ -8,6 +8,7 @@
 #define MOTUTAPU_COMPUTE_COMPUTE_DECL_HPP
 
 #include <Motutapu/tensor/TensorData.hpp>
+#include <algorithm>
 #include <vector>
 
 namespace Motutapu::Compute
@@ -72,21 +73,15 @@ void Inverse(TensorData& out, const TensorData& input);
 //! totalSize parameters should contain actual total size of the whole array
 //! including batch size
 template <typename Func, typename... Params>
-void BroadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
-                          Shape shapeC, unsigned int totalSizeOut,
-                          unsigned int totalSizeA, unsigned int totalSizeB,
-                          unsigned int totalSizeC, float* out, float* A,
-                          float* B, float* C, unsigned int shapeIdx,
+void BroadcastWith3Inputs(const Shape& shapeOut, const Shape& shapeA,
+                          const Shape& shapeB, const Shape& shapeC,
+                          unsigned int totalSizeOut, unsigned int totalSizeA,
+                          unsigned int totalSizeB, unsigned int totalSizeC,
+                          float* out, float* A, float* B, float* C,
+                          unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
                           Params... params)
 {
-    if (shapeIdx == 0)
-    {
-        shapeA.Expand(shapeOut.Dim());
-        shapeB.Expand(shapeOut.Dim());
-        shapeC.Expand(shapeOut.Dim());
-    }
-
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
         func(totalSizeOut, out, A, B, C, params...);
@@ -94,12 +89,14 @@ void BroadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
     }
 
     unsigned int chunkSize = 1;
-    while (!((shapeA[shapeIdx] == 1 || shapeB[shapeIdx] == 1 ||
-              shapeC[shapeIdx] == 1) &&
-             shapeOut[shapeIdx] != 1) &&
-           shapeIdx < shapeOut.Dim() - minimumRequiredDim)
+    while (shapeIdx < shapeOut.Dim() - minimumRequiredDim &&
+           shapeOut.At(shapeIdx) == shapeA.At(shapeIdx) &&
+           shapeOut.At(shapeIdx) == shapeB.At(shapeIdx) &&
+           shapeOut.At(shapeIdx) == shapeC.At(shapeIdx))
     {
-        chunkSize *= shapeOut[shapeIdx];
+        auto dim = std::max({ shapeA.At(shapeIdx), shapeB.At(shapeIdx),
+                              shapeC.At(shapeIdx), shapeOut.At(shapeIdx) });
+        chunkSize *= dim;
         shapeIdx += 1;
     }
 
@@ -111,21 +108,24 @@ void BroadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
         return;
     }
 
-    const auto chunkSizeA = chunkSize * shapeA[shapeIdx];
-    const auto chunkSizeB = chunkSize * shapeB[shapeIdx];
-    const auto chunkSizeC = chunkSize * shapeC[shapeIdx];
-    const auto chunkSizeOut = chunkSize * shapeOut[shapeIdx];
+    const auto chunkSizeA = chunkSize * shapeA.At(shapeIdx);
+    const auto chunkSizeB = chunkSize * shapeB.At(shapeIdx);
+    const auto chunkSizeC = chunkSize * shapeC.At(shapeIdx);
+    const auto chunkSizeOut = chunkSize * shapeOut.At(shapeIdx);
 
     const auto strideA = totalSizeA / chunkSizeA;
     const auto strideB = totalSizeB / chunkSizeB;
     const auto strideC = totalSizeC / chunkSizeC;
     const auto strideOut = totalSizeOut / chunkSizeOut;
 
-    for (unsigned int chunkIdx = 0; chunkIdx < chunkSizeOut; chunkIdx++)
+    const auto maxChunkSize =
+        std::max({ chunkSizeOut, chunkSizeA, chunkSizeB, chunkSizeC });
+
+    for (unsigned int chunkIdx = 0; chunkIdx < maxChunkSize; chunkIdx++)
     {
         BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, strideOut,
                              strideA, strideB, strideC,
-                             out + chunkIdx * strideOut,
+                             out + (chunkIdx % chunkSizeOut) * strideOut,
                              A + (chunkIdx % chunkSizeA) * strideA,
                              B + (chunkIdx % chunkSizeB) * strideB,
                              C + (chunkIdx % chunkSizeC) * strideC,
@@ -134,19 +134,13 @@ void BroadcastWith3Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
 }
 
 template <typename Func, typename... Params>
-void BroadcastWith2Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
-                          unsigned int totalSizeOut, unsigned int totalSizeA,
-                          unsigned int totalSizeB, float* out, float* A,
-                          float* B, unsigned int shapeIdx,
+void BroadcastWith2Inputs(const Shape& shapeOut, const Shape& shapeA,
+                          const Shape& shapeB, unsigned int totalSizeOut,
+                          unsigned int totalSizeA, unsigned int totalSizeB,
+                          float* out, float* A, float* B, unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
                           Params... params)
 {
-    if (shapeIdx == 0)
-    {
-        shapeA.Expand(shapeOut.Dim());
-        shapeB.Expand(shapeOut.Dim());
-    }
-
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
         func(totalSizeOut, out, A, B, params...);
@@ -154,11 +148,13 @@ void BroadcastWith2Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
     }
 
     unsigned int chunkSize = 1;
-    while (!((shapeA[shapeIdx] == 1 || shapeB[shapeIdx] == 1) &&
-             shapeOut[shapeIdx] != 1) &&
-           shapeIdx < shapeOut.Dim() - minimumRequiredDim)
+    while (shapeIdx < shapeOut.Dim() - minimumRequiredDim &&
+           (shapeOut.At(shapeIdx) == shapeA.At(shapeIdx) &&
+            shapeOut.At(shapeIdx) == shapeB.At(shapeIdx)))
     {
-        chunkSize *= shapeOut[shapeIdx];
+        auto dim = std::max({ shapeA.At(shapeIdx), shapeB.At(shapeIdx),
+                              shapeOut.At(shapeIdx) });
+        chunkSize *= dim;
         shapeIdx += 1;
     }
 
@@ -170,18 +166,22 @@ void BroadcastWith2Inputs(Shape shapeOut, Shape shapeA, Shape shapeB,
         return;
     }
 
-    const auto chunkSizeA = chunkSize * shapeA[shapeIdx];
-    const auto chunkSizeB = chunkSize * shapeB[shapeIdx];
-    const auto chunkSizeOut = chunkSize * shapeOut[shapeIdx];
+    const auto chunkSizeA = chunkSize * shapeA.At(shapeIdx);
+    const auto chunkSizeB = chunkSize * shapeB.At(shapeIdx);
+    const auto chunkSizeOut = chunkSize * shapeOut.At(shapeIdx);
 
     const auto strideA = totalSizeA / chunkSizeA;
     const auto strideB = totalSizeB / chunkSizeB;
     const auto strideOut = totalSizeOut / chunkSizeOut;
 
-    for (unsigned int chunkIdx = 0; chunkIdx < chunkSizeOut; chunkIdx++)
+    const auto maxChunkSize =
+        std::max({ chunkSizeOut, chunkSizeA, chunkSizeB });
+
+    for (unsigned int chunkIdx = 0; chunkIdx < maxChunkSize; chunkIdx++)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, strideOut, strideA,
-                             strideB, out + chunkIdx * strideOut,
+                             strideB,
+                             out + (chunkIdx % chunkSizeOut) * strideOut,
                              A + (chunkIdx % chunkSizeA) * strideA,
                              B + (chunkIdx % chunkSizeB) * strideB,
                              shapeIdx + 1, minimumRequiredDim, func, params...);

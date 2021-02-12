@@ -11,7 +11,6 @@
 #include <Motutapu/compute/naive/NaiveBasic.hpp>
 #include <Motutapu/compute/naive/NaiveGemm.hpp>
 #include <algorithm>
-#include <iostream>
 
 namespace Motutapu::Compute
 {
@@ -46,9 +45,12 @@ void Add(TensorData& out, const TensorData& a, const TensorData& b)
     auto shapeA = a.TensorShape;
     auto shapeB = b.TensorShape;
 
-    shapeOut.Expand(out.TensorShape.Dim() + 1);
-    shapeA.Expand(out.TensorShape.Dim() + 1);
-    shapeB.Expand(out.TensorShape.Dim() + 1);
+    const auto maxDim = std::max(
+        { out.TensorShape.Dim(), a.TensorShape.Dim(), b.TensorShape.Dim() });
+
+    shapeOut.Expand(maxDim + 1);
+    shapeA.Expand(maxDim + 1);
+    shapeB.Expand(maxDim + 1);
 
     shapeOut.Set(0, out.BatchSize);
     shapeA.Set(0, a.BatchSize);
@@ -71,7 +73,7 @@ void Add(TensorData& out, const TensorData& a, const TensorData& b)
         const auto paddedSizeB = (sizeB / N) * paddedN;
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
                              paddedSizeA, paddedSizeB, out.DenseMatHost,
-                             a.DenseMatHost, b.DenseMatHost, 0, 1,
+                             a.DenseMatHost, b.DenseMatHost, 0, 0,
                              Naive::Dense::Add, 0, false, false);
     }
 }
@@ -157,13 +159,15 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
     const auto K = shapeA.Cols();
     const auto paddedN = out.PaddedHostColSize;
     const auto paddedK = a.PaddedHostColSize;
-    const auto batchSize = out.BatchSize;
 
     //! Faster broadcast multiply for Cuda if all tensor dimensions are fixed to
     //! 2
     if (out.TensorShape.Dim() == 2 && a.TensorShape.Dim() == 2 &&
-        b.TensorShape.Dim() == 2 && c.TensorShape.Dim() == 2)
+        b.TensorShape.Dim() == 2 && c.TensorShape.Dim() == 2 &&
+        out.BatchSize > 1)
     {
+        const auto batchSize = out.BatchSize;
+
         if (device.Type() == DeviceType::CUDA)
         {
             Cuda::Dense::GemmMatrixWiseBroadcast(
@@ -172,16 +176,16 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
                 b.BatchSize == 1, c.BatchSize == 1);
             return;
         }
-        else
-        {
-        }
     }
 
+    const auto maxDim = std::max({ out.TensorShape.Dim(), a.TensorShape.Dim(),
+                                   b.TensorShape.Dim(), c.TensorShape.Dim() });
+
     //! Treat batch size as part of tensor shape
-    shapeOut.Expand(out.TensorShape.Dim() + 1);
-    shapeA.Expand(out.TensorShape.Dim() + 1);
-    shapeB.Expand(out.TensorShape.Dim() + 1);
-    shapeC.Expand(out.TensorShape.Dim() + 1);
+    shapeOut.Expand(maxDim + 1);
+    shapeA.Expand(maxDim + 1);
+    shapeB.Expand(maxDim + 1);
+    shapeC.Expand(maxDim + 1);
 
     shapeOut.Set(0, out.BatchSize);
     shapeA.Set(0, a.BatchSize);
@@ -271,7 +275,9 @@ void Dot(TensorData& out, const TensorData& a, const TensorData& b)
     const auto broadcastA = a.BatchSize == 1;
     const auto broadcastB = b.BatchSize == 1;
 
-    if ((out.TensorShape == a.TensorShape && out.TensorShape == b.TensorShape))
+    if ((out.TensorShape == a.TensorShape &&
+         out.TensorShape == b.TensorShape) &&
+        out.BatchSize > 1)
     {
         if (device.Type() == DeviceType::CUDA)
         {
@@ -290,13 +296,16 @@ void Dot(TensorData& out, const TensorData& a, const TensorData& b)
         }
     }
 
+    const auto maxDim = std::max(
+        { out.TensorShape.Dim(), a.TensorShape.Dim(), b.TensorShape.Dim() });
+
     auto shapeOut = out.TensorShape;
     auto shapeA = a.TensorShape;
     auto shapeB = b.TensorShape;
 
-    shapeOut.Expand(out.TensorShape.Dim() + 1);
-    shapeA.Expand(out.TensorShape.Dim() + 1);
-    shapeB.Expand(out.TensorShape.Dim() + 1);
+    shapeOut.Expand(maxDim + 1);
+    shapeA.Expand(maxDim + 1);
+    shapeB.Expand(maxDim + 1);
 
     shapeOut.Set(0, out.BatchSize);
     shapeA.Set(0, a.BatchSize);

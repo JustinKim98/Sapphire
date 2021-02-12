@@ -42,13 +42,13 @@ TEST_CASE("Check cuda")
 
 TEST_CASE("Gemm Test")
 {
- const int testLoops = 10;
+    const int testLoops = 3;
     SUBCASE("Gemm With Cuda")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
             std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-            TestGemm1();
+            Gemm1();
         }
     }
 
@@ -57,23 +57,14 @@ TEST_CASE("Gemm Test")
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
             std::cout << "Gemm test 2 : " << loopIdx << std::endl;
-            TestGemm2();
-        }
-    }
-
-    SUBCASE("Gemm Broadcast")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
-            TestGemmBroadcast();
+            Gemm2();
         }
     }
 }
 
 TEST_CASE("Gemm Broadcast Test")
 {
-    const int testLoops = 100;
+    const int testLoops = 3;
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
@@ -91,38 +82,72 @@ TEST_CASE("Gemm Broadcast Test")
         for (int i = 0; i < testLoops; i++)
             BroadcastMixed();
     }
+
+    SUBCASE("Gemm Broadcast")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
+            GemmBroadcast();
+        }
+    }
+
+    SUBCASE("Gemm Broadcast on output")
+    {
+        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
+        {
+            std::cout << "Gemm test Broadcast on Output: " << loopIdx
+                      << std::endl;
+            GemmBroadcastOnOutput();
+        }
+    }
 }
 
 TEST_CASE("Basic computation test")
 {
-    const int testLoops = 10;
-    SUBCASE("General")
+    const int testLoops = 5;
+    SUBCASE("Transpose")
     {
         for (int i = 0; i < testLoops; i++)
+        {
+            std::cout << "Transpose : " << i << std::endl;
             TestTranspose(false);
+        }
     }
-    SUBCASE("Add1")
+    SUBCASE("General1")
     {
         for (int i = 0; i < testLoops; i++)
+        {
+            std::cout << "General1 : " << i << std::endl;
             TestBasics1();
+        }
     }
 
-    SUBCASE("Add2")
+    SUBCASE("General2")
     {
         for (int i = 0; i < testLoops; i++)
+        {
+            std::cout << "General2 : " << i << std::endl;
             TestBasics2();
+        }
     }
 
     SUBCASE("AddWithBroadcast1")
     {
         for (int i = 0; i < testLoops; i++)
+        {
+            std::cout << "AddWithBroadcast1 : " << i << std::endl;
             TestAddBroadcast1();
+        }
     }
 
     SUBCASE("AddWithBroadcast2")
     {
         for (int i = 0; i < testLoops; i++)
+        {
+            std::cout << "AddWithBroadcast2 : " << i << std::endl;
             TestAddBroadcast2();
+        }
     }
 }
 

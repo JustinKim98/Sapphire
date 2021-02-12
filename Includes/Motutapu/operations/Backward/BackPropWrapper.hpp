@@ -7,6 +7,8 @@
 #ifndef MOTUTAPU_BACKPROPWRAPPER_HPP
 #define MOTUTAPU_BACKPROPWRAPPER_HPP
 
+#include <Motutapu/compute/cuda/dense/Basic.cuh>
+#include <Motutapu/compute/naive/NaiveBasic.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <functional>
 #include <list>
@@ -60,7 +62,6 @@ class BackPropWrapper
     //! Vector of tensorData that should give its output
     std::vector<TensorUtil::TensorData> m_gradientOutputs;
     std::vector<TensorUtil::TensorData> m_gradientInputs;
-    std::list<TensorUtil::TensorData> m_receivedInputs;
     std::unordered_map<std::string, TensorUtil::TensorData> m_savedTensorMap;
 };
 }  // namespace Motutapu::BackProp

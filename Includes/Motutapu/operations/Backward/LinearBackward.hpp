@@ -18,23 +18,25 @@ class LinearBackProp : public BackPropWrapper
  public:
     explicit LinearBackProp(TensorUtil::TensorData x, TensorUtil::TensorData dx,
                             TensorUtil::TensorData dy, int unitKey)
-        : BackPropWrapper({ std::move(dx) }, { std::move(dy), std::move(x) },
+        : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
                           unitKey)
     {
-        TensorUtil::TensorData& gradA = m_gradientOutputs[0];
-        TensorUtil::TensorData& gradIn = m_gradientInputs[0];
-        TensorUtil::TensorData& a = m_gradientInputs[1];
+        m_savedTensorMap["x"] = std::move(x);
 
-        //! Treat x and gradA
-        a.TensorShape.Expand(2);
-        gradA.TensorShape.Expand(2);
-        gradIn.TensorShape.Expand(2);
-        a.TensorShape[0] = a.BatchSize;
-        gradA.TensorShape[0] = gradA.BatchSize;
-        gradIn.TensorShape[0] = gradIn.BatchSize;
-        a.BatchSize = 1;
-        gradA.BatchSize = 1;
-        gradIn.BatchSize = 1;
+        TensorUtil::TensorData& dxRef = m_gradientOutputs[0];
+        TensorUtil::TensorData& dyRef = m_gradientInputs[0];
+        TensorUtil::TensorData& xRef = m_savedTensorMap["x"];
+
+        //! Treat x and dxRef
+        xRef.TensorShape.Expand(2);
+        dxRef.TensorShape.Expand(2);
+        dyRef.TensorShape.Expand(2);
+        xRef.TensorShape[0] = xRef.BatchSize;
+        dxRef.TensorShape[0] = dxRef.BatchSize;
+        dyRef.TensorShape[0] = dyRef.BatchSize;
+        xRef.BatchSize = 1;
+        dxRef.BatchSize = 1;
+        dyRef.BatchSize = 1;
     }
 
     bool InvokeBackProp(const TensorUtil::TensorData& input) override
@@ -57,26 +59,26 @@ class LinearBackProp : public BackPropWrapper
         TensorUtil::TensorData transposedWeight(
             weight.GetShape().GetTranspose(), weight.GetType(),
             weight.GetDevice(), 1);
-        TensorUtil::TensorData& gradientA = m_gradientOutputs[0];
-        TensorUtil::TensorData& gradientIn = m_gradientInputs[0];
+        TensorUtil::TensorData& dx = m_gradientOutputs[0];
+        TensorUtil::TensorData& dy = m_gradientInputs[0];
 
-        Compute::Initialize::Zeros(gradientA);
+        Compute::Initialize::Zeros(dx);
         Compute::Transpose(transposedWeight, weight);
-        Compute::Gemm(gradientA, gradientIn, transposedWeight, gradientA);
+        Compute::Gemm(dx, dy, transposedWeight, dx);
     }
 
     void m_updateWeight(TensorUtil::TensorData& weight)
     {
-        TensorUtil::TensorData& gradientIn = m_gradientInputs[0];
-        TensorUtil::TensorData& A = m_gradientInputs[1];
-        TensorUtil::TensorData transposedA(A.GetShape().GetTranspose(),
-                                           A.GetType(), A.GetDevice(), 1);
+        TensorUtil::TensorData& dy = m_gradientInputs[0];
+        TensorUtil::TensorData& x = m_savedTensorMap["x"];
+        TensorUtil::TensorData transposedA(x.GetShape().GetTranspose(),
+                                           x.GetType(), x.GetDevice(), 1);
 
-        Compute::Transpose(transposedA, A);
+        Compute::Transpose(transposedA, x);
         Compute::Scale(
             transposedA, transposedA,
             -1);  // todo : divide by batch size and scale by learning rate
-        Compute::Gemm(weight, transposedA, gradientIn, weight);
+        Compute::Gemm(weight, transposedA, dy, weight);
     }
 
     void m_updateBias(TensorUtil::TensorData& bias)

@@ -10,11 +10,13 @@
 namespace Motutapu::Test
 {
 #ifdef WITH_CUDA
-void TestGemm1();
+void Gemm1();
 
-void TestGemm2();
+void Gemm2();
 
-void TestGemmBroadcast();
+void GemmBroadcast();
+
+void GemmBroadcastOnOutput();
 
 #endif
 }  // namespace Motutapu::Test

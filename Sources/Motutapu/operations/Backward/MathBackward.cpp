@@ -10,67 +10,55 @@
 
 namespace Motutapu::BackProp
 {
-MulBackProp::MulBackProp(TensorUtil::TensorData A,
-                         TensorUtil::TensorData gradientA,
-                         TensorUtil::TensorData B,
-                         TensorUtil::TensorData gradientB,
-                         TensorUtil::TensorData gradientIn)
-    : BackPropWrapper({ std::move(gradientA), std::move(gradientB) },
-                      { std::move(gradientIn) })
+MulBackProp::MulBackProp(TensorUtil::TensorData a, TensorUtil::TensorData da,
+                         TensorUtil::TensorData b, TensorUtil::TensorData db,
+                         TensorUtil::TensorData dy)
+    : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) })
 {
-    TensorUtil::TensorData transposedA(A.TensorShape.GetTranspose(),
-                                       A.GetType(), A.GetDevice(), A.BatchSize);
-    TensorUtil::TensorData transposedB(B.TensorShape.GetTranspose(),
-                                       B.GetType(), B.GetDevice(), B.BatchSize);
+    TensorUtil::TensorData transposedA(a.TensorShape.GetTranspose(),
+                                       a.GetType(), a.GetDevice(), a.BatchSize);
+    TensorUtil::TensorData transposedB(b.TensorShape.GetTranspose(),
+                                       b.GetType(), b.GetDevice(), b.BatchSize);
 
-    m_savedTensorMap["A"] = A.CreateCopy();
-    m_savedTensorMap["B"] = B.CreateCopy();
+    m_savedTensorMap["a"] = std::move(a);
+    m_savedTensorMap["b"] = std::move(b);
     m_savedTensorMap["transposedA"] = transposedA;
     m_savedTensorMap["transposedB"] = transposedB;
 }
 
 bool MulBackProp::InvokeBackProp(const TensorUtil::TensorData& input)
 {
-    auto key = input.GetParentDescKey();
-    auto match = [key](const TensorUtil::TensorData& tensorData) {
-        return tensorData.GetParentDescKey() == key;
-    };
+    auto& dy = m_gradientInputs[0];
+    auto& da = m_gradientOutputs[0];
+    auto& db = m_gradientOutputs[1];
 
-    auto tensorItr =
-        std::find_if(m_gradientInputs.begin(), m_gradientInputs.end(), match);
-
-    auto tensorItrReceived =
-        std::find_if(m_receivedInputs.begin(), m_receivedInputs.end(), match);
-
-    if (tensorItr != m_gradientInputs.end() &&
-        tensorItrReceived != m_receivedInputs.end())
-        m_receivedInputs.emplace_back(*tensorItr);
-
-    if (m_receivedInputs.size() == m_gradientInputs.size())
-    {
-        m_backProp();
-        return true;
-    }
-
-    return false;
-}
-
-void MulBackProp::m_backProp()
-{
-    auto& backPropA = m_gradientOutputs[0];
-    auto& backPropB = m_gradientOutputs[1];
-    auto& backPropIn = m_gradientInputs[0];
-
-    auto& forwardOutA = m_savedTensorMap["backPropA"];
-    auto& forwardOutB = m_savedTensorMap["forwardB"];
+    auto& a = m_savedTensorMap["a"];
+    auto& b = m_savedTensorMap["b"];
     auto& transposedA = m_savedTensorMap["transposedA"];
     auto& transposedB = m_savedTensorMap["transposedB"];
 
-    Compute::Transpose(transposedA, forwardOutA);
-    Compute::Transpose(transposedB, forwardOutB);
+    Compute::Transpose(transposedA, a);
+    Compute::Transpose(transposedB, b);
 
-    Compute::Gemm(backPropA, backPropIn, transposedB, backPropA);
-    Compute::Gemm(backPropB, transposedA, backPropIn, backPropB);
+    Compute::Gemm(da, dy, transposedB, da);
+    Compute::Gemm(db, transposedA, dy, db);
+    return true;
+}
+
+AddBackProp::AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
+                         TensorUtil::TensorData dy)
+    : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) })
+{
+}
+
+bool AddBackProp::InvokeBackProp(const TensorUtil::TensorData& input)
+{
+    auto& dy = m_gradientInputs[0];
+    auto& da = m_gradientOutputs[0];
+    auto& db = m_gradientOutputs[1];
+    Compute::Add(da, dy, da);
+    Compute::Add(db, dy, db);
+    return true;
 }
 
 }  // namespace Motutapu::BackProp

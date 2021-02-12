@@ -21,7 +21,7 @@ namespace Motutapu::Test
 {
 void TestTranspose(bool printResult)
 {
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 5; j++)
     {
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -153,7 +153,7 @@ void TestTranspose(bool printResult)
 
 void TestBasics1()
 {
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 5; j++)
     {
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -235,7 +235,7 @@ void TestBasics1()
 
 void TestBasics2()
 {
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 5; j++)
     {
         std::random_device
             rd;  // Will be used to obtain a seed for the random number engine
@@ -318,7 +318,7 @@ void TestBasics2()
 
 void TestAddBroadcast1()
 {
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 5; j++)
     {
         std::random_device rd;
         std::mt19937 gen(rd());
@@ -448,7 +448,7 @@ void TestAddBroadcast1()
 
 void TestAddBroadcast2()
 {
-    for (int j = 0; j < 10; j++)
+    for (int j = 0; j < 5; j++)
     {
         std::random_device rd;
         std::mt19937 gen(rd());

@@ -7,6 +7,7 @@
 #include <cublas_v2.h>
 #include <Motutapu/compute/cuda/CudaParams.cuh>
 #include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/dense/Basic.cuh>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>
 #include <cassert>
@@ -45,6 +46,7 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
 }
 
 //! Broadcasts operations matrix-wise
+//! while broadcastC is false, broadcastOut must be false
 __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
                                       unsigned int M, unsigned int N,
                                       unsigned int K, unsigned int batchSize,
@@ -64,7 +66,9 @@ __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
     const auto strideOut = M * N;
 
     if (broadcastC)
+    {
         MemcpyGpuToGpuBroadcast(out, C, M * N * batchSize, M * N);
+    }
     else
         MemcpyGpuToGpu(out, C, M * N * batchSize);
 

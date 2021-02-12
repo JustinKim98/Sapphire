@@ -50,42 +50,42 @@ static Tensor Mul(const Tensor& a, const Tensor& b)
 
     return Tensor(outputShape, outputKey);
 }
-//
-// static Tensor AddOp(const Tensor& a, const Tensor& b)
-//{
-//    Model& model = ModelManager::GetCurrentModel();
-//
-//    //! Get descriptors
-//    TensorUtil::TensorDescriptor& descA =
-//        model.GetDescriptor(a.TensorDescriptorKey());
-//    TensorUtil::TensorDescriptor& descB =
-//        model.GetDescriptor(b.TensorDescriptorKey());
-//
-//    auto shapeA = descA.ForwardData.TensorShape;
-//    auto shapeB = descB.ForwardData.TensorShape;
-//
-//    const auto batchSize = descA.ForwardData.BatchSize;
-//    Type type = descA.ForwardData.GetType();
-//    Device device = descA.ForwardData.GetDevice();
-//
-//    const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
-//
-//    TensorUtil::TensorDescriptor descOut(outputShape, type, device, batchSize,
-//                                         false);
-//    model.RegisterTensorDescriptor(descOut);
-//
-//    Compute::Add(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
-//
-//    auto backPropWrapper =
-//        std::make_unique<BackProp::AddBackProp>(descA.m_key, descB.m_key);
-//
-//    descA.AppendOperandHistory(descOut.m_key);
-//    descB.AppendOperandHistory(descOut.m_key);
-//    descOut.AppendOutputHistory(std::move(backPropWrapper), false);
-//
-//    return Tensor(outputShape, descOut.m_key);
-//}
-//
+
+static Tensor AddOp(const Tensor& a, const Tensor& b)
+{
+    Model& model = ModelManager::GetCurrentModel();
+
+    //! Get descriptors
+    TensorUtil::TensorDescriptor& descA =
+        model.GetDescriptor(a.TensorDescriptorKey());
+    TensorUtil::TensorDescriptor& descB =
+        model.GetDescriptor(b.TensorDescriptorKey());
+
+    auto shapeA = descA.ForwardData.TensorShape;
+    auto shapeB = descB.ForwardData.TensorShape;
+
+    const auto batchSize = descA.ForwardData.BatchSize;
+    Type type = descA.ForwardData.GetType();
+    Device device = descA.ForwardData.GetDevice();
+
+    const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
+
+    const auto outKey =
+        model.RegisterTensorDescriptor(outputShape, type, device, batchSize);
+    auto& descOut = model.GetDescriptor(outKey);
+
+    Compute::Add(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
+
+    auto backPropWrapper = std::make_unique<BackProp::AddBackProp>(
+        descA.BackwardData, descB.BackwardData, descOut.BackwardData);
+
+    descA.AppendOperandHistory(descOut.GetKey());
+    descB.AppendOperandHistory(descOut.GetKey());
+    descOut.AppendOutputHistory(std::move(backPropWrapper), false);
+
+    return Tensor(outputShape, descOut.GetKey());
+}
+
 // static void AddOpInplace(const Tensor& out, Tensor& a)
 //{
 //    Model& model = ModelManager::GetCurrentModel();

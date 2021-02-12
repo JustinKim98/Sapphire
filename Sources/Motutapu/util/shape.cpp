@@ -37,7 +37,7 @@ Shape& Shape::operator=(Shape&& shape) noexcept
 
 unsigned int& Shape::operator[](unsigned int index)
 {
-    return m_shapeVector[index];
+    return m_shapeVector.at(index);
 }
 
 bool Shape::operator==(const Shape& shape) const
@@ -92,7 +92,7 @@ void Shape::Set(unsigned int dim, unsigned int value)
             "Shape::Set - Given dimension exceeds shape dimension");
     }
 
-    m_shapeVector[dim] = value;
+    m_shapeVector.at(dim) = value;
 }
 
 void Shape::Expand(unsigned int dim)
@@ -123,9 +123,9 @@ Shape Shape::GetTranspose() const
     }
 
     auto vector = m_shapeVector;
-    auto temp = vector[vector.size() - 1];
-    vector[vector.size() - 1] = vector[vector.size() - 2];
-    vector[vector.size() - 2] = temp;
+    auto temp = vector.at(vector.size() - 1);
+    vector.at(vector.size() - 1) = vector.at(vector.size() - 2);
+    vector.at(vector.size() - 2) = temp;
 
     return Shape(vector);
 }

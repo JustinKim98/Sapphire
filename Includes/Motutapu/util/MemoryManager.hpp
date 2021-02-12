@@ -89,6 +89,7 @@ class MemoryManager
 
     static unsigned int m_allocationUnitSize;
 };
+
 }  // namespace Motutapu::Util
 
 #endif  // MOTUTAPU_MEMORYMANAGER_H
