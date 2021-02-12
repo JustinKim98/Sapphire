@@ -14,9 +14,10 @@ namespace Motutapu::Util
 std::unordered_multimap<size_t, MemoryChunk>
     MemoryManager::m_hostFreeMemoryPool;
 std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_hostBusyMemoryPool;
-std::unordered_multimap<size_t, MemoryChunk>
+std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, pair_hash_free>
     MemoryManager::m_cudaFreeMemoryPool;
-std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_cudaBusyMemoryPool;
+std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, pair_hash_busy>
+    MemoryManager::m_cudaBusyMemoryPool;
 
 std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
@@ -32,8 +33,8 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
         (size / m_allocationUnitSize) * m_allocationUnitSize +
         ((size % m_allocationUnitSize) ? m_allocationUnitSize : 0);
 
-    auto key = allocationSize;
-    const auto itr = m_cudaFreeMemoryPool.find(key);
+    const auto itr =
+        m_cudaFreeMemoryPool.find(std::make_pair(deviceId, allocationSize));
 
     if (itr != m_cudaFreeMemoryPool.end())
     {
@@ -41,7 +42,8 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
         cudaPtr = targetChunk.Data;
         targetChunk.RefCount += 1;
         m_cudaFreeMemoryPool.erase(itr);
-        m_cudaBusyMemoryPool.emplace(intptr_t(cudaPtr), targetChunk);
+        m_cudaBusyMemoryPool.emplace(
+            std::make_pair(deviceId, intptr_t(cudaPtr)), targetChunk);
 
         return cudaPtr;
     }
@@ -50,7 +52,7 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr,
                                          allocationSize * sizeof(float));
 
-    m_cudaBusyMemoryPool.emplace(intptr_t(cudaPtr),
+    m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
                                  MemoryChunk(allocationSize, cudaPtr, 1));
 
     if (!success)
@@ -89,7 +91,8 @@ void MemoryManager::AddReferenceCuda(float* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
-    const auto itr = m_cudaBusyMemoryPool.find(intptr_t(ptr));
+    const auto itr =
+        m_cudaBusyMemoryPool.find(std::make_pair(deviceId, intptr_t(ptr)));
     if (itr == m_cudaBusyMemoryPool.end())
     {
         throw std::runtime_error("AddReferenceCuda - Reference was not found");
@@ -117,7 +120,8 @@ void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
-    const auto itr = m_cudaBusyMemoryPool.find(intptr_t(ptr));
+    const auto itr =
+        m_cudaBusyMemoryPool.find(std::make_pair(deviceId, intptr_t(ptr)));
 
     if (itr == m_cudaBusyMemoryPool.end())
     {
@@ -130,7 +134,8 @@ void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
     if (chunk.RefCount == 0)
     {
         m_cudaBusyMemoryPool.erase(itr);
-        m_cudaFreeMemoryPool.emplace(chunk.Size, chunk);
+        m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.Size),
+                                     chunk);
     }
 }
 
@@ -158,10 +163,9 @@ void MemoryManager::ClearUnusedCudaMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
-    for (auto itr = m_cudaFreeMemoryPool.begin();
-         itr != m_cudaFreeMemoryPool.end(); ++itr)
+    for (auto& [key, memoryChunk] : m_cudaFreeMemoryPool)
     {
-        if (!Compute::Cuda::CudaFree(itr->second.Data))
+        if (!Compute::Cuda::CudaFree(memoryChunk.Data))
             throw std::runtime_error(
                 "ClearUnusedCudaMemoryPool - CudaFree failed");
     }
@@ -173,10 +177,9 @@ void MemoryManager::ClearUnusedHostMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
-    for (auto itr = m_hostFreeMemoryPool.begin();
-         itr != m_hostFreeMemoryPool.end(); ++itr)
+    for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
-        delete[] itr->second.Data;
+        delete[] memoryChunk.Data;
     }
 
     m_hostFreeMemoryPool.clear();
@@ -188,21 +191,19 @@ void MemoryManager::ClearCudaMemoryPool()
 
     cudaDeviceSynchronize();
 
-    for (auto itr = m_cudaFreeMemoryPool.begin();
-         itr != m_cudaFreeMemoryPool.end(); ++itr)
+    for (auto& [key, memoryChunk] : m_cudaFreeMemoryPool)
     {
-        if (!Compute::Cuda::CudaFree(itr->second.Data))
+        if (!Compute::Cuda::CudaFree(memoryChunk.Data))
             throw std::runtime_error(
-                "ClearUnusedCudaMemoryPool - CudaFree(Busy) failed");
+                "ClearCudaMemoryPool - CudaFree(Unused) failed");
     }
     m_cudaFreeMemoryPool.clear();
 
-    for (auto itr = m_cudaBusyMemoryPool.begin();
-         itr != m_cudaBusyMemoryPool.end(); ++itr)
+    for (auto& [key, memoryChunk] : m_cudaBusyMemoryPool)
     {
-        if (!Compute::Cuda::CudaFree(itr->second.Data))
+        if (!Compute::Cuda::CudaFree(memoryChunk.Data))
             throw std::runtime_error(
-                "ClearUnusedCudaMemoryPool - CudaFree(Unused) failed");
+                "ClearCudaMemoryPool - CudaFree(Busy) failed");
     }
 
     m_cudaBusyMemoryPool.clear();
@@ -217,19 +218,17 @@ void MemoryManager::ClearHostMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
-    for (auto itr = m_hostFreeMemoryPool.begin();
-         itr != m_hostFreeMemoryPool.end(); ++itr)
+    for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
-        delete[] itr->second.Data;
+        delete[] memoryChunk.Data;
     }
+
+    for (auto& [key, memoryChunk] : m_hostBusyMemoryPool)
+    {
+        delete[] memoryChunk.Data;
+    }
+
     m_hostFreeMemoryPool.clear();
-
-    for (auto itr = m_hostBusyMemoryPool.begin();
-         itr != m_hostBusyMemoryPool.end(); ++itr)
-    {
-        delete[] itr->second.Data;
-    }
-
     m_hostBusyMemoryPool.clear();
 }
 

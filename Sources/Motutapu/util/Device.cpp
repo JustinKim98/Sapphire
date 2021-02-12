@@ -15,7 +15,7 @@ Device::Device(std::string name)
       m_name(std::move(name)),
       m_padByteSize(32)
 {
-    //! Todo : change padByteSize according to hardware support
+    //! todo : change padByteSize according to hardware support
 }
 
 Device::Device(int id, std::string name)

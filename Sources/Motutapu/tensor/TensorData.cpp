@@ -282,8 +282,8 @@ void TensorData::m_toGpu(const TensorData &tensorData)
             {
                 throw std::runtime_error("m_toGpu - cudaMemCopy failed");
             }
-            cudaDeviceSynchronize();
         }
+        cudaDeviceSynchronize();
     }
 }
 
@@ -302,6 +302,7 @@ void TensorData::m_toHost(const TensorData &tensorData)
     else
     {
         cudaDeviceSynchronize();
+
         const auto colSize = tensorData.Cols();
         const auto totalSize =
             tensorData.TensorShape.Size() * tensorData.BatchSize;
@@ -318,8 +319,8 @@ void TensorData::m_toHost(const TensorData &tensorData)
             {
                 throw std::runtime_error("m_toGpu - cudaMemCopy failed");
             }
-            cudaDeviceSynchronize();
         }
+        cudaDeviceSynchronize();
     }
 }
 
@@ -348,10 +349,9 @@ bool TensorData::m_freeCuda()
     }
     else if (DenseMatCuda)
     {
-//         Compute::Cuda::CudaFree((void *)DenseMatCuda);
-                 Util::MemoryManager::DeReferenceCuda(DenseMatCuda,
-                 m_device.GetID());
-         DenseTotalLengthCuda = 0;
+        //         Compute::Cuda::CudaFree((void *)DenseMatCuda);
+        Util::MemoryManager::DeReferenceCuda(DenseMatCuda, m_device.GetID());
+        DenseTotalLengthCuda = 0;
     }
 
     return isSuccess;
@@ -404,9 +404,9 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
     else
     {
         size_t totalSize = TensorShape.Size() * batchSize;
-//        DenseTotalLengthCuda = totalSize;
-//                Compute::Cuda::CudaMalloc((void **)&DenseMatCuda,
-//                                          totalSize * sizeof(float));
+        //        DenseTotalLengthCuda = totalSize;
+        //                Compute::Cuda::CudaMalloc((void **)&DenseMatCuda,
+        //                                          totalSize * sizeof(float));
         DenseMatCuda =
             Util::MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
     }

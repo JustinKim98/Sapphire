@@ -53,8 +53,6 @@ __host__ void Add(unsigned int totalSize, float* output, const float* inputA,
             output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
             broadcastInputA, broadcastInputB);
 
-    cudaDeviceSynchronize();
-
     if (totalSize > firstLaunchSize)
     {
         const unsigned int offset = firstLaunchSize;
@@ -63,8 +61,6 @@ __host__ void Add(unsigned int totalSize, float* output, const float* inputA,
             output, inputA, inputB, offset, totalSize - firstLaunchSize,
             totalSize, inputStride, broadcastInputA, broadcastInputB);
     }
-
-    cudaDeviceSynchronize();
 }
 
 __host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
@@ -82,8 +78,6 @@ __host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
             output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
             broadcastInputA, broadcastInputB);
 
-    cudaDeviceSynchronize();
-
     if (totalSize > firstLaunchSize)
     {
         const unsigned int offset = firstLaunchSize;
@@ -92,8 +86,6 @@ __host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
             output, inputA, inputB, offset, totalSize - firstLaunchSize,
             totalSize, inputStride, broadcastInputA, broadcastInputB);
     }
-
-    cudaDeviceSynchronize();
 }
 
 __host__ void Scale(float* output, const float* input, const float scaleFactor,
@@ -123,8 +115,6 @@ __host__ void Transpose(float* output, const float* input,
                         unsigned int inputNumRows, unsigned int inputNumCols,
                         unsigned int batchSize, bool broadcastInput)
 {
-    cudaDeviceSynchronize();
-
     unsigned int blockDimX = (inputNumCols % TILE_DIM == 0)
                                  ? inputNumCols / TILE_DIM
                                  : inputNumCols / TILE_DIM + 1;
@@ -137,7 +127,6 @@ __host__ void Transpose(float* output, const float* input,
     dim3 threadDim(TILE_DIM, 8);
     TransposeKernel<<<blockDim, threadDim>>>(output, input, inputNumRows,
                                              inputNumCols, broadcastInput);
-    cudaDeviceSynchronize();
 }
 
 __host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
@@ -155,8 +144,6 @@ __host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
             output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
             broadcastInputA, broadcastInputB);
 
-    cudaDeviceSynchronize();
-
     if (totalSize > firstLaunchSize)
     {
         const unsigned int offset = firstLaunchSize;
@@ -165,8 +152,6 @@ __host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
             output, inputA, inputB, offset, totalSize - firstLaunchSize,
             totalSize, inputStride, broadcastInputA, broadcastInputB);
     }
-
-    cudaDeviceSynchronize();
 }
 
 __host__ void Pow(float* output, const float* input, const float factor,
