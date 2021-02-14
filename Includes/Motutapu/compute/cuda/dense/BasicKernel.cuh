@@ -84,11 +84,14 @@ __global__ void ReLUDerivativeKernel(float* output, const float* input,
 __global__ void LeakyReLUKernel(float* output, const float* input, float a,
                                 unsigned int totalSize);
 
-__global__ void LeakyReLUDerivativeKernel(float* output, const float* input, float a,
-                                unsigned int totalSize);
+__global__ void LeakyReLUDerivativeKernel(float* output, const float* input,
+                                          float a, unsigned int totalSize);
 
 __global__ void InverseKernel(float* output, const float* input,
                               unsigned int totalSize);
+
+__global__ void MeanKernel(float* output, const float* input,
+                           unsigned int totalSize, unsigned int unitSize);
 
 }  // namespace Motutapu::Compute::Cuda::Dense
 

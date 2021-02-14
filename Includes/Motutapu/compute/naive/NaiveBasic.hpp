@@ -60,6 +60,8 @@ void LeakyReLUDerivative(float* output, const float* input, float a,
 
 void Inverse(float* output, const float* input, unsigned int totalSize);
 
+void Mean(float* output, const float* input, unsigned int totalSize,
+          unsigned int unitSize);
 }  // namespace Motutapu::Compute::Naive::Dense
 
 #endif  // MOTUTAPU_NAIVEBASIC_HPP

@@ -191,4 +191,17 @@ void Inverse(float* output, const float* input, unsigned int totalSize)
         output[i] = 1 / input[i];
     }
 }
+
+void Mean(float* output, const float* input, unsigned int totalSize,
+          unsigned int unitSize)
+{
+    for (unsigned int unitIdx = 0; unitIdx < totalSize / unitSize; unitIdx++)
+    {
+        for (unsigned int idx = 0; idx < unitSize; idx++)
+        {
+            output[unitIdx] += input[unitIdx * unitSize + idx];
+        }
+        output[unitIdx] /= static_cast<float>(unitSize);
+    }
+}
 }  // namespace Motutapu::Compute::Naive::Dense

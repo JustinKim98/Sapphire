@@ -13,8 +13,9 @@ namespace Motutapu::TensorUtil
 TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
                                    const Device &device, unsigned int batchSize,
                                    int key)
-    : ForwardData(shape, type, device, batchSize),
+    : ForwardData(shape, type, device, batchSize, key),
       m_key(key),
+      m_batchSize(batchSize),
       m_trainable(false)
 {
 }
@@ -23,19 +24,21 @@ TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
     : ForwardData(std::move(tensorData.ForwardData)),
       BackwardData(std::move(tensorData.BackwardData)),
       m_key(tensorData.m_key),
+      m_batchSize(tensorData.m_batchSize),
       m_trainable(tensorData.m_trainable),
       m_history(std::move(tensorData.m_history))
 {
 }
 
 TensorDescriptor &TensorDescriptor::operator=(
-    TensorDescriptor &&tensorData) noexcept
+    TensorDescriptor &&tensorDesc) noexcept
 {
-    ForwardData = tensorData.ForwardData;
-    BackwardData = tensorData.BackwardData;
-    m_key = tensorData.m_key;
-    m_trainable = tensorData.m_trainable;
-    m_history = std::move(tensorData.m_history);
+    ForwardData = tensorDesc.ForwardData;
+    BackwardData = tensorDesc.BackwardData;
+    m_key = tensorDesc.m_key;
+    m_batchSize = tensorDesc.m_batchSize;
+    m_trainable = tensorDesc.m_trainable;
+    m_history = std::move(tensorDesc.m_history);
     return *this;
 }
 

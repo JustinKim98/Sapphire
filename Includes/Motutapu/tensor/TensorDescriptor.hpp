@@ -32,7 +32,7 @@ class TensorDescriptor
     TensorDescriptor(const TensorDescriptor& tensorData) = delete;
     TensorDescriptor(TensorDescriptor&& tensorData) noexcept;
     TensorDescriptor& operator=(const TensorDescriptor& tensorData) = delete;
-    TensorDescriptor& operator=(TensorDescriptor&& tensorData) noexcept;
+    TensorDescriptor& operator=(TensorDescriptor&& tensorDesc) noexcept;
 
     TensorData ForwardData;
     TensorData BackwardData;
@@ -77,6 +77,13 @@ class TensorDescriptor
         return m_key;
     }
 
+    [[nodiscard]] unsigned int GetBatchSize() const
+    {
+        return m_batchSize;
+    }
+
+    // todo : Create sendTo, GetDevice, GetType
+
  private:
     //! This describes history of the tensorData
     //! As tensorData is used in unit function as an operand or input/output.
@@ -111,6 +118,7 @@ class TensorDescriptor
 
     //! m_key to identify tensor data
     int m_key = -1;
+    unsigned int m_batchSize;
     bool m_trainable = true;
 
     std::list<History> m_history;

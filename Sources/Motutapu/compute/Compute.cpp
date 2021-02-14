@@ -604,4 +604,25 @@ void Inverse(TensorData& out, const TensorData& input)
     }
 }
 
+void Mean(TensorData& out, const TensorData& x)
+{
+    const auto device = out.GetDevice();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto unitSize = out.TensorShape.Size();
+    const auto totalSize = unitSize * out.BatchSize;
+    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        Cuda::Dense::Mean(out.DenseMatCuda, x.DenseMatCuda, totalSize,
+                          unitSize);
+    }
+    else
+    {
+        Naive::Dense::Mean(out.DenseMatHost, x.DenseMatHost,
+                           totalSizeWithPadding, unitSize);
+    }
+}
+
 }  // namespace Motutapu::Compute

@@ -68,6 +68,8 @@ __host__ void LeakyReLUDerivative(float* output, const float* input, float a,
 __host__ void Inverse(float* output, const float* input,
                       unsigned int totalSize);
 
+__host__ void Mean(float* output, const float* input, unsigned int totalSize,
+                   unsigned int unitSize);
 }  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif  // MOTUTAPU_BASIC_CUH

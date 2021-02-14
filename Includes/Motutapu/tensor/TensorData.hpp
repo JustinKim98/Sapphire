@@ -100,6 +100,9 @@ class TensorData
     //! \param device : new device to set
     bool SendTo(const Device& device);
 
+    //! Deep copies tensor data from src to dst
+    static void DeepCopy(TensorData& dst, const TensorData& src);
+
  private:
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors

@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_BACKWARD_MATHBACKWARD_DECL_HPP
-#define MOTUTAPU_BACKWARD_MATHBACKWARD_DECL_HPP
+#ifndef MOTUTAPU_BACKPROP_MATHBACKWARD_DECL_HPP
+#define MOTUTAPU_BACKPROP_MATHBACKWARD_DECL_HPP
 
 #include <Motutapu/operations/Backward/BackPropWrapper.hpp>
 
@@ -14,8 +14,8 @@ namespace Motutapu::BackProp
 class MulBackProp : public BackPropWrapper
 {
  public:
-    explicit MulBackProp(TensorUtil::TensorData a, TensorUtil::TensorData da,
-                         TensorUtil::TensorData b, TensorUtil::TensorData db,
+    explicit MulBackProp(const TensorUtil::TensorData& a, TensorUtil::TensorData da,
+                         const TensorUtil::TensorData& b, TensorUtil::TensorData db,
                          TensorUtil::TensorData dy);
 
     bool InvokeBackProp(const TensorUtil::TensorData& input) override;

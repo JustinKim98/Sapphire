@@ -65,6 +65,10 @@ void LeakyReluDerivative(TensorData& out, const TensorData& input, float a);
 
 void Inverse(TensorData& out, const TensorData& input);
 
+void Mean(TensorData& out, const TensorData& x);
+
+void Mean(TensorData& out, const TensorData& input, int dim);
+
 //! Broadcasts given shape and invokes the function
 //! Each shape variable are required to be same size in reversed order
 //! containing row and column indices shapes must be padded to match the same

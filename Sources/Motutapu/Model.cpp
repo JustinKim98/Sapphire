@@ -22,13 +22,21 @@ int Model::RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
     return unitKey;
 }
 
+//! Todo : Demarcate between tensor with back propagation
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const Device& device,
-                                    unsigned int batchSize)
+                                    unsigned int batchSize,
+                                    bool createBackwardData)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
     TensorUtil::TensorDescriptor tensorDesc(shape, type, device, batchSize,
                                             tensorDescKey);
+    if (createBackwardData)
+    {
+        tensorDesc.BackwardData = TensorUtil::TensorData(
+            shape, type, device, batchSize, tensorDescKey);
+    }
+
     m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
 
     return tensorDescKey;

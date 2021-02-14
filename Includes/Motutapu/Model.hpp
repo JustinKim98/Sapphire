@@ -35,7 +35,8 @@ class Model
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const Device& device, unsigned int batchSize);
+                                 const Device& device, unsigned int batchSize,
+                                 bool createBackwardData);
 
     //! Initializes gradients before training every epoch
     void ZeroGrad();

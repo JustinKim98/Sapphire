@@ -44,8 +44,8 @@ Tensor Linear::operator()(const Tensor& tensor) const
     const Device device = xDesc.ForwardData.GetDevice();
     const Shape outputShape({ m_outputs });
 
-    const auto yKey =
-        model.RegisterTensorDescriptor(outputShape, type, device, batchSize);
+    const auto yKey = model.RegisterTensorDescriptor(outputShape, type, device,
+                                                     batchSize, true);
     auto& yDesc = model.GetDescriptor(yKey);
 
     Compute::Gemm(yDesc.ForwardData, xDesc.ForwardData,

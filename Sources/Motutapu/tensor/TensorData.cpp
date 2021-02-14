@@ -210,8 +210,11 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
 
 TensorData TensorData::CreateCopy() const
 {
-    return TensorData(TensorShape, GetType(), GetDevice(), BatchSize,
-                      m_parentDescKey);
+    TensorData tensorData(TensorShape, GetType(), GetDevice(), BatchSize,
+                          m_parentDescKey);
+
+    DeepCopy(tensorData, *this);
+    return tensorData;
 }
 
 bool TensorData::SendTo(const Device &device)

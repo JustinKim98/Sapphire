@@ -16,37 +16,37 @@ static Tensor Mul(const Tensor& a, const Tensor& b)
 {
     Model& model = ModelManager::GetCurrentModel();
 
-    TensorUtil::TensorDescriptor& descA =
+    TensorUtil::TensorDescriptor& aDesc =
         model.GetDescriptor(a.TensorDescriptorKey());
-    TensorUtil::TensorDescriptor& descB =
+    TensorUtil::TensorDescriptor& bDesc =
         model.GetDescriptor(b.TensorDescriptorKey());
 
-    Shape shapeA = descA.ForwardData.TensorShape;
-    Shape shapeB = descB.ForwardData.TensorShape;
+    Shape shapeA = aDesc.ForwardData.TensorShape;
+    Shape shapeB = bDesc.ForwardData.TensorShape;
 
-    const auto batchSize = descA.ForwardData.BatchSize;
-    Type type = descA.ForwardData.GetType();
-    Device device = descA.ForwardData.GetDevice();
+    const auto batchSize = aDesc.ForwardData.BatchSize;
+    Type type = aDesc.ForwardData.GetType();
+    Device device = aDesc.ForwardData.GetDevice();
 
     const Shape outputShape({ shapeA.At(0), shapeB.At(1) });
 
-    const int outputKey =
-        model.RegisterTensorDescriptor(outputShape, type, device, batchSize);
+    const int outputKey = model.RegisterTensorDescriptor(
+        outputShape, type, device, batchSize, true);
 
-    auto& descOut = model.GetDescriptor(outputKey);
+    auto& yDesc = model.GetDescriptor(outputKey);
 
-    Compute::Gemm(descOut.ForwardData, descA.ForwardData, descB.ForwardData,
-                  descOut.ForwardData);
+    Compute::Gemm(yDesc.ForwardData, aDesc.ForwardData, bDesc.ForwardData,
+                  yDesc.ForwardData);
 
     auto backPropWrapper = std::make_unique<BackProp::MulBackProp>(
-        descA.ForwardData, descA.BackwardData, descB.ForwardData,
-        descB.BackwardData, descOut.BackwardData);
+        aDesc.ForwardData, aDesc.BackwardData, bDesc.ForwardData,
+        bDesc.BackwardData, yDesc.BackwardData);
 
     //! Append operand history to the descriptors of A and B
-    descA.AppendOperandHistory(descOut.GetKey());
-    descB.AppendOperandHistory(descOut.GetKey());
+    aDesc.AppendOperandHistory(yDesc.GetKey());
+    bDesc.AppendOperandHistory(yDesc.GetKey());
     //! Append output history to the descriptor A and associated backPropWrapper
-    descOut.AppendOutputHistory(std::move(backPropWrapper), false);
+    yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
 
     return Tensor(outputShape, outputKey);
 }
@@ -70,8 +70,8 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
 
     const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
 
-    const auto outKey =
-        model.RegisterTensorDescriptor(outputShape, type, device, batchSize);
+    const auto outKey = model.RegisterTensorDescriptor(outputShape, type,
+                                                       device, batchSize, true);
     auto& descOut = model.GetDescriptor(outKey);
 
     Compute::Add(descOut.ForwardData, descA.ForwardData, descB.ForwardData);

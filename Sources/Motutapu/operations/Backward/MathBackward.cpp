@@ -10,9 +10,10 @@
 
 namespace Motutapu::BackProp
 {
-MulBackProp::MulBackProp(TensorUtil::TensorData a, TensorUtil::TensorData da,
-                         TensorUtil::TensorData b, TensorUtil::TensorData db,
-                         TensorUtil::TensorData dy)
+MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
+                         TensorUtil::TensorData da,
+                         const TensorUtil::TensorData& b,
+                         TensorUtil::TensorData db, TensorUtil::TensorData dy)
     : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) })
 {
     TensorUtil::TensorData transposedA(a.TensorShape.GetTranspose(),
@@ -20,8 +21,8 @@ MulBackProp::MulBackProp(TensorUtil::TensorData a, TensorUtil::TensorData da,
     TensorUtil::TensorData transposedB(b.TensorShape.GetTranspose(),
                                        b.GetType(), b.GetDevice(), b.BatchSize);
 
-    m_savedTensorMap["a"] = std::move(a);
-    m_savedTensorMap["b"] = std::move(b);
+    m_savedTensorMap["a"] = a.CreateCopy();
+    m_savedTensorMap["b"] = b.CreateCopy();
     m_savedTensorMap["transposedA"] = transposedA;
     m_savedTensorMap["transposedB"] = transposedB;
 }

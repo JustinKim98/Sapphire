@@ -414,4 +414,19 @@ __global__ void InverseKernel(float* output, const float* input,
             1 / input[blockOffset + blockDim.x * i + threadIdx.x];
     }
 }
+
+__global__ void MeanKernel(float* output, const float* input,
+                           unsigned int totalSize, unsigned int unitSize)
+{
+    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (offset < totalSize)
+    {
+        for (unsigned int i = 0; i < unitSize; i++)
+        {
+            output[unitId] += input[unitSize * unitId + i];
+        }
+        output[unitId] /= static_cast<float>(unitSize);
+    }
+}
 }  // namespace Motutapu::Compute::Cuda::Dense

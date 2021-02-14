@@ -442,6 +442,29 @@ __host__ void Inverse(float* output, const float* input, unsigned int totalSize)
     }
 }
 
+//! output size should be totalSize/unitSize
+__host__ void Mean(float* output, const float* input, unsigned int totalSize,
+                   unsigned int unitSize)
+{
+    const auto numLoops = 8;
+    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+
+    const auto requiredThreadNum = totalSize / unitSize;
+    const auto blockDim = requiredThreadNum / (threadDim * numLoops);
+    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+
+    if (firstLaunchSize > 0)
+        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+    if (requiredThreadNum > firstLaunchSize)
+    {
+        const float* inputOffset = input + firstLaunchSize;
+        float* outputOffset = output + firstLaunchSize;
+
+        MeanKernel<<<1, requiredThreadNum - firstLaunchSize>>>(
+            output, input, totalSize, unitSize);
+    }
+}
+
 //__global__ void ConvInputToFeatureMatrix(
 //    float* out, float* input, unsigned int inputChannels,
 //    unsigned int inputRows, unsigned int inputColumns,
