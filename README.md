@@ -1,4 +1,4 @@
-# Sapphire
+# Motutapu
 
 <img src="./Medias/Logo.png" width=306 height=344 />
 
@@ -8,11 +8,11 @@
 [![codecov](https://codecov.io/gh/jwkim98/Motutapu/branch/master/graph/badge.svg?token=TABTFS9WBN)](https://codecov.io/gh/jwkim98/Motutapu)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d81d09c4b414983b5a99110dfb2a183)](https://www.codacy.com/gh/jwkim98/Motutapu/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jwkim98/Motutapu&amp;utm_campaign=Badge_Grade)
 
-Motutapu is a matrix operation library for use in machine learning applications.
+Motutapu is a Deep learning framework used in 
 This repository was created for research purpose
 
 ## Aim of this project
-* Effivient Sparse-Sparse, Dense-Dense matrix multiplication
+* Efficient Sparse-Sparse, Dense-Dense matrix multiplication
 * Takes benefit of SIMD (CPU) and SIMT (CUDA)
 * Support for deep-learning operations
 
