@@ -4,78 +4,89 @@ set(target motutapu)
 # Define
 set(root_dir ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 
+set(cudnn_lib
+        libcudnn.so
+        libcudnn.so.8
+        libcudnn.so.8.1.0
+        libcudnn_adv_infer.so
+        libcudnn_adv_infer.so.8
+        libcudnn_adv_infer.so.8.1.0
+        libcudnn_adv_train.so
+        libcudnn_adv_train.so.8
+        libcudnn_adv_train.so.8.1.0
+        libcudnn_cnn_infer.so
+        libcudnn_cnn_infer.so.8
+        libcudnn_cnn_infer.so.8.1.0
+        libcudnn_cnn_train.so
+        libcudnn_cnn_train.so.8
+        libcudnn_cnn_train.so.8.1.0
+        libcudnn_ops_infer.so
+        libcudnn_ops_infer.so.8
+        libcudnn_ops_infer.so.8.1.0
+        libcudnn_ops_train.so
+        libcudnn_ops_train.so.8
+        libcudnn_ops_train.so.8.1.0
+        )
+
 # Includes
 include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../Libraries
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../Libraries
 )
 
 # Sources
 file(GLOB header_dir
-    ${root_dir}/Includes)
+        ${root_dir}/Includes)
 
 file(GLOB_RECURSE headers
-    ${header_dir}/*.hpp)
+        ${header_dir}/*.hpp)
 
 file(GLOB_RECURSE sources
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 
-# Build library
-if(USE_CUDA)
-    #set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-	find_package(CUDA 11.2)
-    set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
-	if(NOT CUDA_FOUND)
-		message(STATUS "CUDA not found")
-		set(USE_CUDA OFF)
-    else()
-        message(STATUS "CUDA found")
-	endif()
-endif()
-
-if(USE_CUDA)
-    add_definitions(-DUSE_CUDA)
-    enable_language("CUDA")
+if (USE_CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    CUDA_ADD_LIBRARY(${target} ${sources} ${cuda_sources})
-    message(STATUS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    set_property(TARGET motutapu PROPERTY CUDA_ARCHITECTURES 52 61 75)
-    message(STATUS "CUDA enabled")
-
-else()
+    CUDA_ADD_LIBRARY(motutapu_cuda ${cuda_sources})
+    set_property(TARGET motutapu_cuda PROPERTY CUDA_ARCHITECTURES 86)
+    add_library(motutapu ${sources})
+    find_library(mycublas NAMES libcublas.so HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+    find_library(cudnn NAMES ${cudnn_lib} HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+else ()
     add_library(${target} ${sources})
-endif()
+endif ()
+
+find_package(OpenMP REQUIRED)
+
 # Project options
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-)
+        PROPERTIES
+        ${DEFAULT_PROJECT_OPTIONS}
+        )
 
 # Compile options
 target_compile_options(${target}
-    PRIVATE
-
-    PUBLIC
-    ${DEFAULT_COMPILE_OPTIONS}
-
-    INTERFACE
-)
-
-#if(NOT USE_CUDA)
-
-    target_link_libraries(${target}
         PRIVATE
 
         PUBLIC
-        ${DEFAULT_LINKER_OPTIONS}
-	    ${DEFAULT_LIBRARIES}
-    
+        ${DEFAULT_COMPILE_OPTIONS}
 
         INTERFACE
-    )
-#endif()
+        )
+
+target_link_libraries(${target}
+        PRIVATE
+        motutapu_cuda
+        ${mycublas}
+        ${cudnn}
+        PUBLIC
+        ${DEFAULT_LINKER_OPTIONS}
+        ${DEFAULT_LIBRARIES}
+        OpenMP::OpenMP_CXX
+
+        INTERFACE
+        )
 
 # Install
 install(TARGETS ${target} DESTINATION lib)

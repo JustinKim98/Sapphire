@@ -9,6 +9,10 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 build
+bin
+*.a
+*.cbp
+/lib
 
 # Visual Studio files
 /.vs
@@ -31,3 +35,5 @@ cmake-build-debug
 # Python files
 *.pyc
 /.pytest_cache
+
+*.so
