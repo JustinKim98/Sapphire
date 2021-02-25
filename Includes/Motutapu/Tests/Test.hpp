@@ -4,7 +4,6 @@
 namespace Motutapu::Test
 {
 int Add(int a, int b);
-
+void PrintCudaVersion();
 }  // namespace Motutapu::Test
-
 #endif

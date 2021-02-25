@@ -20,6 +20,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 # Set enable output of compile commands during generation
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
+
 # Includes
 include_directories(Includes)
 include_directories(Libraries)
@@ -53,6 +54,7 @@ endif ()
 
 # Overrides
 set(CMAKE_MACOSX_RPATH ON)
+
 
 # Project modules
 add_subdirectory(Libraries/doctest)

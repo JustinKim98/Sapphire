@@ -54,6 +54,7 @@ if (USE_CUDA)
     find_library(mycublas NAMES libcublas.so HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
     find_library(cudnn NAMES ${cudnn_lib} HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 else ()
+
     add_library(${target} ${sources})
 endif ()
 
