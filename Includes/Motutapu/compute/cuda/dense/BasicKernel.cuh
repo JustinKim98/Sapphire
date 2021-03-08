@@ -93,6 +93,14 @@ __global__ void InverseKernel(float* output, const float* input,
 __global__ void MeanKernel(float* output, const float* input,
                            unsigned int totalSize, unsigned int unitSize);
 
+//! Total size must be multiple of unitSize
+__global__ void SoftmaxKernel(float* output, const float* input,
+                              unsigned int totalSize, unsigned int unitSize);
+
+__global__ void SoftmaxBackKernel(float* dx, const float* dy, const float* x,
+                                  unsigned int totalSize,
+                                  unsigned int unitSize);
+
 }  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif  // MOTUTAPU_BASICKERNEL_CUH

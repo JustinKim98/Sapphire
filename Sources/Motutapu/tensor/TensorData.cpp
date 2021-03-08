@@ -175,7 +175,7 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
 
     const Shape shape = dest.TensorShape;
 
-    if (device.Type() == DeviceType::CPU)
+    if (device.Type() == DeviceType::HOST)
     {
         if (sparse)
         {
@@ -224,14 +224,15 @@ bool TensorData::SendTo(const Device &device)
         return false;
     }
 
-    if (m_device.Type() == DeviceType::CPU && device.Type() == DeviceType::CUDA)
+    if (m_device.Type() == DeviceType::HOST &&
+        device.Type() == DeviceType::CUDA)
     {
         m_device = device;
         m_allocateCuda(BatchSize);
         TensorData::m_toGpu(*this);
     }
     else if (m_device.Type() == DeviceType::CUDA &&
-             device.Type() == DeviceType::CPU)
+             device.Type() == DeviceType::HOST)
     {
         TensorData::m_toHost(*this);
         m_freeCuda();
@@ -246,6 +247,33 @@ bool TensorData::SendTo(const Device &device)
     }
 
     return true;
+}
+
+void TensorData::DeepCopy(TensorData &dst, const TensorData &src)
+{
+    if (dst.GetType() != src.GetType())
+        throw std::invalid_argument(
+            "DeepCopy - matrix or device type mismatch");
+
+    if (dst.GetDevice().Type() != src.GetDevice().Type())
+        throw std::invalid_argument("DeepCopy - Device type mismatch");
+
+    auto deviceType = dst.GetDevice().Type();
+    auto matrixType = dst.GetType();
+
+    if (deviceType == DeviceType::CUDA && matrixType == Type::Dense)
+        Compute::Cuda::MemcpyGpuToGpu(dst.DenseMatCuda, src.DenseMatCuda,
+                                      dst.DenseTotalLengthCuda);
+
+    else if (deviceType == DeviceType::CUDA && matrixType == Type::Sparse)
+        throw std::runtime_error("DeepCopy - Not implemented");
+
+    else if (deviceType == DeviceType::HOST && matrixType == Type::Dense)
+        std::memcpy(dst.DenseMatHost, src.DenseMatHost,
+                    dst.DenseTotalLengthHost);
+
+    else if (deviceType == DeviceType::HOST && matrixType == Type::Sparse)
+        throw std::runtime_error("DeepCopy - Not implemented");
 }
 
 void TensorData::m_toGpu(const TensorData &tensorData)

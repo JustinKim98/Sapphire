@@ -13,7 +13,7 @@ This repository was created for research purpose
 
 ## Aim of this project
 * Effivient Sparse-Sparse, Dense-Dense matrix multiplication
-* Takes benefit of SIMD (CPU) and SIMT (CUDA)
+* Takes benefit of SIMD (HOST) and SIMT (CUDA)
 * Support for deep-learning operations
 
 ## Contact

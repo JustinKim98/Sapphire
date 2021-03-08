@@ -16,7 +16,7 @@ namespace Motutapu
 {
 enum class DeviceType
 {
-    CPU,
+    HOST,
     CUDA,
 };
 
@@ -71,7 +71,7 @@ class Device
 
  private:
     int m_id = -1;
-    DeviceType m_type = DeviceType::CPU;
+    DeviceType m_type = DeviceType::HOST;
     std::string m_name = "Undefined";
     std::size_t m_padByteSize = 0;
     int m_cudaCapability = 0;

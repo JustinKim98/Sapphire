@@ -204,4 +204,50 @@ void Mean(float* output, const float* input, unsigned int totalSize,
         output[unitIdx] /= static_cast<float>(unitSize);
     }
 }
+
+void Softmax(float* output, const float* input, unsigned int totalSize,
+             unsigned int unitSize, unsigned int padSize)
+{
+    const auto batchSize = totalSize / padSize;
+
+    for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+    {
+        float sum = 0;
+        for (unsigned int i = 0; i < unitSize; ++i)
+            sum += std::exp(input[padSize * batchIdx + i]);
+
+        for (unsigned int i = 0; i < unitSize; ++i)
+            output[padSize * batchIdx + i] =
+                input[padSize * batchIdx + i] / sum;
+    }
+}
+
+void SoftmaxBack(float* dx, const float* dy, const float* x,
+                 unsigned int totalSize, unsigned int unitSize,
+                 unsigned int padSize)
+{
+    const auto batchSize = totalSize / padSize;
+
+    for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+    {
+        float sum = 0;
+        for (unsigned int unitIdx = 0; unitIdx < unitSize; ++unitIdx)
+            for (unsigned int i = 0; i < unitSize; ++i)
+            {
+                if (i == unitIdx)
+                {
+                    sum += dy[padSize * batchIdx + i] *
+                           (x[padSize * batchIdx + i] *
+                            (1 - x[padSize * batchIdx + i]));
+                }
+                else
+                {
+                    sum += dy[padSize * batchIdx + i] *
+                           (-x[padSize * batchIdx + unitIdx] *
+                            x[padSize * batchIdx + i]);
+                }
+            }
+    }
+}
+
 }  // namespace Motutapu::Compute::Naive::Dense

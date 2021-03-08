@@ -5,11 +5,11 @@
 // property of any third parties.
 
 #include <Motutapu/compute/Compute.hpp>
-#include <Motutapu/operations/Loss/MSEBackProp.hpp>
+#include <Motutapu/operations/Backward/MSEBackward.hpp>
 
 namespace Motutapu::BackProp
 {
-MSEBackProp::MSEBackProp(const TensorUtil::TensorData& x,
+MSEBackward::MSEBackward(const TensorUtil::TensorData& x,
                          TensorUtil::TensorData dx,
                          const TensorUtil::TensorData& label,
                          TensorUtil::TensorData dy)
@@ -20,7 +20,7 @@ MSEBackProp::MSEBackProp(const TensorUtil::TensorData& x,
     m_savedTensorMap["label"] = label.CreateCopy();
 }
 
-bool MSEBackProp::InvokeBackProp(const TensorUtil::TensorData& input)
+bool MSEBackward::InvokeBackProp(const TensorUtil::TensorData& input)
 {
     auto& x = m_savedTensorMap["x"];
     auto& label = m_savedTensorMap["label"];

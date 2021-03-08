@@ -420,13 +420,59 @@ __global__ void MeanKernel(float* output, const float* input,
 {
     const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (offset < totalSize)
+    if (unitId < totalSize)
     {
         for (unsigned int i = 0; i < unitSize; i++)
         {
             output[unitId] += input[unitSize * unitId + i];
         }
         output[unitId] /= static_cast<float>(unitSize);
+    }
+}
+
+__global__ void SoftmaxKernel(float* output, const float* input,
+                              unsigned int totalSize, unsigned int unitSize)
+{
+    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto curBatch = unitId / blockDim.x;
+    const auto curIdx = unitId % unitSize;
+
+    if (unitId < totalSize)
+    {
+        float sum = 0;
+        for (unsigned int i = 0; i < unitSize; i++)
+        {
+            sum += exp(input[unitSize * curBatch + i]);
+        }
+        output[unitSize * curBatch + curIdx] =
+            sum / exp(input[unitSize * curBatch + curIdx]);
+    }
+}
+
+__global__ void SoftmaxBackKernel(float* dx, const float* dy, const float* x,
+                                  unsigned int totalSize, unsigned int unitSize)
+{
+    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto curIdx = unitId % unitSize;
+
+    if (unitId < totalSize)
+    {
+        float gradX = 0;
+        for (unsigned int i = 0; i < unitSize; i++)
+        {
+            if (i == curIdx)
+            {
+                gradX +=
+                    dy[unitId * unitSize + i] *
+                    (x[unitId * unitSize + i] * (1 - x[unitId * unitSize + i]));
+            }
+            else
+            {
+                gradX +=
+                    dy[unitId * unitSize + i] *
+                    (-x[unitId * unitSize + i] * x[unitId * unitSize + curIdx]);
+            }
+        }
     }
 }
 }  // namespace Motutapu::Compute::Cuda::Dense

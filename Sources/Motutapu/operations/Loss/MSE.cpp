@@ -6,8 +6,8 @@
 
 #include <Motutapu/Model.hpp>
 #include <Motutapu/compute/Compute.hpp>
+#include <Motutapu/operations/Backward/MSEBackward.hpp>
 #include <Motutapu/operations/Loss/MSE.hpp>
-#include <Motutapu/operations/Loss/MSEBackProp.hpp>
 #include <memory>
 #include <vector>
 
@@ -34,14 +34,13 @@ static Tensor MSE(const Tensor& x, const Tensor& label)
 
     Compute::Mean(yDesc.ForwardData, temp);
 
-    auto backPropWrapper = std::make_unique<BackProp::MSEBackProp>(
+    auto backPropWrapper = std::make_unique<BackProp::MSEBackward>(
         xDesc.ForwardData, xDesc.BackwardData, labelDesc.ForwardData,
         yDesc.BackwardData);
 
     xDesc.AppendOperandHistory(yDesc.GetKey());
     labelDesc.AppendOperandHistory(yDesc.GetKey());
     yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
-    // todo : Create mean compute function
 
     return Tensor(Shape({ 1 }), yDescKey);
 }

@@ -69,6 +69,8 @@ void Mean(TensorData& out, const TensorData& x);
 
 void Mean(TensorData& out, const TensorData& input, int dim);
 
+void Softmax(TensorData& out, const TensorData& x);
+
 //! Broadcasts given shape and invokes the function
 //! Each shape variable are required to be same size in reversed order
 //! containing row and column indices shapes must be padded to match the same

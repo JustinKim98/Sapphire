@@ -7,4 +7,11 @@
 #ifndef MOTUTAPU_SOFTMAX_HPP
 #define MOTUTAPU_SOFTMAX_HPP
 
+#include <Motutapu/tensor/Tensor.hpp>
+
+namespace Motutapu::NN
+{
+//static Tensor SoftMax(Tensor input);
+}
+
 #endif  // MOTUTAPU_SOFTMAX_HPP

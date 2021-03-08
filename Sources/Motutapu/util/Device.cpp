@@ -11,7 +11,7 @@ namespace Motutapu
 {
 Device::Device(std::string name)
     : m_id(-1),
-      m_type(DeviceType::CPU),
+      m_type(DeviceType::HOST),
       m_name(std::move(name)),
       m_padByteSize(32)
 {

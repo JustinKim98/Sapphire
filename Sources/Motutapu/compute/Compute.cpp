@@ -31,7 +31,7 @@ void Add(TensorData& out, const TensorData& a, const TensorData& b)
                              out.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
-        if (device.Type() == DeviceType::CPU)
+        if (device.Type() == DeviceType::HOST)
         {
             Naive::Dense::Add(
                 (out.TensorShape.Size() / N) * paddedN * out.BatchSize,
@@ -95,7 +95,7 @@ void Sub(TensorData& out, const TensorData& a, const TensorData& b)
                              out.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
-        if (device.Type() == DeviceType::CPU)
+        if (device.Type() == DeviceType::HOST)
         {
             Naive::Dense::Sub(
                 (out.TensorShape.Size() / N) * paddedN * out.BatchSize,
@@ -286,7 +286,7 @@ void Dot(TensorData& out, const TensorData& a, const TensorData& b)
                              out.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
-        if (device.Type() == DeviceType::CPU)
+        if (device.Type() == DeviceType::HOST)
         {
             Naive::Dense::Dot(
                 (out.TensorShape.Size() / N) * paddedN * out.BatchSize,
@@ -622,6 +622,27 @@ void Mean(TensorData& out, const TensorData& x)
     {
         Naive::Dense::Mean(out.DenseMatHost, x.DenseMatHost,
                            totalSizeWithPadding, unitSize);
+    }
+}
+
+void Softmax(TensorData& out, const TensorData& x)
+{
+    const auto device = out.GetDevice();
+    const auto N = out.Cols();
+    const auto paddedN = out.PaddedHostColSize;
+    const auto unitSize = out.TensorShape.Size();
+    const auto totalSize = unitSize * out.BatchSize;
+    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        Cuda::Dense::Softmax(out.DenseMatCuda, x.DenseMatCuda, totalSize,
+                             unitSize);
+    }
+    else
+    {
+        Naive::Dense::Softmax(out.DenseMatHost, x.DenseMatHost,
+                              totalSizeWithPadding, unitSize, paddedN);
     }
 }
 

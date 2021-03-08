@@ -4,3 +4,9 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <Motutapu/operations/Forward/Softmax.hpp>
+
+namespace Motutapu::NN
+{
+
+}  // namespace Motutapu::NN

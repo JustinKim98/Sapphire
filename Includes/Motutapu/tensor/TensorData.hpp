@@ -121,13 +121,13 @@ class TensorData
                                                 const float* dense, Shape shape,
                                                 unsigned long paddedRowSize,
                                                 Device device);
-    //! Allocates data on the CPU with given batchSize
+    //! Allocates data on the HOST with given batchSize
     void m_allocateCpu(unsigned int batchSize);
 
     //! Allocates data on the GPU with given batchSize
     void m_allocateCuda(unsigned int batchSize);
 
-    //! Free space allocated on CPU memory
+    //! Free space allocated on HOST memory
     void m_freeHost();
 
     //! Free space allocated on GPU memory

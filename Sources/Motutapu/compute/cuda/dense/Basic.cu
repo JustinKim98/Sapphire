@@ -454,15 +454,34 @@ __host__ void Mean(float* output, const float* input, unsigned int totalSize,
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize, unitSize);
     if (requiredThreadNum > firstLaunchSize)
     {
         const float* inputOffset = input + firstLaunchSize;
         float* outputOffset = output + firstLaunchSize;
 
         MeanKernel<<<1, requiredThreadNum - firstLaunchSize>>>(
-            output, input, totalSize, unitSize);
+            outputOffset, inputOffset, totalSize, unitSize);
     }
+}
+
+__host__ void Softmax(float* output, const float* input, unsigned int totalSize,
+                      unsigned int unitSize)
+{
+    const auto blockDim = (unitSize > 512) ? 512 : unitSize;
+    const auto gridDim = (totalSize % blockDim == 0) ? totalSize / blockDim
+                                                     : totalSize / blockDim + 1;
+    SoftmaxKernel<<<gridDim, blockDim>>>(output, input, totalSize, unitSize);
+}
+
+__host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize, unsigned int unitSize,
+                          unsigned int padSize)
+{
+    auto blockDim = (unitSize > 512) ? 512 : unitSize;
+    const auto gridDim = (totalSize % blockDim == 0) ? totalSize / blockDim
+                                                     : totalSize / blockDim + 1;
+    SoftmaxBackKernel<<<gridDim, blockDim>>>(dx, dy, x, totalSize, unitSize);
 }
 
 //__global__ void ConvInputToFeatureMatrix(

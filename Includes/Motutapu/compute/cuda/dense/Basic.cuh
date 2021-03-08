@@ -70,6 +70,12 @@ __host__ void Inverse(float* output, const float* input,
 
 __host__ void Mean(float* output, const float* input, unsigned int totalSize,
                    unsigned int unitSize);
+
+__host__ void Softmax(float* output, const float* input, unsigned int totalSize,
+                      unsigned int unitSize);
+
+__host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize, unsigned int unitSize);
 }  // namespace Motutapu::Compute::Cuda::Dense
 
 #endif  // MOTUTAPU_BASIC_CUH
