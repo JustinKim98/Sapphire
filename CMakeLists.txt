@@ -28,7 +28,7 @@ include_directories(Libraries/doctest/doctest)
 
 # Find CUDA
 if (USE_CUDA)
-    find_package(CUDA 11.0 REQUIRED)
+    find_package(CUDA 10.0 REQUIRED)
     set(CUDA_LIBRARIES PUBLIC ${CUDA_LIBRARIES})
     if (NOT CUDA_FOUND)
         message(STATUS "CUDA not found")
