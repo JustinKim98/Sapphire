@@ -62,6 +62,13 @@ void Inverse(float* output, const float* input, unsigned int totalSize);
 
 void Mean(float* output, const float* input, unsigned int totalSize,
           unsigned int unitSize);
+
+void Softmax(float* output, const float* input, unsigned int totalSize,
+             unsigned int unitSize, unsigned int padSize);
+
+void SoftmaxBack(float* dx, const float* dy, const float* x,
+                 unsigned int totalSize, unsigned int unitSize,
+                 unsigned int padSize);
 }  // namespace Motutapu::Compute::Naive::Dense
 
 #endif  // MOTUTAPU_NAIVEBASIC_HPP
