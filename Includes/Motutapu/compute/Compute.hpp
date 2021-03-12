@@ -13,8 +13,6 @@
 
 namespace Motutapu::Compute
 {
-//! Performs out = out + add
-
 using namespace TensorUtil;
 
 //! Performs out = a + b

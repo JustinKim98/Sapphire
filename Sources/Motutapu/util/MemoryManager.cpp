@@ -23,11 +23,11 @@ std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
 unsigned int MemoryManager::m_allocationUnitSize = 256;
 
-float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
+void* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
     auto success = true;
-    float* cudaPtr = nullptr;
+    void* cudaPtr = nullptr;
 
     auto allocationSize =
         (size / m_allocationUnitSize) * m_allocationUnitSize +
@@ -63,12 +63,12 @@ float* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     return cudaPtr;
 }
 
-float* MemoryManager::GetMemoryHost(size_t size)
+void* MemoryManager::GetMemoryHost(size_t byteSize)
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
-    float* dataPtr;
+    void* dataPtr;
 
-    const auto itr = m_hostFreeMemoryPool.find(size);
+    const auto itr = m_hostFreeMemoryPool.find(byteSize);
     if (itr != m_hostFreeMemoryPool.end())
     {
         MemoryChunk targetChunk = itr->second;
@@ -79,15 +79,16 @@ float* MemoryManager::GetMemoryHost(size_t size)
         return dataPtr;
     }
 
-    dataPtr = new float[size];
-    std::fill(dataPtr, dataPtr + size, 0);
+    dataPtr = malloc(byteSize);
+    std::fill(static_cast<uint32_t*>(dataPtr),
+              static_cast<uint32_t*>(dataPtr) + byteSize, 0);
     m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
-                                 MemoryChunk(size, dataPtr, 1));
+                                 MemoryChunk(byteSize, dataPtr, 1));
 
     return dataPtr;
 }
 
-void MemoryManager::AddReferenceCuda(float* ptr, int deviceId)
+void MemoryManager::AddReferenceCuda(void* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -102,7 +103,7 @@ void MemoryManager::AddReferenceCuda(float* ptr, int deviceId)
     chunk.RefCount += 1;
 }
 
-void MemoryManager::AddReferenceHost(float* ptr)
+void MemoryManager::AddReferenceHost(void* ptr)
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -116,7 +117,7 @@ void MemoryManager::AddReferenceHost(float* ptr)
     chunk.RefCount += 1;
 }
 
-void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
+void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -139,7 +140,7 @@ void MemoryManager::DeReferenceCuda(float* ptr, int deviceId)
     }
 }
 
-void MemoryManager::DeReferenceHost(float* ptr)
+void MemoryManager::DeReferenceHost(void* ptr)
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -179,7 +180,7 @@ void MemoryManager::ClearUnusedHostMemoryPool()
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
-        delete[] memoryChunk.Data;
+        free(memoryChunk.Data);
     }
 
     m_hostFreeMemoryPool.clear();
@@ -220,12 +221,12 @@ void MemoryManager::ClearHostMemoryPool()
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
-        delete[] memoryChunk.Data;
+        free(memoryChunk.Data);
     }
 
     for (auto& [key, memoryChunk] : m_hostBusyMemoryPool)
     {
-        delete[] memoryChunk.Data;
+        free(memoryChunk.Data);
     }
 
     m_hostFreeMemoryPool.clear();
@@ -240,12 +241,12 @@ size_t MemoryManager::GetTotalAllocationByteSizeCuda()
 
     for (const auto& [key, chunk] : m_cudaBusyMemoryPool)
     {
-        size += chunk.Size * sizeof(float);
+        size += chunk.Size;
     }
 
     for (const auto& [key, chunk] : m_cudaFreeMemoryPool)
     {
-        size += chunk.Size * sizeof(float);
+        size += chunk.Size;
     }
 
     return size;
@@ -259,12 +260,12 @@ size_t MemoryManager::GetTotalAllocationByteSizeHost()
 
     for (const auto& [key, chunk] : m_hostBusyMemoryPool)
     {
-        size += chunk.Size * sizeof(float);
+        size += chunk.Size;
     }
 
     for (const auto& [key, chunk] : m_hostFreeMemoryPool)
     {
-        size += chunk.Size * sizeof(float);
+        size += chunk.Size;
     }
 
     return size;

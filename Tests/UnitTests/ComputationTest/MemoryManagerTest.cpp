@@ -28,24 +28,26 @@ void hostAllocationTest()
     {
         size[i] = static_cast<unsigned int>(distrib(gen));
         totalSize += size[i];
-        float* data = Util::MemoryManager::GetMemoryHost(size[i]);
+        auto* data = static_cast<float*>(
+            Util::MemoryManager::GetMemoryHost(size[i] * sizeof(float)));
         for (unsigned int j = 0; j < size[i]; j++)
         {
             data[j] = static_cast<float>(i);
         }
-        Util::MemoryManager::DeReferenceHost(data);
+        Util::MemoryManager::DeReferenceHost(static_cast<void*>(data));
     }
 
     CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeHost(), totalSize);
 
     for (int i = 0; i < 100; i++)
     {
-        float* data = Util::MemoryManager::GetMemoryHost(size[i]);
+        auto* data = static_cast<float*>(
+            Util::MemoryManager::GetMemoryHost(size[i] * sizeof(float)));
         for (unsigned int j = 0; j < size[i]; j++)
         {
             data[j] = static_cast<float>(i);
         }
-        Util::MemoryManager::DeReferenceHost(data);
+        Util::MemoryManager::DeReferenceHost(static_cast<void*>(data));
     }
 
     Util::MemoryManager::ClearUnusedHostMemoryPool();
@@ -68,18 +70,19 @@ void cudaAllocationTest()
     {
         size[i] = static_cast<unsigned int>(distrib(gen));
         totalSize += size[i];
-        float* data = Util::MemoryManager::GetMemoryCuda(size[i], 0);
+        auto* data = static_cast<float*>(
+            Util::MemoryManager::GetMemoryCuda(size[i] * sizeof(float), 0));
 
-        Util::MemoryManager::DeReferenceCuda(data, 0);
+        Util::MemoryManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 
     CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeCuda(), totalSize);
 
     for (int i = 0; i < 100; i++)
     {
-        float* data = Util::MemoryManager::GetMemoryCuda(size[i], 0);
-
-        Util::MemoryManager::DeReferenceCuda(data, 0);
+        auto* data = static_cast<float*>(
+            Util::MemoryManager::GetMemoryCuda(size[i] * sizeof(float), 0));
+        Util::MemoryManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 
     Util::MemoryManager::ClearUnusedCudaMemoryPool();

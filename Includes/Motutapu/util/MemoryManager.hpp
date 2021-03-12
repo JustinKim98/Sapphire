@@ -34,7 +34,7 @@ struct pair_hash_busy
 
 struct MemoryChunk
 {
-    MemoryChunk(size_t size, float* data, int refCount)
+    MemoryChunk(size_t size, void* data, int refCount)
         : Size(size), Data(data), RefCount(refCount)
     {
     }
@@ -42,7 +42,7 @@ struct MemoryChunk
     MemoryChunk(const MemoryChunk& chunk) = default;
 
     size_t Size = 0;
-    float* Data = nullptr;
+    void* Data = nullptr;
 
     int RefCount;
 };
@@ -50,17 +50,17 @@ struct MemoryChunk
 class MemoryManager
 {
  public:
-    static float* GetMemoryCuda(size_t size, int deviceId);
+    static void* GetMemoryCuda(size_t size, int deviceId);
 
-    static float* GetMemoryHost(size_t size);
+    static void* GetMemoryHost(size_t byteSize);
 
-    static void AddReferenceCuda(float* ptr, int deviceId);
+    static void AddReferenceCuda(void* ptr, int deviceId);
 
-    static void AddReferenceHost(float* ptr);
+    static void AddReferenceHost(void* ptr);
 
-    static void DeReferenceCuda(float* ptr, int deviceId);
+    static void DeReferenceCuda(void* ptr, int deviceId);
 
-    static void DeReferenceHost(float* ptr);
+    static void DeReferenceHost(void* ptr);
 
     static void ClearUnusedCudaMemoryPool();
 

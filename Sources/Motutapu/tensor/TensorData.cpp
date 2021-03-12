@@ -58,11 +58,13 @@ TensorData::TensorData(const TensorData &tensorData)
 {
     if (DenseMatHost)
     {
-        Util::MemoryManager::AddReferenceHost(DenseMatHost);
+        Util::MemoryManager::AddReferenceHost(
+            static_cast<void *>(DenseMatHost));
     }
     if (DenseMatCuda)
     {
-        Util::MemoryManager::AddReferenceCuda(DenseMatCuda, m_device.GetID());
+        Util::MemoryManager::AddReferenceCuda(static_cast<void *>(DenseMatCuda),
+                                              m_device.GetID());
     }
 }
 
@@ -108,11 +110,13 @@ TensorData &TensorData::operator=(const TensorData &tensorData)
 
     if (DenseMatHost)
     {
-        Util::MemoryManager::AddReferenceHost(DenseMatHost);
+        Util::MemoryManager::AddReferenceHost(
+            static_cast<void *>(DenseMatHost));
     }
     if (DenseMatCuda)
     {
-        Util::MemoryManager::AddReferenceCuda(DenseMatCuda, m_device.GetID());
+        Util::MemoryManager::AddReferenceCuda(static_cast<void *>(DenseMatCuda),
+                                              m_device.GetID());
     }
 
     return *this;
@@ -363,7 +367,7 @@ void TensorData::m_freeHost()
     }
     else if (DenseMatHost)
     {
-        Util::MemoryManager::DeReferenceHost(DenseMatHost);
+        Util::MemoryManager::DeReferenceHost(static_cast<void *>(DenseMatHost));
         DenseTotalLengthHost = 0;
     }
 }
@@ -381,7 +385,8 @@ bool TensorData::m_freeCuda()
     else if (DenseMatCuda)
     {
         //         Compute::Cuda::CudaFree((void *)DenseMatCuda);
-        Util::MemoryManager::DeReferenceCuda(DenseMatCuda, m_device.GetID());
+        Util::MemoryManager::DeReferenceCuda(static_cast<void *>(DenseMatCuda),
+                                             m_device.GetID());
         DenseTotalLengthCuda = 0;
     }
 
@@ -416,7 +421,8 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
 
         PaddedHostColSize = paddedColumnSize;
         DenseTotalLengthHost = totalSize;
-        DenseMatHost = Util::MemoryManager::GetMemoryHost(totalSize);
+        DenseMatHost = static_cast<float *>(
+            Util::MemoryManager::GetMemoryHost(totalSize * sizeof(float)));
     }
 }
 
@@ -435,11 +441,8 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
     else
     {
         size_t totalSize = TensorShape.Size() * batchSize;
-        //        DenseTotalLengthCuda = totalSize;
-        //                Compute::Cuda::CudaMalloc((void **)&DenseMatCuda,
-        //                                          totalSize * sizeof(float));
-        DenseMatCuda =
-            Util::MemoryManager::GetMemoryCuda(totalSize, m_device.GetID());
+        DenseMatCuda = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+            totalSize * sizeof(float), m_device.GetID()));
     }
 }
 
