@@ -60,6 +60,60 @@ void DeepFreeSparseCuda(SparseMatrix* cudaTarget, int deviceId)
 void ConvertDenseToSparseHost(SparseMatrix* dst, float* src, size_t numRows,
                               size_t numCols, size_t numMatrices)
 {
+    const auto matrixSize = numRows * numCols;
+    for (size_t matrixIdx = 0; matrixIdx < numMatrices; matrixIdx++)
+    {
+        size_t nnz = 0;
+        dst[matrixIdx].ROW[0] = 0;
+        for (size_t rowIdx = 0; rowIdx < numRows; ++rowIdx)
+        {
+            for (size_t colIdx = 0; colIdx < numCols; ++colIdx)
+            {
+                if (src[matrixIdx * matrixSize + rowIdx] != 0)
+                {
+                    dst[matrixIdx].V[nnz] =
+                        src[matrixIdx * matrixSize + rowIdx * numRows + colIdx];
+                    dst[matrixIdx].COL[nnz] = colIdx;
+                    nnz++;
+                }
+            }
+            dst[matrixIdx].NNZ = nnz;
+            dst[matrixIdx].M = numRows;
+        }
+    }
+}
+
+void ConvertDenseToSparseCuda(SparseMatrix* dst, float* src, size_t numRows,
+                              size_t numCols, size_t numMatrices)
+{
+    
+}
+
+void ConvertSparseToDenseHost(float* dst, SparseMatrix* src, size_t numRows,
+                              size_t numCols, size_t numMatrices)
+{
+    const auto matrixSize = numRows * numCols;
+    for (size_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+    {
+        for (size_t rowIdx = 0; rowIdx < src[matrixIdx].M; ++rowIdx)
+        {
+            const auto sparseColIdxBegin = src[matrixIdx].ROW[rowIdx];
+            const auto sparseColIdxEnd = src[matrixIdx].ROW[rowIdx + 1];
+            for (auto sparseColIdx = sparseColIdxBegin;
+                 sparseColIdx < sparseColIdxEnd; ++sparseColIdx)
+            {
+                const auto denseColIdx = src[matrixIdx].ROW[sparseColIdx];
+                const auto value = src[matrixIdx].V[sparseColIdx];
+                dst[matrixIdx * matrixSize + rowIdx * numCols + denseColIdx] =
+                    value;
+            }
+        }
+    }
+}
+
+void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, size_t numRows,
+                              size_t numCols, size_t numMatrices)
+{
 }
 
 }  // namespace Motutapu::Compute

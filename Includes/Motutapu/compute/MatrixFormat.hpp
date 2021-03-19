@@ -25,11 +25,14 @@ void DeepFreeSparseCuda(SparseMatrix* cudaTarget, int deviceId);
 void ConvertDenseToSparseHost(SparseMatrix* dst, float* src, size_t numRows,
                               size_t numCols, size_t numMatrices);
 
-void ConvertDenseToSparseCuda(SparseMatrix* dst, float* src);
+void ConvertDenseToSparseCuda(SparseMatrix* dst, float* src, size_t numRows,
+                              size_t numCols, size_t numMatrices);
 
-void ConvertSparseToDenseHost(float* dst, SparseMatrix* src);
+void ConvertSparseToDenseHost(float* dst, SparseMatrix* src, size_t numRows,
+                              size_t numCols, size_t numMatrices);
 
-void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src);
+void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, size_t numRows,
+                              size_t numCols, size_t numMatrices);
 }  // namespace Motutapu::Compute
 
 #endif  // MOTUTAPU_MATRIXFORMAT_HPP
