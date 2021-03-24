@@ -12,13 +12,14 @@
 
 namespace Motutapu::Compute
 {
-void DeepAllocateSparseHost(SparseMatrix* target, size_t m, size_t nnz,
-                            size_t numMatrices);
+void DeepAllocateSparseHost(SparseMatrix** targetPtr, uint32_t m, uint32_t nnz,
+                            uint32_t numMatrices);
 
 void DeepFreeSparseHost(SparseMatrix* target);
 
-void DeepAllocateSparseCuda(SparseMatrix* cudaTarget, SparseMatrix* hostTarget,
-                            size_t numMatrices, int deviceId);
+void DeepAllocateSparseCuda(SparseMatrix** cudaTargetPtr,
+                            SparseMatrix* hostTarget, uint32_t numMatrices,
+                            int deviceId);
 
 void DeepFreeSparseCuda(SparseMatrix* cudaTarget, int deviceId);
 
@@ -33,6 +34,19 @@ void ConvertSparseToDenseHost(float* dst, SparseMatrix* src, size_t numRows,
 
 void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, size_t numRows,
                               size_t numCols, size_t numMatrices);
+
+//! Copies sparse matrix from device to host
+void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
+                            size_t numMatrices);
+//! Copies sparse matrix from host to device
+void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
+                            size_t numMatrices);
+
+void LaunchSparseGemm(SparseMatrix* A, SparseMatrix* B, uint32_t numMatrices,
+                      uint32_t numRows, uint32_t numCols, int deviceId);
+
+void AllocateGemm(SparseMatrix* Out, SparseMatrix* A, SparseMatrix* B);
+
 }  // namespace Motutapu::Compute
 
 #endif  // MOTUTAPU_MATRIXFORMAT_HPP

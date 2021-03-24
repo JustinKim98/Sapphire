@@ -48,11 +48,11 @@ __host__ void DeepCopyHostToGpu(SparseMatrix* deviceArray,
                                 SparseMatrix* hostArray, uint32_t size);
 
 //! Deep copies host matrix to Host from Gpu
-//! \param deviceArray : Target device array to copy
-//! \param hostArray : Source device array to copy from
+//! \param hostArray : Target device array to copy
+//! \param deviceArray : Source device array to copy from
 //! \param size : Number of sparse matrices
-__host__ void DeepCopyGpuToHost(SparseMatrix* deviceArray,
-                                SparseMatrix* hostArray, uint32_t size);
+__host__ void DeepCopyGpuToHost(SparseMatrix* hostArray,
+                                SparseMatrix* deviceArray, uint32_t size);
 
 //! Shallow Allocates Sparse matrix on the GPU 
 //! \param targetArray : The target array to allocate sparse matrix (Device)

@@ -7,18 +7,16 @@
 #ifndef MOTUTAPU_SPARSEMATRIX_HPP
 #define MOTUTAPU_SPARSEMATRIX_HPP
 
-#include <cstdlib>
+#include <cstdint>
 
-namespace Motutapu::Compute
-{
 struct SparseMatrix
 {
     float* V;
-    size_t* COL;
-    size_t* ROW;
-    size_t M;
-    size_t NNZ;
+    uint32_t* COL;
+    uint32_t* ROW;
+
+    uint32_t NNZ;
+    uint32_t M;
 };
-}  // namespace Motutapu::Compute
 
 #endif  // MOTUTAPU_SPARSEMATRIX_HPP

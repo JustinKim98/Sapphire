@@ -5,16 +5,16 @@
 // property of any third parties.
 
 #include <Motutapu/compute/cuda/CudaParams.cuh>
-#include <Motutapu/compute/cuda/sparse/SparseMatrix.cuh>
+#include <Motutapu/compute/cuda/sparse/Sparse.cuh>
 
 namespace Motutapu::Compute
 {
 __host__ void DeepAllocateSparseMatrix(SparseMatrix* cudaTarget, size_t m,
-                                         size_t nnz)
+                                       size_t nnz)
 {
     cudaMalloc(&cudaTarget->V, sizeof(float) * nnz);
-    cudaMalloc(&cudaTarget->COL, sizeof(size_t) * nnz);
-    cudaMalloc(&cudaTarget->ROW, sizeof(size_t) * m);
+    cudaMalloc(&cudaTarget->COL, sizeof(uint32_t) * nnz);
+    cudaMalloc(&cudaTarget->ROW, sizeof(uint32_t) * m);
     cudaTarget->M = m;
     cudaTarget->NNZ = nnz;
 }
@@ -36,6 +36,18 @@ __host__ void ShallowFreeSparseMatrix(SparseMatrix* target)
     cudaFree(&dest->V);
     cudaFree(&dest->COL);
     cudaFree(&dest->ROW);
+}
+
+__global__ void ConvertDenseToSparseKernel(SparseMatrix* dst, float* src,
+                                           uint32_t numRows, uint32_t numCols,
+                                           uint32_t numMatrices)
+{
+
+}
+
+__global__ void ConvertSparseToDenseKernel(float* dst, SparseMatrix* src,
+                                           uint32_t numMatrices)
+{
 }
 
 }  // namespace Motutapu::Compute

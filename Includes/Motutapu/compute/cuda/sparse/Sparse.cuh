@@ -7,7 +7,7 @@
 #ifndef MOTUTAPU_COMPUTE_SPARSEMATRIX_HPP
 #define MOTUTAPU_COMPUTE_SPARSEMATRIX_HPP
 
-#include <Motutapu/compute/SparseMatrix.hpp>
+#include <Motutapu/compute/Sparse.hpp>
 
 namespace Motutapu::Compute
 {
@@ -22,6 +22,20 @@ __host__ void ShallowFreeSparseMatrix(SparseMatrix* target);
 
 __host__ void DeepCopySparseMatrix(SparseMatrix* dest, SparseMatrix* src,
                                    uint32_t rowOffset);
+
+__host__ void ConvertDenseToSparse(SparseMatrix* dst, float* src,
+                                   uint32_t numRows, uint32_t numCols,
+                                   uint32_t numMatrices);
+
+__host__ void ConvertSparseToDense(float* dst, SparseMatrix* src,
+                                   uint32_t numMatrices);
+
+__global__ void ConvertDenseToSparseKernel(SparseMatrix* dst, float* src,
+                                           uint32_t numRows, uint32_t numCols,
+                                           uint32_t numMatrices);
+
+__global__ void ConvertSparseToDenseKernel(float* dst, SparseMatrix* src,
+                                           uint32_t numMatrices);
 
 //! Frees sparse matrix
 //! \param targetArray : target array to free
