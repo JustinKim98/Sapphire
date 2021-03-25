@@ -20,8 +20,20 @@ __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
 __global__ void CalculateLoadKernel(SparseMatrix* a, SparseMatrix* b,
                                     SparseMatrix* loadDist, size_t numMatrices);
 
-__host__ void CalculateRow(SparseMatrix* result, SparseMatrix* a,
-                           SparseMatrix* b, uint32_t rowNum);
+//! Launches sparse matrix multiplication kernel
+//! Each matrix is called simultaneously with streams
+__host__ void CalculateRow(SparseMatrix* unmergedSparseMatrixRow,
+                           SparseMatrix* a, SparseMatrix* b,
+                           SparseMatrix* loadDist, uint32_t matrixNum);
+
+//! Kernel for calculating sparse matrix
+//! Each block is responsible for one row
+//! Each thread will compute multiplications corresponding to one value in A's
+//! row
+__global__ void CalculateRowKernelRow(SparseMatrix* unmergedSparseMatrixRow,
+                                      SparseMatrix* a, SparseMatrix* b,
+                                      uint32_t maxSizePerValue,
+                                      uint32_t rowIdx);
 
 }  // namespace Motutapu::Compute
 

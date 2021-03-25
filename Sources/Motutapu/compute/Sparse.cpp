@@ -7,8 +7,8 @@
 #include <Motutapu/compute/Sparse.hpp>
 #include <Motutapu/compute/SparseMatrix.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
-#include <Motutapu/compute/cuda/sparse/CalculateLoad.cuh>
 #include <Motutapu/compute/cuda/sparse/MatrixManage.cuh>
+#include <Motutapu/compute/cuda/sparse/SparseGemm.cuh>
 #include <Motutapu/util/MemoryManager.hpp>
 
 namespace Motutapu::Compute

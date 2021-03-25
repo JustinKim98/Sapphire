@@ -19,4 +19,11 @@ struct SparseMatrix
     uint32_t M;
 };
 
+struct UnmergedSparseMatrixRow
+{
+    float* V;
+    uint32_t* COL;
+    uint32_t* ROW;
+};
+
 #endif  // MOTUTAPU_SPARSEMATRIX_HPP
