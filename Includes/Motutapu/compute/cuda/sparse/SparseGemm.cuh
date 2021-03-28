@@ -13,27 +13,46 @@
 namespace Motutapu::Compute
 {
 __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
-                            SparseMatrix* loadDist, size_t numMatrices);
+                            LoadDistMatrix* loadDist, size_t numMatrices);
 
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
-__global__ void CalculateLoadKernel(SparseMatrix* a, SparseMatrix* b,
-                                    SparseMatrix* loadDist, size_t numMatrices);
+__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist,
+                                    SparseMatrix* a, SparseMatrix* b,
+                                    size_t numMatrices);
 
 //! Launches sparse matrix multiplication kernel
 //! Each matrix is called simultaneously with streams
-__host__ void CalculateRow(SparseMatrix* unmergedSparseMatrixRow,
-                           SparseMatrix* a, SparseMatrix* b,
-                           SparseMatrix* loadDist, uint32_t matrixNum);
+//! \param c : input&output c
+//! \param a : input a
+//! \param b : input b
+//! \param loadDist : matrix containing load distribution. This function will
+//! change load distribution into stacked load distribution
+//! \param matrixNum : number of matrices in a batch \param nnzPerBlock : number
+//! of maximum non zeros per block
+//! \param nnzPerBlock : Maximum number of non zeros allowed for each block.
+//! This parameter also denotes size of (value, colIdx) tuples allocated for
+//! each block. This parameter must be power of 2
+__host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
+                            const SparseMatrix* b, LoadDistMatrix* loadDist,
+                            uint32_t matrixNum);
 
 //! Kernel for calculating sparse matrix
 //! Each block is responsible for one row
 //! Each thread will compute multiplications corresponding to one value in A's
 //! row
-__global__ void CalculateRowKernelRow(SparseMatrix* unmergedSparseMatrixRow,
-                                      SparseMatrix* a, SparseMatrix* b,
-                                      uint32_t maxSizePerValue,
-                                      uint32_t rowIdx);
+__global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
+                                   SparseMatrix* b,
+                                   LoadDistMatrix* stackedLoadDist,
+                                   uint32_t rowIdx,
+                                   uint32_t sparseColIndexBegin,
+                                   uint32_t sparseColIndexEnd, uint32_t nnz);
+
+__device__ void Sort(float* tempValueColIdxPair, uint32_t* tempIdxArray,
+                     uint32_t numElements);
+
+__device__ void Merge(float* tempValueColIdxPair, uint32_t* tempIdxArray,
+                      uint32_t numElements);
 
 }  // namespace Motutapu::Compute
 

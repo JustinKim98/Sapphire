@@ -19,6 +19,16 @@ struct SparseMatrix
     uint32_t M;
 };
 
+struct LoadDistMatrix
+{
+    uint32_t* Load;
+    uint32_t* COL;
+    uint32_t* ROW;
+
+    uint32_t NNZ;
+    uint32_t M;
+};
+
 struct UnmergedSparseMatrixRow
 {
     float* V;
