@@ -4,16 +4,17 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <stdint-gcc.h>
 #include <Motutapu/compute/cuda/sparse/SparseGemm.cuh>
 
 #define MAX_NNZ_PER_BLOCK_LARGE 1024
 #define MAX_NNZ_PER_BLOCK_SMALL 512
+#define GEMM_BLOCK_NUM 16
 
 namespace Motutapu::Compute
 {
 __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
-                            LoadDistMatrix* loadDist,
-                            size_t numMatrices)
+                            LoadDistMatrix* loadDist, size_t numMatrices)
 {
     const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
@@ -22,8 +23,7 @@ __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        CalculateLoadKernel<<<blockDim, threadDim>>>(loadDist, a, b,
-                                                     firstLaunchSize);
+        CalculateLoadKernel<<<blockDim, threadDim>>>(loadDist, a, b);
     if (numMatrices > firstLaunchSize)
     {
         const SparseMatrix* offsetA = a + firstLaunchSize;
@@ -32,30 +32,110 @@ __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
 
         const auto secondLaunchSize = numMatrices - firstLaunchSize;
 
-        CalculateLoadKernel<<<secondLaunchSize, threadDim>>>(
-            loadDistOffset, offsetA, offsetB, secondLaunchSize);
+        CalculateLoadKernel<<<secondLaunchSize, threadDim>>>(loadDistOffset,
+                                                             offsetA, offsetB);
     }
 }
 
-__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist,
-                                    SparseMatrix* a, SparseMatrix* b,
-                                    size_t numMatrices)
+//! Todo : unify calculate Load kernel and Calculate Gemm
+//! Should be executed using single block
+__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
+                                    SparseMatrix* b)
 {
-    for (auto sparseMatrixIdx = gridIdx.x; sparseMatrixIdx < numMatrices;
-         sparseMatrixIdx += gridDim.x)
+    __shared__ uint32_t blockStartAddr[GEMM_BLOCK_NUM];
+    //! Stores data in the format of (ROW, COL)
+    //! Size must be larger than 2*(Number of required blocks + 1)
+
+    uint32_t idx = 0;
+    for (auto rowIdx = threadIdx.x; rowIdx < M; rowIdx += blockDim.x)
     {
-        for (auto rowIdx = blockIdx.x; rowIdx < M; rowIdx += blockDim.x)
+        loadDist->ROW[rowIdx] = a->ROW[rowIdx];
+        uint32_t rowLoad = 0;
+        for (auto sparseColIdx = a->ROW[rowIdx];
+             sparseColIdx < a->ROW[rowIdx + 1]; ++sparseColIdx)
         {
-            loadDist->ROW[rowIdx] = a->ROW[rowIdx];
-            for (auto sparseColIdx = a->ROW[rowIdx];
-                 sparseColIdx < a->ROW[rowIdx + 1]; ++sparseColIdx)
+            const auto colIdx = a->COL[sparseColIdx];
+            const auto numElemPerRowB = b->Row[colIdx + 1] - b->ROW[colIdx];
+            loadDist->Load[sparseColIdx] = numElemPerRowB;
+            loadDist->COL[sparseColIdx] = colIdx;
+
+            if (sparseColIdx != a->ROW[rowIdx])
             {
-                const auto colIdx = a->COL[sparseColIdx];
-                const auto numElemPerRowB = b->Row[colIdx + 1] - b->ROW[colIdx];
-                loadDist->Load[sparseColIdx] = numElemPerRowB;
-                loadDist->COL[sparseColIdx] = colIdx;
+                //! Load will stack as row advances
+                loadDist->Load[sparseColIdx] +=
+                    loadDist->Load[sparseColIdx - 1];
             }
+
+            if (rowLoad + numElemPerRowB > MAX_NNZ_PER_BLOCK_LARGE)
+            {
+                blockStartAddr[idx] = rowIdx;
+                blockStartAddr[idx + 1] = colIdx;
+                idx += 2;
+                rowLoad = 0;
+            }
+            rowLoad += numElemPerRowB;
         }
+    }
+
+    __syncthreads();
+
+    if (threadIdx.x < idx / 2)
+    {
+        //! todo : Launch kernel Per block
+        //! todo : How will we allocate the memory for output
+        //! when we don't know how large it will be?
+        //! Allocate the output with NNZ per ROW
+        CalculateRowKernel<<<1, 32>>>(
+            nullptr, nullptr, a, b, loadDist, blockStartAddr[threadIdx.x],
+            blockStartAddr[threadIdx.x + 1], blockStartAddr[threadIdx.x + 2]);
+    }
+}
+
+__global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
+                                   SparseMatrix* b,
+                                   LoadDistMatrix* stackedLoadDist,
+                                   uint32_t rowIdx,
+                                   uint32_t sparseColIndexBegin,
+                                   uint32_t sparseColIndexEnd)
+{
+    //! Stores pair of computer value and pair of index
+    __shared__ float tempValueArray[MAX_NNZ_PER_BLOCK_LARGE];
+    __shared__ uint32_t tempIdxArray[MAX_NNZ_PER_BLOCK_LARGE];
+
+    const auto sparseColIdxOffset = threadIdx.x;
+    const auto sparseColIdxA = sparseColIdxBegin + sparseColIdxOffset;
+
+    const auto colIdxA = a->COL[sparseColIdxA];
+    const auto sparseColIdxBBegin = b->ROW[colIdxA];
+    const auto sparseColIdxBEnd = b->ROW[colIdxA + 1];
+    const auto nnz = stackedLoadDist->Load->V[sparseColIndexEnd - 1];
+
+    if (sparseColIdxA < sparseColIdxAEnd)
+    {
+        for (uint32_t sparseColIdxB = sparseColIdxBBegin;
+             sparseColIdxB < sparseColIdxBEnd, ++sparseColIdxB)
+        {
+            const auto unmergedSparseRowIdx =
+                stackedLoadDist->Load[sparseColIdxA] + sparseColIdxB -
+                sparseColIdxBBegin;
+
+            tempValueArray[unmergedSparseRowIdx] =
+                a->V[sparseColIdxA] * b->V[sparseColIdxB];
+            tempIdxArray[unmergedSparseRowIdx] = b->COL[sparseColIdxB];
+        }
+    }
+
+    Sort(tempValueArray, tempIdxArray, nnz);
+    Merge(tempValueArray, tempIdxArray, nnz);
+
+    const auto NNZPerThread = (nnz / threadDim.x > 0) ? nnz / threadDim.x : 1;
+
+    for (uint32_t idx = NNZPerThread * threadIdx.x;
+         idx < nnz && idx < NNZPerThread * (threadIdx.x + 1); ++idx)
+    {
+        const auto tempIdx = MAX_NNZ_PER_BLOCK_LARGE - nnz + idx;
+        cV[idx] = tempValueArray[tempIdx];
+        cCOL[idx] = tempValueArray[tempIdx];
     }
 }
 
@@ -79,8 +159,7 @@ __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
                 {
                     CalculateRowKernel<<<1, requiredThreads>>>(
                         c + matrixIdx, nullptr, 0, a + matrixIdx, b + matrixIdx,
-                        loadDist + matrixIdx, rowIdx, prevSparseColIdx,
-                        sparseColIdx, nnz);
+                        loadDist + matrixIdx, rowIdx, prevSparseColIdx);
                     prevSparseColIdx = sparseColIdx;
                     nnz = 0;
                 }
@@ -96,60 +175,10 @@ __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
             {
                 CalculateRowKernel<<<1, requiredThreads>>>(
                     c + matrixIdx, nullptr, 0, a + matrixIdx, b + matrixIx,
-                    loadDist + matrixIdx, rowIdx, prevSparseColIdx,
-                    sparseColIdx, nnz);
+                    loadDist + matrixIdx, rowIdx, prevSparseColIdx);
                 prevSparseColIdx = sparseColIdx;
             }
         }
-    }
-}
-
-__global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
-                                   SparseMatrix* b,
-                                   LoadDistMatrix* stackedLoadDist,
-                                   uint32_t rowIdx,
-                                   uint32_t sparseColIndexBegin,
-                                   uint32_t sparseColIndexEnd, uint32_t nnz)
-{
-    //! Stores pair of computer value and pair of index
-    __shared__ float tempValueArray[MAX_NNZ_PER_BLOCK_LARGE];
-    __shared__ uint32_t tempIdxArray[MAX_NNZ_PER_BLOCK_LARGE];
-
-    const auto sparseColIdxOffset = threadIdx.x;
-    const auto sparseColIdxA = sparseColIdxBegin + sparseColIdxOffset;
-
-    const auto colIdxA = a->COL[sparseColIdxA];
-    const auto sparseColIdxBBegin = b->ROW[colIdxA];
-    const auto sparseColIdxBEnd = b->ROW[colIdxA + 1];
-
-    if (sparseColIdxA < sparseColIdxAEnd)
-    {
-        for (uint32_t sparseColIdxB = sparseColIdxBBegin;
-             sparseColIdxB < sparseColIdxBEnd, ++sparseColIdxB)
-        {
-            const auto unmergedSparseRowIdx =
-                stackedLoadDist->Load[sparseColIdxA] + sparseColIdxB -
-                sparseColIdxBBegin;
-
-            tempValueArray[unmergedSparseRowIdx * 2] =
-                a->V[sparseColIdxA] * b->V[sparseColIdxB];
-            tempValueArray[unmergedSparseRowIdx * 2 + 1] =
-                __uint2float_rd(b->COL[sparseColIdxB]);
-        }
-    }
-
-    Sort(tempValueArray, tempIdxArray, MAX_NNZ_PER_BLOCK_LARGE);
-    Merge(tempValueArray, tempIdxArray, MAX_NNZ_PER_BLOCK_LARGE);
-
-    const auto numNNZPerThread =
-        (nnz / threadDim.x > 0) ? nnz / threadDim.x : 1;
-
-    for (uint32_t idx = numNNZPerThread * threadIdx.x;
-         idx < nnz && idx < numNNZPerThread * (threadIdx.x + 1); ++idx)
-    {
-        const auto tempIdx = MAX_NNZ_PER_BLOCK_LARGE - nnz + idx;
-        cV[idx] = tempValueArray[tempIdx];
-        cCOL[idx] = tempValueArray[tempIdx];
     }
 }
 

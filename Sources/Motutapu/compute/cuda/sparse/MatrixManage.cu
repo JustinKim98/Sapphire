@@ -90,7 +90,7 @@
 //    }
 //}
 //
-//__global__ void DeepCopySparseMatrixOnGpu(SparseMatrix* destArray,
+//__global__ void DeepCopyGpuToGpu(SparseMatrix* destArray,
 //                                          SparseMatrix* srcArray,
 //                                          uint32_t size)
 //{

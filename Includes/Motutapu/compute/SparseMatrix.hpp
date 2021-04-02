@@ -9,31 +9,21 @@
 
 #include <cstdint>
 
-struct SparseMatrix
+struct __attribute__((__packed__)) SparseMatrix
 {
+    uint32_t NNZ;
+    uint32_t M;
     float* V;
     uint32_t* COL;
     uint32_t* ROW;
-
-    uint32_t NNZ;
-    uint32_t M;
 };
 
-struct LoadDistMatrix
+struct __attribute__((__packed__)) LoadDistMatrix
 {
+    uint32_t NNZ;
+    uint32_t M;
     uint32_t* Load;
     uint32_t* COL;
     uint32_t* ROW;
-
-    uint32_t NNZ;
-    uint32_t M;
 };
-
-struct UnmergedSparseMatrixRow
-{
-    float* V;
-    uint32_t* COL;
-    uint32_t* ROW;
-};
-
 #endif  // MOTUTAPU_SPARSEMATRIX_HPP

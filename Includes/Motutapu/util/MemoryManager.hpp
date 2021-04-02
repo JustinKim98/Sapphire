@@ -50,8 +50,13 @@ struct MemoryChunk
 class MemoryManager
 {
  public:
+    //! Allocates memory on device
+    //! \param size : Allocation size in bytes
+    //! \param deviceId : device ID to allocate the memory
     static void* GetMemoryCuda(size_t size, int deviceId);
 
+    //! Allocates memory on host
+    //! \param size : Allocation size in bytes
     static void* GetMemoryHost(size_t byteSize);
 
     static void AddReferenceCuda(void* ptr, int deviceId);

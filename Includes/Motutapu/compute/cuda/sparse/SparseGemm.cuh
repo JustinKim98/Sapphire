@@ -7,8 +7,8 @@
 #ifndef MOTUTAPU_COMPUTE_CALCULATELOAD_CUH
 #define MOTUTAPU_COMPUTE_CALCULATELOAD_CUH
 
-#include <Motutapu/compute/Sparse.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/sparse/Sparse.hpp>
 
 namespace Motutapu::Compute
 {
@@ -17,9 +17,8 @@ __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
 
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
-__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist,
-                                    SparseMatrix* a, SparseMatrix* b,
-                                    size_t numMatrices);
+__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
+                                    SparseMatrix* b);
 
 //! Launches sparse matrix multiplication kernel
 //! Each matrix is called simultaneously with streams
@@ -46,7 +45,7 @@ __global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
                                    LoadDistMatrix* stackedLoadDist,
                                    uint32_t rowIdx,
                                    uint32_t sparseColIndexBegin,
-                                   uint32_t sparseColIndexEnd, uint32_t nnz);
+                                   uint32_t sparseColIndexEnd);
 
 __device__ void Sort(float* tempValueColIdxPair, uint32_t* tempIdxArray,
                      uint32_t numElements);

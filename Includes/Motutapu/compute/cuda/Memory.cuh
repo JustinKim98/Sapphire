@@ -17,19 +17,16 @@ __host__ __device__ bool CudaMalloc(void** ptr, unsigned int size);
 
 __host__ __device__ bool CudaFree(void* ptr);
 
-__host__ __device__ bool CudaFree(void* ptr);
+__host__ bool CopyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size);
 
-__host__ bool MemcpyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size);
+__host__ bool CopyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
 
-__host__ bool MemcpyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
+__host__ void CopyGpuToGpu(void* dst, const void* src, unsigned int size);
 
-__host__ void MemcpyGpuToGpu(float* dest, const float* src, unsigned int size);
+__host__ void CopyGpuToGpuAsync(float* dst, const float* src,
+                                unsigned int size, cudaStream_t stream);
 
-__host__ void MemcpyGpuToGpuAsync(float* dest, const float* src,
-                                  unsigned int size, cudaStream_t stream);
-
-__host__ void MemcpyGpuToGpuBroadcast(float* dest, const float* src,
-                                      unsigned int size,
-                                      unsigned int srcStride);
+__host__ void CopyGpuToGpuBroadcast(float* dst, const float* src,
+                                    unsigned int size, unsigned int srcStride);
 }  // namespace Motutapu::Compute::Cuda
 #endif

@@ -203,8 +203,8 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
         }
         else
         {
-            Compute::Cuda::MemcpyGpuToGpu(dest.DenseMatCuda, src.DenseMatCuda,
-                                          src.DenseTotalLengthCuda);
+            Compute::Cuda::CopyGpuToGpu(dest.DenseMatCuda, src.DenseMatCuda,
+                                        src.DenseTotalLengthCuda);
             dest.DenseTotalLengthCuda = src.DenseTotalLengthCuda;
         }
     }
@@ -266,8 +266,8 @@ void TensorData::DeepCopy(TensorData &dst, const TensorData &src)
     auto matrixType = dst.GetType();
 
     if (deviceType == DeviceType::CUDA && matrixType == Type::Dense)
-        Compute::Cuda::MemcpyGpuToGpu(dst.DenseMatCuda, src.DenseMatCuda,
-                                      dst.DenseTotalLengthCuda);
+        Compute::Cuda::CopyGpuToGpu(dst.DenseMatCuda, src.DenseMatCuda,
+                                    dst.DenseTotalLengthCuda);
 
     else if (deviceType == DeviceType::CUDA && matrixType == Type::Sparse)
         throw std::runtime_error("DeepCopy - Not implemented");
@@ -312,8 +312,8 @@ void TensorData::m_toGpu(const TensorData &tensorData)
                 tensorData.DenseMatHost + rowIdx * tensorData.PaddedHostColSize;
             const size_t bytesToCopy = colSize * sizeof(float);
 
-            if (!Compute::Cuda::MemcpyHostToGpu((void *)cudaPtr,
-                                                (void *)hostPtr, bytesToCopy))
+            if (!Compute::Cuda::CopyHostToGpu((void *)cudaPtr, (void *)hostPtr,
+                                              bytesToCopy))
             {
                 throw std::runtime_error("m_toGpu - cudaMemCopy failed");
             }
@@ -349,8 +349,8 @@ void TensorData::m_toHost(const TensorData &tensorData)
                 tensorData.DenseMatHost + rowIdx * tensorData.PaddedHostColSize;
             const size_t bytesToCopy = colSize * sizeof(float);
 
-            if (!Compute::Cuda::MemcpyGpuToHost((void *)hostPtr,
-                                                (void *)cudaPtr, bytesToCopy))
+            if (!Compute::Cuda::CopyGpuToHost((void *)hostPtr, (void *)cudaPtr,
+                                              bytesToCopy))
             {
                 throw std::runtime_error("m_toGpu - cudaMemCopy failed");
             }

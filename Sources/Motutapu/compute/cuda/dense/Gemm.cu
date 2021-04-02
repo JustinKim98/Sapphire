@@ -34,7 +34,7 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
     float* ptrC = C;
     float* ptrOut = out;
 
-    MemcpyGpuToGpu(ptrOut, ptrC, totalSize);
+    CopyGpuToGpu(ptrOut, ptrC, totalSize);
 
     auto status = cublasGemmStridedBatchedEx(
         *handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, ptrB, CUDA_R_32F, N,
@@ -67,10 +67,10 @@ __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
 
     if (broadcastC)
     {
-        MemcpyGpuToGpuBroadcast(out, C, M * N * batchSize, M * N);
+        CopyGpuToGpuBroadcast(out, C, M * N * batchSize, M * N);
     }
     else
-        MemcpyGpuToGpu(out, C, M * N * batchSize);
+        CopyGpuToGpu(out, C, M * N * batchSize);
 
     cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
                                &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
