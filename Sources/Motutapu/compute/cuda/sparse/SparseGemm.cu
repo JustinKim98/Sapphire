@@ -4,17 +4,17 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <stdint-gcc.h>
 #include <Motutapu/compute/cuda/sparse/SparseGemm.cuh>
+#include <cstdlib>
 
 #define MAX_NNZ_PER_BLOCK_LARGE 1024
 #define MAX_NNZ_PER_BLOCK_SMALL 512
 #define GEMM_BLOCK_NUM 16
 
-namespace Motutapu::Compute
+namespace Motutapu::Compute::Sparse
 {
-__host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
-                            LoadDistMatrix* loadDist, size_t numMatrices)
+__host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
+                   LoadDistMatrix* loadDist, size_t numMatrices)
 {
     const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
@@ -23,7 +23,7 @@ __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        CalculateLoadKernel<<<blockDim, threadDim>>>(loadDist, a, b);
+        GemmKernel<<<blockDim, threadDim>>>(loadDist, output, a, b);
     if (numMatrices > firstLaunchSize)
     {
         const SparseMatrix* offsetA = a + firstLaunchSize;
@@ -32,68 +32,99 @@ __host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
 
         const auto secondLaunchSize = numMatrices - firstLaunchSize;
 
-        CalculateLoadKernel<<<secondLaunchSize, threadDim>>>(loadDistOffset,
-                                                             offsetA, offsetB);
+        GemmKernel<<<secondLaunchSize, threadDim>>>(loadDistOffset, output,
+                                                    offsetA, offsetB);
     }
 }
 
 //! Todo : unify calculate Load kernel and Calculate Gemm
 //! Should be executed using single block
-__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
-                                    SparseMatrix* b)
+__global__ void GemmKernel(LoadDistMatrix* loadDist, SparseMatrix* output,
+                           SparseMatrix* a, SparseMatrix* b)
 {
-    __shared__ uint32_t blockStartAddr[GEMM_BLOCK_NUM];
-    //! Stores data in the format of (ROW, COL)
-    //! Size must be larger than 2*(Number of required blocks + 1)
+    __shared__ uint32_t* nnzTotal;
+
+    uint32_t rowStart[GEMM_BLOCK_NUM];
+    uint32_t colStart[GEMM_BLOCK_NUM];
+    //! Size must be larger than Number of required blocks per row + 1
+
+    const auto matrixIdx = blockIdx.x;
+    const auto rowIdxBegin = threadIdx.x;
+    const auto rowIdxStride = blockDim.x;
+
+    SparseMatrix* curA = a + matrixIdx;
+    SparseMatrix* curB = b + matrixIdx;
+    SparseMatrix* curOutput = output + matrixIdx;
+    LoadDistMatrix* curLoadDist = loadDist + matrixIdx;
+
+    if (threadIdx.x == 0)
+    {
+        *nnzTotal = 0;
+    }
 
     uint32_t idx = 0;
-    for (auto rowIdx = threadIdx.x; rowIdx < M; rowIdx += blockDim.x)
+    for (auto rowIdxA = rowIdxBegin rowIdxA < M; rowIdxA += rowIdxStride)
     {
-        loadDist->ROW[rowIdx] = a->ROW[rowIdx];
-        uint32_t rowLoad = 0;
-        for (auto sparseColIdx = a->ROW[rowIdx];
-             sparseColIdx < a->ROW[rowIdx + 1]; ++sparseColIdx)
+        auto sparseColIdxA = curA->ROW[rowIdxA];
+        loadDist->ROW[rowIdxA] = curA->ROW[rowIdxA];
+        rowStart[idx] = rowIdxA;
+        colStart[idx] = sparseColIdxA;
+        uint32_t curLoad = 0;
+        uint32_t nnzPerRow = 0;
+        for (; sparseColIdxA < curA->ROW[rowIdxA + 1]; ++sparseColIdxA)
         {
-            const auto colIdx = a->COL[sparseColIdx];
-            const auto numElemPerRowB = b->Row[colIdx + 1] - b->ROW[colIdx];
-            loadDist->Load[sparseColIdx] = numElemPerRowB;
-            loadDist->COL[sparseColIdx] = colIdx;
+            const auto colIdxA = curA->COL[sparseColIdxA];
+            const auto numElemPerRowB =
+                curB->Row[colIdxA + 1] - curB->ROW[colIdxA];
+            curLoadDist->Load[sparseColIdxA] = numElemPerRowB;
+            curLoadDist->COL[sparseColIdxA] = colIdxA;
 
-            if (sparseColIdx != a->ROW[rowIdx])
+            if (sparseColIdxA != a->ROW[rowIdxA])
             {
                 //! Load will stack as row advances
-                loadDist->Load[sparseColIdx] +=
-                    loadDist->Load[sparseColIdx - 1];
+                curLoadDist->Load[sparseColIdxA] +=
+                    curLoadDist->Load[sparseColIdxA - 1];
             }
 
-            if (rowLoad + numElemPerRowB > MAX_NNZ_PER_BLOCK_LARGE)
+            if (curLoad + numElemPerRowB > MAX_NNZ_PER_BLOCK_LARGE)
             {
-                blockStartAddr[idx] = rowIdx;
-                blockStartAddr[idx + 1] = colIdx;
-                idx += 2;
-                rowLoad = 0;
+                idx += 1;
+                rowStart[idx] = rowIdxA;
+                colStart[idx] = sparseColIdxA;
+                curLoad = 0;
             }
-            rowLoad += numElemPerRowB;
+            curLoad += numElemPerRowB;
+            nnzPerRow += numElemPerRowB;
         }
+
+        atomicAdd_block(nnzTotal, nnzPerRow);
     }
 
     __syncthreads();
 
-    if (threadIdx.x < idx / 2)
+    if (threadIdx.x == 0)
     {
-        //! todo : Launch kernel Per block
-        //! todo : How will we allocate the memory for output
-        //! when we don't know how large it will be?
-        //! Allocate the output with NNZ per ROW
-        CalculateRowKernel<<<1, 32>>>(
-            nullptr, nullptr, a, b, loadDist, blockStartAddr[threadIdx.x],
-            blockStartAddr[threadIdx.x + 1], blockStartAddr[threadIdx.x + 2]);
+        output->NNZ = *nnzTotal;
+        output->M = a->M;
+        output->N = b->N;
+        cudaMalloc(output->V, sizeof(float) * (*nnzTotal));
+        cudaMalloc(output->COL, sizeof(uint32_t) * (*nnzTotal));
+        cudaMalloc(output->ROW, sizeof(uint32_t) * (a->M + 1));
+    }
+
+    __syncthreads();
+
+    idx = 0;
+    for (auto rowIdxA = rowIdxBegin rowIdxA < M; rowIdxA += rowIdxStride)
+    {
+        CalculateRowKernel<<<1, 32>>>(curOut, curA, curB, curLoadDist, rowIdxA,
+                                      colStart[idx], curStart[idx + 1]);
+        idx += 1;
     }
 }
 
-__global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
-                                   SparseMatrix* b,
-                                   LoadDistMatrix* stackedLoadDist,
+__global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
+                                   SparseMatrix* b, LoadDistMatrix* loadDist,
                                    uint32_t rowIdx,
                                    uint32_t sparseColIndexBegin,
                                    uint32_t sparseColIndexEnd)
@@ -108,16 +139,16 @@ __global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
     const auto colIdxA = a->COL[sparseColIdxA];
     const auto sparseColIdxBBegin = b->ROW[colIdxA];
     const auto sparseColIdxBEnd = b->ROW[colIdxA + 1];
-    const auto nnz = stackedLoadDist->Load->V[sparseColIndexEnd - 1];
+    const auto nnz = loadDist->Load->V[sparseColIndexEnd - 1];
 
     if (sparseColIdxA < sparseColIdxAEnd)
     {
         for (uint32_t sparseColIdxB = sparseColIdxBBegin;
              sparseColIdxB < sparseColIdxBEnd, ++sparseColIdxB)
         {
-            const auto unmergedSparseRowIdx =
-                stackedLoadDist->Load[sparseColIdxA] + sparseColIdxB -
-                sparseColIdxBBegin;
+            const auto unmergedSparseRowIdx = loadDist->Load[sparseColIdxA] +
+                                              sparseColIdxB -
+                                              sparseColIdxBBegin;
 
             tempValueArray[unmergedSparseRowIdx] =
                 a->V[sparseColIdxA] * b->V[sparseColIdxB];
@@ -134,14 +165,16 @@ __global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
          idx < nnz && idx < NNZPerThread * (threadIdx.x + 1); ++idx)
     {
         const auto tempIdx = MAX_NNZ_PER_BLOCK_LARGE - nnz + idx;
-        cV[idx] = tempValueArray[tempIdx];
-        cCOL[idx] = tempValueArray[tempIdx];
+        out->V[idx] = tempValueArray[tempIdx];
+        out->COL[idx] = tempValueArray[tempIdx];
     }
 }
 
-__host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
-                            const SparseMatrix* b, LoadDistMatrix* loadDist,
-                            uint32_t matrixNum)
+[[maybe_unused]] __host__ void CalculateGemm(SparseMatrix* c,
+                                             const SparseMatrix* a,
+                                             const SparseMatrix* b,
+                                             LoadDistMatrix* loadDist,
+                                             uint32_t matrixNum)
 {
     for (uint32_t matrixIdx = 0; matrixIdx < matrixNum; ++matrixIdx)
     {
@@ -158,7 +191,7 @@ __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
                     MAX_NNZ_PER_BLOCK_LARGE)
                 {
                     CalculateRowKernel<<<1, requiredThreads>>>(
-                        c + matrixIdx, nullptr, 0, a + matrixIdx, b + matrixIdx,
+                        nullptr, 0, a + matrixIdx, b + matrixIdx,
                         loadDist + matrixIdx, rowIdx, prevSparseColIdx);
                     prevSparseColIdx = sparseColIdx;
                     nnz = 0;
@@ -174,7 +207,7 @@ __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
             else if (nnz > MAX_NNZ_PER_BLOCK_SMALL)
             {
                 CalculateRowKernel<<<1, requiredThreads>>>(
-                    c + matrixIdx, nullptr, 0, a + matrixIdx, b + matrixIx,
+                    nullptr, 0, a + matrixIdx, b + matrixIx,
                     loadDist + matrixIdx, rowIdx, prevSparseColIdx);
                 prevSparseColIdx = sparseColIdx;
             }
@@ -182,4 +215,4 @@ __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
     }
 }
 
-}  // namespace Motutapu::Compute
+}  // namespace Motutapu::Compute::Sparse

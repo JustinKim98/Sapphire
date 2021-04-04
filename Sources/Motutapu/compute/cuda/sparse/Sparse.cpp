@@ -542,7 +542,7 @@ void LaunchSparseGemm(SparseMatrix* A, SparseMatrix* B, uint32_t numMatrices,
     DeepAllocateLoadDistCuda(&loadDiffCuda, loadDiffHost, numMatrices,
                              deviceId);
 
-    CalculateLoad(A, B, loadDiffCuda, numMatrices);
+    Gemm(nullptr, A, B, loadDiffCuda, numMatrices);
 
     //! todo : Avoid copying load data from GPU to Host
     DeepCopyHostToGpu(loadDiffHost, loadDiffCuda, numMatrices, 0);

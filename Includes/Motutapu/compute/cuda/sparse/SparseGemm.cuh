@@ -10,15 +10,26 @@
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/compute/cuda/sparse/Sparse.hpp>
 
-namespace Motutapu::Compute
+namespace Motutapu::Compute::Sparse
 {
-__host__ void CalculateLoad(SparseMatrix* a, SparseMatrix* b,
-                            LoadDistMatrix* loadDist, size_t numMatrices);
+//! Calculates Gemm by launching GemmKernel on the GPU
+//! \param output : Array of output sparse matrices. output must be shallow
+//! allocated.
+//! \param a : Array of sparse matrix for operand a. Must be dense
+//! allocated
+//! \param b : Array of sparse matrix for operand b. Must be dense
+//! allocated
+//! \param loadDist : array of load distribution matrix. Must be dense
+//! allocated
+//! \param numMatrices : number of matrices to compute Gemm
+__host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
+                   LoadDistMatrix* loadDist, size_t numMatrices);
 
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
-__global__ void CalculateLoadKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
-                                    SparseMatrix* b);
+
+__global__ void GemmKernel(LoadDistMatrix* loadDist, SparseMatrix* output,
+                           SparseMatrix* a, SparseMatrix* b);
 
 //! Launches sparse matrix multiplication kernel
 //! Each matrix is called simultaneously with streams
@@ -40,9 +51,9 @@ __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
 //! Each block is responsible for one row
 //! Each thread will compute multiplications corresponding to one value in A's
 //! row
-__global__ void CalculateRowKernel(float* cV, uint32_t* cCOL, SparseMatrix* a,
-                                   SparseMatrix* b,
-                                   LoadDistMatrix* stackedLoadDist,
+
+__global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
+                                   SparseMatrix* b, LoadDistMatrix* loadDist,
                                    uint32_t rowIdx,
                                    uint32_t sparseColIndexBegin,
                                    uint32_t sparseColIndexEnd);
@@ -53,6 +64,6 @@ __device__ void Sort(float* tempValueColIdxPair, uint32_t* tempIdxArray,
 __device__ void Merge(float* tempValueColIdxPair, uint32_t* tempIdxArray,
                       uint32_t numElements);
 
-}  // namespace Motutapu::Compute
+}  // namespace Motutapu::Compute::Sparse
 
 #endif  // MOTUTAPU_CALCULATELOAD_CUH

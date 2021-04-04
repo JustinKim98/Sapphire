@@ -13,6 +13,7 @@ struct __attribute__((__packed__)) SparseMatrix
 {
     uint32_t NNZ;
     uint32_t M;
+    uint32_t N;
     float* V;
     uint32_t* COL;
     uint32_t* ROW;
