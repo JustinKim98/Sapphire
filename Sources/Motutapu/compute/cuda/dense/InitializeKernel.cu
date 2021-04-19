@@ -9,7 +9,7 @@
 
 namespace Motutapu::Compute::Cuda::Dense
 {
-//! Size should be divisible by gridDim.x*blockDim.x
+//! ByteSize should be divisible by gridDim.x*blockDim.x
 //! Both block and thread should be in one dimension
 __global__ void NormalKernel(float* data, float mean, float sd,
                              unsigned int size, int seed)

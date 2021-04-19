@@ -23,6 +23,7 @@ struct __attribute__((__packed__)) LoadDistMatrix
 {
     uint32_t NNZ;
     uint32_t M;
+    uint32_t N;
     uint32_t* Load;
     uint32_t* COL;
     uint32_t* ROW;

@@ -12,7 +12,7 @@
 
 namespace Motutapu::Compute::Sparse
 {
-//! Calculates Gemm by launching GemmKernel on the GPU
+//! Calculates Gemm by launching LoadDistKernel on the GPU
 //! \param output : Array of output sparse matrices. output must be shallow
 //! allocated.
 //! \param a : Array of sparse matrix for operand a. Must be dense
@@ -25,11 +25,19 @@ namespace Motutapu::Compute::Sparse
 __host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
                    LoadDistMatrix* loadDist, size_t numMatrices);
 
+__host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
+                           LoadDistMatrix* loadDist, uint32_t* nnzArray,
+                           size_t numMatrices);
+
+__host__ void AllocateOutput(SparseMatrix* output, SparseMatrix* a,
+                             SparseMatrix* b, size_t numMatrices,
+                             const uint32_t* nnzArray);
+
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
 
-__global__ void GemmKernel(LoadDistMatrix* loadDist, SparseMatrix* output,
-                           SparseMatrix* a, SparseMatrix* b);
+__global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
+                               SparseMatrix* b, uint32_t* nnzArray);
 
 //! Launches sparse matrix multiplication kernel
 //! Each matrix is called simultaneously with streams
@@ -38,31 +46,25 @@ __global__ void GemmKernel(LoadDistMatrix* loadDist, SparseMatrix* output,
 //! \param b : input b
 //! \param loadDist : matrix containing load distribution. This function will
 //! change load distribution into stacked load distribution
-//! \param matrixNum : number of matrices in a batch \param nnzPerBlock : number
-//! of maximum non zeros per block
-//! \param nnzPerBlock : Maximum number of non zeros allowed for each block.
-//! This parameter also denotes size of (value, colIdx) tuples allocated for
-//! each block. This parameter must be power of 2
+//! \param numMatrices : number of matrices in a batch
 __host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
                             const SparseMatrix* b, LoadDistMatrix* loadDist,
-                            uint32_t matrixNum);
+                            uint32_t numMatrices);
 
 //! Kernel for calculating sparse matrix
 //! Each block is responsible for one row
 //! Each thread will compute multiplications corresponding to one value in A's
 //! row
-
 __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
                                    SparseMatrix* b, LoadDistMatrix* loadDist,
-                                   uint32_t rowIdx,
-                                   uint32_t sparseColIndexBegin,
-                                   uint32_t sparseColIndexEnd);
+                                   uint32_t rowIdx, uint32_t sparseColIdxBegin,
+                                   uint32_t sparseColIdxEnd);
 
-__device__ void Sort(float* tempValueColIdxPair, uint32_t* tempIdxArray,
-                     uint32_t numElements);
+__device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
+                     uint32_t arraySize);
 
 __device__ void Merge(float* tempValueColIdxPair, uint32_t* tempIdxArray,
-                      uint32_t numElements);
+                      uint32_t numElements, uint32_t* mergedNumElements);
 
 }  // namespace Motutapu::Compute::Sparse
 

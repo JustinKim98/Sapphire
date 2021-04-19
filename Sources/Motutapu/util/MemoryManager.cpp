@@ -21,17 +21,17 @@ std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, pair_hash_busy>
 
 std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
-unsigned int MemoryManager::m_allocationUnitSize = 256;
+unsigned int MemoryManager::m_allocationUnitByteSize = 256;
 
-void* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
+void* MemoryManager::GetMemoryCuda(size_t byteSize, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
     auto success = true;
     void* cudaPtr = nullptr;
 
     auto allocationSize =
-        (size / m_allocationUnitSize) * m_allocationUnitSize +
-        ((size % m_allocationUnitSize) ? m_allocationUnitSize : 0);
+        (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
+        ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
 
     const auto itr =
         m_cudaFreeMemoryPool.find(std::make_pair(deviceId, allocationSize));
@@ -49,8 +49,7 @@ void* MemoryManager::GetMemoryCuda(size_t size, int deviceId)
     }
 
     success &= Compute::Cuda::CudaSetDevice(deviceId);
-    success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr,
-                                         allocationSize * sizeof(float));
+    success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr, allocationSize);
 
     m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
                                  MemoryChunk(allocationSize, cudaPtr, 1));
@@ -135,7 +134,7 @@ void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
     if (chunk.RefCount == 0)
     {
         m_cudaBusyMemoryPool.erase(itr);
-        m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.Size),
+        m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.ByteSize),
                                      chunk);
     }
 }
@@ -156,7 +155,7 @@ void MemoryManager::DeReferenceHost(void* ptr)
     if (chunk.RefCount == 0)
     {
         m_hostBusyMemoryPool.erase(itr);
-        m_hostFreeMemoryPool.emplace(chunk.Size, chunk);
+        m_hostFreeMemoryPool.emplace(chunk.ByteSize, chunk);
     }
 }
 
@@ -241,12 +240,12 @@ size_t MemoryManager::GetTotalAllocationByteSizeCuda()
 
     for (const auto& [key, chunk] : m_cudaBusyMemoryPool)
     {
-        size += chunk.Size;
+        size += chunk.ByteSize;
     }
 
     for (const auto& [key, chunk] : m_cudaFreeMemoryPool)
     {
-        size += chunk.Size;
+        size += chunk.ByteSize;
     }
 
     return size;
@@ -260,12 +259,12 @@ size_t MemoryManager::GetTotalAllocationByteSizeHost()
 
     for (const auto& [key, chunk] : m_hostBusyMemoryPool)
     {
-        size += chunk.Size;
+        size += chunk.ByteSize;
     }
 
     for (const auto& [key, chunk] : m_hostFreeMemoryPool)
     {
-        size += chunk.Size;
+        size += chunk.ByteSize;
     }
 
     return size;

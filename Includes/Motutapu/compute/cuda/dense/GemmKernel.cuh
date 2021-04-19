@@ -14,7 +14,7 @@ namespace Motutapu::Compute::Cuda::Dense
 //! Computes NaiveGemm operation on the chunk (Out = A x B + Out)
 //! Chunk represents sub matrix that can be computed using one block
 //! Each chunk is composed of tiles which contains 16x16 elements each
-//! Size of the chunk is configurable by chunkSize template parameter
+//! ByteSize of the chunk is configurable by chunkSize template parameter
 //! For example, if chunk size is 4, each block will compute (4x4) x (16x16) =
 //! 64x64 chunks each.
 //!
@@ -30,7 +30,7 @@ namespace Motutapu::Compute::Cuda::Dense
 //!         bytes
 //!     Otherwise, static assertion will fail
 //!
-//! Warp size and block Size should be allocated considering chunk size
+//! Warp size and block ByteSize should be allocated considering chunk size
 //! This kernel requires chunkSize x chunkSize warps in block.x dimension
 //! meaning, we need to allocate chunkSize x chunkSize x 32(warp size) threads.
 //! (y and z dimension is not used for block)

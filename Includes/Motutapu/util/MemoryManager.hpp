@@ -34,14 +34,14 @@ struct pair_hash_busy
 
 struct MemoryChunk
 {
-    MemoryChunk(size_t size, void* data, int refCount)
-        : Size(size), Data(data), RefCount(refCount)
+    MemoryChunk(size_t byteSize, void* data, int refCount)
+        : ByteSize(byteSize), Data(data), RefCount(refCount)
     {
     }
 
     MemoryChunk(const MemoryChunk& chunk) = default;
 
-    size_t Size = 0;
+    size_t ByteSize = 0;
     void* Data = nullptr;
 
     int RefCount;
@@ -51,9 +51,9 @@ class MemoryManager
 {
  public:
     //! Allocates memory on device
-    //! \param size : Allocation size in bytes
+    //! \param byteSize : Allocation byteSize in bytes
     //! \param deviceId : device ID to allocate the memory
-    static void* GetMemoryCuda(size_t size, int deviceId);
+    static void* GetMemoryCuda(size_t byteSize, int deviceId);
 
     //! Allocates memory on host
     //! \param size : Allocation size in bytes
@@ -92,7 +92,7 @@ class MemoryManager
     static std::mutex m_hostPoolMtx;
     static std::mutex m_cudaPoolMtx;
 
-    static unsigned int m_allocationUnitSize;
+    static unsigned int m_allocationUnitByteSize;
 };
 
 }  // namespace Motutapu::Util

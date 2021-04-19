@@ -13,11 +13,11 @@
 namespace Motutapu::Compute::Cuda::Sparse
 {
 //! Deep allocates sparse matrix on host
-//! \param targetPtr : ptr to allocate sparse matrix
+//! \param sparseMatrixArray : ptr to allocate sparse matrix
 //! \param m : array of number of rows
 //! \param nnz : array of number of non-zeros
 //! \param numMatrices : number of matrices
-void DeepAllocateSparseHost(SparseMatrix** targetPtr, const uint32_t m[],
+void DeepAllocateSparseHost(SparseMatrix** sparseMatrixArray, const uint32_t m[],
                             const uint32_t nnz[], uint32_t numMatrices);
 
 //! Deep allocates load distribution matrix on host
@@ -54,12 +54,14 @@ void DeepAllocateLoadDistCuda(LoadDistMatrix** targetPtr,
 //! Frees sparse matrix allocated on the GPU
 //! \param targetPtr : Array of targetPtr sparse matrix to free
 //! \param deviceId : ID of the device that owns the targetPtr
-void DeepFreeSparseCuda(SparseMatrix* targetPtr, int deviceId);
+void DeepFreeSparseCuda(SparseMatrix* targetPtr, uint32_t numMatrices,
+                        int deviceId);
 
 //! Frees load distribution matrix allocated on the GPU
 //! \param targetPtr : Array of targetPtr sparse matrix to free
 //! \param deviceId : ID of the device that owns the targetPtr
-void DeepFreeLoadDistCuda(LoadDistMatrix* cudaTarget, int deviceId);
+void DeepFreeLoadDistCuda(LoadDistMatrix* targetPtr, uint32_t numMatrices,
+                          int deviceId);
 
 //! Copies sparse matrix on the GPU
 //! All pointers given as parameters must be allocated with size of
@@ -140,8 +142,9 @@ void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
 void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
                             size_t numMatrices);
 
-void LaunchSparseGemm(SparseMatrix* A, SparseMatrix* B, uint32_t numMatrices,
-                      uint32_t numRows, uint32_t numCols, int deviceId);
+void LaunchSparseGemm(SparseMatrix* C, SparseMatrix* A, SparseMatrix* B,
+                      uint32_t numMatrices, uint32_t numRows, uint32_t numCols,
+                      int deviceId);
 
 void AllocateGemm(SparseMatrix* Out, SparseMatrix* A, SparseMatrix* B);
 
