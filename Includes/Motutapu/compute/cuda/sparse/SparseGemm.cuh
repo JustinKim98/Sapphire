@@ -35,36 +35,58 @@ __host__ void AllocateOutput(SparseMatrix* output, SparseMatrix* a,
 
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
-
+//! -- Constraints --
+//! All matrices in the same array must have same shape
+//! All matrix arrays must be pre-allocated
+//! All matrix arrays must be in same size
+//! \param loadDist : Array of load distribution matrix
+//! \param a : Array of input sparse matrices for operand A.
+//! \param b : Array of Input sparse matrices for operand B.
+//! \param nnzArray : Array of non-zeros for each matrix. Its size must be
+//! identical to size of matrix arrays.
 __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
                                SparseMatrix* b, uint32_t* nnzArray);
-
-//! Launches sparse matrix multiplication kernel
-//! Each matrix is called simultaneously with streams
-//! \param c : input&output c
-//! \param a : input a
-//! \param b : input b
-//! \param loadDist : matrix containing load distribution. This function will
-//! change load distribution into stacked load distribution
-//! \param numMatrices : number of matrices in a batch
-__host__ void CalculateGemm(SparseMatrix* c, const SparseMatrix* a,
-                            const SparseMatrix* b, LoadDistMatrix* loadDist,
-                            uint32_t numMatrices);
 
 //! Kernel for calculating sparse matrix
 //! Each block is responsible for one row
 //! Each thread will compute multiplications corresponding to one value in A's
 //! row
+//! -- Constraints --
+//! All matrices in the same array must have same shape.
+//! All matrix arrays must be pre-allocated.
+//! All matrix arrays must be in same size
+//! loadDist matrix should have same size and shape with matrix A
+//! \param out : Array of output sparse matrices
+//! \param a : Array of input sparse matrices for operand a.
+//! \param b : Array of input sparse matrices for operand b.
+//! \param loadDist : Array of load distribution matrices.
+//! \param sparseColIdxBegin : Start index of computation for matrix A.
+//! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
 __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
                                    SparseMatrix* b, LoadDistMatrix* loadDist,
-                                   uint32_t rowIdx, uint32_t sparseColIdxBegin,
+                                   uint32_t sparseColIdxBegin,
                                    uint32_t sparseColIdxEnd);
 
+//! Sorts the array in increasing order using bitonic esc sort algorithm
+//! \param tempValArray : array of values. Its size must be power of 2
+//! \param tempIdxArray : Array of indices. Its size must be identical to 2
+//! \param arraySize : Size of the array. Must be power of 2
+//! \param nnz : Number of non-zeros contained in tempValArray
 __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
-                     uint32_t arraySize);
+                     uint32_t arraySize, uint32_t nnz);
 
-__device__ void Merge(float* tempValueColIdxPair, uint32_t* tempIdxArray,
-                      uint32_t numElements, uint32_t* mergedNumElements);
+//! Merges the array sorted by Sort function.
+
+__device__ void Merge(float* tempValArray, uint32_t* tempIdxArray,
+                      uint32_t* numMergedElements, uint32_t numElements);
+
+template <typename T>
+__device__ void Swap(T* a, T* b)
+{
+    auto temp = *a;
+    *a = *b;
+    *b = temp;
+}
 
 }  // namespace Motutapu::Compute::Sparse
 
