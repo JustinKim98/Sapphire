@@ -196,7 +196,7 @@ __global__ void DotKernel(float* output, const float* inputA,
             inputA[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
                    leftOverA] *
             inputB[(offset + blockOffset + blockDim.x * i + threadIdx.x) %
-                   leftOverB];z
+                   leftOverB];
     }
 }
 

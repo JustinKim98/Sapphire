@@ -63,22 +63,24 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 //! \param sparseColIdxBegin : Start index of computation for matrix A.
 //! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
 __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
-                                   SparseMatrix* b, LoadDistMatrix* loadDist,
-                                   uint32_t sparseColIdxBegin,
-                                   uint32_t sparseColIdxEnd);
+                                   SparseMatrix* b, LoadDistMatrix* loadDist);
 
 //! Sorts the array in increasing order using bitonic esc sort algorithm
 //! \param tempValArray : array of values. Its size must be power of 2
 //! \param tempIdxArray : Array of indices. Its size must be identical to 2
 //! \param arraySize : Size of the array. Must be power of 2
-//! \param nnz : Number of non-zeros contained in tempValArray
 __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
-                     uint32_t arraySize, uint32_t nnz);
+                     uint32_t arraySize);
 
 //! Merges the array sorted by Sort function.
 
 __device__ void Merge(float* tempValArray, uint32_t* tempIdxArray,
                       uint32_t* numMergedElements, uint32_t numElements);
+
+__device__ void InsertHash(float* valueArray, uint32_t* idxArray, float value,
+                           uint32_t index, uint32_t arraySize);
+
+__device__ void InitIndexArray(uint32_t* idxArray, uint32_t arraySize);
 
 template <typename T>
 __device__ void Swap(T* a, T* b)
@@ -86,6 +88,11 @@ __device__ void Swap(T* a, T* b)
     auto temp = *a;
     *a = *b;
     *b = temp;
+}
+
+__device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
+{
+    return col % numBuckets;
 }
 
 }  // namespace Motutapu::Compute::Sparse

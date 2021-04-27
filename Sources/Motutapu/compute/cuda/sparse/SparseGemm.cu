@@ -12,6 +12,7 @@
 #define MAX_NNZ_PER_BLOCK_SMALL 512
 #define GEMM_BLOCK_NUM 16
 #define MAX_BLOCK_DIM 1024
+#define INF (~0)
 
 namespace Motutapu::Compute::Sparse
 {
@@ -23,6 +24,7 @@ __host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
     //! TODO : Allocate load distribution matrix
     CallLoadDist(a, b, loadDist, nnzArray, numMatrices);
     AllocateOutput(output, a, b, numMatrices, nnzArray);
+    CalculateRowKernel<<<numMatrices, 64>>>(output, a, b, loadDist);
 }
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
@@ -42,8 +44,8 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
         LoadDistKernel<<<blockDim, threadDim>>>(loadDist, a, b, deviceNNZArray);
     if (numMatrices > blockDim)
     {
-        const SparseMatrix* offsetA = a + blockDim;
-        const SparseMatrix* offsetB = b + blockDim;
+        SparseMatrix* offsetA = a + blockDim;
+        SparseMatrix* offsetB = b + blockDim;
         LoadDistMatrix* loadDistOffset = loadDist + blockDim;
 
         const auto secondBlockDim = numMatrices - blockDim;
@@ -114,7 +116,6 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
                 curLoadDist->Load[sparseColIdxA] +=
                     curLoadDist->Load[sparseColIdxA - 1];
             }
-
             nnzPerRow += numElemPerRowB;
         }
         atomicAdd_block(nnzPerMatrix, nnzPerRow);
@@ -125,15 +126,13 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 }
 
 __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
-                                   SparseMatrix* b, LoadDistMatrix* loadDist,
-                                   uint32_t sparseColIdxBegin,
-                                   uint32_t sparseColIdxEnd)
+                                   SparseMatrix* b, LoadDistMatrix* loadDist)
 {
     //! Stores pair of computer value and pair of index
     __shared__ float tempValueArray[MAX_NNZ_PER_BLOCK_LARGE];
     __shared__ uint32_t tempIdxArray[MAX_NNZ_PER_BLOCK_LARGE];
 
-    // todo : initialize array with largest possible number
+    InitIndexArray(tempIdxArray, MAX_NNZ_PER_BLOCK_LARGE);
 
     const auto M = out[0].M;
     SparseMatrix* curOut = out + blockIdx.x / M;
@@ -141,98 +140,84 @@ __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
     SparseMatrix* curB = b + blockIdx.x / M;
     LoadDistMatrix* curLoadDist = loadDist + blockIdx.x / M;
 
+    const auto curRowIdx = blockIdx.x % M;
     const auto sparseColIdxOffset = threadIdx.x;
-    const auto sparseColIdxA = sparseColIdxBegin + sparseColIdxOffset;
+    const auto sparseColIdxA = sparseColIdxOffset;
 
     const auto colIdxA = curA->COL[sparseColIdxA];
     const auto sparseColIdxBBegin = curB->ROW[colIdxA];
     const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
-    const auto nnz = curLoadDist->Load[sparseColIdxEnd - 1];
+    const auto nnz = curLoadDist->Load[curLoadDist->ROW[curRowIdx - 1]];
 
-    if (sparseColIdxA < sparseColIdxEnd)
+    if (sparseColIdxA < curA->ROW[curRowIdx])
     {
         for (uint32_t sparseColIdxB = sparseColIdxBBegin;
              sparseColIdxB < sparseColIdxBEnd; ++sparseColIdxB)
         {
-            const auto unmergedSparseRowIdx = loadDist->Load[sparseColIdxA] +
-                                              sparseColIdxB -
-                                              sparseColIdxBBegin;
-
-            tempValueArray[unmergedSparseRowIdx] =
-                curA->V[sparseColIdxA] * curB->V[sparseColIdxB];
-            tempIdxArray[unmergedSparseRowIdx] = curB->COL[sparseColIdxB];
+            InsertHash(tempValueArray, tempIdxArray,
+                       curA->V[sparseColIdxA] * curB->V[sparseColIdxB],
+                       curB->COL[sparseColIdxB], MAX_NNZ_PER_BLOCK_LARGE);
         }
     }
 
-    uint32_t mergedNumElements = 0;
-    Sort(tempValueArray, tempIdxArray, MAX_NNZ_PER_BLOCK_LARGE, nnz);
-    Merge(tempValueArray, tempIdxArray, nullptr, nnz);
+    Sort(tempValueArray, tempIdxArray, MAX_NNZ_PER_BLOCK_LARGE);
 
-    const auto stride = (mergedNumElements / blockDim.x > 0)
-                            ? mergedNumElements / blockDim.x
-                            : mergedNumElements;
-
-    for (uint32_t idx = stride * threadIdx.x;
-         idx < nnz && idx < stride * (threadIdx.x + 1); ++idx)
+    for (uint32_t idx = threadIdx.x; idx < nnz; idx += blockDim.x)
     {
         //! TODO : How are we going to store the result if row is distributed?
-        const auto tempIdx = MAX_NNZ_PER_BLOCK_LARGE - nnz + idx;
-        curOut->V[idx] = tempValueArray[tempIdx];
-        curOut->COL[idx] = tempIdxArray[tempIdx];
+        curOut->V[idx] = tempValueArray[idx];
+        curOut->COL[idx] = tempIdxArray[idx];
     }
 }
 
-// todo : Check if this algorithm works by manipulating on python
 __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
-                     uint32_t arraySize, uint32_t nnz)
+                     uint32_t arraySize)
 {
-    const uint32_t id = threadIdx.x;
-
-    for (uint32_t idx = nnz + threadIdx.x; idx < arraySize; idx += blockDim.x)
-        tempIdxArray[nnz + idx] = (uint32_t)(-1);
-
-    if (id > arraySize / 2)
-        return;
-
     for (uint32_t level = 0; level < log2(arraySize); ++level)
     {
         const auto phase = __double2uint_rz(pow(2, level));
         for (auto stride = phase; stride > 0; stride /= 2)
         {
-            const auto sizePerBlock = stride * 2;
-            const auto sizePerBlockPair = 2 * sizePerBlock;
-            const bool direction = id / phase == 0;
-
-            if ((id / stride) % 2 == 0)
+            for (uint32_t id = threadIdx.x; id <= arraySize / 2;
+                 id += blockDim.x)
             {
-                const auto idx =
-                    (id / sizePerBlock) * sizePerBlockPair + id % sizePerBlock;
-                const auto targetIdx = idx + stride;
+                const auto sizePerBlock = stride * 2;
+                const auto sizePerBlockPair = 2 * sizePerBlock;
+                const bool direction = id / phase == 0;
 
-                if ((direction &&
-                     tempIdxArray[idx] > tempIdxArray[targetIdx]) ||
-                    (!direction && tempIdxArray[idx] < tempIdxArray[targetIdx]))
+                if ((id / stride) % 2 == 0)
                 {
-                    Swap(tempValArray + idx, tempValArray + targetIdx);
-                    Swap(tempIdxArray + idx, tempIdxArray + targetIdx);
+                    const auto idx = (id / sizePerBlock) * sizePerBlockPair +
+                                     id % sizePerBlock;
+                    const auto targetIdx = idx + stride;
+
+                    if ((direction &&
+                         tempIdxArray[idx] > tempIdxArray[targetIdx]) ||
+                        (!direction &&
+                         tempIdxArray[idx] < tempIdxArray[targetIdx]))
+                    {
+                        Swap(tempValArray + idx, tempValArray + targetIdx);
+                        Swap(tempIdxArray + idx, tempIdxArray + targetIdx);
+                    }
                 }
-            }
-            else
-            {
-                const auto idx =
-                    ((arraySize / 2 - id) / sizePerBlock) * sizePerBlockPair +
-                    (arraySize / 2 - id) % sizePerBlock;
-                const auto targetIdx = idx + stride;
-
-                if ((direction && tempIdxArray[arraySize - idx] <
-                                      tempIdxArray[arraySize - targetIdx]) ||
-                    (!direction && tempIdxArray[arraySize - idx] >
-                                       tempIdxArray[arraySize - targetIdx]))
+                else
                 {
-                    Swap(tempValArray + (arraySize - idx),
-                         tempValArray + (arraySize - targetIdx));
-                    Swap(tempIdxArray + (arraySize - idx),
-                         tempIdxArray + (arraySize - targetIdx));
+                    const auto idx = ((arraySize / 2 - id) / sizePerBlock) *
+                                         sizePerBlockPair +
+                                     (arraySize / 2 - id) % sizePerBlock;
+                    const auto targetIdx = idx + stride;
+
+                    if ((direction &&
+                         tempIdxArray[arraySize - idx] <
+                             tempIdxArray[arraySize - targetIdx]) ||
+                        (!direction && tempIdxArray[arraySize - idx] >
+                                           tempIdxArray[arraySize - targetIdx]))
+                    {
+                        Swap(tempValArray + (arraySize - idx),
+                             tempValArray + (arraySize - targetIdx));
+                        Swap(tempIdxArray + (arraySize - idx),
+                             tempIdxArray + (arraySize - targetIdx));
+                    }
                 }
             }
         }
@@ -240,49 +225,30 @@ __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
     }
 }
 
-__device__ void Merge(float* tempValArray, uint32_t* tempIdxArray,
-                      uint32_t* numMergedElements, uint32_t numElements)
+__device__ void InsertHash(float* valueArray, uint32_t* idxArray, float value,
+                           uint32_t index, uint32_t arraySize)
 {
-    for (uint32_t mergeIdx = threadIdx.x; mergeIdx < numElements;
-         mergeIdx += blockDim.x)
+    auto key = Hash(index, arraySize);
+
+    while (idxArray[key] != index && idxArray[key] != INF)
     {
-        //! If the selected mergeIdx is the start of the new column index
-        if (tempIdxArray[mergeIdx - 1] != tempIdxArray[mergeIdx])
-        {
-            float mergedValue = 0;
-            uint32_t colIdx = tempIdxArray[mergeIdx];
-            uint32_t i = mergeIdx;
+        key = Hash(index + 1, arraySize);
+    }
+    if (idxArray[key] == index)
+        atomicAdd_block(valueArray + key, value);
+    else if (idxArray[key] == INF)
+    {
+        idxArray[key] = index;
+        atomicExch_block(valueArray + key, value);
+    }
+}
 
-            for (; tempIdxArray[i] == colIdx && i < numElements; ++i)
-            {
-                //! Add up all values to the mergedValue until index changfes
-                mergedValue += tempValArray[i];
-            }
-
-            //! Store the number of iterations at the last index of current
-            //! column index
-            tempIdxArray[i - 1] = (i - 1) - mergeIdx;
-            __syncthreads();
-
-            auto j = mergeIdx - 1;
-            uint32_t mergedIdx = 0;
-            while (j > 0)
-            {
-                j -= tempIdxArray[j] - 1;
-                //! Count the number of valid column indices (array index
-                //! without duplication)
-                mergedIdx += 1;
-            }
-            __syncthreads();
-
-            tempValArray[mergedIdx] = mergedValue;
-            tempIdxArray[mergedIdx] = colIdx;
-
-            //! If this thread calculated the last index, store the number of
-            //! merged elements for this row
-            if (i == numElements)
-                *numMergedElements = mergedIdx + 1;
-        }
+__device__ void InitIndexArray(uint32_t* idxArray, uint32_t arraySize)
+{
+    const auto id = threadIdx.x;
+    for (uint32_t idx = id; idx < arraySize; idx += blockDim.x)
+    {
+        idxArray[idx] = INF;
     }
 }
 }  // namespace Motutapu::Compute::Sparse
