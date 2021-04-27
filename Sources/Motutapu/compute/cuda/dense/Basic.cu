@@ -454,14 +454,15 @@ __host__ void Mean(float* output, const float* input, unsigned int totalSize,
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        MeanKernel<<<blockDim, threadDim>>>(output, input, totalSize,
+                                            firstLaunchSize);
     if (requiredThreadNum > firstLaunchSize)
     {
         const float* inputOffset = input + firstLaunchSize;
         float* outputOffset = output + firstLaunchSize;
 
         MeanKernel<<<1, requiredThreadNum - firstLaunchSize>>>(
-            output, input, totalSize, unitSize);
+            outputOffset, inputOffset, totalSize, unitSize);
     }
 }
 

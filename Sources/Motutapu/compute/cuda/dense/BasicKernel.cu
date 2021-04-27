@@ -420,7 +420,7 @@ __global__ void MeanKernel(float* output, const float* input,
 {
     const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (offset < totalSize)
+    if (unitId < totalSize)
     {
         for (unsigned int i = 0; i < unitSize; i++)
         {

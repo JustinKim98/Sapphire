@@ -1,9 +1,7 @@
 //#ifdef WITH_CUDA
 
-#include <iostream>
-#include <Motutapu/Test.hpp>
-#include <iostream>
 #include <cuda_runtime.h>
+#include <iostream>
 
 namespace Test::Cuda
 {
@@ -28,5 +26,5 @@ void PrintCudaVersion()
 
     std::cout << "CudaSuccess" << std::endl;
 }
-}
-//#endif
+}  // namespace Test::Cuda
+   //#endif
