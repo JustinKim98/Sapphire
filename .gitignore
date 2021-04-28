@@ -16,6 +16,7 @@ lib/
 bin/
 cmake-build-release/
 cmake-build-debug/
+Libraries/
 
 
 # Visual Studio files
