@@ -55,6 +55,7 @@ void BroadcastWithOneDimension()
         Compute::Initialize::Normal(B, 0, 5);
         Compute::Initialize::Normal(C, 0, 5);
         Compute::Initialize::Zeros(C);
+        Compute::Initialize::Zeros(Out);
 
         Compute::Gemm(Out, A, B, C);
 
@@ -136,6 +137,7 @@ void BroadcastWithMissingDimension()
         Compute::Initialize::Normal(B, 0, 5);
         Compute::Initialize::Normal(C, 0, 5);
         Compute::Initialize::Zeros(C);
+        Compute::Initialize::Zeros(Out);
 
         Compute::Gemm(Out, A, B, C);
 

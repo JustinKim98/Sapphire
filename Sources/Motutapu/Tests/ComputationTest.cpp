@@ -56,7 +56,8 @@ void Gemm1()
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
         Compute::Initialize::Normal(C, 10, 5);
-        Compute::Initialize::Zeros(C);
+        // Compute::Initialize::Zeros(C);
+        Compute::Initialize::Zeros(Out);
 
         Compute::Gemm(Out, A, B, C);
 
@@ -136,6 +137,7 @@ void Gemm2()
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
         Compute::Initialize::Normal(C, 10, 5);
+        Compute::Initialize::Zeros(out);
 
         A.SendTo(cuda);
         B.SendTo(cuda);
@@ -221,13 +223,12 @@ void GemmBroadcast()
         Compute::Initialize::Normal(A, 10, 1);
         Compute::Initialize::Normal(B, 10, 1);
         Compute::Initialize::Normal(C, 10, 1);
+        Compute::Initialize::Zeros(out);
 
         A.SendTo(cuda);
         B.SendTo(cuda);
         C.SendTo(cuda);
         out.SendTo(cuda);
-
-        Compute::Initialize::Zeros(out);
 
         Compute::Gemm(out, A, B, C);
 

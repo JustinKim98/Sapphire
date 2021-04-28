@@ -79,8 +79,9 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
     }
 
     dataPtr = malloc(byteSize);
-    std::fill(static_cast<uint32_t*>(dataPtr),
-              static_cast<uint32_t*>(dataPtr) + byteSize, 0);
+    auto* initPtr = static_cast<uint8_t*>(dataPtr);
+    for (size_t i = 0; i < byteSize; ++i)
+        initPtr[i] = 0;
     m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
                                  MemoryChunk(byteSize, dataPtr, 1));
 

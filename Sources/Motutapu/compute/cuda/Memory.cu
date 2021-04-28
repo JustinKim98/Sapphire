@@ -92,14 +92,15 @@ __host__ bool CopyGpuToGpuAsync(float* dst, const float* src,
     return error == cudaSuccess;
 }
 
-__host__ bool CopyGpuToGpuBroadcast(float* dst, const float* src,
+__host__ bool CopyGpuToGpuBroadcast(void* dst, const void* src,
                                     unsigned int byteSize,
                                     unsigned int srcStrideByteSize)
 {
     for (unsigned int idx = 0; idx < byteSize; idx += srcStrideByteSize)
     {
-        const cudaError_t error = cudaMemcpy(dst + idx, src, srcStrideByteSize,
-                                             cudaMemcpyDeviceToDevice);
+        const cudaError_t error =
+            cudaMemcpy(static_cast<uint8_t*>(dst) + idx, src, srcStrideByteSize,
+                       cudaMemcpyDeviceToDevice);
         if (error != cudaSuccess)
             return false;
     }
