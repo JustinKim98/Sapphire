@@ -12,7 +12,11 @@ build
 bin
 *.a
 *.cbp
-/lib
+lib/
+bin/
+cmake-build-release/
+cmake-build-debug/
+
 
 # Visual Studio files
 /.vs
