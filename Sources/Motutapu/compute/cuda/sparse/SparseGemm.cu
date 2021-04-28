@@ -173,7 +173,9 @@ __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
 __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
                      uint32_t arraySize)
 {
-    for (uint32_t level = 0; level < log2(arraySize); ++level)
+    const uint32_t maxLevel =
+        __double2uint_rz(log2(__uint2float_rz(arraySize)));
+    for (uint32_t level = 0; level < maxLevel; ++level)
     {
         const auto phase = __double2uint_rz(pow(2, level));
         for (auto stride = phase; stride > 0; stride /= 2)

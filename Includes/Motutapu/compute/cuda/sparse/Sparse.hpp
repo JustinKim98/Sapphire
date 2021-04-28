@@ -17,8 +17,9 @@ namespace Motutapu::Compute::Cuda::Sparse
 //! \param m : array of number of rows
 //! \param nnz : array of number of non-zeros
 //! \param numMatrices : number of matrices
-void DeepAllocateSparseHost(SparseMatrix** sparseMatrixArray, const uint32_t m[],
-                            const uint32_t nnz[], uint32_t numMatrices);
+void DeepAllocateSparseHost(SparseMatrix** sparseMatrixArray,
+                            const uint32_t m[], const uint32_t nnz[],
+                            uint32_t numMatrices);
 
 //! Deep allocates load distribution matrix on host
 //! \param loadDistArray : ptr to allocate Load distribution matrix
@@ -141,12 +142,6 @@ void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
 //! Copies sparse matrix from host to device
 void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
                             size_t numMatrices);
-
-void LaunchSparseGemm(SparseMatrix* C, SparseMatrix* A, SparseMatrix* B,
-                      uint32_t numMatrices, uint32_t numRows, uint32_t numCols,
-                      int deviceId);
-
-void AllocateGemm(SparseMatrix* Out, SparseMatrix* A, SparseMatrix* B);
 
 }  // namespace Motutapu::Compute::Cuda::Sparse
 

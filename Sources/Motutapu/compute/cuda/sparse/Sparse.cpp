@@ -6,9 +6,7 @@
 
 #include <Motutapu/compute/SparseMatrix.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
-#include <Motutapu/compute/cuda/sparse/MatrixManage.cuh>
 #include <Motutapu/compute/cuda/sparse/Sparse.hpp>
-#include <Motutapu/compute/cuda/sparse/SparseGemm.cuh>
 #include <Motutapu/util/MemoryManager.hpp>
 
 namespace Motutapu::Compute::Cuda::Sparse
@@ -119,9 +117,9 @@ void DeepAllocateLoadDistCuda(LoadDistMatrix** targetPtr,
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
         cudaSetDevice(deviceId);
-        cudaMalloc(&cudaTarget[i].Load, hostPtr[i].NNZ * sizeof(uint32_t));
-        cudaMalloc(&cudaTarget[i].COL, hostPtr[i].NNZ * sizeof(uint32_t));
-        cudaMalloc(&cudaTarget[i].ROW, (hostPtr[i].M + 1) * sizeof(uint32_t));
+        cudaMalloc(&(cudaTarget[i].Load), hostPtr[i].NNZ * sizeof(uint32_t));
+        cudaMalloc(&(cudaTarget[i].COL), hostPtr[i].NNZ * sizeof(uint32_t));
+        cudaMalloc(&(cudaTarget[i].ROW), (hostPtr[i].M + 1) * sizeof(uint32_t));
     }
 }
 
@@ -163,7 +161,7 @@ void DeepCopyGpuToGpu(SparseMatrix* gpuDstArray, SparseMatrix* gpuSrcArray,
     CopyGpuToHost(srcArrayBuffer, gpuSrcArray,
                   numMatrices * sizeof(SparseMatrix));
 
-    for (int idx = 0; idx < numMatrices; ++idx)
+    for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
         if (dstArrayBuffer[idx].NNZ != srcArrayBuffer[idx].NNZ)
         {
@@ -214,7 +212,7 @@ void DeepCopyGpuToGpu(LoadDistMatrix* gpuDstArray, LoadDistMatrix* gpuSrcArray,
     CopyGpuToHost(srcArrayBuffer, gpuSrcArray,
                   numMatrices * sizeof(LoadDistMatrix));
 
-    for (int idx = 0; idx < numMatrices; ++idx)
+    for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
         if (dstArrayBuffer[idx].NNZ != srcArrayBuffer[idx].NNZ)
         {
@@ -261,7 +259,7 @@ void DeepCopyHostToGpu(SparseMatrix* gpuDstArray, SparseMatrix* hostSrcArray,
     CopyGpuToHost(dstArrayBuffer, gpuDstArray,
                   numMatrices * sizeof(SparseMatrix));
 
-    for (int idx = 0; idx < numMatrices; ++idx)
+    for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
         const auto m = hostSrcArray[idx].M;
         const auto n = hostSrcArray[idx].N;
@@ -310,7 +308,7 @@ void DeepCopyHostToGpu(LoadDistMatrix* gpuDstArray,
     CopyGpuToHost(dstArrayBuffer, gpuDstArray,
                   numMatrices * sizeof(LoadDistMatrix));
 
-    for (int idx = 0; idx < numMatrices; ++idx)
+    for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
         const auto m = hostSrcArray[idx].M;
         const auto n = hostSrcArray[idx].N;
@@ -357,7 +355,7 @@ void DeepCopyGpuToHost(SparseMatrix* hostDstArray, SparseMatrix* gpuSrcArray,
     CopyGpuToHost(srcArrayBuffer, gpuSrcArray,
                   numMatrices * sizeof(SparseMatrix));
 
-    for (int idx = 0; idx < numMatrices; ++idx)
+    for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
         if (hostDstArray[idx].NNZ != srcArrayBuffer[idx].NNZ)
         {
@@ -402,7 +400,7 @@ void DeepCopyGpuToHost(LoadDistMatrix* hostDstArray,
     CopyGpuToHost(srcArrayBuffer, gpuSrcArray,
                   numMatrices * sizeof(LoadDistMatrix));
 
-    for (int idx = 0; idx < numMatrices; ++idx)
+    for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
         if (hostDstArray[idx].NNZ != srcArrayBuffer[idx].NNZ)
         {
@@ -550,51 +548,6 @@ void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
         Cuda::CopyHostToGpu(dst[matrixIdx].COL, src[matrixIdx].COL,
                             sizeof(uint32_t) * dst[matrixIdx].NNZ);
     }
-}
-
-void LaunchSparseGemm(SparseMatrix* C, SparseMatrix* A, SparseMatrix* B,
-                      uint32_t numMatrices, uint32_t numRows, uint32_t numCols,
-                      int deviceId)
-{
-    LoadDistMatrix* loadDiffHost = nullptr;
-    LoadDistMatrix* loadDiffCuda = nullptr;
-
-    DeepAllocateLoadDistMatrixHost(&loadDiffHost, A, numMatrices);
-    DeepAllocateLoadDistCuda(&loadDiffCuda, loadDiffHost, numMatrices,
-                             deviceId);
-
-
-    //! todo : Avoid copying load data from GPU to Host
-    DeepCopyHostToGpu(loadDiffHost, loadDiffCuda, numMatrices, 0);
-
-    uint32_t nnzArray[numMatrices][numRows];
-
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-        for (uint32_t rowIdx = 0; rowIdx < loadDiffCuda[matrixIdx].M; ++rowIdx)
-        {
-            const auto from = loadDiffHost[matrixIdx].ROW[rowIdx];
-            const auto to = loadDiffHost[matrixIdx].ROW[rowIdx + 1];
-
-            uint32_t nnz = 0;
-
-            for (uint32_t sparseColIdx = from; sparseColIdx < to;
-                 ++sparseColIdx)
-            {
-                nnz += loadDiffHost[matrixIdx].Load[sparseColIdx];
-            }
-
-            nnzArray[matrixIdx][rowIdx] = nnz;
-        }
-
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-        for (uint32_t rowIdx = 0; rowIdx < A[matrixIdx].M; ++rowIdx)
-        {
-            //! Launch calculation Kernel based on load distribution
-        }
-}
-
-void AllocateGemm(SparseMatrix* Out, SparseMatrix* A, SparseMatrix* B)
-{
 }
 
 }  // namespace Motutapu::Compute::Cuda::Sparse

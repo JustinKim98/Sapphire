@@ -203,8 +203,9 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
         }
         else
         {
-            Compute::Cuda::CopyGpuToGpu(dest.DenseMatCuda, src.DenseMatCuda,
-                                        src.DenseTotalLengthCuda);
+            Compute::Cuda::CopyGpuToGpu(
+                dest.DenseMatCuda, src.DenseMatCuda,
+                src.DenseTotalLengthCuda * sizeof(float));
             dest.DenseTotalLengthCuda = src.DenseTotalLengthCuda;
         }
     }
@@ -267,7 +268,7 @@ void TensorData::DeepCopy(TensorData &dst, const TensorData &src)
 
     if (deviceType == DeviceType::CUDA && matrixType == Type::Dense)
         Compute::Cuda::CopyGpuToGpu(dst.DenseMatCuda, src.DenseMatCuda,
-                                    dst.DenseTotalLengthCuda);
+                                    dst.DenseTotalLengthCuda * sizeof(float));
 
     else if (deviceType == DeviceType::CUDA && matrixType == Type::Sparse)
         throw std::runtime_error("DeepCopy - Not implemented");

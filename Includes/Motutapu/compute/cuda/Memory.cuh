@@ -21,12 +21,12 @@ __host__ bool CopyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size);
 
 __host__ bool CopyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
 
-__host__ void CopyGpuToGpu(void* dst, const void* src, unsigned int size);
+__host__ bool CopyGpuToGpu(void* dst, const void* src, unsigned int byteSize);
 
-__host__ void CopyGpuToGpuAsync(float* dst, const float* src,
-                                unsigned int size, cudaStream_t stream);
+__host__ bool CopyGpuToGpuAsync(float* dst, const float* src,
+                                unsigned int byteSize, cudaStream_t stream);
 
-__host__ void CopyGpuToGpuBroadcast(float* dst, const float* src,
-                                    unsigned int size, unsigned int srcStride);
+__host__ bool CopyGpuToGpuBroadcast(float* dst, const float* src,
+                                    unsigned int byteSize, unsigned int srcStrideByteSize);
 }  // namespace Motutapu::Compute::Cuda
 #endif

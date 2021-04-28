@@ -77,57 +77,34 @@ __host__ bool CopyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size)
     return error == cudaSuccess;
 }
 
-__host__ void CopyGpuToGpu(void* dst, const void* src, unsigned int size)
+__host__ bool CopyGpuToGpu(void* dst, const void* src, unsigned int byteSize)
 {
-    const auto numLoops = 16;
-    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
-
-    const auto blockDim = size / (threadDim * numLoops);
-    const auto firstLaunchSize = blockDim * threadDim * numLoops;
-
-    if (firstLaunchSize > 0)
-        CopyOnGpuKernel<<<blockDim, threadDim>>>(dst, src, firstLaunchSize);
-    if (size > firstLaunchSize)
-        CopyOnGpuKernel<<<1, size - firstLaunchSize>>>(dst + firstLaunchSize,
-                                                       src + firstLaunchSize,
-                                                       size - firstLaunchSize);
+    const cudaError_t error =
+        cudaMemcpy(dst, src, byteSize, cudaMemcpyDeviceToDevice);
+    return error == cudaSuccess;
 }
 
-__host__ void CopyGpuToGpuAsync(float* dst, const float* src, unsigned int size,
-                                cudaStream_t stream)
+__host__ bool CopyGpuToGpuAsync(float* dst, const float* src,
+                                unsigned int byteSize, cudaStream_t stream)
 {
-    const auto numLoops = 16;
-    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
-
-    const auto blockDim = size / (threadDim * numLoops);
-    const auto firstLaunchSize = blockDim * threadDim * numLoops;
-
-    if (firstLaunchSize > 0)
-        CopyOnGpuKernel<<<blockDim, threadDim, 0, stream>>>(dst, src,
-                                                            firstLaunchSize);
-    cudaStreamSynchronize(stream);
-
-    if (size > firstLaunchSize)
-        CopyOnGpuKernel<<<1, size - firstLaunchSize, 0, stream>>>(
-            dst + firstLaunchSize, src + firstLaunchSize,
-            size - firstLaunchSize);
+    const cudaError_t error =
+        cudaMemcpyAsync(dst, src, byteSize, cudaMemcpyDeviceToDevice, stream);
+    return error == cudaSuccess;
 }
 
-__host__ void CopyGpuToGpuBroadcast(float* dst, const float* src,
-                                    unsigned int size, unsigned int srcStride)
+__host__ bool CopyGpuToGpuBroadcast(float* dst, const float* src,
+                                    unsigned int byteSize,
+                                    unsigned int srcStrideByteSize)
 {
-    const auto numLoops = 8;
-    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+    for (unsigned int idx = 0; idx < byteSize; idx += srcStrideByteSize)
+    {
+        const cudaError_t error = cudaMemcpy(dst + idx, src, srcStrideByteSize,
+                                             cudaMemcpyDeviceToDevice);
+        if (error != cudaSuccess)
+            return false;
+    }
 
-    const auto blockDim = size / (threadDim * numLoops);
-    const auto firstLaunchSize = blockDim * threadDim * numLoops;
-
-    if (firstLaunchSize > 0)
-        CopyOnGpuKernelBroadcast<<<blockDim, threadDim>>>(dst, src, srcStride,
-                                                          firstLaunchSize);
-    if (size > firstLaunchSize)
-        CopyOnGpuKernelBroadcast<<<1, size - firstLaunchSize>>>(
-            dst + firstLaunchSize, src, srcStride, size - firstLaunchSize);
+    return true;
 }
 
 }  // namespace Motutapu::Compute::Cuda

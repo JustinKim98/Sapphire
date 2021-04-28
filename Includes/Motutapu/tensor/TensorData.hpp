@@ -7,11 +7,11 @@
 #ifndef MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 #define MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 
+#include <Motutapu/compute/SparseMatrix.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
 #include <Motutapu/util/SharedPtr.hpp>
-#include <Motutapu/util/SparseMatrix.hpp>
 
 namespace Motutapu::TensorUtil
 {
