@@ -163,6 +163,11 @@ TEST_CASE("SparseMemoryTest")
     {
         LoadDistMemoryAllocationHost();
     }
+
+    SUBCASE("SparseMemoryAllocationDevice")
+    {
+        SparseMemoryAllocationDevice();
+    }
 }
 
 }  // namespace Motutapu::Test
