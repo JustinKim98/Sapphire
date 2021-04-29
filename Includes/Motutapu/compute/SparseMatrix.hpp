@@ -33,12 +33,12 @@ struct ALIGN(16) SparseMatrix
 
 struct ALIGN(16) LoadDistMatrix
 {
-    uint32_t NNZ;
-    uint32_t M;
-    uint32_t N;
     uint32_t* Load;
     uint32_t* COL;
     uint32_t* ROW;
+    uint32_t NNZ;
+    uint32_t M;
+    uint32_t N;
     //! Padding bits to ensure this struct to be 48 bytes
     uint32_t Padding[3];
 };

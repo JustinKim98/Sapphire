@@ -49,8 +49,6 @@ void TestTranspose(bool printResult)
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
-        //        Compute::Initialize::Ones(A);
-        //        Compute::Initialize::Ones(B);
 
         Compute::Add(out, A, B);
         Compute::Scale(out, out, 2);
@@ -162,10 +160,6 @@ void TestBasics1()
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
         const auto batchSize = distrib(gen) % 5 + 1;
-
-        //        const unsigned int M = 10;   // distrib(gen);
-        //        const unsigned int N = 235;  // distrib(gen);
-        //        const auto batchSize = 2;    // distrib(gen) % 5 + 1;
 
         const Shape shapeA({ M, N });
         const Shape shapeB({ M, N });

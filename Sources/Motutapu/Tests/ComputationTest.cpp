@@ -56,7 +56,6 @@ void Gemm1()
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
         Compute::Initialize::Normal(C, 10, 5);
-        // Compute::Initialize::Zeros(C);
         Compute::Initialize::Zeros(Out);
 
         Compute::Gemm(Out, A, B, C);
@@ -88,10 +87,6 @@ void Gemm1()
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-
-            //            std::cout << "cpu : " << cpuGemmResult[i]
-            //                      << " cuda : " << Out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= 2.0f);
         }
@@ -173,10 +168,6 @@ void Gemm2()
             if (largestError < error)
                 largestError = error;
 
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
-
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
 
@@ -257,10 +248,6 @@ void GemmBroadcast()
             if (largestError < error)
                 largestError = error;
 
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
-
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
 
@@ -336,10 +323,6 @@ void GemmBroadcastOnOutput()
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
