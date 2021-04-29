@@ -71,7 +71,7 @@ void DeepFreeSparseHost(SparseMatrix* sparseMatrixArray, uint32_t numMatrices)
             static_cast<void*>(sparseMatrixArray[i].ROW));
     }
 
-    delete[] sparseMatrixArray;
+    Util::MemoryManager::DeReferenceHost(sparseMatrixArray);
 }
 
 void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices)
@@ -86,7 +86,7 @@ void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices)
             static_cast<void*>(loadDistArray[i].ROW));
     }
 
-    delete[] loadDistArray;
+    Util::MemoryManager::DeReferenceHost(loadDistArray);
 }
 
 void DeepAllocateSparseCuda(SparseMatrix** deviceSparseMatrixArray,
@@ -159,9 +159,9 @@ void DeepFreeLoadDistCuda(LoadDistMatrix* loadDistArray, uint32_t numMatrices,
     Cuda::CudaFree(loadDistArray);
 }
 
-void DeepCopyGpuToGpu(SparseMatrix* deviceDstArray,
-                      SparseMatrix* deviceSrcArray, uint32_t numMatrices,
-                      int deviceId)
+void DeepCopyDeviceToDevice(SparseMatrix* deviceDstArray,
+                            SparseMatrix* deviceSrcArray, uint32_t numMatrices,
+                            int deviceId)
 {
     auto* dstArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
@@ -211,9 +211,9 @@ void DeepCopyGpuToGpu(SparseMatrix* deviceDstArray,
     MemoryManager::DeReferenceHost(dstArrayBuffer);
 }
 
-void DeepCopyGpuToGpu(LoadDistMatrix* deviceDstArray,
-                      LoadDistMatrix* deviceSrcArray, uint32_t numMatrices,
-                      int deviceId)
+void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
+                            LoadDistMatrix* deviceSrcArray,
+                            uint32_t numMatrices, int deviceId)
 {
     auto* dstArrayBuffer = static_cast<LoadDistMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(LoadDistMatrix)));
@@ -263,8 +263,9 @@ void DeepCopyGpuToGpu(LoadDistMatrix* deviceDstArray,
     MemoryManager::DeReferenceHost(dstArrayBuffer);
 }
 
-void DeepCopyHostToGpu(SparseMatrix* deviceDstArray, SparseMatrix* hostSrcArray,
-                       uint32_t numMatrices, int deviceId)
+void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
+                          SparseMatrix* hostSrcArray, uint32_t numMatrices,
+                          int deviceId)
 {
     auto* dstArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
@@ -311,9 +312,9 @@ void DeepCopyHostToGpu(SparseMatrix* deviceDstArray, SparseMatrix* hostSrcArray,
     MemoryManager::DeReferenceHost(dstArrayBuffer);
 }
 
-void DeepCopyHostToGpu(LoadDistMatrix* deviceDstArray,
-                       LoadDistMatrix* hostSrcArray, uint32_t numMatrices,
-                       int deviceId)
+void DeepCopyHostToDevice(LoadDistMatrix* deviceDstArray,
+                          LoadDistMatrix* hostSrcArray, uint32_t numMatrices,
+                          int deviceId)
 {
     auto* dstArrayBuffer = static_cast<LoadDistMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(LoadDistMatrix)));
@@ -360,8 +361,9 @@ void DeepCopyHostToGpu(LoadDistMatrix* deviceDstArray,
     MemoryManager::DeReferenceHost(dstArrayBuffer);
 }
 
-void DeepCopyGpuToHost(SparseMatrix* hostDstArray, SparseMatrix* deviceSrcArray,
-                       uint32_t numMatrices, int deviceId)
+void DeepCopyDeviceToHost(SparseMatrix* hostDstArray,
+                          SparseMatrix* deviceSrcArray, uint32_t numMatrices,
+                          int deviceId)
 {
     auto* srcArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
@@ -406,8 +408,8 @@ void DeepCopyGpuToHost(SparseMatrix* hostDstArray, SparseMatrix* deviceSrcArray,
     MemoryManager::DeReferenceHost(srcArrayBuffer);
 }
 
-void DeepCopyGpuToHost(LoadDistMatrix* hostDstArray,
-                       LoadDistMatrix* deviceSrcArray, uint32_t numMatrices)
+void DeepCopyDeviceToHost(LoadDistMatrix* hostDstArray,
+                          LoadDistMatrix* deviceSrcArray, uint32_t numMatrices)
 {
     auto* srcArrayBuffer = static_cast<LoadDistMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(LoadDistMatrix)));

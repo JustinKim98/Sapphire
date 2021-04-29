@@ -10,6 +10,7 @@
 #include <Motutapu/Tests/BroadcastTest.hpp>
 #include <Motutapu/Tests/ComputationTest.hpp>
 #include <Motutapu/Tests/CudaFunctionalityTest.cuh>
+#include <Motutapu/Tests/SparseMemoryTest.hpp>
 #include <Motutapu/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
@@ -148,6 +149,19 @@ TEST_CASE("Basic computation test")
             std::cout << "AddWithBroadcast2 : " << i << std::endl;
             TestAddBroadcast2();
         }
+    }
+}
+
+TEST_CASE("SparseMemoryTest")
+{
+    SUBCASE("SparseMemoryAllocationHost")
+    {
+        SparseMemoryAllocationHost();
+    }
+
+    SUBCASE("LoadDistMemoryAllocationHost")
+    {
+        LoadDistMemoryAllocationHost();
     }
 }
 

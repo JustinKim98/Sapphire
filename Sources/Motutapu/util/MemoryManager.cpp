@@ -7,6 +7,7 @@
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/util/MemoryManager.hpp>
 #include <cassert>
+#include <iostream>
 #include <utility>
 
 namespace Motutapu::Util
