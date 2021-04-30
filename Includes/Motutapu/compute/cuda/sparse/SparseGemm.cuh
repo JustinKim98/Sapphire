@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef MOTUTAPU_COMPUTE_CALCULATELOAD_CUH
-#define MOTUTAPU_COMPUTE_CALCULATELOAD_CUH
+#ifndef MOTUTAPU_COMPUTE_CALCULATE_LOAD_CUH
+#define MOTUTAPU_COMPUTE_CALCULATE_LOAD_CUH
 
 #include <Motutapu/compute/Sparse.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>

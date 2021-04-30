@@ -165,13 +165,20 @@ TEST_CASE("SparseMemoryTest")
     {
         std::cout << "Testing Load Distribution Memory Allocation for Host ...";
         LoadDistMemoryAllocationHost();
-        std::cout << " Done" << std::endl;
+        std::cout << " Done " << std::endl;
     }
 
     SUBCASE("SparseMemoryDevice")
     {
         std::cout << "Testing Sparse Memory Allocation For Device ...";
         SparseMemoryAllocationDevice();
+        std::cout << " Done" << std::endl;
+    }
+
+    SUBCASE("SparseMemoryCopy Device To Device")
+    {
+        std::cout << "Testing Sparse Memory Copy between device ...";
+        SparseMemoryCopyDeviceToDevice();
         std::cout << " Done" << std::endl;
     }
 }
