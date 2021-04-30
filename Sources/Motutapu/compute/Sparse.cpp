@@ -89,11 +89,11 @@ void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices)
     MemoryManager::DeReferenceHost(loadDistArray);
 }
 
-void DeepAllocateSparseCuda(SparseMatrix** deviceSparseMatrixArray,
+void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
                             SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId)
 {
-    *deviceSparseMatrixArray =
+    *deviceSparseArray =
         static_cast<SparseMatrix*>(MemoryManager::GetMemoryCuda(
             sizeof(SparseMatrix) * numMatrices, deviceId));
     auto* hostDstBuffer = static_cast<SparseMatrix*>(
@@ -110,12 +110,12 @@ void DeepAllocateSparseCuda(SparseMatrix** deviceSparseMatrixArray,
             static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
                 hostSparseMatrixArray[i].NNZ * sizeof(uint32_t), deviceId));
         hostDstBuffer[i].ROW =
-            static_cast<uint32_t*>(MemoryManager::GetMemoryHost(
-                (hostSparseMatrixArray[i].M + 1) * sizeof(uint32_t)));
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                (hostSparseMatrixArray[i].M + 1) * sizeof(uint32_t), deviceId));
     }
 
-    DeepCopyHostToDevice(*deviceSparseMatrixArray, hostDstBuffer, numMatrices,
-                         deviceId);
+    Cuda::CopyHostToDevice(*deviceSparseArray, hostDstBuffer,
+                           sizeof(SparseMatrix) * numMatrices);
     MemoryManager::DeReferenceHost(hostDstBuffer);
 }
 
@@ -141,13 +141,12 @@ void DeepAllocateLoadDistCuda(LoadDistMatrix** deviceLoadDistArray,
             static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
                 hostLoadDistArray[i].NNZ * sizeof(uint32_t), deviceId));
         hostDstBuffer[i].ROW =
-            static_cast<uint32_t*>(MemoryManager::GetMemoryHost(
-                (hostLoadDistArray[i].M + 1) * sizeof(uint32_t)));
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                (hostLoadDistArray[i].M + 1) * sizeof(uint32_t), deviceId));
     }
 
-    DeepCopyHostToDevice(*deviceLoadDistArray, hostDstBuffer, numMatrices,
-                         deviceId);
-
+    Cuda::CopyHostToDevice(*deviceLoadDistArray, hostDstBuffer,
+                           sizeof(LoadDistMatrix) * numMatrices);
     MemoryManager::DeReferenceHost(hostDstBuffer);
 }
 
@@ -204,14 +203,17 @@ void DeepCopyDeviceToDevice(SparseMatrix* deviceDstArray,
     {
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].COL, deviceId);
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].V, deviceId);
-        dstArrayBuffer[idx].COL = (uint32_t*)MemoryManager::GetMemoryCuda(
-            srcArrayBuffer[idx].NNZ * sizeof(uint32_t), deviceId);
-        dstArrayBuffer[idx].V = (float*)MemoryManager::GetMemoryCuda(
-            srcArrayBuffer[idx].NNZ * sizeof(float), deviceId);
-
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].ROW, deviceId);
-        dstArrayBuffer[idx].ROW = (uint32_t*)MemoryManager::GetMemoryCuda(
-            (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t), deviceId);
+
+        dstArrayBuffer[idx].COL =
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                srcArrayBuffer[idx].NNZ * sizeof(uint32_t), deviceId));
+        dstArrayBuffer[idx].V =
+            static_cast<float*>(MemoryManager::GetMemoryCuda(
+                srcArrayBuffer[idx].NNZ * sizeof(float), deviceId));
+        dstArrayBuffer[idx].ROW =
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t), deviceId));
 
         dstArrayBuffer[idx].M = srcArrayBuffer[idx].M;
         dstArrayBuffer[idx].N = srcArrayBuffer[idx].N;
@@ -253,14 +255,17 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
     {
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].COL, deviceId);
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].Load, deviceId);
-        dstArrayBuffer[idx].COL = (uint32_t*)MemoryManager::GetMemoryCuda(
-            srcArrayBuffer[idx].NNZ * sizeof(uint32_t), deviceId);
-        dstArrayBuffer[idx].Load = (uint32_t*)MemoryManager::GetMemoryCuda(
-            srcArrayBuffer[idx].NNZ * sizeof(uint32_t), deviceId);
-
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].ROW, deviceId);
-        dstArrayBuffer[idx].ROW = (uint32_t*)MemoryManager::GetMemoryCuda(
-            (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t), deviceId);
+
+        dstArrayBuffer[idx].COL =
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                srcArrayBuffer[idx].NNZ * sizeof(uint32_t), deviceId));
+        dstArrayBuffer[idx].Load =
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                srcArrayBuffer[idx].NNZ * sizeof(uint32_t), deviceId));
+        dstArrayBuffer[idx].ROW =
+            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
+                (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t), deviceId));
 
         dstArrayBuffer[idx].M = srcArrayBuffer[idx].M;
         dstArrayBuffer[idx].N = srcArrayBuffer[idx].N;
@@ -303,14 +308,14 @@ void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
 
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].V, deviceId);
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].COL, deviceId);
-        dstArrayBuffer[idx].V =
-            (float*)MemoryManager::GetMemoryCuda(sizeof(float) * nnz, deviceId);
-        dstArrayBuffer[idx].COL = (uint32_t*)MemoryManager::GetMemoryCuda(
-            sizeof(uint32_t) * nnz, deviceId);
-
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].ROW, deviceId);
-        dstArrayBuffer[idx].ROW = (uint32_t*)MemoryManager::GetMemoryCuda(
-            sizeof(uint32_t) * (m + 1), deviceId);
+
+        dstArrayBuffer[idx].V = static_cast<float*>(
+            MemoryManager::GetMemoryCuda(sizeof(float) * nnz, deviceId));
+        dstArrayBuffer[idx].COL = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * nnz, deviceId));
+        dstArrayBuffer[idx].ROW = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * (m + 1), deviceId));
 
         dstArrayBuffer[idx].M = m;
         dstArrayBuffer[idx].N = n;
@@ -347,14 +352,14 @@ void DeepCopyHostToDevice(LoadDistMatrix* deviceDstArray,
 
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].Load, deviceId);
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].COL, deviceId);
-        dstArrayBuffer[idx].Load = (uint32_t*)MemoryManager::GetMemoryCuda(
-            sizeof(uint32_t) * nnz, deviceId);
-        dstArrayBuffer[idx].COL = (uint32_t*)MemoryManager::GetMemoryCuda(
-            sizeof(uint32_t) * nnz, deviceId);
+        dstArrayBuffer[idx].Load = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * nnz, deviceId));
+        dstArrayBuffer[idx].COL = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * nnz, deviceId));
 
         MemoryManager::DeReferenceCuda(dstArrayBuffer[idx].ROW, deviceId);
-        dstArrayBuffer[idx].ROW = (uint32_t*)MemoryManager::GetMemoryCuda(
-            sizeof(uint32_t) * (m + 1), deviceId);
+        dstArrayBuffer[idx].ROW = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * (m + 1), deviceId));
 
         dstArrayBuffer[idx].M = m;
         dstArrayBuffer[idx].N = n;

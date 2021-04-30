@@ -42,11 +42,11 @@ void DeepFreeSparseHost(SparseMatrix* sparseMatrixArray, uint32_t numMatrices);
 void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices);
 
 //! Allocates sparse matrix array on the Device
-//! \param deviceSparseMatrixArray : ptr to allocate the sparse matrix array
+//! \param deviceSparseArray : ptr to allocate the sparse matrix array
 //! \param hostSparseMatrixArray : ptr to the previously allocated host
 //! \param numMatrices : number of matrices
 //! \param deviceId : ID of the device to allocate
-void DeepAllocateSparseCuda(SparseMatrix** deviceSparseMatrixArray,
+void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
                             SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId);
 
