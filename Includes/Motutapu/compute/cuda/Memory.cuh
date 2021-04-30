@@ -13,20 +13,20 @@ namespace Motutapu::Compute::Cuda
 {
 __host__ bool CudaSetDevice(int deviceId);
 
-__host__ __device__ bool CudaMalloc(void** ptr, unsigned int size);
+__host__ __device__ bool CudaMalloc(void** ptr, unsigned int byteSize);
 
 __host__ __device__ bool CudaFree(void* ptr);
 
-__host__ bool CopyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size);
+__host__ bool CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize);
 
-__host__ bool CopyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size);
+__host__ bool CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize);
 
-__host__ bool CopyGpuToGpu(void* dst, const void* src, unsigned int byteSize);
+__host__ bool CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize);
 
-__host__ bool CopyGpuToGpuAsync(float* dst, const float* src,
+__host__ bool CopyDeviceToDeviceAsync(float* dst, const float* src,
                                 unsigned int byteSize, cudaStream_t stream);
 
-__host__ bool CopyGpuToGpuBroadcast(void* dst, const void* src,
+__host__ bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
                                     unsigned int byteSize, unsigned int srcStrideByteSize);
 }  // namespace Motutapu::Compute::Cuda
 #endif

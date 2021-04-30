@@ -62,19 +62,19 @@ void DeepAllocateLoadDistCuda(LoadDistMatrix** deviceLoadDistArray,
                               uint32_t numMatrices, int deviceId);
 
 //! Frees sparse matrix allocated on the Device
-//! \param sparseMatrixArray : Array of sparseMatrixArray sparse matrix to free
+//! \param deviceSparseArray : Array of deviceSparseArray sparse matrix to free
 //! on the device
 //! \param deviceId : ID of the device that owns the
-//! sparseMatrixArray
-void DeepFreeSparseCuda(SparseMatrix* sparseMatrixArray, uint32_t numMatrices,
+//! deviceSparseArray
+void DeepFreeSparseCuda(SparseMatrix* deviceSparseArray, uint32_t numMatrices,
                         int deviceId);
 
 //! Frees load distribution matrix allocated on the Device
-//! \param loadDistArray : Array of loadDistArray load distribution matrix to
+//! \param deviceLoadDistArray : Array of deviceLoadDistArray load distribution matrix to
 //! free on the device
 //! \param deviceId : ID of the device that owns the
-//! loadDistArray
-void DeepFreeLoadDistCuda(LoadDistMatrix* loadDistArray, uint32_t numMatrices,
+//! deviceLoadDistArray
+void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray, uint32_t numMatrices,
                           int deviceId);
 
 //! Deep copies sparse matrix to Device from Host

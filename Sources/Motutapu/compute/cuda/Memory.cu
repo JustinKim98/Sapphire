@@ -8,9 +8,9 @@
 
 namespace Motutapu::Compute::Cuda
 {
-__global__ void CopyOnGpuKernelBroadcast(float* dst, const float* const src,
-                                         unsigned int srcStride,
-                                         unsigned int size)
+__global__ void CopyOnDeviceKernelBroadcast(float* dst, const float* const src,
+                                            unsigned int srcStride,
+                                            unsigned int size)
 {
     const auto sizePerBlock = size / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
@@ -23,8 +23,8 @@ __global__ void CopyOnGpuKernelBroadcast(float* dst, const float* const src,
     }
 }
 
-__global__ void CopyOnGpuKernel(float* dst, const float* const src,
-                                unsigned int size)
+__global__ void CopyOnDeviceKernel(float* dst, const float* const src,
+                                   unsigned int size)
 {
     const auto sizePerBlock = size / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
@@ -49,9 +49,9 @@ __host__ bool CudaSetDevice(int deviceId)
     return false;
 }
 
-__host__ __device__ bool CudaMalloc(void** ptr, unsigned int size)
+__host__ __device__ bool CudaMalloc(void** ptr, unsigned int byteSize)
 {
-    const cudaError_t error = cudaMalloc((void**)ptr, size);
+    const cudaError_t error = cudaMalloc((void**)ptr, byteSize);
     return error == cudaSuccess;
 }
 
@@ -61,40 +61,44 @@ __host__ __device__ bool CudaFree(void* ptr)
     return error == cudaSuccess;
 }
 
-__host__ bool CopyHostToGpu(void* gpuPtr, void* hostPtr, unsigned int size)
+__host__ bool CopyHostToDevice(void* devicePtr, void* hostPtr,
+                               unsigned int byteSize)
 {
-    const cudaError_t error = cudaMemcpy((void*)(gpuPtr), (void*)(hostPtr),
-                                         size, cudaMemcpyHostToDevice);
+    const cudaError_t error = cudaMemcpy((void*)(devicePtr), (void*)(hostPtr),
+                                         byteSize, cudaMemcpyHostToDevice);
 
     return error == cudaSuccess;
 }
 
-__host__ bool CopyGpuToHost(void* hostPtr, void* gpuPtr, unsigned int size)
+__host__ bool CopyDeviceToHost(void* hostPtr, void* devicePtr,
+                               unsigned int byteSize)
 {
-    const cudaError_t error = cudaMemcpy((void*)(hostPtr), (void*)(gpuPtr),
-                                         size, cudaMemcpyDeviceToHost);
+    const cudaError_t error = cudaMemcpy((void*)(hostPtr), (void*)(devicePtr),
+                                         byteSize, cudaMemcpyDeviceToHost);
 
     return error == cudaSuccess;
 }
 
-__host__ bool CopyGpuToGpu(void* dst, const void* src, unsigned int byteSize)
+__host__ bool CopyDeviceToDevice(void* dst, const void* src,
+                                 unsigned int byteSize)
 {
     const cudaError_t error =
         cudaMemcpy(dst, src, byteSize, cudaMemcpyDeviceToDevice);
     return error == cudaSuccess;
 }
 
-__host__ bool CopyGpuToGpuAsync(float* dst, const float* src,
-                                unsigned int byteSize, cudaStream_t stream)
+__host__ bool CopyDeviceToDeviceAsync(float* dst, const float* src,
+                                      unsigned int byteSize,
+                                      cudaStream_t stream)
 {
     const cudaError_t error =
         cudaMemcpyAsync(dst, src, byteSize, cudaMemcpyDeviceToDevice, stream);
     return error == cudaSuccess;
 }
 
-__host__ bool CopyGpuToGpuBroadcast(void* dst, const void* src,
-                                    unsigned int byteSize,
-                                    unsigned int srcStrideByteSize)
+__host__ bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
+                                          unsigned int byteSize,
+                                          unsigned int srcStrideByteSize)
 {
     for (unsigned int idx = 0; idx < byteSize; idx += srcStrideByteSize)
     {

@@ -121,7 +121,7 @@ void MemoryManager::AddReferenceHost(void* ptr)
 void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
 {
     if (!ptr)
-        throw std::runtime_error("DeReferenceCuda - Attempted to free nullptr");
+        return;
 
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 

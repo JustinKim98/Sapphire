@@ -93,70 +93,99 @@ void DeepAllocateSparseCuda(SparseMatrix** deviceSparseMatrixArray,
                             SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId)
 {
-    Cuda::CudaMalloc((void**)(deviceSparseMatrixArray),
-                     sizeof(SparseMatrix) * numMatrices);
-    SparseMatrix* cudaTarget = *deviceSparseMatrixArray;
-    Cuda::CopyHostToGpu(cudaTarget, hostSparseMatrixArray,
-                        sizeof(SparseMatrix) * numMatrices);
+    *deviceSparseMatrixArray =
+        static_cast<SparseMatrix*>(Util::MemoryManager::GetMemoryCuda(
+            sizeof(SparseMatrix) * numMatrices, deviceId));
+    auto* hostDstBuffer = static_cast<SparseMatrix*>(
+        Util::MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        cudaTarget[i].V =
+        hostDstBuffer[i].M = hostSparseMatrixArray[i].M;
+        hostDstBuffer[i].N = hostSparseMatrixArray[i].N;
+        hostDstBuffer[i].NNZ = hostSparseMatrixArray[i].NNZ;
+        hostDstBuffer[i].V =
             static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
                 hostSparseMatrixArray[i].NNZ * sizeof(float), deviceId));
-        cudaTarget[i].COL =
+        hostDstBuffer[i].COL =
             static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
                 hostSparseMatrixArray[i].NNZ * sizeof(uint32_t), deviceId));
-        cudaTarget[i].ROW =
+        hostDstBuffer[i].ROW =
             static_cast<uint32_t*>(Util::MemoryManager::GetMemoryHost(
                 (hostSparseMatrixArray[i].M + 1) * sizeof(uint32_t)));
     }
+
+    DeepCopyHostToDevice(*deviceSparseMatrixArray, hostDstBuffer, numMatrices,
+                         deviceId);
+    Util::MemoryManager::DeReferenceHost(hostDstBuffer);
 }
 
 void DeepAllocateLoadDistCuda(LoadDistMatrix** deviceLoadDistArray,
                               LoadDistMatrix* hostLoadDistArray,
                               uint32_t numMatrices, int deviceId)
 {
-    Cuda::CudaMalloc((void**)(deviceLoadDistArray),
-                     sizeof(SparseMatrix) * numMatrices);
-    LoadDistMatrix* cudaTarget = *deviceLoadDistArray;
-    Cuda::CopyHostToGpu(cudaTarget, hostLoadDistArray,
-                        sizeof(SparseMatrix) * numMatrices);
+    *deviceLoadDistArray =
+        static_cast<LoadDistMatrix*>(Util::MemoryManager::GetMemoryCuda(
+            sizeof(LoadDistMatrix) * numMatrices, deviceId));
+    auto* hostDstBuffer =
+        static_cast<LoadDistMatrix*>(Util::MemoryManager::GetMemoryHost(
+            sizeof(LoadDistMatrix) * numMatrices));
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        cudaSetDevice(deviceId);
-        cudaMalloc(&(cudaTarget[i].Load),
-                   hostLoadDistArray[i].NNZ * sizeof(uint32_t));
-        cudaMalloc(&(cudaTarget[i].COL),
-                   hostLoadDistArray[i].NNZ * sizeof(uint32_t));
-        cudaMalloc(&(cudaTarget[i].ROW),
-                   (hostLoadDistArray[i].M + 1) * sizeof(uint32_t));
+        hostDstBuffer[i].M = hostLoadDistArray[i].M;
+        hostDstBuffer[i].N = hostLoadDistArray[i].N;
+        hostDstBuffer[i].NNZ = hostLoadDistArray[i].NNZ;
+        hostDstBuffer[i].Load =
+            static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
+                hostLoadDistArray[i].NNZ * sizeof(uint32_t), deviceId));
+        hostDstBuffer[i].COL =
+            static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
+                hostLoadDistArray[i].NNZ * sizeof(uint32_t), deviceId));
+        hostDstBuffer[i].ROW =
+            static_cast<uint32_t*>(Util::MemoryManager::GetMemoryHost(
+                (hostLoadDistArray[i].M + 1) * sizeof(uint32_t)));
     }
+
+    DeepCopyHostToDevice(*deviceLoadDistArray, hostDstBuffer, numMatrices,
+                         deviceId);
+
+    Util::MemoryManager::DeReferenceHost(hostDstBuffer);
 }
 
-void DeepFreeSparseCuda(SparseMatrix* sparseMatrixArray, uint32_t numMatrices,
+void DeepFreeSparseCuda(SparseMatrix* deviceSparseArray, uint32_t numMatrices,
                         int deviceId)
 {
+    auto* hostBuffer = static_cast<SparseMatrix*>(
+        Util::MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+    Cuda::CopyDeviceToHost(hostBuffer, deviceSparseArray,
+                           sizeof(SparseMatrix) * numMatrices);
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        cudaFree(sparseMatrixArray[i].V);
-        cudaFree(sparseMatrixArray[i].COL);
-        cudaFree(sparseMatrixArray[i].ROW);
+        Util::MemoryManager::DeReferenceCuda(hostBuffer[i].V, deviceId);
+        Util::MemoryManager::DeReferenceCuda(hostBuffer[i].COL, deviceId);
+        Util::MemoryManager::DeReferenceCuda(hostBuffer[i].ROW, deviceId);
     }
-    Cuda::CudaFree(sparseMatrixArray);
+    Util::MemoryManager::DeReferenceHost(hostBuffer);
+    Util::MemoryManager::DeReferenceCuda(deviceSparseArray, deviceId);
 }
 
-void DeepFreeLoadDistCuda(LoadDistMatrix* loadDistArray, uint32_t numMatrices,
-                          int deviceId)
+void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray,
+                          uint32_t numMatrices, int deviceId)
 {
+    auto* hostBuffer =
+        static_cast<LoadDistMatrix*>(Util::MemoryManager::GetMemoryHost(
+            sizeof(LoadDistMatrix) * numMatrices));
+    Cuda::CopyDeviceToHost(hostBuffer, deviceLoadDistArray,
+                           sizeof(LoadDistMatrix) * numMatrices);
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        cudaFree(loadDistArray[i].Load);
-        cudaFree(loadDistArray[i].COL);
-        cudaFree(loadDistArray[i].ROW);
+        Util::MemoryManager::DeReferenceCuda(hostBuffer[i].Load, deviceId);
+        Util::MemoryManager::DeReferenceCuda(hostBuffer[i].COL, deviceId);
+        Util::MemoryManager::DeReferenceCuda(hostBuffer[i].ROW, deviceId);
     }
-    Cuda::CudaFree(loadDistArray);
+    Util::MemoryManager::DeReferenceHost(hostBuffer);
+    Util::MemoryManager::DeReferenceCuda(deviceLoadDistArray, deviceId);
 }
 
 void DeepCopyDeviceToDevice(SparseMatrix* deviceDstArray,
@@ -168,11 +197,11 @@ void DeepCopyDeviceToDevice(SparseMatrix* deviceDstArray,
     auto* srcArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
 
-    cudaSetDevice(deviceId);
-    Cuda::CopyGpuToHost(dstArrayBuffer, deviceDstArray,
-                        numMatrices * sizeof(SparseMatrix));
-    Cuda::CopyGpuToHost(srcArrayBuffer, deviceSrcArray,
-                        numMatrices * sizeof(SparseMatrix));
+    Cuda::CudaSetDevice(deviceId);
+    Cuda::CopyDeviceToHost(dstArrayBuffer, deviceDstArray,
+                           numMatrices * sizeof(SparseMatrix));
+    Cuda::CopyDeviceToHost(srcArrayBuffer, deviceSrcArray,
+                           numMatrices * sizeof(SparseMatrix));
 
     for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
@@ -191,16 +220,18 @@ void DeepCopyDeviceToDevice(SparseMatrix* deviceDstArray,
         dstArrayBuffer[idx].N = srcArrayBuffer[idx].N;
         dstArrayBuffer[idx].NNZ = srcArrayBuffer[idx].NNZ;
 
-        Cuda::CopyGpuToGpu(dstArrayBuffer[idx].COL, srcArrayBuffer[idx].COL,
-                           srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
-        Cuda::CopyGpuToGpu(dstArrayBuffer[idx].V, srcArrayBuffer[idx].V,
-                           srcArrayBuffer[idx].NNZ * sizeof(float));
-        Cuda::CopyGpuToGpu(dstArrayBuffer[idx].ROW, srcArrayBuffer[idx].ROW,
-                           (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t));
+        Cuda::CopyDeviceToDevice(dstArrayBuffer[idx].COL,
+                                 srcArrayBuffer[idx].COL,
+                                 srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
+        Cuda::CopyDeviceToDevice(dstArrayBuffer[idx].V, srcArrayBuffer[idx].V,
+                                 srcArrayBuffer[idx].NNZ * sizeof(float));
+        Cuda::CopyDeviceToDevice(
+            dstArrayBuffer[idx].ROW, srcArrayBuffer[idx].ROW,
+            (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t));
     }
 
-    Cuda::CopyHostToGpu(deviceDstArray, dstArrayBuffer,
-                        numMatrices * sizeof(SparseMatrix));
+    Cuda::CopyHostToDevice(deviceDstArray, dstArrayBuffer,
+                           numMatrices * sizeof(SparseMatrix));
 
     MemoryManager::DeReferenceHost(dstArrayBuffer);
     MemoryManager::DeReferenceHost(dstArrayBuffer);
@@ -215,11 +246,11 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
     auto* srcArrayBuffer = static_cast<LoadDistMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(LoadDistMatrix)));
 
-    cudaSetDevice(deviceId);
-    Cuda::CopyGpuToHost(dstArrayBuffer, deviceDstArray,
-                        numMatrices * sizeof(LoadDistMatrix));
-    Cuda::CopyGpuToHost(srcArrayBuffer, deviceSrcArray,
-                        numMatrices * sizeof(LoadDistMatrix));
+    Cuda::CudaSetDevice(deviceId);
+    Cuda::CopyDeviceToHost(dstArrayBuffer, deviceDstArray,
+                           numMatrices * sizeof(LoadDistMatrix));
+    Cuda::CopyDeviceToHost(srcArrayBuffer, deviceSrcArray,
+                           numMatrices * sizeof(LoadDistMatrix));
 
     for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
@@ -238,16 +269,19 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
         dstArrayBuffer[idx].N = srcArrayBuffer[idx].N;
         dstArrayBuffer[idx].NNZ = srcArrayBuffer[idx].NNZ;
 
-        Cuda::CopyGpuToGpu(dstArrayBuffer[idx].COL, srcArrayBuffer[idx].COL,
-                           srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
-        Cuda::CopyGpuToGpu(dstArrayBuffer[idx].Load, srcArrayBuffer[idx].Load,
-                           srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
-        Cuda::CopyGpuToGpu(dstArrayBuffer[idx].ROW, srcArrayBuffer[idx].ROW,
-                           (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t));
+        Cuda::CopyDeviceToDevice(dstArrayBuffer[idx].COL,
+                                 srcArrayBuffer[idx].COL,
+                                 srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
+        Cuda::CopyDeviceToDevice(dstArrayBuffer[idx].Load,
+                                 srcArrayBuffer[idx].Load,
+                                 srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
+        Cuda::CopyDeviceToDevice(
+            dstArrayBuffer[idx].ROW, srcArrayBuffer[idx].ROW,
+            (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t));
     }
 
-    Cuda::CopyHostToGpu(deviceDstArray, dstArrayBuffer,
-                        numMatrices * sizeof(LoadDistMatrix));
+    Cuda::CopyHostToDevice(deviceDstArray, dstArrayBuffer,
+                           numMatrices * sizeof(LoadDistMatrix));
 
     MemoryManager::DeReferenceHost(dstArrayBuffer);
     MemoryManager::DeReferenceHost(dstArrayBuffer);
@@ -260,9 +294,9 @@ void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
     auto* dstArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
 
-    cudaSetDevice(deviceId);
-    Cuda::CopyGpuToHost(dstArrayBuffer, deviceDstArray,
-                        numMatrices * sizeof(SparseMatrix));
+    Cuda::CudaSetDevice(deviceId);
+    Cuda::CopyDeviceToHost(dstArrayBuffer, deviceDstArray,
+                           numMatrices * sizeof(SparseMatrix));
 
     for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
@@ -285,15 +319,15 @@ void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
         dstArrayBuffer[idx].N = n;
         dstArrayBuffer[idx].NNZ = nnz;
 
-        Cuda::CopyHostToGpu(dstArrayBuffer[idx].V, hostSrcArray[idx].V,
-                            sizeof(float) * nnz);
-        Cuda::CopyHostToGpu(dstArrayBuffer[idx].COL, hostSrcArray[idx].COL,
-                            sizeof(uint32_t) * nnz);
-        Cuda::CopyHostToGpu(dstArrayBuffer[idx].ROW, hostSrcArray[idx].ROW,
-                            sizeof(uint32_t) * (m + 1));
+        Cuda::CopyHostToDevice(dstArrayBuffer[idx].V, hostSrcArray[idx].V,
+                               sizeof(float) * nnz);
+        Cuda::CopyHostToDevice(dstArrayBuffer[idx].COL, hostSrcArray[idx].COL,
+                               sizeof(uint32_t) * nnz);
+        Cuda::CopyHostToDevice(dstArrayBuffer[idx].ROW, hostSrcArray[idx].ROW,
+                               sizeof(uint32_t) * (m + 1));
     }
-    Cuda::CopyHostToGpu(deviceDstArray, dstArrayBuffer,
-                        sizeof(SparseMatrix) * numMatrices);
+    Cuda::CopyHostToDevice(deviceDstArray, dstArrayBuffer,
+                           sizeof(SparseMatrix) * numMatrices);
     MemoryManager::DeReferenceHost(dstArrayBuffer);
 }
 
@@ -304,9 +338,9 @@ void DeepCopyHostToDevice(LoadDistMatrix* deviceDstArray,
     auto* dstArrayBuffer = static_cast<LoadDistMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(LoadDistMatrix)));
 
-    cudaSetDevice(deviceId);
-    Cuda::CopyGpuToHost(dstArrayBuffer, deviceDstArray,
-                        numMatrices * sizeof(LoadDistMatrix));
+    Cuda::CudaSetDevice(deviceId);
+    Cuda::CopyDeviceToHost(dstArrayBuffer, deviceDstArray,
+                           numMatrices * sizeof(LoadDistMatrix));
 
     for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
@@ -329,15 +363,15 @@ void DeepCopyHostToDevice(LoadDistMatrix* deviceDstArray,
         dstArrayBuffer[idx].N = n;
         dstArrayBuffer[idx].NNZ = nnz;
 
-        Cuda::CopyHostToGpu(dstArrayBuffer[idx].Load, hostSrcArray[idx].Load,
-                            sizeof(uint32_t) * nnz);
-        Cuda::CopyHostToGpu(dstArrayBuffer[idx].COL, hostSrcArray[idx].COL,
-                            sizeof(uint32_t) * nnz);
-        Cuda::CopyHostToGpu(dstArrayBuffer[idx].ROW, hostSrcArray[idx].ROW,
-                            sizeof(uint32_t) * (m + 1));
+        Cuda::CopyHostToDevice(dstArrayBuffer[idx].Load, hostSrcArray[idx].Load,
+                               sizeof(uint32_t) * nnz);
+        Cuda::CopyHostToDevice(dstArrayBuffer[idx].COL, hostSrcArray[idx].COL,
+                               sizeof(uint32_t) * nnz);
+        Cuda::CopyHostToDevice(dstArrayBuffer[idx].ROW, hostSrcArray[idx].ROW,
+                               sizeof(uint32_t) * (m + 1));
     }
-    Cuda::CopyHostToGpu(deviceDstArray, dstArrayBuffer,
-                        sizeof(LoadDistMatrix) * numMatrices);
+    Cuda::CopyHostToDevice(deviceDstArray, dstArrayBuffer,
+                           sizeof(LoadDistMatrix) * numMatrices);
     MemoryManager::DeReferenceHost(dstArrayBuffer);
 }
 
@@ -348,9 +382,9 @@ void DeepCopyDeviceToHost(SparseMatrix* hostDstArray,
     auto* srcArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
 
-    cudaSetDevice(deviceId);
-    Cuda::CopyGpuToHost(srcArrayBuffer, deviceSrcArray,
-                        numMatrices * sizeof(SparseMatrix));
+    Cuda::CudaSetDevice(deviceId);
+    Cuda::CopyDeviceToHost(srcArrayBuffer, deviceSrcArray,
+                           numMatrices * sizeof(SparseMatrix));
 
     for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
@@ -372,12 +406,12 @@ void DeepCopyDeviceToHost(SparseMatrix* hostDstArray,
         hostDstArray[idx].N = srcArrayBuffer[idx].N;
         hostDstArray[idx].NNZ = srcArrayBuffer[idx].NNZ;
 
-        Cuda::CopyGpuToHost(hostDstArray[idx].COL, deviceSrcArray[idx].COL,
-                            hostDstArray[idx].NNZ * sizeof(uint32_t));
-        Cuda::CopyGpuToHost(hostDstArray[idx].V, deviceSrcArray[idx].V,
-                            hostDstArray[idx].NNZ * sizeof(float));
-        Cuda::CopyGpuToHost(hostDstArray[idx].ROW, deviceSrcArray[idx].ROW,
-                            (hostDstArray[idx].M + 1) * sizeof(uint32_t));
+        Cuda::CopyDeviceToHost(hostDstArray[idx].COL, srcArrayBuffer[idx].COL,
+                               srcArrayBuffer[idx].NNZ * sizeof(uint32_t));
+        Cuda::CopyDeviceToHost(hostDstArray[idx].V, srcArrayBuffer[idx].V,
+                               srcArrayBuffer[idx].NNZ * sizeof(float));
+        Cuda::CopyDeviceToHost(hostDstArray[idx].ROW, srcArrayBuffer[idx].ROW,
+                               (srcArrayBuffer[idx].M + 1) * sizeof(uint32_t));
     }
 
     MemoryManager::DeReferenceHost(srcArrayBuffer);
@@ -389,8 +423,8 @@ void DeepCopyDeviceToHost(LoadDistMatrix* hostDstArray,
     auto* srcArrayBuffer = static_cast<LoadDistMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(LoadDistMatrix)));
 
-    Cuda::CopyGpuToHost(srcArrayBuffer, deviceSrcArray,
-                        numMatrices * sizeof(LoadDistMatrix));
+    Cuda::CopyDeviceToHost(srcArrayBuffer, deviceSrcArray,
+                           numMatrices * sizeof(LoadDistMatrix));
 
     for (uint32_t idx = 0; idx < numMatrices; ++idx)
     {
@@ -412,12 +446,12 @@ void DeepCopyDeviceToHost(LoadDistMatrix* hostDstArray,
         hostDstArray[idx].N = srcArrayBuffer[idx].N;
         hostDstArray[idx].NNZ = srcArrayBuffer[idx].NNZ;
 
-        Cuda::CopyGpuToHost(hostDstArray[idx].COL, deviceSrcArray[idx].COL,
-                            hostDstArray[idx].NNZ * sizeof(uint32_t));
-        Cuda::CopyGpuToHost(hostDstArray[idx].Load, deviceSrcArray[idx].Load,
-                            hostDstArray[idx].NNZ * sizeof(uint32_t));
-        Cuda::CopyGpuToHost(hostDstArray[idx].ROW, deviceSrcArray[idx].ROW,
-                            (hostDstArray[idx].M + 1) * sizeof(uint32_t));
+        Cuda::CopyDeviceToHost(hostDstArray[idx].COL, deviceSrcArray[idx].COL,
+                               hostDstArray[idx].NNZ * sizeof(uint32_t));
+        Cuda::CopyDeviceToHost(hostDstArray[idx].Load, deviceSrcArray[idx].Load,
+                               hostDstArray[idx].NNZ * sizeof(uint32_t));
+        Cuda::CopyDeviceToHost(hostDstArray[idx].ROW, deviceSrcArray[idx].ROW,
+                               (hostDstArray[idx].M + 1) * sizeof(uint32_t));
     }
 
     MemoryManager::DeReferenceHost(srcArrayBuffer);
@@ -430,6 +464,7 @@ void DeepCopyHostToHost(SparseMatrix* hostDstArray, SparseMatrix* hostSrcArray,
     {
         const auto nnz = hostSrcArray[matrixIdx].NNZ;
         const auto m = hostSrcArray[matrixIdx].M;
+        const auto n = hostSrcArray[matrixIdx].N;
 
         Util::MemoryManager::DeReferenceHost(hostDstArray[matrixIdx].V);
         Util::MemoryManager::DeReferenceHost(hostDstArray[matrixIdx].COL);
@@ -453,6 +488,10 @@ void DeepCopyHostToHost(SparseMatrix* hostDstArray, SparseMatrix* hostSrcArray,
         {
             hostDstArray[matrixIdx].ROW[i] = hostSrcArray[matrixIdx].ROW[i];
         }
+
+        hostDstArray[matrixIdx].NNZ = nnz;
+        hostDstArray[matrixIdx].M = m;
+        hostDstArray[matrixIdx].N = n;
     }
 }
 
@@ -463,6 +502,7 @@ void DeepCopyHostToHost(LoadDistMatrix* hostDstArray,
     {
         const auto nnz = hostSrcArray[matrixIdx].NNZ;
         const auto m = hostSrcArray[matrixIdx].M;
+        const auto n = hostSrcArray[matrixIdx].N;
 
         Util::MemoryManager::DeReferenceHost(hostDstArray[matrixIdx].Load);
         Util::MemoryManager::DeReferenceHost(hostDstArray[matrixIdx].COL);
@@ -486,6 +526,10 @@ void DeepCopyHostToHost(LoadDistMatrix* hostDstArray,
         {
             hostDstArray[matrixIdx].ROW[i] = hostSrcArray[matrixIdx].ROW[i];
         }
+
+        hostDstArray[matrixIdx].NNZ = nnz;
+        hostDstArray[matrixIdx].M = m;
+        hostDstArray[matrixIdx].N = n;
     }
 }
 
@@ -552,12 +596,12 @@ void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, uint32_t numRows,
 void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
                             size_t numMatrices)
 {
-    Cuda::CopyGpuToHost(dst, src, numMatrices * sizeof(SparseMatrix));
+    Cuda::CopyDeviceToHost(dst, src, numMatrices * sizeof(SparseMatrix));
 
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
-        Cuda::CopyGpuToHost(dst[matrixIdx].ROW, src[matrixIdx].ROW,
-                            sizeof(uint32_t) * (src[matrixIdx].M + 1));
+        Cuda::CopyDeviceToHost(dst[matrixIdx].ROW, src[matrixIdx].ROW,
+                               sizeof(uint32_t) * (src[matrixIdx].M + 1));
 
         Util::MemoryManager::DeReferenceHost(dst[matrixIdx].COL);
         Util::MemoryManager::DeReferenceHost(dst[matrixIdx].V);
@@ -569,22 +613,22 @@ void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
             static_cast<float*>(Util::MemoryManager::GetMemoryHost(
                 sizeof(float) * src[matrixIdx].NNZ));
 
-        Cuda::CopyGpuToHost(dst[matrixIdx].V, src[matrixIdx].V,
-                            sizeof(float) * dst[matrixIdx].NNZ);
-        Cuda::CopyGpuToHost(dst[matrixIdx].COL, src[matrixIdx].COL,
-                            sizeof(uint32_t) * dst[matrixIdx].NNZ);
+        Cuda::CopyDeviceToHost(dst[matrixIdx].V, src[matrixIdx].V,
+                               sizeof(float) * dst[matrixIdx].NNZ);
+        Cuda::CopyDeviceToHost(dst[matrixIdx].COL, src[matrixIdx].COL,
+                               sizeof(uint32_t) * dst[matrixIdx].NNZ);
     }
 }
 
 void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
                             size_t numMatrices, int deviceId)
 {
-    Cuda::CopyHostToGpu(dst, src, numMatrices * sizeof(SparseMatrix));
+    Cuda::CopyHostToDevice(dst, src, numMatrices * sizeof(SparseMatrix));
 
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
-        Cuda::CopyHostToGpu(dst[matrixIdx].ROW, src[matrixIdx].ROW,
-                            sizeof(uint32_t) * (src[matrixIdx].M + 1));
+        Cuda::CopyHostToDevice(dst[matrixIdx].ROW, src[matrixIdx].ROW,
+                               sizeof(uint32_t) * (src[matrixIdx].M + 1));
 
         Util::MemoryManager::DeReferenceCuda(dst[matrixIdx].COL, deviceId);
         Util::MemoryManager::DeReferenceCuda(dst[matrixIdx].V, deviceId);
@@ -596,10 +640,10 @@ void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
             static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
                 sizeof(float) * src[matrixIdx].NNZ, deviceId));
 
-        Cuda::CopyHostToGpu(dst[matrixIdx].V, src[matrixIdx].V,
-                            sizeof(float) * dst[matrixIdx].NNZ);
-        Cuda::CopyHostToGpu(dst[matrixIdx].COL, src[matrixIdx].COL,
-                            sizeof(uint32_t) * dst[matrixIdx].NNZ);
+        Cuda::CopyHostToDevice(dst[matrixIdx].V, src[matrixIdx].V,
+                               sizeof(float) * dst[matrixIdx].NNZ);
+        Cuda::CopyHostToDevice(dst[matrixIdx].COL, src[matrixIdx].COL,
+                               sizeof(uint32_t) * dst[matrixIdx].NNZ);
     }
 }
 
