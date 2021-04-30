@@ -37,7 +37,7 @@ void hostAllocationTest()
         Util::MemoryManager::DeReferenceHost(static_cast<void*>(data));
     }
 
-    CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeHost(), totalSize);
+    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeHost(), totalSize);
 
     for (int i = 0; i < 100; i++)
     {
@@ -51,7 +51,7 @@ void hostAllocationTest()
     }
 
     Util::MemoryManager::ClearUnusedHostMemoryPool();
-    CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeHost(), 0);
+    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeHost(), 0);
 }
 
 void cudaAllocationTest()
@@ -76,7 +76,7 @@ void cudaAllocationTest()
         Util::MemoryManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 
-    CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeCuda(), totalSize);
+    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeCuda(), totalSize);
 
     for (int i = 0; i < 100; i++)
     {
@@ -86,6 +86,6 @@ void cudaAllocationTest()
     }
 
     Util::MemoryManager::ClearUnusedCudaMemoryPool();
-    CHECK_EQ(Util::MemoryManager::GetTotalAllocationByteSizeCuda(), 0);
+    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeCuda(), 0);
 }
 }  // namespace Motutapu::Test

@@ -152,7 +152,7 @@ TEST_CASE("Basic computation test")
     }
 }
 
-TEST_CASE("SparseMemoryTest")
+TEST_CASE("SparseMemory function Test")
 {
     SUBCASE("SparseMemoryAllocationHost")
     {

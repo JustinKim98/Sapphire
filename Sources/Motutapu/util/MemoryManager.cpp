@@ -240,7 +240,7 @@ void MemoryManager::ClearHostMemoryPool()
     m_hostBusyMemoryPool.clear();
 }
 
-size_t MemoryManager::GetTotalAllocationByteSizeCuda()
+size_t MemoryManager::GetTotalByteSizeCuda()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -259,7 +259,7 @@ size_t MemoryManager::GetTotalAllocationByteSizeCuda()
     return size;
 }
 
-size_t MemoryManager::GetTotalAllocationByteSizeHost()
+size_t MemoryManager::GetTotalByteSizeHost()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -275,6 +275,54 @@ size_t MemoryManager::GetTotalAllocationByteSizeHost()
         size += chunk.ByteSize;
     }
 
+    return size;
+}
+
+size_t MemoryManager::GetAllocatedByteSizeCuda()
+{
+    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    size_t size = 0;
+
+    for (const auto& [key, chunk] : m_cudaBusyMemoryPool)
+    {
+        size += chunk.ByteSize;
+    }
+    return size;
+}
+
+size_t MemoryManager::GetAllocatedByteSizeHost()
+{
+    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    size_t size = 0;
+
+    for (const auto& [key, chunk] : m_hostBusyMemoryPool)
+    {
+        size += chunk.ByteSize;
+    }
+    return size;
+}
+
+size_t MemoryManager::GetFreeByteSizeCuda()
+{
+    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    size_t size = 0;
+
+    for (const auto& [key, chunk] : m_cudaFreeMemoryPool)
+    {
+        size += chunk.ByteSize;
+    }
+    return size;
+}
+
+size_t MemoryManager::GetFreeByteSizeHost()
+{
+    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    size_t size = 0;
+
+    for (const auto& [key, chunk] : m_hostFreeMemoryPool)
+    {
+        size += chunk.ByteSize;
+    }
     return size;
 }
 

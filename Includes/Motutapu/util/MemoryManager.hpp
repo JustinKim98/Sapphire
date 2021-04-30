@@ -75,9 +75,17 @@ class MemoryManager
 
     static void ClearHostMemoryPool();
 
-    static size_t GetTotalAllocationByteSizeCuda();
+    static size_t GetTotalByteSizeCuda();
 
-    static size_t GetTotalAllocationByteSizeHost();
+    static size_t GetTotalByteSizeHost();
+
+    static size_t GetAllocatedByteSizeCuda();
+
+    static size_t GetAllocatedByteSizeHost();
+
+    static size_t GetFreeByteSizeCuda();
+
+    static size_t GetFreeByteSizeHost();
 
  private:
     static std::unordered_multimap<size_t, MemoryChunk> m_hostFreeMemoryPool;
