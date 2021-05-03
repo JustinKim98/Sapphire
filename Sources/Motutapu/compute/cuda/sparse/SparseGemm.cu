@@ -14,8 +14,13 @@
 #define MAX_BLOCK_DIM 1024
 #define INF (~0)
 
-namespace Motutapu::Compute::Sparse
+namespace Motutapu::Compute::Cuda::Sparse
 {
+__device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
+{
+    return col % numBuckets;
+}
+
 __host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
                    LoadDistMatrix* loadDist, size_t numMatrices)
 {

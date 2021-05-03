@@ -25,6 +25,10 @@ void Sub(TensorData& out, const TensorData& a, const TensorData& b);
 void Gemm(TensorData& out, const TensorData& a, const TensorData& b,
           const TensorData& c);
 
+//! Performs GEMM (out = a*b + c) using the sparse matrix
+void SparseGemm(TensorData& out, const TensorData& a, const TensorData& b,
+                TensorData& c);
+
 //! Performs output = input*factor
 void Scale(TensorData& output, const TensorData& input, float factor);
 

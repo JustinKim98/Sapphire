@@ -10,6 +10,7 @@
 #include <Motutapu/Tests/BroadcastTest.hpp>
 #include <Motutapu/Tests/ComputationTest.hpp>
 #include <Motutapu/Tests/CudaFunctionalityTest.cuh>
+#include <Motutapu/Tests/SparseGemmTest.hpp>
 #include <Motutapu/Tests/SparseMemoryTest.hpp>
 #include <Motutapu/Tests/Test.hpp>
 #include <iostream>
@@ -180,6 +181,14 @@ TEST_CASE("SparseMemory function Test")
         std::cout << "Testing Sparse Memory Copy between device ...";
         SparseMemoryCopyDeviceToDevice();
         std::cout << " Done" << std::endl;
+    }
+}
+
+TEST_CASE("Device Sparse Gemm Test")
+{
+    SUBCASE("Sparse Gemm Test")
+    {
+        SparseGemmTest();
     }
 }
 

@@ -10,7 +10,7 @@
 #include <Motutapu/compute/SparseMatrix.hpp>
 #include <cstdlib>
 
-namespace Motutapu::Compute::Sparse
+namespace Motutapu::Compute
 {
 //! Deep allocates sparse matrix on host
 //! \param sparseMatrixArray : ptr to allocate sparse matrix

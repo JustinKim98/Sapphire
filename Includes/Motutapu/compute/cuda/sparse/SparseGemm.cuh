@@ -10,7 +10,7 @@
 #include <Motutapu/compute/Sparse.hpp>
 #include <Motutapu/compute/cuda/Memory.cuh>
 
-namespace Motutapu::Compute::Sparse
+namespace Motutapu::Compute::Cuda::Sparse
 {
 //! Calculates Gemm by launching LoadDistKernel on the GPU
 //! \param output : Array of output sparse matrices. output must be shallow
@@ -90,11 +90,6 @@ __device__ void Swap(T* a, T* b)
     *b = temp;
 }
 
-__device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
-{
-    return col % numBuckets;
-}
-
-}  // namespace Motutapu::Compute::Sparse
+}  // namespace Motutapu::Compute::Cuda::Sparse
 
 #endif  // MOTUTAPU_CALCULATELOAD_CUH

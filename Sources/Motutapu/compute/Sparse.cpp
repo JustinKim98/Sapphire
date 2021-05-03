@@ -9,7 +9,7 @@
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/util/MemoryManager.hpp>
 
-namespace Motutapu::Compute::Sparse
+namespace Motutapu::Compute
 {
 using namespace Util;
 
