@@ -7,7 +7,7 @@
 #ifdef WITH_CUDA
 
 #include <Motutapu/Tests/CudaFunctionalityTest.cuh>
-#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/Memory.hpp>
 #include <iostream>
 
 #include <cuda_runtime.h>

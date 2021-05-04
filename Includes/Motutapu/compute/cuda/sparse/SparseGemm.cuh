@@ -8,7 +8,7 @@
 #define MOTUTAPU_COMPUTE_CALCULATE_LOAD_CUH
 
 #include <Motutapu/compute/Sparse.hpp>
-#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/Memory.hpp>
 
 namespace Motutapu::Compute::Cuda::Sparse
 {

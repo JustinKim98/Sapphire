@@ -101,7 +101,7 @@ __host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
 __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
                                SparseMatrix* b, uint32_t* nnzArray)
 {
-    __shared__ uint32_t* nnzPerMatrix;
+    __shared__ uint32_t nnzPerMatrix;
     //! ByteSize must be larger than Number of required blocks per row + 1
 
     const auto matrixIdx = blockIdx.x;
@@ -113,7 +113,9 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
     LoadDistMatrix* curLoadDist = loadDist + matrixIdx;
 
     if (threadIdx.x == 0)
-        *nnzPerMatrix = 0;
+        nnzPerMatrix = 0;
+
+    __syncthreads();
 
     for (auto rowIdxA = rowIdxBegin; rowIdxA < a[matrixIdx].M;
          rowIdxA += rowIdxStride)
@@ -137,11 +139,11 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
             }
             nnzPerRow += numElemPerRowB;
         }
-        atomicAdd_block(nnzPerMatrix, nnzPerRow);
+        atomicAdd_block(&nnzPerMatrix, nnzPerRow);
     }
 
-    curLoadDist->NNZ = *nnzPerMatrix;
-    nnzArray[matrixIdx] = *nnzPerMatrix;
+    curLoadDist->NNZ = nnzPerMatrix;
+    nnzArray[matrixIdx] = nnzPerMatrix;
 }
 
 __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,

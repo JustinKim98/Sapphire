@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/Memory.hpp>
 #include <Motutapu/util/MemoryManager.hpp>
 #include <cassert>
 #include <iostream>
@@ -52,13 +52,13 @@ void* MemoryManager::GetMemoryCuda(size_t byteSize, int deviceId)
     success &= Compute::Cuda::CudaSetDevice(deviceId);
     success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr, allocationSize);
 
-    m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
-                                 MemoryChunk(allocationSize, cudaPtr, 1));
-
     if (!success)
     {
         throw std::runtime_error("GetMemoryCuda - Allocation failure");
     }
+
+    m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
+                                 MemoryChunk(allocationSize, cudaPtr, 1));
 
     return cudaPtr;
 }

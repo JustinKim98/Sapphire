@@ -6,7 +6,7 @@
 
 #include <cublas_v2.h>
 #include <Motutapu/compute/cuda/CudaParams.cuh>
-#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/Memory.hpp>
 #include <Motutapu/compute/cuda/dense/Basic.cuh>
 #include <Motutapu/compute/cuda/dense/Gemm.cuh>
 #include <Motutapu/compute/cuda/dense/GemmKernel.cuh>

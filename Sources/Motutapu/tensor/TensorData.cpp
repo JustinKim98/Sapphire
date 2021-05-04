@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <immintrin.h>
-#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/Memory.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <Motutapu/util/MemoryManager.hpp>
 #include <algorithm>
