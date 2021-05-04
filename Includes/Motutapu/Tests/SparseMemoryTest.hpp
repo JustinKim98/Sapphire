@@ -14,12 +14,8 @@
 
 namespace Motutapu::Test
 {
-void RandomInitSparseMatrixHost(SparseMatrix** sparseMatrixArray, uint32_t m,
+void GenerateRandomSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
                                 uint32_t n, uint32_t numMatrices);
-
-void ZeroInitSparseMatrixHost(SparseMatrix** sparseMatrixArray, uint32_t m,
-                              uint32_t n, uint32_t numMatrices);
-
 void SparseMemoryAllocationHost();
 
 void LoadDistMemoryAllocationHost();

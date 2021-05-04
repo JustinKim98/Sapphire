@@ -46,8 +46,8 @@ void SparseGemmTest()
     const auto n = uniform(gen);
     const auto k = uniform(gen);
 
-    RandomInitSparseMatrixHost(&A, m, k, numMatrices);
-    RandomInitSparseMatrixHost(&B, m, k, numMatrices);
+    GenerateRandomSparseArray(&A, m, k, numMatrices);
+    GenerateRandomSparseArray(&B, m, k, numMatrices);
 
     Compute::DeepAllocateSparseCuda(&cudaA, A, numMatrices, 0);
     Compute::DeepAllocateSparseCuda(&cudaB, B, numMatrices, 0);

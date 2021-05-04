@@ -11,12 +11,12 @@ namespace Motutapu::Test
 {
 using namespace Motutapu::Compute;
 
-void RandomInitSparseMatrixHost(SparseMatrix** sparseMatrixArray, uint32_t m,
-                                uint32_t n, uint32_t numMatrices)
+void GenerateRandomSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
+                               uint32_t n, uint32_t numMatrices)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> uniform(1, 50);
+    std::uniform_int_distribution<uint32_t> uniform(0, n);
     std::normal_distribution<float> normal(0, 100);
 
     //! Array containing NNZ for each matrix
@@ -48,67 +48,32 @@ void RandomInitSparseMatrixHost(SparseMatrix** sparseMatrixArray, uint32_t m,
         {
             const auto nnzPerRow = nnzArray[m * matrixIdx + rowIdx];
             sparse[matrixIdx].ROW[rowIdx] = curNNZ;
-            for (uint32_t colIdx = 0; colIdx < nnzPerRow; ++colIdx)
+            std::list<uint32_t> columnList;
+
+            for (uint32_t i = 0; i < n; ++i)
+                columnList.emplace_back(i);
+            for (uint32_t i = 0; i < n - nnzPerRow; ++i)
             {
-                sparse[matrixIdx].COL[colIdx] = uniform(gen);
-                sparse[matrixIdx].V[colIdx] = normal(gen);
+                auto itr = columnList.begin();
+                auto size = columnList.size();
+                std::uniform_int_distribution<uint32_t> dist(0, size - 1);
+                auto offset = dist(gen);
+                for (uint32_t j = 0; j < offset; ++j)
+                    itr++;
+                columnList.erase(itr);
+            }
+
+            auto itr = columnList.begin();
+            for (uint32_t sparseColIdx = 0; sparseColIdx < nnzPerRow;
+                 ++sparseColIdx)
+            {
+                sparse[matrixIdx].COL[sparseColIdx] = *itr;
+                sparse[matrixIdx].V[sparseColIdx] = normal(gen);
+                itr++;
             }
             curNNZ += nnzPerRow;
         }
         sparse[matrixIdx].ROW[m] = curNNZ;
-        CHECK_EQ(curNNZ, nnz[matrixIdx]);
-    }
-
-    delete[] nnz;
-    delete[] nnzArray;
-}
-
-void ZeroInitSparseMatrixHost(SparseMatrix** sparseMatrixArray, uint32_t m,
-                              uint32_t n, uint32_t numMatrices)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> uniform(1, 50);
-    std::normal_distribution<float> normal(0, 100);
-
-    //! Array containing NNZ for each matrix
-    auto* nnz = new uint32_t[numMatrices];
-    //! Array containing NNZ for each row in the matrix
-    auto* nnzArray = new uint32_t[numMatrices * m];
-
-    for (uint32_t rowOffset = 0; rowOffset < numMatrices * m; rowOffset += m)
-    {
-        uint32_t curNNZ = 0;
-        for (uint32_t colOffset = rowOffset; colOffset < rowOffset + m;
-             ++colOffset)
-        {
-            nnzArray[colOffset] = uniform(gen) % 10;
-            curNNZ += nnzArray[colOffset];
-        }
-        nnz[rowOffset / m] = curNNZ;
-    }
-
-    DeepAllocateSparseHost(sparseMatrixArray, m, n, nnz, numMatrices);
-    SparseMatrix* sparse = *sparseMatrixArray;
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-    {
-        sparse[matrixIdx].ROW[m] = nnz[matrixIdx];
-        sparse[matrixIdx].NNZ = nnz[matrixIdx];
-        sparse[matrixIdx].M = m;
-        sparse[matrixIdx].N = n;
-        uint32_t curNNZ = 0;
-        for (uint32_t rowIdx = 0; rowIdx < sparse[matrixIdx].M; ++rowIdx)
-        {
-            const auto nnzPerRow = nnzArray[m * matrixIdx + rowIdx];
-            sparse[matrixIdx].ROW[rowIdx] = curNNZ;
-            for (uint32_t colIdx = 0; colIdx < nnzPerRow; ++colIdx)
-            {
-                sparse[matrixIdx].COL[colIdx] = uniform(gen);
-                sparse[matrixIdx].V[colIdx] = 0.0f;
-            }
-            curNNZ += nnzPerRow;
-        }
-        sparse[matrixIdx].ROW[sparse[matrixIdx].M] = curNNZ;
         CHECK_EQ(curNNZ, nnz[matrixIdx]);
     }
 
@@ -176,7 +141,7 @@ void LoadDistMemoryAllocationHost()
     const auto m = uniform(gen);
     const auto n = uniform(gen);
 
-    RandomInitSparseMatrixHost(&sparse, m, n, numMatrices);
+    GenerateRandomSparseArray(&sparse, m, n, numMatrices);
 
     LoadDistMatrix* loadDist;
     DeepAllocateLoadDistHost(&loadDist, sparse, numMatrices);
