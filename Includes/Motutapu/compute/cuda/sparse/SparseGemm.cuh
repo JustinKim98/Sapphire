@@ -13,25 +13,26 @@
 namespace Motutapu::Compute::Cuda::Sparse
 {
 //! Calculates Gemm by launching LoadDistKernel on the GPU
-//! \param output : Array of output sparse matrices. output must be shallow
+//! \param cudaOutput : Array of output sparse matrices. output must be shallow
 //! allocated.
-//! \param a : Array of sparse matrix for operand a. Must be dense
+//! \param cudaA : Array of sparse matrix for operand a. Must be dense
 //! allocated
-//! \param b : Array of sparse matrix for operand b. Must be dense
+//! \param cudaB : Array of sparse matrix for operand b. Must be dense
 //! allocated
-//! \param loadDist : array of load distribution matrix. Must be dense
+//! \param cudaLoadDist : array of load distribution matrix. Must be dense
 //! allocated
 //! \param numMatrices : number of matrices to compute Gemm
-__host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
-                   LoadDistMatrix* loadDist, size_t numMatrices);
+__host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
+                   SparseMatrix* hostA, SparseMatrix* cudaA,
+                   SparseMatrix* cudaB, uint32_t m, uint32_t n,
+                   size_t numMatrices, int deviceId, bool copyResultToHost);
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
-                           LoadDistMatrix* loadDist, uint32_t* nnzArray,
-                           size_t numMatrices);
+                           LoadDistMatrix* loadDist, uint32_t M,
+                           uint32_t* nnzArray, size_t numMatrices);
 
-__host__ void AllocateOutput(SparseMatrix* output, SparseMatrix* a,
-                             SparseMatrix* b, size_t numMatrices,
-                             const uint32_t* nnzArray);
+__host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
+                             size_t numMatrices, const uint32_t* nnzArray);
 
 //! Each block works for each matrix
 //! Assigns number of calculation for each element

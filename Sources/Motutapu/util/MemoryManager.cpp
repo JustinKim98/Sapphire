@@ -68,7 +68,11 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
     void* dataPtr;
 
-    const auto itr = m_hostFreeMemoryPool.find(byteSize);
+    auto allocationSize =
+        (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
+        ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
+
+    const auto itr = m_hostFreeMemoryPool.find(allocationSize);
     if (itr != m_hostFreeMemoryPool.end())
     {
         MemoryChunk targetChunk = itr->second;
@@ -79,12 +83,12 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
         return dataPtr;
     }
 
-    dataPtr = malloc(byteSize);
-    auto* initPtr = static_cast<uint8_t*>(dataPtr);
-    for (size_t i = 0; i < byteSize; ++i)
-        initPtr[i] = 0;
+    dataPtr = new uint8_t[allocationSize];
+//    auto* initPtr = static_cast<uint8_t*>(dataPtr);
+//    for (size_t i = 0; i < byteSize; ++i)
+//        initPtr[i] = 0;
     m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
-                                 MemoryChunk(byteSize, dataPtr, 1));
+                                 MemoryChunk(allocationSize, dataPtr, 1));
 
     return dataPtr;
 }

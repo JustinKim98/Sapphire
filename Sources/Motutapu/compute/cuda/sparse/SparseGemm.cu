@@ -5,7 +5,9 @@
 // property of any third parties.
 
 #include <stdint-gcc.h>
+#include <Motutapu/compute/Sparse.hpp>
 #include <Motutapu/compute/cuda/sparse/SparseGemm.cuh>
+
 #include <cstdlib>
 
 #define MAX_NNZ_PER_BLOCK_LARGE 1024
@@ -21,23 +23,36 @@ __device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
     return col % numBuckets;
 }
 
-__host__ void Gemm(SparseMatrix* output, SparseMatrix* a, SparseMatrix* b,
-                   LoadDistMatrix* loadDist, size_t numMatrices)
+__host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
+                   SparseMatrix* hostA, SparseMatrix* cudaA,
+                   SparseMatrix* cudaB, uint32_t m, uint32_t n,
+                   size_t numMatrices, int deviceId, bool copyResultToHost)
 {
+    LoadDistMatrix *hostLoadDist, *cudaLoadDist;
     auto* nnzArray =
         static_cast<uint32_t*>(malloc(sizeof(uint32_t) * numMatrices));
-    //! TODO : Allocate load distribution matrix
-    CallLoadDist(a, b, loadDist, nnzArray, numMatrices);
-    AllocateOutput(output, a, b, numMatrices, nnzArray);
-    CalculateRowKernel<<<numMatrices, 64>>>(output, a, b, loadDist);
+    DeepAllocateLoadDistHost(&hostLoadDist, hostA, numMatrices);
+    DeepAllocateLoadDistCuda(&cudaLoadDist, hostLoadDist, numMatrices,
+                             deviceId);
+    CallLoadDist(cudaA, cudaB, cudaLoadDist, m, nnzArray, numMatrices);
+    DeepAllocateSparseHost(hostOutput, m, n, nnzArray, numMatrices);
+    DeepAllocateSparseCuda(cudaOutput, *hostOutput, numMatrices, deviceId);
+    CalculateRowKernel<<<numMatrices, 64>>>(*cudaOutput, cudaA, cudaB,
+                                            cudaLoadDist);
+
+    if (copyResultToHost)
+        DeepCopyDeviceToHost(*hostOutput, *cudaOutput, numMatrices, deviceId);
+
+    free(nnzArray);
+    DeepFreeLoadDistCuda(cudaLoadDist, numMatrices, deviceId);
+    DeepFreeLoadDistHost(hostLoadDist, numMatrices);
 }
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
-                           LoadDistMatrix* loadDist, uint32_t* nnzArray,
-                           size_t numMatrices)
+                           LoadDistMatrix* loadDist, uint32_t M,
+                           uint32_t* nnzArray, size_t numMatrices)
 {
     const auto numLoops = 8;
-    const auto M = a[0].M;
     const auto threadDim = M / numLoops;
     uint32_t* deviceNNZArray = nullptr;
     cudaMalloc((void**)&deviceNNZArray, sizeof(uint32_t) * numMatrices);
@@ -62,15 +77,14 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
     cudaFree(deviceNNZArray);
 }
 
-__host__ void AllocateOutput(SparseMatrix* output, SparseMatrix* a,
-                             SparseMatrix* b, size_t numMatrices,
-                             const uint32_t* nnzArray)
+__host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
+                             size_t numMatrices, const uint32_t* nnzArray)
 {
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
         SparseMatrix* curOutput = output + matrixIdx;
-        curOutput->M = a->M;
-        curOutput->N = b->N;
+        curOutput->M = m;
+        curOutput->N = n;
         curOutput->NNZ = nnzArray[matrixIdx];
         cudaFree(curOutput->V);
         cudaFree(curOutput->ROW);
@@ -258,4 +272,4 @@ __device__ void InitIndexArray(uint32_t* idxArray, uint32_t arraySize)
         idxArray[idx] = INF;
     }
 }
-}  // namespace Motutapu::Compute::Sparse
+}  // namespace Motutapu::Compute::Cuda::Sparse
