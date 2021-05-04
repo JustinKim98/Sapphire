@@ -4,6 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <immintrin.h>
 #include <Motutapu/compute/cuda/Memory.cuh>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <Motutapu/util/MemoryManager.hpp>
@@ -24,7 +25,7 @@ TensorData::TensorData(Shape shape, Type type, Device device,
     {
         m_allocateCuda(batchSize);
     }
-    m_allocateCpu(batchSize);
+    m_allocateHost(batchSize);
 }
 
 TensorData::TensorData(Shape shape, Type type, Device device,
@@ -39,7 +40,7 @@ TensorData::TensorData(Shape shape, Type type, Device device,
     {
         m_allocateCuda(batchSize);
     }
-    m_allocateCpu(batchSize);
+    m_allocateHost(batchSize);
 }
 
 TensorData::TensorData(const TensorData &tensorData)
@@ -395,7 +396,7 @@ bool TensorData::m_freeCuda()
     return isSuccess;
 }
 
-void TensorData::m_allocateCpu(unsigned int batchSize)
+void TensorData::m_allocateHost(unsigned int batchSize)
 {
     const auto colSize = Cols();
 
@@ -425,6 +426,11 @@ void TensorData::m_allocateCpu(unsigned int batchSize)
         DenseTotalLengthHost = totalSize;
         DenseMatHost = static_cast<float *>(
             Util::MemoryManager::GetMemoryHost(totalSize * sizeof(float)));
+
+#pragma omp parallel for default(shared) schedule(static)
+        for (size_t i = 0; i < totalSize / padUnitSize; ++i)
+            _mm256_store_ps(DenseMatHost + i * padUnitSize,
+                            _mm256_set1_ps(0.0f));
     }
 }
 

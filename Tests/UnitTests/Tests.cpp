@@ -184,12 +184,12 @@ TEST_CASE("SparseMemory function Test")
     }
 }
 
-TEST_CASE("Device Sparse Gemm Test")
-{
-    SUBCASE("Sparse Gemm Test")
-    {
-        SparseGemmTest();
-    }
-}
+// TEST_CASE("Device Sparse Gemm Test")
+//{
+//     SUBCASE("Sparse Gemm Test")
+//     {
+//         SparseGemmTest();
+//     }
+// }
 
 }  // namespace Motutapu::Test

@@ -83,10 +83,7 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
         return dataPtr;
     }
 
-    dataPtr = new uint8_t[allocationSize];
-//    auto* initPtr = static_cast<uint8_t*>(dataPtr);
-//    for (size_t i = 0; i < byteSize; ++i)
-//        initPtr[i] = 0;
+    dataPtr = aligned_alloc(32, allocationSize);
     m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
                                  MemoryChunk(allocationSize, dataPtr, 1));
 

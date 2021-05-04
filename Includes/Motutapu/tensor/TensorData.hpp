@@ -122,7 +122,7 @@ class TensorData
                                                 unsigned long paddedRowSize,
                                                 Device device);
     //! Allocates data on the HOST with given batchSize
-    void m_allocateCpu(unsigned int batchSize);
+    void m_allocateHost(unsigned int batchSize);
 
     //! Allocates data on the GPU with given batchSize
     void m_allocateCuda(unsigned int batchSize);

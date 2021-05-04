@@ -87,7 +87,6 @@ void Gemm1()
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-
             CHECK(error <= 2.0f);
         }
 
