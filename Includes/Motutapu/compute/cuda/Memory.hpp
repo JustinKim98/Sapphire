@@ -11,22 +11,22 @@
 
 namespace Motutapu::Compute::Cuda
 {
-__host__ bool CudaSetDevice(int deviceId);
+ bool CudaSetDevice(int deviceId);
 
-__host__ __device__ bool CudaMalloc(void** ptr, unsigned int byteSize);
+bool CudaMalloc(void** ptr, unsigned int byteSize);
 
-__host__ __device__ bool CudaFree(void* ptr);
+bool CudaFree(void* ptr);
 
-__host__ bool CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize);
+bool CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize);
 
-__host__ bool CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize);
+bool CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize);
 
-__host__ bool CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize);
+bool CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize);
 
-__host__ bool CopyDeviceToDeviceAsync(float* dst, const float* src,
+bool CopyDeviceToDeviceAsync(float* dst, const float* src,
                                 unsigned int byteSize, cudaStream_t stream);
 
-__host__ bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
+bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
                                     unsigned int byteSize, unsigned int srcStrideByteSize);
 }  // namespace Motutapu::Compute::Cuda
 #endif

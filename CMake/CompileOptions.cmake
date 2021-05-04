@@ -186,21 +186,40 @@ endif ()
 
 # NVCC configurations in case of using CUDA
 if (USE_CUDA)
+    # Turn off optimizations and generate debug information
+    if (CMAKE_BUILD_TYPE MATCHES Debug)
+        set(
+                CUDA_NVCC_FLAGS
+                ${CUDA_NVCC_FLAGS};
+                -arch=sm_86
+                -gencode=arch=compute_70,code=sm_70
+                -gencode=arch=compute_75,code=sm_75
+                -gencode=arch=compute_80,code=sm_80
+                -gencode=arch=compute_86,code=sm_86
+                -gencode=arch=compute_86,code=compute_86
+                --default-stream per-thread
+                #--device-c
+                --cudart=shared
+                --cudadevrt=static
+                --std=c++17
+                -g
+                -G
+        )
+    else ()
+        set(
+                CUDA_NVCC_FLAGS
+                ${CUDA_NVCC_FLAGS};
+                -arch=sm_86
+                -gencode=arch=compute_70,code=sm_70
+                -gencode=arch=compute_75,code=sm_75
+                -gencode=arch=compute_80,code=sm_80
+                -gencode=arch=compute_86,code=sm_86
+                -gencode=arch=compute_86,code=compute_86
+                --default-stream per-thread
+                --cudart=shared
+                --cudadevrt=static
+                --std=c++17
+        )
 
-    set(
-            CUDA_NVCC_FLAGS
-            ${CUDA_NVCC_FLAGS};
-            -arch=sm_80
-            -gencode=arch=compute_70,code=sm_70
-            -gencode=arch=compute_75,code=sm_75
-            -gencode=arch=compute_80,code=sm_80
-            -gencode=arch=compute_86,code=sm_86
-            -gencode=arch=compute_86,code=compute_86
-            --default-stream per-thread
-            #--device-c
-            --cudart=shared
-            --cudadevrt=static
-            --std=c++17
-            #-lcublas
-    )
+    endif ()
 endif ()

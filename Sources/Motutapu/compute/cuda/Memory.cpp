@@ -4,40 +4,40 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Motutapu/compute/cuda/Memory.cuh>
+#include <Motutapu/compute/cuda/Memory.hpp>
 
 namespace Motutapu::Compute::Cuda
 {
-__global__ void CopyOnDeviceKernelBroadcast(float* dst, const float* const src,
-                                            unsigned int srcStride,
-                                            unsigned int size)
-{
-    const auto sizePerBlock = size / gridDim.x;
-    const auto numLoops = sizePerBlock / blockDim.x;
-    const auto blockOffset = sizePerBlock * blockIdx.x;
+//__global__ void CopyOnDeviceKernelBroadcast(float* dst, const float* const src,
+//                                            unsigned int srcStride,
+//                                            unsigned int size)
+//{
+//    const auto sizePerBlock = size / gridDim.x;
+//    const auto numLoops = sizePerBlock / blockDim.x;
+//    const auto blockOffset = sizePerBlock * blockIdx.x;
+//
+//    for (unsigned int i = 0; i < numLoops; i++)
+//    {
+//        dst[blockOffset + blockDim.x * i + threadIdx.x] =
+//            src[(blockOffset + blockDim.x * i + threadIdx.x) % srcStride];
+//    }
+//}
+//
+//__global__ void CopyOnDeviceKernel(float* dst, const float* const src,
+//                                   unsigned int size)
+//{
+//    const auto sizePerBlock = size / gridDim.x;
+//    const auto numLoops = sizePerBlock / blockDim.x;
+//    const auto blockOffset = sizePerBlock * blockIdx.x;
+//
+//    for (unsigned int i = 0; i < numLoops; i++)
+//    {
+//        dst[blockOffset + blockDim.x * i + threadIdx.x] =
+//            src[blockOffset + blockDim.x * i + threadIdx.x];
+//    }
+//}
 
-    for (unsigned int i = 0; i < numLoops; i++)
-    {
-        dst[blockOffset + blockDim.x * i + threadIdx.x] =
-            src[(blockOffset + blockDim.x * i + threadIdx.x) % srcStride];
-    }
-}
-
-__global__ void CopyOnDeviceKernel(float* dst, const float* const src,
-                                   unsigned int size)
-{
-    const auto sizePerBlock = size / gridDim.x;
-    const auto numLoops = sizePerBlock / blockDim.x;
-    const auto blockOffset = sizePerBlock * blockIdx.x;
-
-    for (unsigned int i = 0; i < numLoops; i++)
-    {
-        dst[blockOffset + blockDim.x * i + threadIdx.x] =
-            src[blockOffset + blockDim.x * i + threadIdx.x];
-    }
-}
-
-__host__ bool CudaSetDevice(int deviceId)
+bool CudaSetDevice(int deviceId)
 {
     int deviceCount;
     cudaGetDeviceCount(&deviceCount);
@@ -49,19 +49,19 @@ __host__ bool CudaSetDevice(int deviceId)
     return false;
 }
 
-__host__ __device__ bool CudaMalloc(void** ptr, unsigned int byteSize)
+bool CudaMalloc(void** ptr, unsigned int byteSize)
 {
     const cudaError_t error = cudaMalloc((void**)ptr, byteSize);
     return error == cudaSuccess;
 }
 
-__host__ __device__ bool CudaFree(void* ptr)
+bool CudaFree(void* ptr)
 {
     const cudaError_t error = cudaFree((void*)(ptr));
     return error == cudaSuccess;
 }
 
-__host__ bool CopyHostToDevice(void* devicePtr, void* hostPtr,
+bool CopyHostToDevice(void* devicePtr, void* hostPtr,
                                unsigned int byteSize)
 {
     const cudaError_t error = cudaMemcpy((void*)(devicePtr), (void*)(hostPtr),
@@ -70,7 +70,7 @@ __host__ bool CopyHostToDevice(void* devicePtr, void* hostPtr,
     return error == cudaSuccess;
 }
 
-__host__ bool CopyDeviceToHost(void* hostPtr, void* devicePtr,
+bool CopyDeviceToHost(void* hostPtr, void* devicePtr,
                                unsigned int byteSize)
 {
     const cudaError_t error = cudaMemcpy((void*)(hostPtr), (void*)(devicePtr),
@@ -79,7 +79,7 @@ __host__ bool CopyDeviceToHost(void* hostPtr, void* devicePtr,
     return error == cudaSuccess;
 }
 
-__host__ bool CopyDeviceToDevice(void* dst, const void* src,
+bool CopyDeviceToDevice(void* dst, const void* src,
                                  unsigned int byteSize)
 {
     const cudaError_t error =
@@ -87,7 +87,7 @@ __host__ bool CopyDeviceToDevice(void* dst, const void* src,
     return error == cudaSuccess;
 }
 
-__host__ bool CopyDeviceToDeviceAsync(float* dst, const float* src,
+bool CopyDeviceToDeviceAsync(float* dst, const float* src,
                                       unsigned int byteSize,
                                       cudaStream_t stream)
 {
@@ -96,7 +96,7 @@ __host__ bool CopyDeviceToDeviceAsync(float* dst, const float* src,
     return error == cudaSuccess;
 }
 
-__host__ bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
+bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
                                           unsigned int byteSize,
                                           unsigned int srcStrideByteSize)
 {
