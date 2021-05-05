@@ -14,8 +14,11 @@
 
 namespace Motutapu::Test
 {
+void GenerateFixedSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
+                              uint32_t n, uint32_t numMatrices);
+
 void GenerateRandomSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
-                                uint32_t n, uint32_t numMatrices);
+                               uint32_t n, uint32_t numMatrices);
 void SparseMemoryAllocationHost();
 
 void LoadDistMemoryAllocationHost();
@@ -23,7 +26,6 @@ void LoadDistMemoryAllocationHost();
 void SparseMemoryAllocationDevice();
 
 void SparseMemoryCopyDeviceToDevice();
-
 
 }  // namespace Motutapu::Test
 

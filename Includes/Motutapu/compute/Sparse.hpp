@@ -135,7 +135,8 @@ void DeepCopyDeviceToHost(SparseMatrix* hostDstArray,
 //! \param deviceArray : source device array
 //! \param numMatrices : Number of sparse matrices
 void DeepCopyDeviceToHost(LoadDistMatrix* hostDstArray,
-                          LoadDistMatrix* deviceSrcArray, uint32_t numMatrices);
+                          LoadDistMatrix* deviceSrcArray, uint32_t numMatrices,
+                          int deviceId);
 
 //! Deep copies sparse matrix to Host from Host
 //! \param hostDstArray : destination host array

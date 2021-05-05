@@ -12,16 +12,30 @@
 
 namespace Motutapu::Compute::Cuda::Sparse
 {
+__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
+                          SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
+                          size_t numMatrices, int deviceId);
+
 //! Calculates Gemm by launching LoadDistKernel on the GPU
-//! \param cudaOutput : Array of output sparse matrices. output must be shallow
-//! allocated.
-//! \param cudaA : Array of sparse matrix for operand a. Must be dense
-//! allocated
-//! \param cudaB : Array of sparse matrix for operand b. Must be dense
-//! allocated
-//! \param cudaLoadDist : array of load distribution matrix. Must be dense
-//! allocated
+//! \param hostOutput : Array of output sparse matrices on the host memory
+//! Required memory is automatically allocated
+//! It's caller's responsibility to free the allocated memory
+//! \param cudaOutput : Array of output sparse matrices on the device Memory
+//! Required memory is automatically allocated
+//! It's caller's responsibility to free the allocated memory
+//! \param hostA : Array of sparse matrix for operand a on host memory.
+//! Must be dense allocated
+//! \param cudaA : Array of sparse matrix for operand a on device memory.
+//! Must be dense allocated
+//! \param hostB : Array of sparse matrix for operand a on host memory.
+//! Must be dense allocated
+//! \param cudaB : Array of sparse matrix for operand b on device memory.
+//! Must be dense allocated
+//! \param m : Expected number of rows for output matrix
+//! \param n : Expected number of columns for output matrix
 //! \param numMatrices : number of matrices to compute Gemm
+//! \param deviceId : Device to perform the computation
+//! \param copyResultToHost : If true, copies the result to host output.
 __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                    SparseMatrix* hostA, SparseMatrix* cudaA,
                    SparseMatrix* cudaB, uint32_t m, uint32_t n,

@@ -9,8 +9,9 @@
 
 namespace Motutapu::Test
 {
+void LoadDistTest();
 
 void SparseGemmTest();
-}
+}  // namespace Motutapu::Test
 
 #endif  // MOTUTAPU_SPARSEGEMMTEST_HPP

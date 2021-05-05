@@ -11,6 +11,49 @@ namespace Motutapu::Test
 {
 using namespace Motutapu::Compute;
 
+void GenerateFixedSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
+                              uint32_t n, uint32_t numMatrices)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<uint32_t> uniform(0, n);
+    std::normal_distribution<float> normal(0, 100);
+
+    //! Array containing NNZ for each matrix
+    auto* nnz = new uint32_t[numMatrices];
+    //! Array containing NNZ for each row in the matrix
+
+    for (uint32_t i = 0; i < numMatrices; ++i)
+        nnz[i] = m * n;
+
+    DeepAllocateSparseHost(sparseMatrixArray, m, n, nnz, numMatrices);
+    SparseMatrix* sparse = *sparseMatrixArray;
+    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+    {
+        sparse[matrixIdx].NNZ = nnz[matrixIdx];
+        sparse[matrixIdx].M = m;
+        sparse[matrixIdx].N = n;
+        uint32_t curNNZ = 0;
+        for (uint32_t rowIdx = 0; rowIdx < sparse[matrixIdx].M; ++rowIdx)
+        {
+            sparse[matrixIdx].ROW[rowIdx] = curNNZ;
+
+            uint32_t colIdx = 0;
+            for (uint32_t sparseColIdx = curNNZ; sparseColIdx < curNNZ + n;
+                 ++sparseColIdx)
+            {
+                sparse[matrixIdx].COL[sparseColIdx] = colIdx++;
+                sparse[matrixIdx].V[sparseColIdx] = normal(gen);
+            }
+            curNNZ += n;
+        }
+        sparse[matrixIdx].ROW[m] = curNNZ;
+        CHECK_EQ(curNNZ, nnz[matrixIdx]);
+    }
+
+    delete[] nnz;
+}
+
 void GenerateRandomSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
                                uint32_t n, uint32_t numMatrices)
 {
@@ -64,8 +107,8 @@ void GenerateRandomSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
             }
 
             auto itr = columnList.begin();
-            for (uint32_t sparseColIdx = 0; sparseColIdx < nnzPerRow;
-                 ++sparseColIdx)
+            for (uint32_t sparseColIdx = curNNZ;
+                 sparseColIdx < curNNZ + nnzPerRow; ++sparseColIdx)
             {
                 sparse[matrixIdx].COL[sparseColIdx] = *itr;
                 sparse[matrixIdx].V[sparseColIdx] = normal(gen);

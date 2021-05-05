@@ -23,6 +23,22 @@ __device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
     return col % numBuckets;
 }
 
+__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
+                          SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
+                          size_t numMatrices, int deviceId)
+{
+    LoadDistMatrix* cudaLoadDist;
+    auto* nnzArray =
+        static_cast<uint32_t*>(malloc(sizeof(uint32_t) * numMatrices));
+    DeepAllocateLoadDistCuda(&cudaLoadDist, hostLoadDist, numMatrices,
+                             deviceId);
+    CallLoadDist(cudaA, cudaB, cudaLoadDist, m, nnzArray, numMatrices);
+    DeepCopyDeviceToHost(hostLoadDist, cudaLoadDist, numMatrices, deviceId);
+
+    free(nnzArray);
+    DeepFreeLoadDistCuda(cudaLoadDist, numMatrices, deviceId);
+}
+
 __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                    SparseMatrix* hostA, SparseMatrix* cudaA,
                    SparseMatrix* cudaB, uint32_t m, uint32_t n,
@@ -37,8 +53,8 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
     CallLoadDist(cudaA, cudaB, cudaLoadDist, m, nnzArray, numMatrices);
     DeepAllocateSparseHost(hostOutput, m, n, nnzArray, numMatrices);
     DeepAllocateSparseCuda(cudaOutput, *hostOutput, numMatrices, deviceId);
-    CalculateRowKernel<<<numMatrices, 64>>>(*cudaOutput, cudaA, cudaB,
-                                            cudaLoadDist);
+    CalculateRowKernel<<<numMatrices * m, 64>>>(*cudaOutput, cudaA, cudaB,
+                                                cudaLoadDist);
 
     if (copyResultToHost)
         DeepCopyDeviceToHost(*hostOutput, *cudaOutput, numMatrices, deviceId);
@@ -52,8 +68,7 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
                            LoadDistMatrix* loadDist, uint32_t M,
                            uint32_t* nnzArray, size_t numMatrices)
 {
-    const auto numLoops = 8;
-    const auto threadDim = M / numLoops;
+    const auto threadDim = 32;
     uint32_t* deviceNNZArray = nullptr;
     cudaMalloc((void**)&deviceNNZArray, sizeof(uint32_t) * numMatrices);
 
@@ -62,16 +77,18 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
 
     if (blockDim > 0)
         LoadDistKernel<<<blockDim, threadDim>>>(loadDist, a, b, deviceNNZArray);
-    if (numMatrices > blockDim)
-    {
-        SparseMatrix* offsetA = a + blockDim;
-        SparseMatrix* offsetB = b + blockDim;
-        LoadDistMatrix* loadDistOffset = loadDist + blockDim;
-
-        const auto secondBlockDim = numMatrices - blockDim;
-        LoadDistKernel<<<secondBlockDim, threadDim>>>(loadDistOffset, offsetA,
-                                                      offsetB, deviceNNZArray);
-    }
+    //    if (numMatrices > blockDim)
+    //    {
+    //        SparseMatrix* offsetA = a + blockDim;
+    //        SparseMatrix* offsetB = b + blockDim;
+    //        LoadDistMatrix* loadDistOffset = loadDist + blockDim;
+    //
+    //        const auto secondBlockDim = numMatrices - blockDim;
+    //        LoadDistKernel<<<secondBlockDim, threadDim>>>(loadDistOffset,
+    //        offsetA,
+    //                                                      offsetB,
+    //                                                      deviceNNZArray);
+    //    }
     cudaMemcpy(nnzArray, deviceNNZArray, sizeof(uint32_t) * numMatrices,
                cudaMemcpyDeviceToHost);
     cudaFree(deviceNNZArray);
@@ -131,7 +148,7 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
             curLoadDist->Load[sparseColIdxA] = numElemPerRowB;
             curLoadDist->COL[sparseColIdxA] = colIdxA;
 
-            if (sparseColIdxA != a->ROW[rowIdxA])
+            if (sparseColIdxA != curA->ROW[rowIdxA])
             {
                 //! Load will stack as row advances
                 curLoadDist->Load[sparseColIdxA] +=
@@ -142,7 +159,8 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
         atomicAdd_block(&nnzPerMatrix, nnzPerRow);
     }
 
-    curLoadDist->NNZ = nnzPerMatrix;
+    __syncthreads();
+
     nnzArray[matrixIdx] = nnzPerMatrix;
 }
 
@@ -156,28 +174,36 @@ __global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
     InitIndexArray(tempIdxArray, MAX_NNZ_PER_BLOCK_LARGE);
 
     const auto M = out[0].M;
-    SparseMatrix* curOut = out + blockIdx.x / M;
-    SparseMatrix* curA = a + blockIdx.x / M;
-    SparseMatrix* curB = b + blockIdx.x / M;
-    LoadDistMatrix* curLoadDist = loadDist + blockIdx.x / M;
-
     const auto curRowIdx = blockIdx.x % M;
+    const auto matrixOffset = blockIdx.x / M;
+
+    SparseMatrix* curOut = out + matrixOffset;
+    SparseMatrix* curA = a + matrixOffset;
+    SparseMatrix* curB = b + matrixOffset;
+    LoadDistMatrix* curLoadDist = loadDist + matrixOffset;
+
     const auto sparseColIdxOffset = threadIdx.x;
-    const auto sparseColIdxA = sparseColIdxOffset;
+    const auto sparseColIdxA = curA->ROW[curRowIdx] + sparseColIdxOffset;
 
-    const auto colIdxA = curA->COL[sparseColIdxA];
-    const auto sparseColIdxBBegin = curB->ROW[colIdxA];
-    const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
-    const auto nnz = curLoadDist->Load[curLoadDist->ROW[curRowIdx - 1]];
-
-    if (sparseColIdxA < curA->ROW[curRowIdx])
+    uint32_t nnz = 0;
+    if (sparseColIdxA < curA->ROW[curRowIdx + 1] &&
+        curLoadDist->ROW[curRowIdx] < curLoadDist->ROW[curRowIdx + 1])
     {
-        for (uint32_t sparseColIdxB = sparseColIdxBBegin;
-             sparseColIdxB < sparseColIdxBEnd; ++sparseColIdxB)
+        const auto colIdxA = curA->COL[sparseColIdxA];
+        const auto sparseColIdxBBegin = curB->ROW[colIdxA];
+        const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
+        const auto loadDistNNZOffset = curLoadDist->ROW[curRowIdx + 1] - 1;
+        nnz = curLoadDist->Load[loadDistNNZOffset];
+
+        if (sparseColIdxA < curA->ROW[curRowIdx])
         {
-            InsertHash(tempValueArray, tempIdxArray,
-                       curA->V[sparseColIdxA] * curB->V[sparseColIdxB],
-                       curB->COL[sparseColIdxB], MAX_NNZ_PER_BLOCK_LARGE);
+            for (uint32_t sparseColIdxB = sparseColIdxBBegin;
+                 sparseColIdxB < sparseColIdxBEnd; ++sparseColIdxB)
+            {
+                InsertHash(tempValueArray, tempIdxArray,
+                           curA->V[sparseColIdxA] * curB->V[sparseColIdxB],
+                           curB->COL[sparseColIdxB], MAX_NNZ_PER_BLOCK_LARGE);
+            }
         }
     }
 
