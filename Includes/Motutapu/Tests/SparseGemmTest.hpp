@@ -9,6 +9,8 @@
 
 namespace Motutapu::Test
 {
+void LoadDistTestFixed();
+
 void LoadDistTest();
 
 void SparseGemmTest();

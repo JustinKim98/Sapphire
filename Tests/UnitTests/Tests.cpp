@@ -164,7 +164,7 @@ TEST_CASE("SparseMemory function Test")
 
     SUBCASE("LoadDistMemoryAllocationHost")
     {
-        std::cout << "Testing Load Distribution Memory Allocation for Host ...";
+        std::cout << "Testing Load Distribution Memory Allocation forHost... ";
         LoadDistMemoryAllocationHost();
         std::cout << " Done " << std::endl;
     }
@@ -184,12 +184,26 @@ TEST_CASE("SparseMemory function Test")
     }
 }
 
-// TEST_CASE("Device Sparse Gemm Test")
-//{
-//     SUBCASE("Sparse Gemm Test")
-//     {
-//         SparseGemmTest();
-//     }
-// }
+TEST_CASE("Device Sparse Gemm Test")
+{
+    SUBCASE("Load distribution Test (simple)")
+    {
+        std::cout << "Testing Load distribution (simple) ..." << std::endl;
+        LoadDistTestFixed();
+        std::cout << " Done" << std::endl;
+    }
+    SUBCASE("Load distribution Test (complex)")
+    {
+        std::cout << "Testing Load distribution (complex) ..." << std::endl;
+        LoadDistTest();
+        std::cout << " Done" << std::endl;
+    }
+    SUBCASE("Sparse Gemm Test")
+    {
+        std::cout << "Testing Sparse Gemm ..." << std::endl;
+        SparseGemmTest();
+        std::cout << " Done" << std::endl;
+    }
+}
 
 }  // namespace Motutapu::Test

@@ -17,7 +17,7 @@ void GenerateFixedSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> uniform(0, n);
-    std::normal_distribution<float> normal(0, 100);
+    std::normal_distribution<float> normal(0, 10);
 
     //! Array containing NNZ for each matrix
     auto* nnz = new uint32_t[numMatrices];
