@@ -11,7 +11,7 @@
 
 #include <cstdlib>
 
-#define MAX_NNZ_PER_BLOCK 1024
+#define MAX_NNZ_PER_BLOCK 512
 #define THREADS_PER_BLOCK 16
 #define INF (~0)
 
@@ -296,7 +296,7 @@ __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
         const auto phase = __double2uint_rz(pow(2, level));
         for (auto stride = phase; stride > 0; stride /= 2)
         {
-            for (uint32_t id = threadIdx.x; id <= arraySize / 2;
+            for (uint32_t id = threadIdx.x; id < arraySize / 2;
                  id += blockDim.x)
             {
                 const auto sizePerBlock = stride * 2;
