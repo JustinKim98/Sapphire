@@ -43,7 +43,8 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
                            LoadDistMatrix* loadDist, uint32_t M,
-                           uint32_t* nnzArray, size_t numMatrices);
+                           uint32_t* nnzArray, size_t numMatrices,
+                           int deviceId);
 
 __host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
                              size_t numMatrices, const uint32_t* nnzArray);
@@ -77,8 +78,15 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 //! \param loadDist : Array of load distribution matrices.
 //! \param sparseColIdxBegin : Start index of computation for matrix A.
 //! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
-__global__ void CalculateRowKernel(SparseMatrix* out, SparseMatrix* a,
-                                   SparseMatrix* b, LoadDistMatrix* loadDist);
+__global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
+                          LoadDistMatrix* loadDist, uint32_t* idxArray,
+                          float* valArray, uint32_t m, uint32_t numMatrices);
+
+__global__ void StackRowKernel(SparseMatrix* out, uint32_t numMatrices);
+
+__global__ void StoreOutput(SparseMatrix* out, const uint32_t* idxArray,
+                            const float* valArray, uint32_t M,
+                            uint32_t numMatrices);
 
 //! Sorts the array in increasing order using bitonic esc sort algorithm
 //! \param tempValArray : array of values. Its size must be power of 2
@@ -92,10 +100,10 @@ __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
 __device__ void Merge(float* tempValArray, uint32_t* tempIdxArray,
                       uint32_t* numMergedElements, uint32_t numElements);
 
-__device__ void InsertHash(float* valueArray, uint32_t* idxArray, float value,
-                           uint32_t index, uint32_t arraySize);
+__device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
+                           float value, uint32_t index, uint32_t arraySize);
 
-__device__ void InitIndexArray(uint32_t* idxArray, uint32_t arraySize);
+__device__ void InitIdxArray(uint32_t* idxArray, uint32_t arraySize);
 
 template <typename T>
 __device__ void Swap(T* a, T* b)
