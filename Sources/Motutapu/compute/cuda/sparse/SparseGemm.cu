@@ -19,7 +19,7 @@ namespace Motutapu::Compute::Cuda::Sparse
 {
 __device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
 {
-    return col % numBuckets;
+    return (12345 ^ col) % numBuckets;
 }
 
 __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
@@ -294,14 +294,14 @@ __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
     for (uint32_t level = 0; level < maxLevel; ++level)
     {
         const auto phase = __double2uint_rz(pow(2, level));
-        for (auto stride = phase; stride > 0; stride /= 2)
+        for (uint32_t stride = phase; stride > 0; stride /= 2)
         {
             for (uint32_t id = threadIdx.x; id < arraySize / 2;
                  id += blockDim.x)
             {
                 const auto sizePerBlock = stride * 2;
                 const auto sizePerBlockPair = 2 * sizePerBlock;
-                const bool direction = id / phase == 0;
+                const bool direction = (id / phase) % 2 == 0;
 
                 if ((id / stride) % 2 == 0)
                 {
@@ -320,26 +320,26 @@ __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
                 }
                 else
                 {
-                    const auto idx = ((arraySize / 2 - id) / sizePerBlock) *
-                                         sizePerBlockPair +
-                                     (arraySize / 2 - id) % sizePerBlock;
-                    const auto targetIdx = idx + stride;
+                    auto idx = ((arraySize / 2 - id) / sizePerBlock) *
+                                   sizePerBlockPair +
+                               (arraySize / 2 - id) % sizePerBlock;
+                    auto targetIdx = idx + stride;
+
+                    idx = arraySize - idx;
+                    targetIdx = arraySize - targetIdx;
 
                     if ((direction &&
-                         tempIdxArray[arraySize - idx] <
-                             tempIdxArray[arraySize - targetIdx]) ||
-                        (!direction && tempIdxArray[arraySize - idx] >
-                                           tempIdxArray[arraySize - targetIdx]))
+                         tempIdxArray[idx] < tempIdxArray[targetIdx]) ||
+                        (!direction &&
+                         tempIdxArray[idx] > tempIdxArray[targetIdx]))
                     {
-                        Swap(tempValArray + (arraySize - idx),
-                             tempValArray + (arraySize - targetIdx));
-                        Swap(tempIdxArray + (arraySize - idx),
-                             tempIdxArray + (arraySize - targetIdx));
+                        Swap(tempValArray + idx, tempValArray + targetIdx);
+                        Swap(tempIdxArray + idx, tempIdxArray + targetIdx);
                     }
                 }
             }
+            __syncthreads();
         }
-        __syncthreads();
     }
 }
 

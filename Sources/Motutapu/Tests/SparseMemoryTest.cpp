@@ -73,7 +73,7 @@ void GenerateRandomSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
         for (uint32_t colOffset = rowOffset; colOffset < rowOffset + m;
              ++colOffset)
         {
-            nnzArray[colOffset] = uniform(gen) % 10;
+            nnzArray[colOffset] = uniform(gen);
             curNNZ += nnzArray[colOffset];
         }
         nnz[rowOffset / m] = curNNZ;
