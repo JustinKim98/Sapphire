@@ -209,18 +209,19 @@ __global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
     SparseMatrix* curB = b + matrixOffset;
     LoadDistMatrix* curLoadDist = loadDist + matrixOffset;
 
-    const auto sparseColIdxOffset = threadIdx.x;
-    const auto sparseColIdxA = curA->ROW[curRowIdx] + sparseColIdxOffset;
-
-    if (sparseColIdxA < curA->ROW[curRowIdx + 1] &&
-        curLoadDist->ROW[curRowIdx] < curLoadDist->ROW[curRowIdx + 1])
+    if (curLoadDist->ROW[curRowIdx] < curLoadDist->ROW[curRowIdx + 1])
     {
-        const auto colIdxA = curA->COL[sparseColIdxA];
-        const auto sparseColIdxBBegin = curB->ROW[colIdxA];
-        const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
-
-        if (sparseColIdxA < curA->ROW[curRowIdx + 1])
+        const auto rowNNZa = curA->ROW[curRowIdx + 1] - curA->ROW[curRowIdx];
+        for (uint32_t sparseColIdxOffset = threadIdx.x;
+             sparseColIdxOffset < rowNNZa; sparseColIdxOffset += blockDim.x)
         {
+            const auto sparseColIdxA =
+                curA->ROW[curRowIdx] + sparseColIdxOffset;
+
+            const auto colIdxA = curA->COL[sparseColIdxA];
+            const auto sparseColIdxBBegin = curB->ROW[colIdxA];
+            const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
+
             for (uint32_t sparseColIdxB = sparseColIdxBBegin;
                  sparseColIdxB < sparseColIdxBEnd; ++sparseColIdxB)
             {

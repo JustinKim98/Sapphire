@@ -43,7 +43,7 @@ void GenerateFixedSparseArray(SparseMatrix** sparseMatrixArray, uint32_t m,
                  ++sparseColIdx)
             {
                 sparse[matrixIdx].COL[sparseColIdx] = colIdx++;
-                sparse[matrixIdx].V[sparseColIdx] = normal(gen);
+                sparse[matrixIdx].V[sparseColIdx] = 1;  // normal(gen);
             }
             curNNZ += n;
         }

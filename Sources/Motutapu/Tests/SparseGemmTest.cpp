@@ -12,7 +12,7 @@
 
 namespace Motutapu::Test
 {
-void PrintSparseMatrix(SparseMatrix *sparseMatrix)
+void PrintSparseMatrix(SparseMatrix *sparseMatrix, bool printVerbose)
 {
     std::cout << "# rows : " << sparseMatrix->M
               << " # columns : " << sparseMatrix->N
@@ -21,23 +21,29 @@ void PrintSparseMatrix(SparseMatrix *sparseMatrix)
     {
         const auto sparseColIdxBegin = sparseMatrix->ROW[rowIdx];
         const auto sparseColIdxEnd = sparseMatrix->ROW[rowIdx + 1];
+        uint32_t colIdxPrev = 0;
         for (uint32_t sparseColIdx = sparseColIdxBegin;
              sparseColIdx < sparseColIdxEnd; ++sparseColIdx)
         {
             const auto colIdx = sparseMatrix->COL[sparseColIdx];
+            CHECK(colIdx >= colIdxPrev);
+            colIdxPrev = colIdx;
             const auto value = sparseMatrix->V[sparseColIdx];
-            std::cout << "rowIdx : " << rowIdx
-                      << " rowOffset : " << sparseMatrix->ROW[rowIdx]
-                      << " colIdx : " << colIdx << " value : " << value
-                      << std::endl;
+
+            if (printVerbose)
+                std::cout << "rowIdx : " << rowIdx
+                          << " rowOffset : " << sparseMatrix->ROW[rowIdx]
+                          << " colIdx : " << colIdx << " value : " << value
+                          << std::endl;
         }
     }
-
-    std::cout << "rowOffset : " << sparseMatrix->ROW[sparseMatrix->M]
-              << std::endl;
+    CHECK_EQ(sparseMatrix->NNZ, sparseMatrix->ROW[sparseMatrix->M]);
+    if (printVerbose)
+        std::cout << "rowOffset : " << sparseMatrix->ROW[sparseMatrix->M]
+                  << std::endl;
 }
 
-void PrintLoadDistMatrix(LoadDistMatrix *loadDistMatrix)
+void PrintLoadDistMatrix(LoadDistMatrix *loadDistMatrix, bool printVerbose)
 {
     std::cout << "# rows : " << loadDistMatrix->M
               << " # columns : " << loadDistMatrix->N
@@ -46,23 +52,30 @@ void PrintLoadDistMatrix(LoadDistMatrix *loadDistMatrix)
     {
         const auto sparseColIdxBegin = loadDistMatrix->ROW[rowIdx];
         const auto sparseColIdxEnd = loadDistMatrix->ROW[rowIdx + 1];
+
+        uint32_t colIdxPrev = 0;
         for (uint32_t sparseColIdx = sparseColIdxBegin;
              sparseColIdx < sparseColIdxEnd; ++sparseColIdx)
         {
             const auto colIdx = loadDistMatrix->COL[sparseColIdx];
             const auto value = loadDistMatrix->Load[sparseColIdx];
-            std::cout << "rowIdx : " << rowIdx
-                      << " rowOffset : " << loadDistMatrix->ROW[rowIdx]
-                      << " colIdx : " << colIdx << " load : " << value
-                      << std::endl;
+            CHECK(colIdx >= colIdxPrev);
+            colIdxPrev = colIdx;
+            if (printVerbose)
+                std::cout << "rowIdx : " << rowIdx
+                          << " rowOffset : " << loadDistMatrix->ROW[rowIdx]
+                          << " colIdx : " << colIdx << " load : " << value
+                          << std::endl;
         }
     }
 
-    std::cout << "rowOffset : " << loadDistMatrix->ROW[loadDistMatrix->M]
-              << std::endl;
+    CHECK_EQ(loadDistMatrix->NNZ, loadDistMatrix->ROW[loadDistMatrix->M]);
+    if (printVerbose)
+        std::cout << "rowOffset : " << loadDistMatrix->ROW[loadDistMatrix->M]
+                  << std::endl;
 }
 
-void LoadDistTest()
+void LoadDistTest(bool printVerbose)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -93,10 +106,13 @@ void LoadDistTest()
     CHECK_EQ(loadDist->ROW[loadDist->M], loadDist->NNZ);
 
     for (uint32_t i = 0; i < numMatrices; ++i)
-        PrintLoadDistMatrix(loadDist + i);
+    {
+        std::cout << "\nMatrix " << i << std::endl;
+        PrintLoadDistMatrix(loadDist + i, printVerbose);
+    }
 }
 
-void LoadDistTestFixed()
+void LoadDistTestFixed(bool printVerbose)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -126,27 +142,26 @@ void LoadDistTestFixed()
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        CHECK_EQ(loadDist->NNZ, loadDist->ROW[loadDist->M]);
-        PrintLoadDistMatrix(loadDist + i);
+        std::cout << "\nMatrix " << i << std::endl;
+        PrintLoadDistMatrix(loadDist + i, printVerbose);
     }
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();
 }
 
-void SparseGemmTest()
+void SparseGemmTest(bool printVerbose)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> uniform(1, 10);
-    std::normal_distribution<float> normal(0, 100);
+    std::uniform_int_distribution<uint32_t> uniform(32, 64);
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = 2;  // uniform(gen) % 5 + 1;
-    const auto m = 10;               // m = uniform(gen);
-    const auto n = 10;               // n = uniform(gen);
-    const auto k = 10;               // k = uniform(gen);
+    const uint32_t numMatrices = uniform(gen) % 5 + 1;
+    const auto m = uniform(gen);
+    const auto n = uniform(gen);
+    const auto k = uniform(gen);
 
     GenerateRandomSparseArray(&A, m, k, numMatrices);
     GenerateRandomSparseArray(&B, k, n, numMatrices);
@@ -162,8 +177,8 @@ void SparseGemmTest()
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        CHECK_EQ(C->NNZ, C->ROW[C->M]);
-        PrintSparseMatrix(C + i);
+        std::cout << "\nMatrix " << i << std::endl;
+        PrintSparseMatrix(C + i, printVerbose);
     }
 
     Compute::DeepFreeSparseHost(C, numMatrices);

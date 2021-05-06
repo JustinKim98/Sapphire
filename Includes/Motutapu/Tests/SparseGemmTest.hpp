@@ -9,11 +9,11 @@
 
 namespace Motutapu::Test
 {
-void LoadDistTestFixed();
+void LoadDistTestFixed(bool printVerbose);
 
-void LoadDistTest();
+void LoadDistTest(bool printVerbose);
 
-void SparseGemmTest();
+void SparseGemmTest(bool printVerbose);
 }  // namespace Motutapu::Test
 
 #endif  // MOTUTAPU_SPARSEGEMMTEST_HPP
