@@ -8,7 +8,7 @@
 #define MOTUTAPU_TEST_SPARSE_MEMORY_TEST_HPP
 
 #include <doctest.h>
-#include <Motutapu/compute/Sparse.hpp>
+#include <Motutapu/compute/sparse/Sparse.hpp>
 #include <Motutapu/util/MemoryManager.hpp>
 #include <random>
 

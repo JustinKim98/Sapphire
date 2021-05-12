@@ -7,8 +7,8 @@
 #ifndef MOTUTAPU_BACKPROPWRAPPER_HPP
 #define MOTUTAPU_BACKPROPWRAPPER_HPP
 
-#include <Motutapu/compute/cuda/dense/Basic.cuh>
-#include <Motutapu/compute/naive/NaiveBasic.hpp>
+#include <Motutapu/compute/dense/cuda/Basic.cuh>
+#include <Motutapu/compute/dense/naive/NaiveBasic.hpp>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <functional>
 #include <list>

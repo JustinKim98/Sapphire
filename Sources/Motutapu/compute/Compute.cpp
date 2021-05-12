@@ -5,11 +5,11 @@
 // property of any third parties.
 
 #include <Motutapu/compute/Compute.hpp>
-#include <Motutapu/compute/cuda/CudaParams.cuh>
-#include <Motutapu/compute/cuda/dense/Basic.cuh>
-#include <Motutapu/compute/cuda/dense/Gemm.cuh>
-#include <Motutapu/compute/naive/NaiveBasic.hpp>
-#include <Motutapu/compute/naive/NaiveGemm.hpp>
+#include <Motutapu/compute/cudaUtil/CudaParams.cuh>
+#include <Motutapu/compute/dense/cuda/Basic.cuh>
+#include <Motutapu/compute/dense/cuda/Gemm.cuh>
+#include <Motutapu/compute/dense/naive/NaiveBasic.hpp>
+#include <Motutapu/compute/dense/naive/NaiveGemm.hpp>
 #include <algorithm>
 
 namespace Motutapu::Compute

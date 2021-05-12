@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Motutapu/compute/cuda/Memory.hpp>
+#include <Motutapu/compute/cudaUtil/Memory.hpp>
 #include <Motutapu/util/MemoryManager.hpp>
 #include <cassert>
 #include <iostream>

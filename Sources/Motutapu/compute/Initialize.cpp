@@ -5,8 +5,8 @@
 // property of any third parties.
 
 #include <Motutapu/compute/Initialize.hpp>
-#include <Motutapu/compute/cuda/dense/Initialize.cuh>
-#include <Motutapu/compute/naive/NaiveInitialize.hpp>
+#include <Motutapu/compute/dense/cuda/Initialize.cuh>
+#include <Motutapu/compute/dense/naive/NaiveInitialize.hpp>
 #include <chrono>
 
 namespace Motutapu::Compute::Initialize

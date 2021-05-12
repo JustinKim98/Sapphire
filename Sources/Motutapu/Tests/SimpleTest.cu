@@ -6,14 +6,12 @@
 
 #ifdef WITH_CUDA
 
-#include <Motutapu/Tests/CudaFunctionalityTest.cuh>
-#include <Motutapu/compute/cuda/Memory.hpp>
-#include <iostream>
-
 #include <cuda_runtime.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <Motutapu/Tests/CudaFunctionalityTest.cuh>
+#include <Motutapu/compute/cudaUtil/Memory.hpp>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
 #include "cublas_v2.h"
 #define M 6
 #define N 5

@@ -7,7 +7,7 @@
 #ifndef MOTUTAPU_UNIT_DECL_HPP
 #define MOTUTAPU_UNIT_DECL_HPP
 
-#include <Motutapu/compute/cuda/dense/Convolution.cuh>
+#include <Motutapu/compute/dense/cuda/Convolution.cuh>
 #include <Motutapu/tensor/TensorData.hpp>
 #include <unordered_map>
 

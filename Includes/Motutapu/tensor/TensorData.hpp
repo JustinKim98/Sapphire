@@ -7,8 +7,8 @@
 #ifndef MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 #define MOTUTAPU_UTIL_TENSORDATA_DECL_HPP
 
-#include <Motutapu/compute/SparseMatrix.hpp>
-#include <Motutapu/compute/cuda/Memory.hpp>
+#include <Motutapu/compute/cudaUtil/Memory.hpp>
+#include <Motutapu/compute/sparse/SparseMatrix.hpp>
 #include <Motutapu/tensor/Shape.hpp>
 #include <Motutapu/util/Device.hpp>
 #include <Motutapu/util/SharedPtr.hpp>

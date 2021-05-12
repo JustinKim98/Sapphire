@@ -6,7 +6,7 @@
 
 #include <Motutapu/Tests/SparseGemmTest.hpp>
 #include <Motutapu/Tests/SparseMemoryTest.hpp>
-#include <Motutapu/compute/cuda/sparse/SparseGemm.cuh>
+#include <Motutapu/compute/sparse/cuda/SparseGemm.cuh>
 #include <iostream>
 #include <random>
 
