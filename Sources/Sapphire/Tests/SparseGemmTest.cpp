@@ -100,8 +100,8 @@ void LoadDistTest(bool printVerbose)
 
     LoadDistMatrix *loadDist;
     Compute::DeepAllocateLoadDistHost(&loadDist, hostA, numMatrices);
-    Compute::Cuda::Sparse::GetLoadDist(loadDist, hostA, cudaA, cudaB, m,
-                                       numMatrices, 0);
+    Compute::Sparse::Cuda::GetLoadDist(loadDist, cudaA, cudaB, m, numMatrices,
+                                       0);
 
     CHECK_EQ(loadDist->ROW[loadDist->M], loadDist->NNZ);
 
@@ -137,8 +137,8 @@ void LoadDistTestFixed(bool printVerbose)
 
     LoadDistMatrix *loadDist;
     Compute::DeepAllocateLoadDistHost(&loadDist, hostA, numMatrices);
-    Compute::Cuda::Sparse::GetLoadDist(loadDist, hostA, cudaA, cudaB, m,
-                                       numMatrices, 0);
+    Compute::Sparse::Cuda::GetLoadDist(loadDist, cudaA, cudaB, m, numMatrices,
+                                       0);
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
@@ -172,7 +172,7 @@ void SparseGemmTest(bool printVerbose)
     Compute::DeepCopyHostToDevice(cudaA, A, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
 
-    Compute::Cuda::Sparse::Gemm(&C, &cudaC, A, cudaA, cudaB, m, n, numMatrices,
+    Compute::Sparse::Cuda::Gemm(&C, &cudaC, A, cudaA, cudaB, m, n, numMatrices,
                                 0, true);
 
     for (uint32_t i = 0; i < numMatrices; ++i)

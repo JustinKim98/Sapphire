@@ -4,7 +4,6 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <stdint-gcc.h>
 #include <Sapphire/compute/sparse/Sparse.hpp>
 #include <Sapphire/compute/sparse/cuda/SparseGemm.cuh>
 #include <Sapphire/util/MemoryManager.hpp>
@@ -14,16 +13,16 @@
 #define THREADS_PER_BLOCK 16
 #define INF (~0)
 
-namespace Sapphire::Compute::Cuda::Sparse
+namespace Sapphire::Compute::Sparse::Cuda
 {
 __device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
 {
     return (12345 ^ col) % numBuckets;
 }
 
-__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
-                          SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
-                          size_t numMatrices, int deviceId)
+__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
+                          SparseMatrix* cudaB, uint32_t m, size_t numMatrices,
+                          int deviceId)
 {
     LoadDistMatrix* cudaLoadDist;
     auto* nnzArray =
@@ -93,18 +92,7 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
 
     if (blockDim > 0)
         LoadDistKernel<<<blockDim, threadDim>>>(loadDist, a, b, deviceNNZArray);
-    //    if (numMatrices > blockDim)
-    //    {
-    //        SparseMatrix* offsetA = a + blockDim;
-    //        SparseMatrix* offsetB = b + blockDim;
-    //        LoadDistMatrix* loadDistOffset = loadDist + blockDim;
-    //
-    //        const auto secondBlockDim = numMatrices - blockDim;
-    //        LoadDistKernel<<<secondBlockDim, threadDim>>>(loadDistOffset,
-    //        offsetA,
-    //                                                      offsetB,
-    //                                                      deviceNNZArray);
-    //    }
+
     cudaMemcpy(nnzArray, deviceNNZArray, sizeof(uint32_t) * numMatrices,
                cudaMemcpyDeviceToHost);
     Util::MemoryManager::DeReferenceCuda(deviceNNZArray, deviceId);
@@ -372,4 +360,4 @@ __device__ void InitIdxArray(uint32_t* idxArray, uint32_t arraySize)
         idxArray[idx] = INF;
     }
 }
-}  // namespace Sapphire::Compute::Cuda::Sparse
+}  // namespace Sapphire::Compute::Sparse::Cuda

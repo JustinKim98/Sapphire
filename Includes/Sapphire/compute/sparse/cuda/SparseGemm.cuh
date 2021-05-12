@@ -11,11 +11,11 @@
 #include <Sapphire/compute/sparse/Sparse.hpp>
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
-namespace Sapphire::Compute::Cuda::Sparse
+namespace Sapphire::Compute::Sparse::Cuda
 {
-__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
-                          SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
-                          size_t numMatrices, int deviceId);
+__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
+                          SparseMatrix* cudaB, uint32_t m, size_t numMatrices,
+                          int deviceId);
 
 //! Calculates Gemm by launching LoadDistKernel on the GPU
 //! \param hostOutput : Array of output sparse matrices on the host memory
