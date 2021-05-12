@@ -101,10 +101,7 @@ class TensorData
     bool SendTo(const Device& device);
 
     //! Deep copies tensor data from src to dst
-    static void DeepCopy(TensorData& dst, const TensorData& src)
-    {
-        throw std::runtime_error("DeepCopy - Not implemented");
-    }
+    static void DeepCopy(TensorData& dst, const TensorData& src);
 
  private:
     //! Copies data on the Host to Gpu
