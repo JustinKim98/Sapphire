@@ -42,3 +42,5 @@ cmake-build-debug
 /.pytest_cache
 
 *.so
+
+cmake-build-release/Libraries/doctest/generated/

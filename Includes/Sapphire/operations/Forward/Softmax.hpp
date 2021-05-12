@@ -4,14 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TEST_TESTCUDAGEMM_HPP
-#define Sapphire_TEST_TESTCUDAGEMM_HPP
+#ifndef Sapphire_SOFTMAX_HPP
+#define Sapphire_SOFTMAX_HPP
 
-namespace Sapphire::Test
+#include <Sapphire/tensor/Tensor.hpp>
+
+namespace Sapphire::NN
 {
-void MallocTest();
+//static Tensor SoftMax(Tensor input);
+}
 
-void TestGemm();
-}  // namespace Sapphire::Test
-
-#endif
+#endif  // Sapphire_SOFTMAX_HPP

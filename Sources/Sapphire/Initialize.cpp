@@ -4,14 +4,9 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TEST_TESTCUDAGEMM_HPP
-#define Sapphire_TEST_TESTCUDAGEMM_HPP
+#include <Sapphire/compute/Initialize.hpp>
 
-namespace Sapphire::Test
+namespace Sapphire::Compute
 {
-void MallocTest();
 
-void TestGemm();
-}  // namespace Sapphire::Test
-
-#endif
+}

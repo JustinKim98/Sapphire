@@ -6,15 +6,17 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Motutapu/Tests/BasicComputationTest.hpp>
-#include <Motutapu/Tests/BroadcastTest.hpp>
-#include <Motutapu/Tests/ComputationTest.hpp>
-#include <Motutapu/Tests/CudaFunctionalityTest.cuh>
-#include <Motutapu/Tests/Test.hpp>
+#include <Sapphire/Tests/BasicComputationTest.hpp>
+#include <Sapphire/Tests/BroadcastTest.hpp>
+#include <Sapphire/Tests/ComputationTest.hpp>
+#include <Sapphire/Tests/CudaFunctionalityTest.cuh>
+#include <Sapphire/Tests/SparseGemmTest.hpp>
+#include <Sapphire/Tests/SparseMemoryTest.hpp>
+#include <Sapphire/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
 
-namespace Motutapu::Test
+namespace Sapphire::Test
 {
 TEST_CASE("Simple test")
 {
@@ -114,6 +116,7 @@ TEST_CASE("Basic computation test")
             TestTranspose(false);
         }
     }
+
     SUBCASE("General1")
     {
         for (int i = 0; i < testLoops; i++)
@@ -151,4 +154,57 @@ TEST_CASE("Basic computation test")
     }
 }
 
-}  // namespace Motutapu::Test
+TEST_CASE("SparseMemory function Test")
+{
+    SUBCASE("SparseMemoryAllocationHost")
+    {
+        std::cout << "Testing Sparse Memory Allocation for Host ...";
+        SparseMemoryAllocationHost();
+        std::cout << " Done" << std::endl;
+    }
+
+    SUBCASE("LoadDistMemoryAllocationHost")
+    {
+        std::cout << "Testing Load Distribution Memory Allocation forHost...";
+        LoadDistMemoryAllocationHost();
+        std::cout << " Done " << std::endl;
+    }
+
+    SUBCASE("SparseMemoryDevice")
+    {
+        std::cout << "Testing Sparse Memory Allocation For Device ...";
+        SparseMemoryAllocationDevice();
+        std::cout << " Done" << std::endl;
+    }
+
+    SUBCASE("SparseMemoryCopy Device To Device")
+    {
+        std::cout << "Testing Sparse Memory Copy between device ...";
+        SparseMemoryCopyDeviceToDevice();
+        std::cout << " Done" << std::endl;
+    }
+}
+
+TEST_CASE("Device Sparse Gemm Test")
+{
+    SUBCASE("Load distribution Test (simple)")
+    {
+        std::cout << "Testing Load distribution (simple) ..." << std::endl;
+        LoadDistTestFixed(false);
+        std::cout << " Done" << std::endl;
+    }
+    SUBCASE("Load distribution Test (complex)")
+    {
+        std::cout << "Testing Load distribution (complex) ..." << std::endl;
+        LoadDistTest(false);
+        std::cout << " Done" << std::endl;
+    }
+    SUBCASE("Sparse Gemm Test")
+    {
+        std::cout << "Testing Sparse Gemm ..." << std::endl;
+        SparseGemmTest(false);
+        std::cout << " Done" << std::endl;
+    }
+}
+
+}  // namespace Sapphire::Test

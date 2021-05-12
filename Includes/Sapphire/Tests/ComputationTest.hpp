@@ -4,14 +4,21 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TEST_TESTCUDAGEMM_HPP
-#define Sapphire_TEST_TESTCUDAGEMM_HPP
+#ifndef Sapphire_COMPUTATIONTEST_HPP
+#define Sapphire_COMPUTATIONTEST_HPP
 
 namespace Sapphire::Test
 {
-void MallocTest();
+#ifdef WITH_CUDA
+void Gemm1();
 
-void TestGemm();
-}  // namespace Sapphire::Test
+void Gemm2();
+
+void GemmBroadcast();
+
+void GemmBroadcastOnOutput();
 
 #endif
+}  // namespace Sapphire::Test
+
+#endif  // Sapphire_COMPUTATIONTEST_HPP

@@ -4,14 +4,9 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TEST_TESTCUDAGEMM_HPP
-#define Sapphire_TEST_TESTCUDAGEMM_HPP
+#include <Sapphire/operations/Forward/Softmax.hpp>
 
-namespace Sapphire::Test
+namespace Sapphire::NN
 {
-void MallocTest();
 
-void TestGemm();
-}  // namespace Sapphire::Test
-
-#endif
+}  // namespace Sapphire::NN

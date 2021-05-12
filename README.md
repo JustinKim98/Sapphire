@@ -12,8 +12,8 @@ Motutapu is a Deep learning framework used in
 This repository was created for research purpose
 
 ## Aim of this project
-* Efficient Sparse-Sparse, Dense-Dense matrix multiplication
-* Takes benefit of SIMD (CPU) and SIMT (CUDA)
+* Effivient Sparse-Sparse, Dense-Dense matrix multiplication
+* Takes benefit of SIMD (HOST) and SIMT (CUDA)
 * Support for deep-learning operations
 
 ## Contact
