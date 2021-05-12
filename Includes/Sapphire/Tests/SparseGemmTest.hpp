@@ -4,14 +4,16 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TEST_TESTCUDAGEMM_HPP
-#define Sapphire_TEST_TESTCUDAGEMM_HPP
+#ifndef Sapphire_SPARSE_GEMM_TEST_HPP
+#define Sapphire_SPARSE_GEMM_TEST_HPP
 
 namespace Sapphire::Test
 {
-void MallocTest();
+void LoadDistTestFixed(bool printVerbose);
 
-void TestGemm();
+void LoadDistTest(bool printVerbose);
+
+void SparseGemmTest(bool printVerbose);
 }  // namespace Sapphire::Test
 
-#endif
+#endif  // Sapphire_SPARSEGEMMTEST_HPP

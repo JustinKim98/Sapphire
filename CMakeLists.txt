@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.12.0 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 
 # Declare project
-project(motutapu)
+project(sapphire)
 
 option(USE_CUDA "USE_CUDA" ON)
 option(USE_AVX2 "USE_AVX2" ON)
@@ -56,7 +56,7 @@ set(CMAKE_MACOSX_RPATH ON)
 
 # Project modules
 add_subdirectory(Libraries/doctest)
-add_subdirectory(Sources/Motutapu)
+add_subdirectory(Sources/Sapphire)
 add_subdirectory(Tests/UnitTests)
 
 if (USE_CUDA)

@@ -4,14 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Motutapu/util/MemoryManager.hpp>
+#include <Sapphire/util/MemoryManager.hpp>
 #include <chrono>
 #include <iostream>
 #include <random>
 #include <vector>
 #include "doctest.h"
 
-namespace Motutapu::Test
+namespace Sapphire::Test
 {
 void hostAllocationTest()
 {
@@ -88,4 +88,4 @@ void cudaAllocationTest()
     Util::MemoryManager::ClearUnusedCudaMemoryPool();
     CHECK_EQ(Util::MemoryManager::GetTotalByteSizeCuda(), 0);
 }
-}  // namespace Motutapu::Test
+}  // namespace Sapphire::Test

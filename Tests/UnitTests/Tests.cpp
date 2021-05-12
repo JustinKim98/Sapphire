@@ -6,17 +6,17 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Motutapu/Tests/BasicComputationTest.hpp>
-#include <Motutapu/Tests/BroadcastTest.hpp>
-#include <Motutapu/Tests/ComputationTest.hpp>
-#include <Motutapu/Tests/CudaFunctionalityTest.cuh>
-#include <Motutapu/Tests/SparseGemmTest.hpp>
-#include <Motutapu/Tests/SparseMemoryTest.hpp>
-#include <Motutapu/Tests/Test.hpp>
+#include <Sapphire/Tests/BasicComputationTest.hpp>
+#include <Sapphire/Tests/BroadcastTest.hpp>
+#include <Sapphire/Tests/ComputationTest.hpp>
+#include <Sapphire/Tests/CudaFunctionalityTest.cuh>
+#include <Sapphire/Tests/SparseGemmTest.hpp>
+#include <Sapphire/Tests/SparseMemoryTest.hpp>
+#include <Sapphire/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
 
-namespace Motutapu::Test
+namespace Sapphire::Test
 {
 TEST_CASE("Simple test")
 {
@@ -116,6 +116,7 @@ TEST_CASE("Basic computation test")
             TestTranspose(false);
         }
     }
+
     SUBCASE("General1")
     {
         for (int i = 0; i < testLoops; i++)
@@ -206,4 +207,4 @@ TEST_CASE("Device Sparse Gemm Test")
     }
 }
 
-}  // namespace Motutapu::Test
+}  // namespace Sapphire::Test

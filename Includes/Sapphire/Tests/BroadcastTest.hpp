@@ -3,15 +3,17 @@
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
-
-#ifndef Sapphire_TEST_TESTCUDAGEMM_HPP
-#define Sapphire_TEST_TESTCUDAGEMM_HPP
+#ifndef Sapphire_BROADCASTTEST_HPP
+#define Sapphire_BROADCASTTEST_HPP
 
 namespace Sapphire::Test
 {
-void MallocTest();
+void BroadcastWithOneDimension();
 
-void TestGemm();
+void BroadcastWithMissingDimension();
+
+void BroadcastMixed();
+
 }  // namespace Sapphire::Test
 
-#endif
+#endif  // Sapphire_BROADCASTTEST_HPP
