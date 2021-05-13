@@ -11,15 +11,19 @@
 #include <cstdlib>
 
 #define THREADS_PER_BLOCK 32
-#define INF (~0)
 
 namespace Sapphire::Compute::Sparse::Cuda
 {
 using namespace Util;
 
-__device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
+__device__ uint32_t Hash1(uint32_t col, uint32_t numBuckets)
 {
-    return (12345 ^ col) % numBuckets;
+    return col % (numBuckets / 2);
+}
+
+__device__ uint32_t Hash2(uint32_t col, uint32_t numBuckets)
+{
+    return (numBuckets / 2) - col % (numBuckets / 2);
 }
 
 __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
@@ -207,7 +211,7 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 }
 
 __global__ void GemmKernel(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
-                          uint32_t* idxArray, float* valArray, uint32_t m)
+                           uint32_t* idxArray, float* valArray, uint32_t m)
 {
     //! Stores pair of computer value and pair of index
     __shared__ float tempValueArray[MAX_NNZ_PER_ROW];
@@ -361,11 +365,14 @@ __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
 __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
                            float value, uint32_t index, uint32_t arraySize)
 {
-    auto key = Hash(index, arraySize);
+    auto key = Hash1(index, arraySize);
 
+    uint32_t i = 1;
     while (idxArray[key] != index && idxArray[key] != INF)
     {
-        key = Hash(index + 1, arraySize);
+        key =
+            (Hash1(index, arraySize) + i * Hash2(index, arraySize)) % arraySize;
+        i++;
     }
 
     if (atomicCAS_block(idxArray + key, INF, index) == INF)
