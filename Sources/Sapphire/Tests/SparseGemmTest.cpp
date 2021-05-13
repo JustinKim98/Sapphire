@@ -203,7 +203,7 @@ long SparseGemmTestSimple(bool printVerbose)
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = 10;
+    const uint32_t numMatrices = 2;
     const auto m = 10;
     const auto n = 5;
     const auto k = 7;

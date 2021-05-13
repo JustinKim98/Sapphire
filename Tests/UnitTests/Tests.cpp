@@ -212,7 +212,7 @@ TEST_CASE("Device Sparse Gemm Test")
     SUBCASE("Sparse Multiplication Test (simple)")
     {
         std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
-        const auto elapsedTime = SparseGemmTestSimple(false);
+        const auto elapsedTime = SparseGemmTestSimple(true);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
                   << "\n"
                   << std::endl;

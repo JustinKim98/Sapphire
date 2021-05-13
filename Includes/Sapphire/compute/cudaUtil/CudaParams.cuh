@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef CUDAPARAMS_HPP
-#define CUDAPARAMS_HPP
+#ifndef CUDA_PARAMS_HPP
+#define CUDA_PARAMS_HPP
 
 #ifdef WITH_CUDA
 
