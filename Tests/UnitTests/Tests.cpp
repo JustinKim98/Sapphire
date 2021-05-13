@@ -165,9 +165,9 @@ TEST_CASE("SparseMemory function Test")
 
     SUBCASE("LoadDistMemoryAllocationHost")
     {
-        std::cout << "Testing Load Distribution Memory Allocation forHost...";
+        std::cout << "Testing Load Distribution Memory Allocation forHost... ";
         LoadDistMemoryAllocationHost();
-        std::cout << " Done " << std::endl;
+        std::cout << " Done\n" << std::endl;
     }
 
     SUBCASE("SparseMemoryDevice")
@@ -199,11 +199,23 @@ TEST_CASE("Device Sparse Gemm Test")
         LoadDistTest(false);
         std::cout << " Done" << std::endl;
     }
-    SUBCASE("Sparse Gemm Test")
+
+    SUBCASE("Sparse Gemm Test (complex)")
     {
-        std::cout << "Testing Sparse Gemm ..." << std::endl;
-        SparseGemmTest(false);
-        std::cout << " Done" << std::endl;
+        std::cout << "Testing Sparse Gemm (complex) ..." << std::endl;
+        const auto elapsedTime = SparseGemmTestComplex(false);
+        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
+                  << "\n"
+                  << std::endl;
+    }
+
+    SUBCASE("Sparse Gemm Test (simple)")
+    {
+        std::cout << "Testing Sparse Gemm (simple) ..." << std::endl;
+        const auto elapsedTime = SparseGemmTestSimple(false);
+        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
+                  << "\n"
+                  << std::endl;
     }
 }
 

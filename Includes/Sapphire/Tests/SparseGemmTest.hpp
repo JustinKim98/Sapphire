@@ -13,7 +13,10 @@ void LoadDistTestFixed(bool printVerbose);
 
 void LoadDistTest(bool printVerbose);
 
-void SparseGemmTest(bool printVerbose);
+long SparseGemmTestComplex(bool printVerbose);
+
+long SparseGemmTestSimple(bool printVerbose);
+
 }  // namespace Sapphire::Test
 
 #endif  // Sapphire_SPARSEGEMMTEST_HPP

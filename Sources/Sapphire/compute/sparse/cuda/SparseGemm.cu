@@ -11,7 +11,7 @@
 #include <cstdlib>
 
 #define MAX_NNZ_PER_BLOCK 512
-#define THREADS_PER_BLOCK 16
+#define THREADS_PER_BLOCK 32
 #define INF (~0)
 
 namespace Sapphire::Compute::Sparse::Cuda

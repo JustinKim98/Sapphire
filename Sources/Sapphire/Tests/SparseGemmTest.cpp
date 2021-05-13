@@ -7,6 +7,7 @@
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/compute/sparse/cuda/SparseGemm.cuh>
+#include <chrono>
 #include <iostream>
 #include <random>
 
@@ -150,7 +151,7 @@ void LoadDistTestFixed(bool printVerbose)
     Util::MemoryManager::ClearCudaMemoryPool();
 }
 
-void SparseGemmTest(bool printVerbose)
+long SparseGemmTestComplex(bool printVerbose)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -158,7 +159,7 @@ void SparseGemmTest(bool printVerbose)
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = uniform(gen) % 5 + 1;
+    const uint32_t numMatrices = uniform(gen) % 50 + 1000;
     const auto m = uniform(gen);
     const auto n = uniform(gen);
     const auto k = uniform(gen);
@@ -172,8 +173,10 @@ void SparseGemmTest(bool printVerbose)
     Compute::DeepCopyHostToDevice(cudaA, A, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
 
+    auto start = std::chrono::system_clock::now();
     Compute::Sparse::Cuda::Gemm(&C, &cudaC, A, cudaA, cudaB, m, n, numMatrices,
                                 0, true);
+    auto end = std::chrono::system_clock::now();
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
@@ -186,6 +189,55 @@ void SparseGemmTest(bool printVerbose)
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();
+
+    auto elapsedTime =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+    return elapsedTime;
+}
+
+long SparseGemmTestSimple(bool printVerbose)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    SparseMatrix *A, *B, *C = nullptr;
+    SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
+    const uint32_t numMatrices = 1000;
+    const auto m = 500;
+    const auto n = 500;
+    const auto k = 100;
+
+    GenerateFixedSparseArray(&A, m, k, numMatrices);
+    GenerateFixedSparseArray(&B, k, n, numMatrices);
+
+    Compute::DeepAllocateSparseCuda(&cudaA, A, numMatrices, 0);
+    Compute::DeepAllocateSparseCuda(&cudaB, B, numMatrices, 0);
+
+    Compute::DeepCopyHostToDevice(cudaA, A, numMatrices, 0);
+    Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
+
+    auto start = std::chrono::system_clock::now();
+    Compute::Sparse::Cuda::Gemm(&C, &cudaC, A, cudaA, cudaB, m, n, numMatrices,
+                                0, true);
+    auto end = std::chrono::system_clock::now();
+
+    for (uint32_t i = 0; i < numMatrices; ++i)
+    {
+        std::cout << "\nMatrix " << i << std::endl;
+        PrintSparseMatrix(C + i, printVerbose);
+    }
+
+    Compute::DeepFreeSparseHost(C, numMatrices);
+    Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
+
+    Util::MemoryManager::ClearHostMemoryPool();
+    Util::MemoryManager::ClearCudaMemoryPool();
+
+    auto elapsedTime =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+    return elapsedTime;
 }
 
 }  // namespace Sapphire::Test
