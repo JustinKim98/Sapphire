@@ -18,6 +18,7 @@
 #endif
 
 #define MAX_NNZ_PER_ROW 512
+#define INF (~0)
 
 #include <cstdint>
 

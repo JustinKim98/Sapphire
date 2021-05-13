@@ -42,6 +42,7 @@ set(DEFAULT_INCLUDE_DIRECTORIES)
 #
 
 set(DEFAULT_LIBRARIES)
+set(OMP_NESTED TRUE)
 
 #
 # Compile definitions
