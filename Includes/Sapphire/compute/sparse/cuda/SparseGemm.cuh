@@ -76,7 +76,7 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 //! \param loadDist : Array of load distribution matrices.
 //! \param sparseColIdxBegin : Start index of computation for matrix A.
 //! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
-__global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
+__global__ void GemmKernel(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
                           uint32_t* idxArray, float* valArray, uint32_t m);
 
 __global__ void StackRowKernel(SparseMatrix* out, uint32_t m,

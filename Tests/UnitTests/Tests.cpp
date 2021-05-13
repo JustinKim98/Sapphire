@@ -200,18 +200,18 @@ TEST_CASE("Device Sparse Gemm Test")
         std::cout << " Done" << std::endl;
     }
 
-    SUBCASE("Sparse Gemm Test (complex)")
+    SUBCASE("Sparse Multiplication Test (complex)")
     {
-        std::cout << "Testing Sparse Gemm (complex) ..." << std::endl;
+        std::cout << "Testing Sparse Multiplication (complex) ..." << std::endl;
         const auto elapsedTime = SparseGemmTestComplex(false);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
                   << "\n"
                   << std::endl;
     }
 
-    SUBCASE("Sparse Gemm Test (simple)")
+    SUBCASE("Sparse Multiplication Test (simple)")
     {
-        std::cout << "Testing Sparse Gemm (simple) ..." << std::endl;
+        std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
         const auto elapsedTime = SparseGemmTestSimple(false);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
                   << "\n"

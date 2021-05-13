@@ -17,6 +17,8 @@
 #error "Unsupported compiler"
 #endif
 
+#define MAX_NNZ_PER_ROW 512
+
 #include <cstdint>
 
 struct ALIGN(16) SparseMatrix

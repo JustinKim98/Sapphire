@@ -10,7 +10,6 @@
 #include <Sapphire/util/MemoryManager.hpp>
 #include <cstdlib>
 
-#define MAX_NNZ_PER_BLOCK 512
 #define THREADS_PER_BLOCK 32
 #define INF (~0)
 
@@ -47,11 +46,11 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
 {
     auto* tempValueArray =
         static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
-            sizeof(float) * numMatrices * m * MAX_NNZ_PER_BLOCK, deviceId));
+            sizeof(float) * numMatrices * m * MAX_NNZ_PER_ROW, deviceId));
 
     auto* tempIdxArray =
         static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
-            sizeof(uint32_t) * numMatrices * m * MAX_NNZ_PER_BLOCK, deviceId));
+            sizeof(uint32_t) * numMatrices * m * MAX_NNZ_PER_ROW, deviceId));
 
     *cudaOutput = static_cast<SparseMatrix*>(MemoryManager::GetMemoryCuda(
         sizeof(SparseMatrix) * numMatrices, deviceId));
@@ -67,7 +66,7 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
     Compute::Cuda::CopyHostToDevice(*cudaOutput, outputBuffer,
                                     sizeof(SparseMatrix) * numMatrices);
 
-    Calculate<<<numMatrices * m, THREADS_PER_BLOCK>>>(
+    GemmKernel<<<numMatrices * m, THREADS_PER_BLOCK>>>(
         *cudaOutput, cudaA, cudaB, tempIdxArray, tempValueArray, m);
     const auto blockDim = (numMatrices % THREADS_PER_BLOCK == 0)
                               ? numMatrices / THREADS_PER_BLOCK
@@ -153,7 +152,6 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
     Util::MemoryManager::DeReferenceCuda(deviceNNZArray, deviceId);
 }
 
-//! Todo : unify calculate Load kernel and Calculate Gemm
 //! Should be executed using single block
 __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
                                SparseMatrix* b, uint32_t* nnzArray)
@@ -208,15 +206,15 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
     }
 }
 
-__global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
+__global__ void GemmKernel(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
                           uint32_t* idxArray, float* valArray, uint32_t m)
 {
     //! Stores pair of computer value and pair of index
-    __shared__ float tempValueArray[MAX_NNZ_PER_BLOCK];
-    __shared__ uint32_t tempIdxArray[MAX_NNZ_PER_BLOCK];
+    __shared__ float tempValueArray[MAX_NNZ_PER_ROW];
+    __shared__ uint32_t tempIdxArray[MAX_NNZ_PER_ROW];
     __shared__ uint32_t nnz;
 
-    InitIdxArray(tempIdxArray, MAX_NNZ_PER_BLOCK);
+    InitIdxArray(tempIdxArray, MAX_NNZ_PER_ROW);
     if (threadIdx.x == 0)
         nnz = 0;
 
@@ -245,19 +243,19 @@ __global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
         {
             InsertHash(tempValueArray, tempIdxArray, &nnz,
                        curA->V[sparseColIdxA] * curB->V[sparseColIdxB],
-                       curB->COL[sparseColIdxB], MAX_NNZ_PER_BLOCK);
+                       curB->COL[sparseColIdxB], MAX_NNZ_PER_ROW);
         }
     }
     __syncthreads();
 
-    Sort(tempValueArray, tempIdxArray, MAX_NNZ_PER_BLOCK);
+    Sort(tempValueArray, tempIdxArray, MAX_NNZ_PER_ROW);
 
     __syncthreads();
 
     if (threadIdx.x == 0 && curRowIdx < m)
         curOut->ROW[curRowIdx] = nnz;
 
-    const auto curOffset = MAX_NNZ_PER_BLOCK * (m * matrixOffset + curRowIdx);
+    const auto curOffset = MAX_NNZ_PER_ROW * (m * matrixOffset + curRowIdx);
     for (uint32_t idx = threadIdx.x; idx < nnz; idx += blockDim.x)
     {
         valArray[curOffset + idx] = tempValueArray[idx];
@@ -293,7 +291,7 @@ __global__ void StoreOutput(SparseMatrix* out, const uint32_t* idxArray,
     const auto matrixOffset = blockIdx.x / M;
 
     SparseMatrix* curOut = out + matrixOffset;
-    const auto arrayOffset = MAX_NNZ_PER_BLOCK * (M * matrixOffset + curRowIdx);
+    const auto arrayOffset = MAX_NNZ_PER_ROW * (M * matrixOffset + curRowIdx);
     const auto nnz = curOut->ROW[curRowIdx + 1] - curOut->ROW[curRowIdx];
     const auto colOffset = curOut->ROW[curRowIdx];
     for (auto i = threadIdx.x; i < nnz; i += blockDim.x)
