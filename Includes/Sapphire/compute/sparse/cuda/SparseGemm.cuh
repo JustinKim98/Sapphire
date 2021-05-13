@@ -47,9 +47,6 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
                            uint32_t* nnzArray, size_t numMatrices,
                            int deviceId);
 
-__host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
-                             size_t numMatrices, const uint32_t* nnzArray);
-
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
 //! -- Constraints --
@@ -80,10 +77,10 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 //! \param sparseColIdxBegin : Start index of computation for matrix A.
 //! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
 __global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
-                          LoadDistMatrix* loadDist, uint32_t* idxArray,
-                          float* valArray, uint32_t m, uint32_t numMatrices);
+                          uint32_t* idxArray, float* valArray, uint32_t m);
 
-__global__ void StackRowKernel(SparseMatrix* out, uint32_t numMatrices);
+__global__ void StackRowKernel(SparseMatrix* out, uint32_t m,
+                               uint32_t numMatrices);
 
 __global__ void StoreOutput(SparseMatrix* out, const uint32_t* idxArray,
                             const float* valArray, uint32_t M,

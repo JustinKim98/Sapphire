@@ -4,6 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/sparse/Sparse.hpp>
 #include <Sapphire/compute/sparse/cuda/SparseGemm.cuh>
 #include <Sapphire/util/MemoryManager.hpp>
@@ -15,6 +16,8 @@
 
 namespace Sapphire::Compute::Sparse::Cuda
 {
+using namespace Util;
+
 __device__ uint32_t Hash(uint32_t col, uint32_t numBuckets)
 {
     return (12345 ^ col) % numBuckets;
@@ -42,15 +45,6 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                    SparseMatrix* cudaB, uint32_t m, uint32_t n,
                    size_t numMatrices, int deviceId, bool copyResultToHost)
 {
-    LoadDistMatrix *hostLoadDist, *cudaLoadDist;
-    auto* nnzArray = static_cast<uint32_t*>(
-        Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * numMatrices));
-    DeepAllocateLoadDistHost(&hostLoadDist, hostA, numMatrices);
-    DeepAllocateLoadDistCuda(&cudaLoadDist, hostLoadDist, numMatrices,
-                             deviceId);
-    CallLoadDist(cudaA, cudaB, cudaLoadDist, m, nnzArray, numMatrices, 0);
-    DeepAllocateSparseHost(hostOutput, m, n, nnzArray, numMatrices);
-    DeepAllocateSparseCuda(cudaOutput, *hostOutput, numMatrices, deviceId);
     auto* tempValueArray =
         static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
             sizeof(float) * numMatrices * m * MAX_NNZ_PER_BLOCK, deviceId));
@@ -59,23 +53,84 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
             sizeof(uint32_t) * numMatrices * m * MAX_NNZ_PER_BLOCK, deviceId));
 
+    *cudaOutput = static_cast<SparseMatrix*>(MemoryManager::GetMemoryCuda(
+        sizeof(SparseMatrix) * numMatrices, deviceId));
+    auto* outputBuffer = static_cast<SparseMatrix*>(
+        MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+
+    for (uint32_t i = 0; i < numMatrices; ++i)
+    {
+        outputBuffer[i].ROW = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda((m + 1) * sizeof(uint32_t), deviceId));
+    }
+
+    Compute::Cuda::CopyHostToDevice(*cudaOutput, outputBuffer,
+                                    sizeof(SparseMatrix) * numMatrices);
+
     Calculate<<<numMatrices * m, THREADS_PER_BLOCK>>>(
-        *cudaOutput, cudaA, cudaB, cudaLoadDist, tempIdxArray, tempValueArray,
-        m, numMatrices);
-    const auto blockDim =
-        (numMatrices % 32 == 0) ? numMatrices / 32 : numMatrices / 32 + 1;
-    StackRowKernel<<<blockDim, THREADS_PER_BLOCK>>>(*cudaOutput, numMatrices);
+        *cudaOutput, cudaA, cudaB, tempIdxArray, tempValueArray, m);
+    const auto blockDim = (numMatrices % THREADS_PER_BLOCK == 0)
+                              ? numMatrices / THREADS_PER_BLOCK
+                              : numMatrices / THREADS_PER_BLOCK + 1;
+    StackRowKernel<<<blockDim, THREADS_PER_BLOCK>>>(*cudaOutput, m,
+                                                    numMatrices);
+
+    for (uint32_t i = 0; i < numMatrices; ++i)
+    {
+        uint32_t nnz;
+        Compute::Cuda::CopyDeviceToHost(&nnz, outputBuffer[i].ROW + m,
+                                        sizeof(uint32_t));
+
+        (outputBuffer + i)->V = static_cast<float*>(
+            MemoryManager::GetMemoryCuda(sizeof(float) * nnz, deviceId));
+        (outputBuffer + i)->COL = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * nnz, deviceId));
+
+        (outputBuffer + i)->M = m;
+        (outputBuffer + i)->N = n;
+        (outputBuffer + i)->NNZ = nnz;
+    }
+
+    Compute::Cuda::CopyHostToDevice(*cudaOutput, outputBuffer,
+                                    sizeof(SparseMatrix) * numMatrices);
+
     StoreOutput<<<numMatrices * m, THREADS_PER_BLOCK>>>(
         *cudaOutput, tempIdxArray, tempValueArray, m, numMatrices);
 
     if (copyResultToHost)
-        DeepCopyDeviceToHost(*hostOutput, *cudaOutput, numMatrices, deviceId);
+    {
+        *hostOutput = static_cast<SparseMatrix*>(
+            MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        for (uint32_t i = 0; i < numMatrices; ++i)
+        {
+            (*hostOutput + i)->ROW = static_cast<uint32_t*>(
+                MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
+            Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->ROW,
+                                            (outputBuffer + i)->ROW,
+                                            sizeof(uint32_t) * (m + 1));
 
+            const auto nnz = (*hostOutput + i)->ROW[m];
+            (*hostOutput + i)->V = static_cast<float*>(
+                MemoryManager::GetMemoryHost(sizeof(float) * nnz));
+            (*hostOutput + i)->COL = static_cast<uint32_t*>(
+                MemoryManager::GetMemoryHost(sizeof(float) * nnz));
+
+            Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->V,
+                                            (outputBuffer + i)->V,
+                                            sizeof(float) * nnz);
+            Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->COL,
+                                            (outputBuffer + i)->COL,
+                                            sizeof(uint32_t) * nnz);
+
+            (*hostOutput + i)->M = m;
+            (*hostOutput + i)->N = n;
+            (*hostOutput + i)->NNZ = nnz;
+        }
+    }
+
+    MemoryManager::DeReferenceHost(outputBuffer);
     Util::MemoryManager::DeReferenceCuda(tempValueArray, deviceId);
     Util::MemoryManager::DeReferenceCuda(tempIdxArray, deviceId);
-    Util::MemoryManager::DeReferenceHost(nnzArray);
-    DeepFreeLoadDistCuda(cudaLoadDist, numMatrices, deviceId);
-    DeepFreeLoadDistHost(hostLoadDist, numMatrices);
 }
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
@@ -96,25 +151,6 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
     cudaMemcpy(nnzArray, deviceNNZArray, sizeof(uint32_t) * numMatrices,
                cudaMemcpyDeviceToHost);
     Util::MemoryManager::DeReferenceCuda(deviceNNZArray, deviceId);
-}
-
-__host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
-                             size_t numMatrices, const uint32_t* nnzArray)
-{
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-    {
-        SparseMatrix* curOutput = output + matrixIdx;
-        curOutput->M = m;
-        curOutput->N = n;
-        curOutput->NNZ = nnzArray[matrixIdx];
-        cudaFree(curOutput->V);
-        cudaFree(curOutput->ROW);
-        cudaFree(curOutput->COL);
-        cudaMalloc((void**)curOutput->V, sizeof(float) * curOutput->NNZ);
-        cudaMalloc((void**)curOutput->COL, sizeof(float) * curOutput->NNZ);
-        cudaMalloc((void**)curOutput->ROW,
-                   sizeof(uint32_t) * (curOutput->M + 1));
-    }
 }
 
 //! Todo : unify calculate Load kernel and Calculate Gemm
@@ -173,8 +209,7 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 }
 
 __global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
-                          LoadDistMatrix* loadDist, uint32_t* idxArray,
-                          float* valArray, uint32_t m, uint32_t numMatrices)
+                          uint32_t* idxArray, float* valArray, uint32_t m)
 {
     //! Stores pair of computer value and pair of index
     __shared__ float tempValueArray[MAX_NNZ_PER_BLOCK];
@@ -194,31 +229,25 @@ __global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
     SparseMatrix* curOut = out + matrixOffset;
     SparseMatrix* curA = a + matrixOffset;
     SparseMatrix* curB = b + matrixOffset;
-    LoadDistMatrix* curLoadDist = loadDist + matrixOffset;
 
-    if (curLoadDist->ROW[curRowIdx] < curLoadDist->ROW[curRowIdx + 1])
+    const auto rowNNZa = curA->ROW[curRowIdx + 1] - curA->ROW[curRowIdx];
+    for (uint32_t sparseColIdxOffset = threadIdx.x;
+         sparseColIdxOffset < rowNNZa; sparseColIdxOffset += blockDim.x)
     {
-        const auto rowNNZa = curA->ROW[curRowIdx + 1] - curA->ROW[curRowIdx];
-        for (uint32_t sparseColIdxOffset = threadIdx.x;
-             sparseColIdxOffset < rowNNZa; sparseColIdxOffset += blockDim.x)
+        const auto sparseColIdxA = curA->ROW[curRowIdx] + sparseColIdxOffset;
+
+        const auto colIdxA = curA->COL[sparseColIdxA];
+        const auto sparseColIdxBBegin = curB->ROW[colIdxA];
+        const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
+
+        for (uint32_t sparseColIdxB = sparseColIdxBBegin;
+             sparseColIdxB < sparseColIdxBEnd; ++sparseColIdxB)
         {
-            const auto sparseColIdxA =
-                curA->ROW[curRowIdx] + sparseColIdxOffset;
-
-            const auto colIdxA = curA->COL[sparseColIdxA];
-            const auto sparseColIdxBBegin = curB->ROW[colIdxA];
-            const auto sparseColIdxBEnd = curB->ROW[colIdxA + 1];
-
-            for (uint32_t sparseColIdxB = sparseColIdxBBegin;
-                 sparseColIdxB < sparseColIdxBEnd; ++sparseColIdxB)
-            {
-                InsertHash(tempValueArray, tempIdxArray, &nnz,
-                           curA->V[sparseColIdxA] * curB->V[sparseColIdxB],
-                           curB->COL[sparseColIdxB], MAX_NNZ_PER_BLOCK);
-            }
+            InsertHash(tempValueArray, tempIdxArray, &nnz,
+                       curA->V[sparseColIdxA] * curB->V[sparseColIdxB],
+                       curB->COL[sparseColIdxB], MAX_NNZ_PER_BLOCK);
         }
     }
-
     __syncthreads();
 
     Sort(tempValueArray, tempIdxArray, MAX_NNZ_PER_BLOCK);
@@ -236,14 +265,14 @@ __global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
     }
 }
 
-__global__ void StackRowKernel(SparseMatrix* out, uint32_t numMatrices)
+__global__ void StackRowKernel(SparseMatrix* out, uint32_t m,
+                               uint32_t numMatrices)
 {
     const auto matrixIdx = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (matrixIdx < numMatrices)
     {
         SparseMatrix* curMatrix = out + matrixIdx;
-        const auto m = curMatrix->M;
         uint32_t stackedOffset = 0;
         for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
         {
