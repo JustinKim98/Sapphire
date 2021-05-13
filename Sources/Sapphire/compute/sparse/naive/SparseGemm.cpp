@@ -87,8 +87,15 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
               tempValueBuffer + MAX_NNZ_PER_ROW * m * numMatrices, 0);
     std::atomic<bool> flagBuffer[MAX_NNZ_PER_ROW * m * numMatrices];
 
-#pragma omp parallel for schedule(static) collapse(2) default(none) \
-    shared(numMatrices, m, a, b, tempIdxBuffer, tempValueBuffer, flagBuffer)
+    *output = static_cast<SparseMatrix*>(
+        Util::MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+
+    for (uint32_t i = 0; i < m; ++i)
+        (*output)[i].ROW = static_cast<uint32_t*>(
+            Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
+
+#pragma omp parallel for schedule(static) collapse(2) default(none) shared( \
+    numMatrices, m, a, b, output, tempIdxBuffer, tempValueBuffer, flagBuffer)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
         for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
@@ -96,6 +103,7 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
             uint32_t nnz = 0;
             auto* curMatrixA = a + matrixIdx;
             auto* curMatrixB = b + matrixIdx;
+            auto* curMatrixOut = (*output) + matrixIdx;
             for (auto sparseColIdx = curMatrixA->ROW[rowIdx];
                  sparseColIdx < curMatrixA->ROW[rowIdx + 1]; ++sparseColIdx)
             {
@@ -114,11 +122,18 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
                 }
             }
 
-            Sort(tempIdxBuffer, tempValueBuffer,
-                 matrixIdx * rowIdx * MAX_NNZ_PER_ROW,
-                 matrixIdx * (rowIdx + 1) * MAX_NNZ_PER_ROW);
+            const auto beginOffset = matrixIdx * rowIdx * MAX_NNZ_PER_ROW;
+            const auto endOffset = matrixIdx * (rowIdx + 1) * MAX_NNZ_PER_ROW;
+            Sort(tempIdxBuffer, tempValueBuffer, beginOffset, endOffset);
+            curMatrixOut->COL = static_cast<uint32_t*>(
+                Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * nnz));
+            curMatrixOut->V = static_cast<float*>(
+                Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * nnz));
 
-
+            std::copy(tempIdxBuffer + beginOffset, tempIdxBuffer + endOffset,
+                      curMatrixOut->COL);
+            std::copy(tempValueBuffer + beginOffset,
+                      tempValueBuffer + endOffset, curMatrixOut->V);
         }
     }
 }
