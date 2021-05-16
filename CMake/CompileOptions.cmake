@@ -192,7 +192,11 @@ if (USE_CUDA)
         set(
                 CUDA_NVCC_FLAGS
                 ${CUDA_NVCC_FLAGS};
-                -arch=sm_86
+                -arch=sm_50
+                -gencode=arch=compute_50,code=sm_50
+                -gencode=arch=compute_52,code=sm_52
+                -gencode=arch=compute_53,code=sm_53
+                -gencode=arch=compute_60,code=sm_60
                 -gencode=arch=compute_70,code=sm_70
                 -gencode=arch=compute_75,code=sm_75
                 -gencode=arch=compute_80,code=sm_80
@@ -210,7 +214,11 @@ if (USE_CUDA)
         set(
                 CUDA_NVCC_FLAGS
                 ${CUDA_NVCC_FLAGS};
-                -arch=sm_86
+                -arch=sm_50
+                -gencode=arch=compute_50,code=sm_50
+                -gencode=arch=compute_52,code=sm_52
+                -gencode=arch=compute_53,code=sm_53
+                -gencode=arch=compute_60,code=sm_60
                 -gencode=arch=compute_70,code=sm_70
                 -gencode=arch=compute_75,code=sm_75
                 -gencode=arch=compute_80,code=sm_80

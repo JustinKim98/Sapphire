@@ -198,7 +198,11 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
             }
             nnzPerRow += numElemPerRowB;
         }
+#if __CUDA_ARCH__ >= 600
         atomicAdd_block(&nnzPerMatrix, nnzPerRow);
+#else
+        atomicAdd(&nnzPerMatrix, nnzPerRow);
+#endif
     }
 
     __syncthreads();
@@ -375,6 +379,7 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
         i++;
     }
 
+#if __CUDA_ARCH__ >= 600
     if (atomicCAS_block(idxArray + key, INF, index) == INF)
     {
         atomicExch_block(valueArray + key, value);
@@ -384,6 +389,17 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
     {
         atomicAdd_block(valueArray + key, value);
     }
+#else
+    if (atomicCAS(idxArray + key, INF, index) == INF)
+    {
+        atomicExch(valueArray + key, value);
+        atomicAdd(nnz, 1);
+    }
+    else
+    {
+        atomicAdd(valueArray + key, value);
+    }
+#endif
 }
 
 __device__ void InitIdxArray(uint32_t* idxArray, uint32_t arraySize)
