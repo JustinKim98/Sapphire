@@ -19,6 +19,7 @@
 
 #define MAX_NNZ_PER_ROW 512
 #define INF (~0)
+#define DELETED_MARKER (~1)
 
 #include <cstdint>
 

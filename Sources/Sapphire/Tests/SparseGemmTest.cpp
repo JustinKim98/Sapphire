@@ -159,7 +159,7 @@ long SparseGemmTestComplex(bool printVerbose)
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = uniform(gen) % 50;
+    const uint32_t numMatrices = uniform(gen) % 50 + 1000;
     const auto m = uniform(gen);
     const auto n = uniform(gen);
     const auto k = uniform(gen);

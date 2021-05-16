@@ -198,10 +198,10 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
             }
             nnzPerRow += numElemPerRowB;
         }
-#if __CUDA_ARCH__ >= 600
-        atomicAdd_block(&nnzPerMatrix, nnzPerRow);
-#else
+#if __CUDA_ARCH__ < 600
         atomicAdd(&nnzPerMatrix, nnzPerRow);
+#else
+        atomicAdd_block(&nnzPerMatrix, nnzPerRow);
 #endif
     }
 
@@ -372,24 +372,15 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
     auto key = Hash1(index, arraySize);
 
     uint32_t i = 1;
-    while (idxArray[key] != index && idxArray[key] != INF)
+    while ((idxArray[key] != index && idxArray[key] != INF) ||
+           idxArray[key] == DELETED_MARKER)
     {
         key =
             (Hash1(index, arraySize) + i * Hash2(index, arraySize)) % arraySize;
         i++;
     }
 
-#if __CUDA_ARCH__ >= 600
-    if (atomicCAS_block(idxArray + key, INF, index) == INF)
-    {
-        atomicExch_block(valueArray + key, value);
-        atomicAdd_block(nnz, 1);
-    }
-    else
-    {
-        atomicAdd_block(valueArray + key, value);
-    }
-#else
+#if __CUDA_ARCH__ < 600
     if (atomicCAS(idxArray + key, INF, index) == INF)
     {
         atomicExch(valueArray + key, value);
@@ -398,6 +389,26 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
     else
     {
         atomicAdd(valueArray + key, value);
+        if (valueArray[key] == 0.0f)
+        {
+            atomicExch(valueArray + key, DELETED_MARKER);
+            atomicSub(nnz, 1);
+        }
+    }
+#else
+    if (atomicCAS_block(idxArray + key, INF, index) == INF)
+    {
+        atomicExch_block(valueArray + key, value);
+        atomicAdd_block(nnz, 1);
+    }
+    else
+    {
+        atomicAdd_block(valueArray + key, value);
+        if (valueArray[key] == 0.0f)
+        {
+            atomicExch_block(valueArray + key, DELETED_MARKER);
+            atomicSub_block(nnz, 1);
+        }
     }
 #endif
 }
