@@ -11,22 +11,22 @@
 
 namespace Sapphire::Compute::Cuda
 {
- bool CudaSetDevice(int deviceId);
+void CudaSetDevice(int deviceId);
 
-bool CudaMalloc(void** ptr, unsigned int byteSize);
+ void CudaMalloc(void** ptr, unsigned int byteSize);
 
-bool CudaFree(void* ptr);
+ void CudaFree(void* ptr);
 
-bool CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize);
+void CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize);
 
-bool CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize);
+void CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize);
 
-bool CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize);
+void CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize);
 
-bool CopyDeviceToDeviceAsync(void* dst, const void* src,
+void CopyDeviceToDeviceAsync(void* dst, const void* src,
                                 unsigned int byteSize, cudaStream_t stream);
 
-bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
+void CopyDeviceToDeviceBroadcast(void* dst, const void* src,
                                     unsigned int byteSize, unsigned int srcStrideByteSize);
 }  // namespace Sapphire::Compute::Cuda
 #endif

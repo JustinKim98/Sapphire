@@ -88,7 +88,7 @@ class TensorData
 
     //! Deep copies tensor data from src to dest
     //! Type of dest and src must be the same
-    static bool CopyTensorData(TensorData dest, const TensorData& src);
+    static void CopyTensorData(TensorData dest, const TensorData& src);
 
     //! Creates and returns same copy as this tensorData
     [[nodiscard]] TensorData CreateCopy() const;
@@ -131,7 +131,7 @@ class TensorData
     void m_freeHost();
 
     //! Free space allocated on GPU memory
-    bool m_freeCuda();
+    void m_freeCuda();
 
     int m_parentDescKey = -1;
 

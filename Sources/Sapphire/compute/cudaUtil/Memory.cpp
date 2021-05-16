@@ -5,72 +5,83 @@
 // property of any third parties.
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
+#include <stdexcept>
 
 namespace Sapphire::Compute::Cuda
 {
-
-bool CudaSetDevice(int deviceId)
+void CudaSetDevice(int deviceId)
 {
     int deviceCount;
     cudaGetDeviceCount(&deviceCount);
     if (deviceId < deviceCount)
     {
         const cudaError_t error = cudaSetDevice(deviceId);
-        return error == cudaSuccess;
+        if (error != cudaSuccess)
+            throw std::runtime_error("CudaSetDevice failed with " +
+                                     std::to_string(error));
     }
-    return false;
+    else
+        throw std::runtime_error(
+            "CudaSetDevice - deviceId exceeds number of available devices");
 }
 
-bool CudaMalloc(void** ptr, unsigned int byteSize)
+void CudaMalloc(void** ptr, unsigned int byteSize)
 {
     const cudaError_t error = cudaMalloc((void**)ptr, byteSize);
-    return error == cudaSuccess;
+    if (error != cudaSuccess)
+        throw std::runtime_error("CudaMalloc failed with " +
+                                 std::to_string(error));
 }
 
-bool CudaFree(void* ptr)
+void CudaFree(void* ptr)
 {
     const cudaError_t error = cudaFree((void*)(ptr));
-    return error == cudaSuccess;
+    if (error != cudaSuccess)
+        throw std::runtime_error("CudaFree failed with " +
+                                 std::to_string(error));
 }
 
-bool CopyHostToDevice(void* devicePtr, void* hostPtr,
-                               unsigned int byteSize)
+void CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize)
 {
     const cudaError_t error = cudaMemcpy((void*)(devicePtr), (void*)(hostPtr),
                                          byteSize, cudaMemcpyHostToDevice);
-
-    return error == cudaSuccess;
+    if (error != cudaSuccess)
+        throw std::runtime_error("CopyDeviceToDevice failed with " +
+                                 std::to_string(error));
 }
 
-bool CopyDeviceToHost(void* hostPtr, void* devicePtr,
-                               unsigned int byteSize)
+void CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize)
 {
     const cudaError_t error = cudaMemcpy((void*)(hostPtr), (void*)(devicePtr),
                                          byteSize, cudaMemcpyDeviceToHost);
 
-    return error == cudaSuccess;
+    if (error != cudaSuccess)
+        throw std::runtime_error("CopyDeviceToHost failed with " +
+                                 std::to_string(error));
 }
 
-bool CopyDeviceToDevice(void* dst, const void* src,
-                                 unsigned int byteSize)
+void CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize)
 {
     const cudaError_t error =
         cudaMemcpy(dst, src, byteSize, cudaMemcpyDeviceToDevice);
-    return error == cudaSuccess;
+    if (error != cudaSuccess)
+        throw std::runtime_error("CopyDeviceToDevice failed with " +
+                                 std::to_string(error));
 }
 
-bool CopyDeviceToDeviceAsync(void* dst, const void* src,
-                                      unsigned int byteSize,
-                                      cudaStream_t stream)
+void CopyDeviceToDeviceAsync(void* dst, const void* src, unsigned int byteSize,
+                             cudaStream_t stream)
 {
     const cudaError_t error =
         cudaMemcpyAsync(dst, src, byteSize, cudaMemcpyDeviceToDevice, stream);
-    return error == cudaSuccess;
+    if (error != cudaSuccess)
+        throw std::runtime_error("CopyDeviceToDeviceAsync failed with " +
+                                 std::to_string(error));
 }
 
-bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
-                                          unsigned int byteSize,
-                                          unsigned int srcStrideByteSize)
+void CopyDeviceToDeviceBroadcast(void* dst, const void* src,
+                                 unsigned int byteSize,
+                                 unsigned int srcStrideByteSize)
 {
     for (unsigned int idx = 0; idx < byteSize; idx += srcStrideByteSize)
     {
@@ -78,10 +89,10 @@ bool CopyDeviceToDeviceBroadcast(void* dst, const void* src,
             cudaMemcpy(static_cast<uint8_t*>(dst) + idx, src, srcStrideByteSize,
                        cudaMemcpyDeviceToDevice);
         if (error != cudaSuccess)
-            return false;
+            throw std::runtime_error(
+                "CopyDeviceToDeviceBroadcast failed in idx" +
+                std::to_string(idx) + " with " + std::to_string(error));
     }
-
-    return true;
 }
 
 }  // namespace Sapphire::Compute::Cuda

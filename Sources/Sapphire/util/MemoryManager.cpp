@@ -27,7 +27,6 @@ unsigned int MemoryManager::m_allocationUnitByteSize = 256;
 void* MemoryManager::GetMemoryCuda(size_t byteSize, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
-    auto success = true;
     void* cudaPtr = nullptr;
 
     auto allocationSize =
@@ -49,13 +48,8 @@ void* MemoryManager::GetMemoryCuda(size_t byteSize, int deviceId)
         return cudaPtr;
     }
 
-    success &= Compute::Cuda::CudaSetDevice(deviceId);
-    success &= Compute::Cuda::CudaMalloc((void**)&cudaPtr, allocationSize);
-
-    if (!success)
-    {
-        throw std::runtime_error("GetMemoryCuda - Allocation failure");
-    }
+    Compute::Cuda::CudaSetDevice(deviceId);
+    Compute::Cuda::CudaMalloc((void**)&cudaPtr, allocationSize);
 
     m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
                                  MemoryChunk(allocationSize, cudaPtr, 1));
@@ -174,9 +168,7 @@ void MemoryManager::ClearUnusedCudaMemoryPool()
 
     for (auto& [key, memoryChunk] : m_cudaFreeMemoryPool)
     {
-        if (!Compute::Cuda::CudaFree(memoryChunk.Data))
-            throw std::runtime_error(
-                "ClearUnusedCudaMemoryPool - CudaFree failed");
+        Compute::Cuda::CudaFree(memoryChunk.Data);
     }
 
     m_cudaFreeMemoryPool.clear();
@@ -202,17 +194,13 @@ void MemoryManager::ClearCudaMemoryPool()
 
     for (auto& [key, memoryChunk] : m_cudaFreeMemoryPool)
     {
-        if (!Compute::Cuda::CudaFree(memoryChunk.Data))
-            throw std::runtime_error(
-                "ClearCudaMemoryPool - CudaFree(Unused) failed");
+        Compute::Cuda::CudaFree(memoryChunk.Data);
     }
     m_cudaFreeMemoryPool.clear();
 
     for (auto& [key, memoryChunk] : m_cudaBusyMemoryPool)
     {
-        if (!Compute::Cuda::CudaFree(memoryChunk.Data))
-            throw std::runtime_error(
-                "ClearCudaMemoryPool - CudaFree(Busy) failed");
+        Compute::Cuda::CudaFree(memoryChunk.Data);
     }
 
     m_cudaBusyMemoryPool.clear();
