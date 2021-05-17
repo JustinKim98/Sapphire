@@ -10,6 +10,7 @@
 #include <Sapphire/compute/dense/cuda/Gemm.cuh>
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/sparse/cuda/SparseGemm.cuh>
+#include <Sapphire/compute/sparse/cuda/cuSparseGemm.cuh>
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -154,7 +155,7 @@ void LoadDistTestFixed(bool printVerbose)
     Util::MemoryManager::ClearCudaMemoryPool();
 }
 
-long SparseGemmTestComplex(bool printVerbose)
+long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -162,7 +163,7 @@ long SparseGemmTestComplex(bool printVerbose)
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = uniform(gen) % 50 + 1000;
+    const uint32_t numMatrices = uniform(gen) % 50 + minimumNumMatrices;
     const auto m = uniform(gen);
     const auto n = uniform(gen);
     const auto k = uniform(gen);
@@ -177,8 +178,8 @@ long SparseGemmTestComplex(bool printVerbose)
     Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
 
     auto start = std::chrono::system_clock::now();
-    Compute::Sparse::Cuda::Gemm(&C, &cudaC, A, cudaA, cudaB, m, n, numMatrices,
-                                0, true);
+    Compute::Sparse::Cuda::Gemm(&C, &cudaC, cudaA, cudaB, m, n, numMatrices, 0,
+                                true);
     auto end = std::chrono::system_clock::now();
 
     for (uint32_t i = 0; i < numMatrices; ++i)
@@ -221,8 +222,8 @@ long SparseGemmTestSimple(bool printVerbose)
     Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
 
     auto start = std::chrono::system_clock::now();
-    Compute::Sparse::Cuda::Gemm(&C, &cudaC, A, cudaA, cudaB, m, n, numMatrices,
-                                0, true);
+    Compute::Sparse::Cuda::Gemm(&C, &cudaC, cudaA, cudaB, m, n, numMatrices, 0,
+                                true);
     auto end = std::chrono::system_clock::now();
 
     for (uint32_t i = 0; i < numMatrices; ++i)
@@ -319,20 +320,32 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
             .count();
 
     auto cudaSparseBegin = std::chrono::system_clock::now();
-    Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, hostSparseA,
-                                cudaSparseA, cudaSparseB, m, n, numMatrices, 0,
-                                false);
+    Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, cudaSparseA,
+                                cudaSparseB, m, n, numMatrices, 0, false);
     auto cudaSparseEnd = std::chrono::system_clock::now();
     auto cudaSparseGemmElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(cudaSparseEnd -
                                                               cudaSparseBegin)
             .count();
 
+    auto cuSparseBegin = std::chrono::system_clock::now();
+    Compute::Sparse::Cuda::cuSparseGemm(&hostSparseOut, &cudaSparseOut,
+                                        cudaSparseA, cudaSparseB, m, n,
+                                        numMatrices, 0, false);
+    auto cuSparseEnd = std::chrono::system_clock::now();
+    auto cuSparseGemmElapsedTime =
+        std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
+                                                              cuSparseBegin)
+            .count();
+
     std::cout << "--- Results (time in microseconds) ---" << std::endl;
     std::cout << "Sparsity : " << sparsity << std::endl;
     std::cout << "Naive Dense : " << naiveDenseElapsedTime << std::endl;
     std::cout << "Cuda Dense : " << cudaDenseElapsedTime << std::endl;
-    std::cout << "Cuda Sparse : " << cudaSparseGemmElapsedTime << std::endl;
+    std::cout << "Cuda Sparse (custom) : " << cudaSparseGemmElapsedTime
+              << std::endl;
+    std::cout << "Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTime
+              << std::endl;
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();

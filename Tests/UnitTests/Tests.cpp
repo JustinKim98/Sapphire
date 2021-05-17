@@ -16,8 +16,12 @@
 #include <iostream>
 #include "doctest.h"
 
+//#define EnableAllTest
+
 namespace Sapphire::Test
 {
+#ifdef EnableAllTest
+
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
@@ -203,7 +207,7 @@ TEST_CASE("Device Sparse Gemm Test")
     SUBCASE("Sparse Multiplication Test (complex)")
     {
         std::cout << "Testing Sparse Multiplication (complex) ..." << std::endl;
-        const auto elapsedTime = SparseGemmTestComplex(false);
+        const auto elapsedTime = SparseGemmTestComplex(false, 1);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
                   << "\n"
                   << std::endl;
@@ -212,19 +216,19 @@ TEST_CASE("Device Sparse Gemm Test")
     SUBCASE("Sparse Multiplication Test (simple)")
     {
         std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
-        const auto elapsedTime = SparseGemmTestSimple(true);
+        const auto elapsedTime = SparseGemmTestSimple(false);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
                   << "\n"
                   << std::endl;
     }
 }
-
+#endif
 TEST_CASE("Performance Test")
 {
     SUBCASE("General Performance Test")
     {
         std::cout << "Testing performance ..." << std::endl;
-        NestedPerformanceTest(64, 64, 500, 200, 0.99);
+        NestedPerformanceTest(500, 500, 500, 1, 0.9);
         std::cout << " Done" << std::endl;
     }
 }

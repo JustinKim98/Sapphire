@@ -24,8 +24,6 @@ __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
 //! \param cudaOutput : Array of output sparse matrices on the device Memory
 //! Required memory is automatically allocated
 //! It's caller's responsibility to free the allocated memory
-//! \param hostA : Array of sparse matrix for operand a on host memory.
-//! Must be dense allocated
 //! \param cudaA : Array of sparse matrix for operand a on device memory.
 //! Must be dense allocated
 //! \param hostB : Array of sparse matrix for operand a on host memory.
@@ -38,9 +36,9 @@ __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
 //! \param deviceId : Device to perform the computation
 //! \param copyResultToHost : If true, copies the result to host output.
 __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
-                   SparseMatrix* hostA, SparseMatrix* cudaA,
-                   SparseMatrix* cudaB, uint32_t m, uint32_t n,
-                   size_t numMatrices, int deviceId, bool copyResultToHost);
+                   SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
+                   uint32_t n, size_t numMatrices, int deviceId,
+                   bool copyResultToHost);
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
                            LoadDistMatrix* loadDist, uint32_t M,

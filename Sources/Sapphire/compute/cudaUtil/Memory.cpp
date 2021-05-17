@@ -18,7 +18,7 @@ void CudaSetDevice(int deviceId)
         const cudaError_t error = cudaSetDevice(deviceId);
         if (error != cudaSuccess)
             throw std::runtime_error("CudaSetDevice failed with " +
-                                     std::to_string(error));
+                                     std::string(cudaGetErrorString(error)));
     }
     else
         throw std::runtime_error(
@@ -30,7 +30,7 @@ void CudaMalloc(void** ptr, unsigned int byteSize)
     const cudaError_t error = cudaMalloc((void**)ptr, byteSize);
     if (error != cudaSuccess)
         throw std::runtime_error("CudaMalloc failed with " +
-                                 std::to_string(error));
+                                 std::string(cudaGetErrorString(error)));
 }
 
 void CudaFree(void* ptr)
@@ -38,7 +38,7 @@ void CudaFree(void* ptr)
     const cudaError_t error = cudaFree((void*)(ptr));
     if (error != cudaSuccess)
         throw std::runtime_error("CudaFree failed with " +
-                                 std::to_string(error));
+                                 std::string(cudaGetErrorString(error)));
 }
 
 void CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize)
@@ -47,7 +47,7 @@ void CopyHostToDevice(void* devicePtr, void* hostPtr, unsigned int byteSize)
                                          byteSize, cudaMemcpyHostToDevice);
     if (error != cudaSuccess)
         throw std::runtime_error("CopyDeviceToDevice failed with " +
-                                 std::to_string(error));
+                                 std::string(cudaGetErrorString(error)));
 }
 
 void CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize)
@@ -57,7 +57,7 @@ void CopyDeviceToHost(void* hostPtr, void* devicePtr, unsigned int byteSize)
 
     if (error != cudaSuccess)
         throw std::runtime_error("CopyDeviceToHost failed with " +
-                                 std::to_string(error));
+                                 std::string(cudaGetErrorString(error)));
 }
 
 void CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize)
@@ -66,7 +66,7 @@ void CopyDeviceToDevice(void* dst, const void* src, unsigned int byteSize)
         cudaMemcpy(dst, src, byteSize, cudaMemcpyDeviceToDevice);
     if (error != cudaSuccess)
         throw std::runtime_error("CopyDeviceToDevice failed with " +
-                                 std::to_string(error));
+                                 std::string(cudaGetErrorString(error)));
 }
 
 void CopyDeviceToDeviceAsync(void* dst, const void* src, unsigned int byteSize,
@@ -76,7 +76,7 @@ void CopyDeviceToDeviceAsync(void* dst, const void* src, unsigned int byteSize,
         cudaMemcpyAsync(dst, src, byteSize, cudaMemcpyDeviceToDevice, stream);
     if (error != cudaSuccess)
         throw std::runtime_error("CopyDeviceToDeviceAsync failed with " +
-                                 std::to_string(error));
+                                 std::string(cudaGetErrorString(error)));
 }
 
 void CopyDeviceToDeviceBroadcast(void* dst, const void* src,
@@ -91,7 +91,8 @@ void CopyDeviceToDeviceBroadcast(void* dst, const void* src,
         if (error != cudaSuccess)
             throw std::runtime_error(
                 "CopyDeviceToDeviceBroadcast failed in idx" +
-                std::to_string(idx) + " with " + std::to_string(error));
+                std::to_string(idx) + " with " +
+                std::string(cudaGetErrorString(error)));
     }
 }
 

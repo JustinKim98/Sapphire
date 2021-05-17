@@ -10,7 +10,7 @@
 #include <Sapphire/util/MemoryManager.hpp>
 #include <cstdlib>
 
-#define THREADS_PER_BLOCK 32
+#define THREADS_PER_BLOCK 128
 
 namespace Sapphire::Compute::Sparse::Cuda
 {
@@ -157,9 +157,9 @@ __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
 }
 
 __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
-                   SparseMatrix* hostA, SparseMatrix* cudaA,
-                   SparseMatrix* cudaB, uint32_t m, uint32_t n,
-                   size_t numMatrices, int deviceId, bool copyResultToHost)
+                   SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
+                   uint32_t n, size_t numMatrices, int deviceId,
+                   bool copyResultToHost)
 {
     auto* tempValueArray =
         static_cast<float*>(Util::MemoryManager::GetMemoryCuda(

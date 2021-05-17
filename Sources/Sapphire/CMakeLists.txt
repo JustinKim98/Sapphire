@@ -52,6 +52,7 @@ if (USE_CUDA)
     set_property(TARGET sapphire_cuda PROPERTY CUDA_ARCHITECTURES 86)
     add_library(sapphire ${sources})
     find_library(sapphire_cublas NAMES libcublas.so HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
+    find_library(sapphire_cusparse NAMES libcusparse.so HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
     find_library(cudnn NAMES ${cudnn_lib} HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 else ()
 
@@ -80,6 +81,7 @@ target_link_libraries(${target}
         PRIVATE
         sapphire_cuda
         ${sapphire_cublas}
+        ${sapphire_cusparse}
         ${cudnn}
         PUBLIC
         ${DEFAULT_LINKER_OPTIONS}

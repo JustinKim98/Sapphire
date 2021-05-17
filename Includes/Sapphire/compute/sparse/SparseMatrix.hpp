@@ -17,7 +17,7 @@
 #error "Unsupported compiler"
 #endif
 
-#define MAX_NNZ_PER_ROW 128
+#define MAX_NNZ_PER_ROW (1 << 10)
 #define INF (~0)
 #define DELETED_MARKER (~1)
 

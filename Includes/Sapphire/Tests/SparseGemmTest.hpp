@@ -15,7 +15,7 @@ void LoadDistTestFixed(bool printVerbose);
 
 void LoadDistTest(bool printVerbose);
 
-long SparseGemmTestComplex(bool printVerbose);
+long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices);
 
 long SparseGemmTestSimple(bool printVerbose);
 
