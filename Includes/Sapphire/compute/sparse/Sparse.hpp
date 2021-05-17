@@ -152,26 +152,10 @@ void DeepCopyHostToHost(SparseMatrix* hostDstArray,
 void DeepCopyHostToHost(LoadDistMatrix* hostDstArray,
                         LoadDistMatrix* hostSrcArray, uint32_t numMatrices);
 
-void ConvertDenseToSparseHost(SparseMatrix* dst, const float* src,
-                              uint32_t numRows, uint32_t numCols,
-                              uint32_t numMatrices);
+void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
+                                       uint32_t m, uint32_t n, uint32_t paddedN,
+                                       uint32_t numMatrices);
 
-void ConvertDenseToSparseCuda(SparseMatrix* dst, float* src, uint32_t numRows,
-                              uint32_t numCols, uint32_t numMatrices);
-
-void ConvertSparseToDenseHost(float* dst, const SparseMatrix* src,
-                              uint32_t numRows, uint32_t numCols,
-                              uint32_t numMatrices);
-
-void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, uint32_t numRows,
-                              uint32_t numCols, uint32_t numMatrices);
-
-//! Copies sparse matrix from device to host
-void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
-                            size_t numMatrices);
-//! Copies sparse matrix from host to device
-void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
-                            size_t numMatrices, int deviceId);
 
 }  // namespace Sapphire::Compute::Sparse
 
