@@ -101,14 +101,15 @@ void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
+        const auto nnz = hostSparseMatrixArray[i].NNZ;
         hostDstBuffer[i].M = hostSparseMatrixArray[i].M;
         hostDstBuffer[i].N = hostSparseMatrixArray[i].N;
         hostDstBuffer[i].NNZ = hostSparseMatrixArray[i].NNZ;
         hostDstBuffer[i].V = static_cast<float*>(MemoryManager::GetMemoryCuda(
-            hostSparseMatrixArray[i].NNZ * sizeof(float), deviceId));
+            (!nnz ? 1 : nnz) * sizeof(float), deviceId));
         hostDstBuffer[i].COL =
             static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
-                hostSparseMatrixArray[i].NNZ * sizeof(uint32_t), deviceId));
+                (!nnz ? 1 : nnz) * sizeof(uint32_t), deviceId));
         hostDstBuffer[i].ROW =
             static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
                 (hostSparseMatrixArray[i].M + 1) * sizeof(uint32_t), deviceId));
@@ -551,7 +552,6 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
         uint32_t nnz = 0;
         for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
         {
-            dstPtr[matrixIdx].ROW[0] = nnz;
             for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
                 if (src[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] !=
                     0)
@@ -561,9 +561,9 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
         dstPtr[matrixIdx].ROW = static_cast<uint32_t*>(
             MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
         dstPtr[matrixIdx].COL = static_cast<uint32_t*>(
-            MemoryManager::GetMemoryHost(sizeof(uint32_t) * nnz));
+            MemoryManager::GetMemoryHost(sizeof(uint32_t) * (!nnz ? 1 : nnz)));
         dstPtr[matrixIdx].V = static_cast<float*>(
-            MemoryManager::GetMemoryHost(sizeof(uint32_t) * nnz));
+            MemoryManager::GetMemoryHost(sizeof(uint32_t) * (!nnz ? 1 : nnz)));
         dstPtr[matrixIdx].M = m;
         dstPtr[matrixIdx].N = n;
         dstPtr[matrixIdx].NNZ = nnz;
@@ -571,7 +571,7 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
         nnz = 0;
         for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
         {
-            dstPtr[matrixIdx].ROW[0] = nnz;
+            dstPtr[matrixIdx].ROW[rowIdx] = nnz;
             for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
             {
                 if (src[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] !=

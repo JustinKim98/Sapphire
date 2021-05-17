@@ -19,6 +19,9 @@ void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
     const auto strideC = M * paddedN;
     const auto strideOut = M * paddedN;
 
+#pragma omp parallel for default(none) schedule(static) collapse(3)           \
+    shared(paddedSizeOut, strideOut, M, N, paddedN, K, paddedK, A, B, C, out, \
+           strideA, strideB, strideC)
     for (size_t chunkIdx = 0; chunkIdx < paddedSizeOut / strideOut; ++chunkIdx)
         for (size_t mIdx = 0; mIdx < M; ++mIdx)
             for (size_t nIdx = 0; nIdx < N; ++nIdx)

@@ -264,8 +264,8 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
         static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
-#pragma omp parallel for default(none) \
-    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
+    // #pragma omp parallel for default(none)
+    //    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
     for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
         hostDenseOut[i] = 0.0f;
 
@@ -281,8 +281,9 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
                  *hostSparseOut = nullptr;
     SparseMatrix *cudaSparseA = nullptr, *cudaSparseB = nullptr,
                  *cudaSparseOut = nullptr;
-    InitRandomDenseMatrix(hostDenseA, m, n, paddedN, numMatrices, sparsity);
-    InitRandomDenseMatrix(hostDenseB, m, n, paddedN, numMatrices, sparsity);
+
+    InitRandomDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
+    InitRandomDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
 
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
                                                paddedK, numMatrices);
@@ -291,6 +292,7 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
 
     Compute::DeepAllocateSparseCuda(&cudaSparseA, hostSparseA, numMatrices, 0);
     Compute::DeepAllocateSparseCuda(&cudaSparseB, hostSparseB, numMatrices, 0);
+
     Compute::DeepCopyHostToDevice(cudaSparseA, hostSparseA, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaSparseB, hostSparseB, numMatrices, 0);
 
@@ -319,11 +321,11 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
     auto cudaSparseBegin = std::chrono::system_clock::now();
     Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, hostSparseA,
                                 cudaSparseA, cudaSparseB, m, n, numMatrices, 0,
-                                true);
+                                false);
     auto cudaSparseEnd = std::chrono::system_clock::now();
     auto cudaSparseGemmElapsedTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(cudaSparseBegin -
-                                                              cudaSparseEnd)
+        std::chrono::duration_cast<std::chrono::microseconds>(cudaSparseEnd -
+                                                              cudaSparseBegin)
             .count();
 
     std::cout << "--- Results (time in microseconds) ---" << std::endl;
@@ -331,6 +333,9 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
     std::cout << "Naive Dense : " << naiveDenseElapsedTime << std::endl;
     std::cout << "Cuda Dense : " << cudaDenseElapsedTime << std::endl;
     std::cout << "Cuda Sparse : " << cudaSparseGemmElapsedTime << std::endl;
+
+    Util::MemoryManager::ClearHostMemoryPool();
+    Util::MemoryManager::ClearCudaMemoryPool();
 }
 
 }  // namespace Sapphire::Test

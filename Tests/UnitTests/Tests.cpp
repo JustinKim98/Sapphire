@@ -165,9 +165,9 @@ TEST_CASE("SparseMemory function Test")
 
     SUBCASE("LoadDistMemoryAllocationHost")
     {
-        std::cout << "Testing Load Distribution Memory Allocation forHost... ";
+        std::cout << "Testing Load Distribution Memory Allocation forHost...";
         LoadDistMemoryAllocationHost();
-        std::cout << " Done\n" << std::endl;
+        std::cout << " Done\n  " << std::endl;
     }
 
     SUBCASE("SparseMemoryDevice")
@@ -219,4 +219,13 @@ TEST_CASE("Device Sparse Gemm Test")
     }
 }
 
+TEST_CASE("Performance Test")
+{
+    SUBCASE("General Performance Test")
+    {
+        std::cout << "Testing performance ..." << std::endl;
+        NestedPerformanceTest(64, 64, 500, 200, 0.99);
+        std::cout << " Done" << std::endl;
+    }
+}
 }  // namespace Sapphire::Test
