@@ -37,9 +37,11 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
     CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
 
     auto status = cublasGemmStridedBatchedEx(
-        *handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, ptrB, CUDA_R_32F, N,
-        strideB, ptrA, CUDA_R_32F, K, strideA, &beta, ptrOut, CUDA_R_32F, N,
-        strideOut, totalSize / strideOut, CUBLAS_COMPUTE_32F_FAST_TF32,
+        *handle, CUBLAS_OP_N, CUBLAS_OP_N, static_cast<int>(N),
+        static_cast<int>(M), static_cast<int>(K), &alpha, ptrB, CUDA_R_32F,
+        static_cast<int>(N), strideB, ptrA, CUDA_R_32F, static_cast<int>(K),
+        strideA, &beta, ptrOut, CUDA_R_32F, static_cast<int>(N), strideOut,
+        static_cast<int>(totalSize / strideOut), CUBLAS_COMPUTE_32F_FAST_TF32,
         CUBLAS_GEMM_DEFAULT_TENSOR_OP);
 
     assert(status == CUBLAS_STATUS_SUCCESS);
@@ -103,7 +105,6 @@ __host__ unsigned int FindGCD(unsigned int arr[], int n)
     }
     return result;
 }
-
 
 __host__ void GemmNormal(float* out, float* A, float* B, float* C,
                          unsigned int paddedM, unsigned int paddedN,

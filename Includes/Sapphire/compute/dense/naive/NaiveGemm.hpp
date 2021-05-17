@@ -9,9 +9,15 @@
 
 namespace Sapphire::Compute::Naive::Dense
 {
-void NaiveGemm(unsigned int totalSize, float* out, float* A, float* B, float* C,
+void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B, float* C,
                unsigned int M, unsigned int N, unsigned int paddedN,
                unsigned int K, unsigned int paddedK);
+
+void Gemm(float* out, float* A, float* B, float* C, unsigned int M,
+          unsigned int N, unsigned int paddedN, unsigned int K,
+          unsigned int paddedK, unsigned int batchSizeOut,
+          unsigned int batchSizeA, unsigned int batchSizeB,
+          unsigned int batchSizeC, unsigned int unitBatchSize);
 }  // namespace Sapphire::Compute::Naive::Dense
 
 #endif
