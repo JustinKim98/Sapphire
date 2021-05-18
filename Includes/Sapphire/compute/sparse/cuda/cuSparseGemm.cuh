@@ -12,7 +12,7 @@
 
 namespace Sapphire::Compute::Sparse::Cuda
 {
-size_t cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
+void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                   SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
                   uint32_t n, size_t numMatrices, int deviceId,
                   bool copyResultToHost);

@@ -12,41 +12,42 @@
 
 namespace Sapphire::Compute::Sparse::Naive
 {
-bool Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer,
-            std::atomic<bool>* flagBuffer, uint32_t matrixIdx, uint32_t rowIdx,
-            uint32_t colIdx, float value)
+uint32_t Hash1(uint32_t col, uint32_t numBuckets)
 {
-    const auto prime = MAX_NNZ_PER_ROW / 2;
-    auto hash1 = [colIdx]() { return colIdx % prime; };
-    auto hash2 = [colIdx]() { return prime - colIdx % prime; };
-    auto hashOutput = hash1();
-    auto offset = matrixIdx * rowIdx * MAX_NNZ_PER_ROW + colIdx;
+    return col % numBuckets;
+}
 
-    bool isFirst = false;
-    Util::SpinLock::Lock(flagBuffer + offset);
+void Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer, uint32_t m,
+            uint32_t matrixIdx, uint32_t rowIdx, uint32_t colIdx, float value,
+            uint32_t* nnz)
+{
+    auto key = Hash1(colIdx, MAX_NNZ_PER_ROW_HOST);
+    auto offset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
+                  rowIdx * MAX_NNZ_PER_ROW_HOST + key;
 
-    for (uint32_t i = 0; tempIdxBuffer[offset] != static_cast<uint32_t>(INF) ||
-                         i < MAX_NNZ_PER_ROW;
-         ++i)
+    // Util::SpinLock::Lock(flagBuffer + offset);
+
+    while (true)
     {
-        hashOutput = (hash1() + i * hash2()) % MAX_NNZ_PER_ROW;
-        offset = matrixIdx * rowIdx * MAX_NNZ_PER_ROW + hashOutput;
+        if (tempIdxBuffer[offset] == static_cast<uint32_t>(INF) ||
+            tempIdxBuffer[offset] == colIdx)
+        {
+            if (tempIdxBuffer[offset] == static_cast<uint32_t>(INF))
+                *nnz += 1;
+            tempIdxBuffer[offset] = colIdx;
+            tempValueBuffer[offset] += value;
+            break;
+        }
+        key = (key + 1) % (MAX_NNZ_PER_ROW_HOST - 1);
     }
 
-    if (tempIdxBuffer[offset] == static_cast<uint32_t>(INF))
-        isFirst = true;
-
-    tempIdxBuffer[offset] = colIdx;
-    tempValueBuffer[offset] += value;
-
-    Util::SpinLock::Release(flagBuffer + offset);
-    return isFirst;
+    // Util::SpinLock::Release(flagBuffer + offset);
 }
 
 void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,
           size_t endIdx)
 {
-    if (beginIdx == endIdx || endIdx == beginIdx + 1)
+    if (beginIdx >= endIdx || endIdx == beginIdx + 1)
         return;
 
     const auto midIdx = (beginIdx + endIdx) / 2;
@@ -54,56 +55,64 @@ void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,
     Sort(tempIdxBuffer, tempValueBuffer, midIdx, endIdx);
 
     size_t left = 0, right = 0;
-    std::vector<uint32_t> indices(endIdx - beginIdx);
-    std::vector<float> values(endIdx - beginIdx);
-    for (auto i = beginIdx; i < endIdx; ++i)
+    uint32_t indices[endIdx - beginIdx];
+    float values[endIdx - beginIdx];
+
+    for (size_t vectorIdx = 0; vectorIdx < endIdx - beginIdx; ++vectorIdx)
     {
-        if (tempIdxBuffer[beginIdx + left] < tempIdxBuffer[midIdx + right])
+        if (tempIdxBuffer[beginIdx + left] < tempIdxBuffer[midIdx + right] &&
+            beginIdx + left < midIdx)
         {
-            indices[i] = tempIdxBuffer[beginIdx + left];
-            values[i] = tempValueBuffer[beginIdx + left];
+            indices[vectorIdx] = tempIdxBuffer[beginIdx + left];
+            values[vectorIdx] = tempValueBuffer[beginIdx + left];
             left++;
         }
         else
         {
-            indices[i] = tempIdxBuffer[midIdx + right];
-            values[i] = tempValueBuffer[midIdx + right];
+            indices[vectorIdx] = tempIdxBuffer[midIdx + right];
+            values[vectorIdx] = tempValueBuffer[midIdx + right];
             right++;
         }
     }
 
-    std::copy(indices.begin(), indices.end(), tempIdxBuffer + beginIdx);
-    std::copy(values.begin(), values.end(), tempValueBuffer + beginIdx);
+    std::copy(indices, indices + (endIdx - beginIdx), tempIdxBuffer + beginIdx);
+    std::copy(values, values + (endIdx - beginIdx), tempValueBuffer + beginIdx);
 }
 
 void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
           uint32_t n, size_t numMatrices)
 {
-    uint32_t tempIdxBuffer[MAX_NNZ_PER_ROW * m * numMatrices];
-    float tempValueBuffer[MAX_NNZ_PER_ROW * m * numMatrices];
-    std::fill(tempIdxBuffer, tempIdxBuffer + MAX_NNZ_PER_ROW * m * numMatrices,
+    auto* tempIdxBuffer =
+        new uint32_t[MAX_NNZ_PER_ROW_HOST * (m + 1) * numMatrices];
+    auto* tempValueBuffer =
+        new float[MAX_NNZ_PER_ROW_HOST * (m + 1) * numMatrices];
+    std::fill(tempIdxBuffer,
+              tempIdxBuffer + MAX_NNZ_PER_ROW_HOST * (m + 1) * numMatrices,
               static_cast<uint32_t>(INF));
     std::fill(tempValueBuffer,
-              tempValueBuffer + MAX_NNZ_PER_ROW * m * numMatrices, 0);
-    std::atomic<bool> flagBuffer[MAX_NNZ_PER_ROW * m * numMatrices];
+              tempValueBuffer + MAX_NNZ_PER_ROW_HOST * (m + 1) * numMatrices,
+              0.0f);
 
     *output = static_cast<SparseMatrix*>(
         Util::MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
 
-    for (uint32_t i = 0; i < m; ++i)
+    for (uint32_t i = 0; i < numMatrices; ++i)
         (*output)[i].ROW = static_cast<uint32_t*>(
             Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
 
-#pragma omp parallel for schedule(static) collapse(2) default(none) shared( \
-    numMatrices, m, a, b, output, tempIdxBuffer, tempValueBuffer, flagBuffer)
+    //#pragma omp parallel for schedule(static) default(none)
+    //    shared(numMatrices, m, n, a, b, output, tempIdxBuffer,
+    //    tempValueBuffer)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
+        auto* curMatrixA = a + matrixIdx;
+        auto* curMatrixB = b + matrixIdx;
+        auto* curMatrixOut = (*output) + matrixIdx;
+        uint32_t matrixNNZ = 0;
         for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
         {
-            uint32_t nnz = 0;
-            auto* curMatrixA = a + matrixIdx;
-            auto* curMatrixB = b + matrixIdx;
-            auto* curMatrixOut = (*output) + matrixIdx;
+            curMatrixOut->ROW[rowIdx] = matrixNNZ;
+            uint32_t rowNNZ = 0;
             for (auto sparseColIdx = curMatrixA->ROW[rowIdx];
                  sparseColIdx < curMatrixA->ROW[rowIdx + 1]; ++sparseColIdx)
             {
@@ -116,26 +125,49 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
                     const auto valueB = curMatrixB->V[sparseColIdxB];
                     const auto colIdxB = curMatrixB->COL[sparseColIdxB];
                     const auto valueOut = valueA * valueB;
-                    nnz += static_cast<uint32_t>(
-                        Insert(tempIdxBuffer, tempValueBuffer, flagBuffer,
-                               matrixIdx, rowIdx, colIdxB, valueOut));
+                    Insert(tempIdxBuffer, tempValueBuffer, m, matrixIdx, rowIdx,
+                           colIdxB, valueOut, &rowNNZ);
                 }
             }
 
-            const auto beginOffset = matrixIdx * rowIdx * MAX_NNZ_PER_ROW;
-            const auto endOffset = matrixIdx * (rowIdx + 1) * MAX_NNZ_PER_ROW;
+            const auto beginOffset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
+                                     rowIdx * MAX_NNZ_PER_ROW_HOST;
+            const auto endOffset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
+                                   (rowIdx + 1) * MAX_NNZ_PER_ROW_HOST;
             Sort(tempIdxBuffer, tempValueBuffer, beginOffset, endOffset);
-            curMatrixOut->COL = static_cast<uint32_t*>(
-                Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * nnz));
-            curMatrixOut->V = static_cast<float*>(
-                Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * nnz));
 
-            std::copy(tempIdxBuffer + beginOffset, tempIdxBuffer + endOffset,
-                      curMatrixOut->COL);
-            std::copy(tempValueBuffer + beginOffset,
-                      tempValueBuffer + endOffset, curMatrixOut->V);
+            matrixNNZ += rowNNZ;
+        }
+        curMatrixOut->ROW[m] = matrixNNZ;
+
+        curMatrixOut->COL = static_cast<uint32_t*>(
+            Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * matrixNNZ));
+        curMatrixOut->V = static_cast<float*>(
+            Util::MemoryManager::GetMemoryHost(sizeof(float) * matrixNNZ));
+
+        curMatrixOut->NNZ = matrixNNZ;
+        curMatrixOut->M = m;
+        curMatrixOut->N = n;
+
+        for (size_t rowIdx = 0; rowIdx < m; ++rowIdx)
+        {
+            const auto rowNNZ =
+                curMatrixOut->ROW[rowIdx + 1] - curMatrixOut->ROW[rowIdx];
+            if (rowNNZ)
+            {
+                const auto copyOffset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
+                                        rowIdx * MAX_NNZ_PER_ROW_HOST;
+                std::copy(tempIdxBuffer + copyOffset,
+                          tempIdxBuffer + copyOffset + rowNNZ,
+                          curMatrixOut->COL + curMatrixOut->ROW[rowIdx]);
+                std::copy(tempValueBuffer + copyOffset,
+                          tempValueBuffer + copyOffset + rowNNZ,
+                          curMatrixOut->V + curMatrixOut->ROW[rowIdx]);
+            }
         }
     }
+    delete[] tempIdxBuffer;
+    delete[] tempValueBuffer;
 }
 
 }  // namespace Sapphire::Compute::Sparse::Naive

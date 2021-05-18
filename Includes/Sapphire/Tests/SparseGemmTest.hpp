@@ -19,11 +19,14 @@ long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices);
 
 long SparseGemmTestSimple(bool printVerbose);
 
-void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
-                           float sparsity, bool printResult);
+void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
+                               float sparsity, bool printResult);
+
+void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
+                               float sparsity, bool printResult);
 
 void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
-                           float sparsity);
+                     float sparsity);
 
 }  // namespace Sapphire::Test
 

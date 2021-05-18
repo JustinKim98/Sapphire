@@ -11,6 +11,7 @@
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/sparse/cuda/SparseGemm.cuh>
 #include <Sapphire/compute/sparse/cuda/cuSparseGemm.cuh>
+#include <Sapphire/compute/sparse/naive/SparseGemm.hpp>
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -286,8 +287,8 @@ long SparseGemmTestCorrectness(bool printVerbose, size_t minimumNumMatrices)
     return elapsedTime;
 }
 
-void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
-                           float sparsity, bool printResult)
+void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
+                               float sparsity, bool printResult)
 {
     size_t paddedK = k;
     size_t paddedN = n;
@@ -313,8 +314,8 @@ void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
     InitIntegerDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
 
-    // #pragma omp parallel for default(none)
-    //    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
+#pragma omp parallel for default(none) \
+    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
     for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
         hostDenseOut[i] = 0.0f;
     //! Copy data to device
@@ -365,8 +366,70 @@ void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
                 const auto denseResult = hostDenseOut[index];
                 const auto sparseResult = hostSparseConverted[index];
 
-                CHECK(std::abs(denseResult - sparseResult) <=
-                      std::abs(denseResult / 10.0f));
+                CHECK_EQ(denseResult, sparseResult);
+
+                if (printResult)
+                    std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
+                              << " col : " << colIdx
+                              << " dense : " << denseResult
+                              << " sparse : " << sparseResult << std::endl;
+            }
+    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::MemoryManager::ClearHostMemoryPool();
+}
+
+void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
+                               float sparsity, bool printResult)
+{
+    size_t paddedK = k;
+    size_t paddedN = n;
+    auto *hostDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+        sizeof(float) * m * paddedK * numMatrices));
+    auto *hostDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+        sizeof(float) * k * paddedN * numMatrices));
+    auto *hostDenseOut =
+        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+            sizeof(float) * m * paddedN * numMatrices));
+    auto *hostSparseConverted =
+        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+            sizeof(float) * m * paddedN * numMatrices));
+
+    InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
+    InitIntegerDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
+
+#pragma omp parallel for default(none) \
+    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
+    for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
+        hostDenseOut[i] = 0.0f;
+
+    SparseMatrix *hostSparseA = nullptr, *hostSparseB = nullptr,
+                 *hostSparseOut = nullptr;
+
+    Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
+                                               paddedK, numMatrices);
+    Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseB, hostDenseB, k, n,
+                                               paddedN, numMatrices);
+
+    Compute::Naive::Dense::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
+                                     hostDenseA, hostDenseB, hostDenseOut, m, n,
+                                     paddedN, k, paddedK);
+
+    Compute::Sparse::Naive::Gemm(&hostSparseOut, hostSparseA, hostSparseB, m, n,
+                                 numMatrices);
+
+    Compute::ConvertSparseMatrixToDenseMatrix(
+        hostSparseConverted, hostSparseOut, m, n, paddedN, numMatrices);
+
+    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
+            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
+            {
+                const auto index =
+                    matrixIdx * m * paddedN + rowIdx * paddedN + colIdx;
+                const auto denseResult = hostDenseOut[index];
+                const auto sparseResult = hostSparseConverted[index];
+
+                CHECK_EQ(denseResult, sparseResult);
 
                 if (printResult)
                     std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
@@ -453,9 +516,9 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
             .count();
 
     auto cuSparseBegin = std::chrono::system_clock::now();
-    auto cuSparseGemmElapsedTime = Compute::Sparse::Cuda::cuSparseGemm(
-        &hostSparseOut, &cudaSparseOut, cudaSparseA, cudaSparseB, m, n,
-        numMatrices, 0, false);
+    Compute::Sparse::Cuda::cuSparseGemm(&hostSparseOut, &cudaSparseOut,
+                                        cudaSparseA, cudaSparseB, m, n,
+                                        numMatrices, 0, false);
     auto cuSparseEnd = std::chrono::system_clock::now();
     auto cuSparseGemmElapsedTimeTotal =
         std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
@@ -472,16 +535,14 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
             .count();
 
     std::cout << "--- Results (time in microseconds) ---" << std::endl;
-    std::cout << "Sparsity : " << sparsity << std::endl;
-    std::cout << "Naive Dense : " << naiveDenseElapsedTime << std::endl;
-    std::cout << "Cuda Dense : " << cudaDenseElapsedTime << std::endl;
-    std::cout << "Cuda Sparse (custom) : " << cudaSparseGemmElapsedTime
+    std::cout << "* Sparsity : " << sparsity << std::endl;
+    std::cout << "* Naive Dense : " << naiveDenseElapsedTime << std::endl;
+    std::cout << "* Cuda Dense : " << cudaDenseElapsedTime << std::endl;
+    std::cout << "* Cuda Sparse (custom) : " << cudaSparseGemmElapsedTime
               << std::endl;
-    std::cout << "Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTimeTotal
+    std::cout << "* Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTimeTotal
               << std::endl;
-        std::cout << "Cuda Sparse (cuSparse excluding initialization) : "
-                  << cuSparseGemmElapsedTime << std::endl;
-        std::cout << "--------------------------------------" << std::endl;
+    std::cout << "-------------------------------------\n" << std::endl;
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();

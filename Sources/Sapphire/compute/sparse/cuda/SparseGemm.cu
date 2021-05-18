@@ -101,7 +101,7 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
         if (prev == INF || prev == index)
         {
             atomicAdd_block(valueArray + key, value);
-            atomicExch_block(idxArray + key, index);
+            //atomicExch_block(idxArray + key, index);
             if (prev == INF)
                 atomicAdd_block(nnz, 1);
             break;
