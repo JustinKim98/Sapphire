@@ -479,9 +479,9 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
               << std::endl;
     std::cout << "Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTimeTotal
               << std::endl;
-    std::cout << "Cuda Sparse (cuSparse excluding initialization) : "
-              << cuSparseGemmElapsedTime << std::endl;
-    std::cout << "--------------------------------------" << std::endl;
+        std::cout << "Cuda Sparse (cuSparse excluding initialization) : "
+                  << cuSparseGemmElapsedTime << std::endl;
+        std::cout << "--------------------------------------" << std::endl;
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();

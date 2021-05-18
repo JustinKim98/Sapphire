@@ -239,7 +239,7 @@ TEST_CASE("Sparse Performance Test")
         float sparsity = 0.0f;
         while (sparsity <= 1.0f)
         {
-            PerformanceTest(500, 500, 50, 1, sparsity);
+            PerformanceTest(500, 500, 500, 1, sparsity);
             sparsity += 0.1f;
         }
         std::cout << " Done" << std::endl;

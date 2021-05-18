@@ -4,7 +4,7 @@
 
 # Set warnings as errors flag
 option(SAPPHIRE_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
-option(SAPPHIRE_GENERATE_FOR_OLD_ARCHITECTURES OFF)
+option(GEN_OLD_ARCH OFF)
 
 if (SAPPHIRE_WARNINGS_AS_ERRORS)
     if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
@@ -191,7 +191,7 @@ endif ()
 if (USE_CUDA)
     # Turn off optimizations and generate debug information
     if (CMAKE_BUILD_TYPE MATCHES Debug)
-        if (SAPPHIRE_GENERATE_FOR_OLD_ARCHITECTURES)
+        if (GEN_OLD_ARCH MATCHES ON)
 
             set(
                     CUDA_NVCC_FLAGS
@@ -230,7 +230,7 @@ if (USE_CUDA)
             )
         endif ()
     else ()
-        if (SAPPHIRE_GENERATE_FOR_OLD_ARCHITECTURES)
+        if (GEN_OLD_ARCH MATCHES ON)
             set(
                     CUDA_NVCC_FLAGS
                     ${CUDA_NVCC_FLAGS};
