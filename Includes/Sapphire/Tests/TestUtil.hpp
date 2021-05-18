@@ -9,9 +9,13 @@
 #include <cstdlib>
 namespace Sapphire::Test
 {
+void InitFixedDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
+                          const size_t paddedN, const size_t numMatrices,
+                          const float sparsity);
+
 void InitRandomDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
-                               const size_t paddedN, const size_t numMatrices,
-                               const float sparsity);
-}
+                           const size_t paddedN, const size_t numMatrices,
+                           const float sparsity);
+}  // namespace Sapphire::Test
 
 #endif  // SAPPHIRE_TESTUTIL_HPP
