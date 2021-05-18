@@ -10,20 +10,13 @@
 #include <Sapphire/util/MemoryManager.hpp>
 #include <cstdlib>
 
-#define THREADS_PER_BLOCK 128
-
 namespace Sapphire::Compute::Sparse::Cuda
 {
 using namespace Util;
 
 __device__ uint32_t Hash1(uint32_t col, uint32_t numBuckets)
 {
-    return col % (numBuckets / 2);
-}
-
-__device__ uint32_t Hash2(uint32_t col, uint32_t numBuckets)
-{
-    return (numBuckets / 2) - col % (numBuckets / 2);
+    return col % numBuckets;
 }
 
 __device__ void Sort(float* tempValArray, uint32_t* tempIdxArray,
@@ -87,54 +80,44 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
                            float value, uint32_t index, uint32_t arraySize)
 {
     auto key = Hash1(index, arraySize);
-
-    uint32_t i = 1;
-    while ((idxArray[key] != index && idxArray[key] != INF) ||
-           idxArray[key] == DELETED_MARKER)
-    {
-        key =
-            (Hash1(index, arraySize) + i * Hash2(index, arraySize)) % arraySize;
-        i++;
-    }
-
 #if __CUDA_ARCH__ < 600
-    if (atomicCAS(idxArray + key, INF, index) == INF)
+    while (true)
     {
-        atomicExch(valueArray + key, value);
-        atomicAdd(nnz, 1);
-    }
-    else
-    {
-        atomicAdd(valueArray + key, value);
-        if (valueArray[key] == 0.0f)
+        uint32_t prev = atomicCAS(idxArray + key, INF, index);
+        if (prev == INF || prev == index)
         {
-            atomicExch(valueArray + key, DELETED_MARKER);
-            atomicSub(nnz, 1);
+            atomicAdd(valueArray + key, value);
+            atomicExch(idxArray + key, index);
+            if (prev == INF)
+                atomicAdd(nnz, 1);
+            break;
         }
+        key = (key + 1) & (arraySize - 1);
     }
 #else
-    if (atomicCAS_block(idxArray + key, INF, index) == INF)
+    while (true)
     {
-        atomicExch_block(valueArray + key, value);
-        atomicAdd_block(nnz, 1);
-    }
-    else
-    {
-        atomicAdd_block(valueArray + key, value);
-        if (valueArray[key] == 0.0f)
+        uint32_t prev = atomicCAS_block(idxArray + key, INF, index);
+        if (prev == INF || prev == index)
         {
-            atomicExch_block(valueArray + key, DELETED_MARKER);
-            atomicSub_block(nnz, 1);
+            atomicAdd_block(valueArray + key, value);
+            atomicExch_block(idxArray + key, index);
+            if (prev == INF)
+                atomicAdd_block(nnz, 1);
+            break;
         }
+        key = (key + 1) & (arraySize - 1);
     }
 #endif
 }
 
-__device__ void InitIdxArray(uint32_t* idxArray, uint32_t arraySize)
+__device__ void InitIdxArray(uint32_t* idxArray, float* valArray,
+                             uint32_t arraySize)
 {
     const auto id = threadIdx.x;
     for (uint32_t idx = id; idx < arraySize; idx += blockDim.x)
     {
+        valArray[idx] = 0.0f;
         idxArray[idx] = INF;
     }
 }
@@ -335,7 +318,7 @@ __global__ void GemmKernel(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
     __shared__ uint32_t tempIdxArray[MAX_NNZ_PER_ROW];
     __shared__ uint32_t nnz;
 
-    InitIdxArray(tempIdxArray, MAX_NNZ_PER_ROW);
+    InitIdxArray(tempIdxArray, tempValueArray, MAX_NNZ_PER_ROW);
     if (threadIdx.x == 0)
         nnz = 0;
 

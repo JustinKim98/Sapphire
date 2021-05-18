@@ -7,9 +7,9 @@
 #ifndef Sapphire_COMPUTE_CALCULATE_LOAD_CUH
 #define Sapphire_COMPUTE_CALCULATE_LOAD_CUH
 
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/sparse/Sparse.hpp>
-#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
 namespace Sapphire::Compute::Sparse::Cuda
 {
@@ -75,7 +75,7 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 //! \param sparseColIdxBegin : Start index of computation for matrix A.
 //! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
 __global__ void GemmKernel(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
-                          uint32_t* idxArray, float* valArray, uint32_t m);
+                           uint32_t* idxArray, float* valArray, uint32_t m);
 
 __global__ void StackRowKernel(SparseMatrix* out, uint32_t m,
                                uint32_t numMatrices);
@@ -99,8 +99,6 @@ __device__ void Merge(float* tempValArray, uint32_t* tempIdxArray,
 __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
                            float value, uint32_t index, uint32_t arraySize);
 
-__device__ void InitIdxArray(uint32_t* idxArray, uint32_t arraySize);
-
 template <typename T>
 __device__ void Swap(T* a, T* b)
 {
@@ -109,6 +107,6 @@ __device__ void Swap(T* a, T* b)
     *b = temp;
 }
 
-}  // namespace Sapphire::Compute::Cuda::Sparse
+}  // namespace Sapphire::Compute::Sparse::Cuda
 
 #endif  // Sapphire_CALCULATELOAD_CUH
