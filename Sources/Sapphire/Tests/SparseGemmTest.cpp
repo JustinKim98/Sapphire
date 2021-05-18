@@ -155,6 +155,47 @@ void LoadDistTestFixed(bool printVerbose)
     Util::MemoryManager::ClearCudaMemoryPool();
 }
 
+long SparseGemmTestSimple(bool printVerbose)
+{
+    SparseMatrix *A, *B, *C = nullptr;
+    SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
+    const uint32_t numMatrices = 2;
+    const auto m = 10;
+    const auto n = 5;
+    const auto k = 7;
+
+    GenerateFixedSparseArray(&A, m, k, numMatrices);
+    GenerateFixedSparseArray(&B, k, n, numMatrices);
+
+    Compute::DeepAllocateSparseCuda(&cudaA, A, numMatrices, 0);
+    Compute::DeepAllocateSparseCuda(&cudaB, B, numMatrices, 0);
+
+    Compute::DeepCopyHostToDevice(cudaA, A, numMatrices, 0);
+    Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
+
+    auto start = std::chrono::system_clock::now();
+    Compute::Sparse::Cuda::Gemm(&C, &cudaC, cudaA, cudaB, m, n, numMatrices, 0,
+                                true);
+    auto end = std::chrono::system_clock::now();
+
+    for (uint32_t i = 0; i < numMatrices; ++i)
+    {
+        std::cout << "\nMatrix " << i << std::endl;
+        PrintSparseMatrix(C + i, printVerbose);
+    }
+
+    Compute::DeepFreeSparseHost(C, numMatrices);
+    Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
+
+    Util::MemoryManager::ClearHostMemoryPool();
+    Util::MemoryManager::ClearCudaMemoryPool();
+
+    auto elapsedTime =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count();
+    return elapsedTime;
+}
+
 long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices)
 {
     std::random_device rd;
@@ -200,20 +241,21 @@ long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices)
     return elapsedTime;
 }
 
-long SparseGemmTestSimple(bool printVerbose)
+long SparseGemmTestCorrectness(bool printVerbose, size_t minimumNumMatrices)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
+    std::uniform_int_distribution<uint32_t> uniform(32, 64);
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = 2;
-    const auto m = 10;
-    const auto n = 5;
-    const auto k = 7;
+    const uint32_t numMatrices = uniform(gen) % 10 + minimumNumMatrices;
+    const auto m = uniform(gen);
+    const auto n = uniform(gen);
+    const auto k = uniform(gen);
 
-    GenerateFixedSparseArray(&A, m, k, numMatrices);
-    GenerateFixedSparseArray(&B, k, n, numMatrices);
+    GenerateRandomSparseArray(&A, m, k, numMatrices);
+    GenerateRandomSparseArray(&B, k, n, numMatrices);
 
     Compute::DeepAllocateSparseCuda(&cudaA, A, numMatrices, 0);
     Compute::DeepAllocateSparseCuda(&cudaB, B, numMatrices, 0);
@@ -244,8 +286,100 @@ long SparseGemmTestSimple(bool printVerbose)
     return elapsedTime;
 }
 
-void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
-                           float sparsity)
+void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
+                           float sparsity, bool printResult)
+{
+    size_t paddedK = k;
+    size_t paddedN = n;
+    auto *hostDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+        sizeof(float) * m * paddedK * numMatrices));
+    auto *hostDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+        sizeof(float) * k * paddedN * numMatrices));
+    auto *hostDenseOut =
+        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+            sizeof(float) * m * paddedN * numMatrices));
+    auto *hostSparseConverted =
+        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+            sizeof(float) * m * paddedN * numMatrices));
+
+    auto *cudaDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+        sizeof(float) * m * k * numMatrices, 0));
+    auto *cudaDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+        sizeof(float) * k * n * numMatrices, 0));
+    auto *cudaDenseOut =
+        static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+            sizeof(float) * m * n * numMatrices, 0));
+
+    InitFixedDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
+    InitFixedDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
+
+    // #pragma omp parallel for default(none)
+    //    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
+    for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
+        hostDenseOut[i] = 0.0f;
+    //! Copy data to device
+    Compute::Cuda::CopyHostToDevice(cudaDenseA, hostDenseA,
+                                    sizeof(float) * m * k * numMatrices);
+    Compute::Cuda::CopyHostToDevice(cudaDenseB, hostDenseB,
+                                    sizeof(float) * k * n * numMatrices);
+    Compute::Cuda::CopyHostToDevice(cudaDenseOut, hostDenseOut,
+                                    sizeof(float) * m * n * numMatrices);
+
+    SparseMatrix *hostSparseA = nullptr, *hostSparseB = nullptr,
+                 *hostSparseOut = nullptr;
+    SparseMatrix *cudaSparseA = nullptr, *cudaSparseB = nullptr,
+                 *cudaSparseOut = nullptr;
+
+    Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
+                                               paddedK, numMatrices);
+    Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseB, hostDenseB, k, n,
+                                               paddedN, numMatrices);
+
+    Compute::DeepAllocateSparseCuda(&cudaSparseA, hostSparseA, numMatrices, 0);
+    Compute::DeepAllocateSparseCuda(&cudaSparseB, hostSparseB, numMatrices, 0);
+
+    Compute::DeepCopyHostToDevice(cudaSparseA, hostSparseA, numMatrices, 0);
+    Compute::DeepCopyHostToDevice(cudaSparseB, hostSparseB, numMatrices, 0);
+
+    cublasHandle_t handle;
+    cublasCreate(&handle);
+    Compute::Cuda::Dense::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
+                               cudaDenseB, cudaDenseOut, m, n, k, &handle);
+    cublasDestroy(handle);
+
+    Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, cudaSparseA,
+                                cudaSparseB, m, n, numMatrices, 0, true);
+
+    Compute::Cuda::CopyDeviceToHost(hostDenseOut, cudaDenseOut,
+                                    sizeof(float) * m * n * numMatrices);
+
+    Compute::ConvertSparseMatrixToDenseMatrix(
+        hostSparseConverted, hostSparseOut, m, n, paddedN, numMatrices);
+
+    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
+            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
+            {
+                const auto index =
+                    matrixIdx * m * paddedN + rowIdx * paddedN + colIdx;
+                const auto denseResult = hostDenseOut[index];
+                const auto sparseResult = hostSparseConverted[index];
+
+                CHECK(std::abs(denseResult - sparseResult) <=
+                      std::abs(denseResult) / 10.0f);
+
+                if (printResult)
+                    std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
+                              << " col : " << colIdx
+                              << " dense : " << denseResult
+                              << " sparse : " << sparseResult << std::endl;
+            }
+    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::MemoryManager::ClearHostMemoryPool();
+}
+
+void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
+                     float sparsity)
 {
     size_t paddedK = k;
     size_t paddedN = n;
@@ -319,6 +453,16 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
                                                               cudaDenseBegin)
             .count();
 
+    auto cuSparseBegin = std::chrono::system_clock::now();
+    auto cuSparseGemmElapsedTime = Compute::Sparse::Cuda::cuSparseGemm(
+        &hostSparseOut, &cudaSparseOut, cudaSparseA, cudaSparseB, m, n,
+        numMatrices, 0, false);
+    auto cuSparseEnd = std::chrono::system_clock::now();
+    auto cuSparseGemmElapsedTimeTotal =
+        std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
+                                                              cuSparseBegin)
+            .count();
+
     auto cudaSparseBegin = std::chrono::system_clock::now();
     Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, cudaSparseA,
                                 cudaSparseB, m, n, numMatrices, 0, false);
@@ -328,24 +472,17 @@ void NestedPerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
                                                               cudaSparseBegin)
             .count();
 
-    auto cuSparseBegin = std::chrono::system_clock::now();
-    Compute::Sparse::Cuda::cuSparseGemm(&hostSparseOut, &cudaSparseOut,
-                                        cudaSparseA, cudaSparseB, m, n,
-                                        numMatrices, 0, false);
-    auto cuSparseEnd = std::chrono::system_clock::now();
-    auto cuSparseGemmElapsedTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
-                                                              cuSparseBegin)
-            .count();
-
     std::cout << "--- Results (time in microseconds) ---" << std::endl;
     std::cout << "Sparsity : " << sparsity << std::endl;
     std::cout << "Naive Dense : " << naiveDenseElapsedTime << std::endl;
     std::cout << "Cuda Dense : " << cudaDenseElapsedTime << std::endl;
     std::cout << "Cuda Sparse (custom) : " << cudaSparseGemmElapsedTime
               << std::endl;
-    std::cout << "Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTime
+    std::cout << "Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTimeTotal
               << std::endl;
+    std::cout << "Cuda Sparse (cuSparse excluding initialization) : "
+              << cuSparseGemmElapsedTime << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();

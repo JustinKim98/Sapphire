@@ -15,8 +15,7 @@
 #include <Sapphire/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
-
-//#define EnableAllTest
+#define EnableAllTest
 
 namespace Sapphire::Test
 {
@@ -223,12 +222,24 @@ TEST_CASE("Device Sparse Gemm Test")
     }
 }
 #endif
-TEST_CASE("Performance Test")
+TEST_CASE("Sparse Performance Test")
 {
+    SUBCASE("Correctness test")
+    {
+        std::cout << "Testing correctness ..." << std::endl;
+        SparseTestCorrectness(820, 832, 839, 3, 0.5, false);
+        std::cout << " Done" << std::endl;
+    }
+
     SUBCASE("General Performance Test")
     {
         std::cout << "Testing performance ..." << std::endl;
-        NestedPerformanceTest(500, 500, 500, 1, 0.9);
+        float sparsity = 0.0f;
+        while (sparsity <= 1.0f)
+        {
+            PerformanceTest(100, 100, 300, 50, sparsity);
+            sparsity += 0.1f;
+        }
         std::cout << " Done" << std::endl;
     }
 }
