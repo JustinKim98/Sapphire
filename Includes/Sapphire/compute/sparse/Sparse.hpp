@@ -70,12 +70,11 @@ void DeepFreeSparseCuda(SparseMatrix* deviceSparseArray, uint32_t numMatrices,
                         int deviceId);
 
 //! Frees load distribution matrix allocated on the Device
-//! \param deviceLoadDistArray : Array of deviceLoadDistArray load distribution matrix to
-//! free on the device
-//! \param deviceId : ID of the device that owns the
-//! deviceLoadDistArray
-void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray, uint32_t numMatrices,
-                          int deviceId);
+//! \param deviceLoadDistArray : Array of deviceLoadDistArray load distribution
+//! matrix to free on the device \param deviceId : ID of the device that owns
+//! the deviceLoadDistArray
+void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray,
+                          uint32_t numMatrices, int deviceId);
 
 //! Deep copies sparse matrix to Device from Host
 //! All pointers given as parameters must be allocated with size of
@@ -142,8 +141,8 @@ void DeepCopyDeviceToHost(LoadDistMatrix* hostDstArray,
 //! \param hostDstArray : destination host array
 //! \param hostSrcArray : source host array
 //! \param numMatrices : number of sparse matrices to copy
-void DeepCopyHostToHost(SparseMatrix* hostDstArray,
-                        SparseMatrix* hostSrcArray, uint32_t numMatrices);
+void DeepCopyHostToHost(SparseMatrix* hostDstArray, SparseMatrix* hostSrcArray,
+                        uint32_t numMatrices);
 
 //! Deep copies host matrix to Host from Host
 //! \param hostDstArray : destination host array
@@ -156,7 +155,10 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
                                        uint32_t m, uint32_t n, uint32_t paddedN,
                                        uint32_t numMatrices);
 
+void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
+                                      uint32_t m, uint32_t n, uint32_t paddedN,
+                                      uint32_t numMatrices);
 
-}  // namespace Sapphire::Compute::Sparse
+}  // namespace Sapphire::Compute
 
 #endif  // Sapphire_MATRIXFORMAT_HPP

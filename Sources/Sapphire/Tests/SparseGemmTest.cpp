@@ -310,8 +310,8 @@ void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
         static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
-    InitFixedDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
-    InitFixedDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
+    InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
+    InitIntegerDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
 
     // #pragma omp parallel for default(none)
     //    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
@@ -366,7 +366,7 @@ void SparseTestCorrectness(size_t m, size_t n, size_t k, size_t numMatrices,
                 const auto sparseResult = hostSparseConverted[index];
 
                 CHECK(std::abs(denseResult - sparseResult) <=
-                      std::abs(denseResult) / 10.0f);
+                      std::abs(denseResult / 10.0f));
 
                 if (printResult)
                     std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
@@ -399,11 +399,13 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
         static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
-    // #pragma omp parallel for default(none)
-    //    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
+    InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
+    InitIntegerDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
+
+#pragma omp parallel for default(none) \
+    shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
     for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
         hostDenseOut[i] = 0.0f;
-
     //! Copy data to device
     Compute::Cuda::CopyHostToDevice(cudaDenseA, hostDenseA,
                                     sizeof(float) * m * k * numMatrices);
@@ -416,9 +418,6 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
                  *hostSparseOut = nullptr;
     SparseMatrix *cudaSparseA = nullptr, *cudaSparseB = nullptr,
                  *cudaSparseOut = nullptr;
-
-    InitRandomDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
-    InitRandomDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
 
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
                                                paddedK, numMatrices);

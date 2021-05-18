@@ -9,13 +9,13 @@
 
 namespace Sapphire::Test
 {
-void InitFixedDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
-                          const size_t paddedN, const size_t numMatrices,
-                          const float sparsity)
+void InitIntegerDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
+                            const size_t paddedN, const size_t numMatrices,
+                            const float sparsity)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> uniform(0.0, 1.0);
+    std::uniform_int_distribution<int> uniform(-30.0, 30.0);
     std::normal_distribution<float> normal(0, 10);
 
 #pragma omp parallel for default(none) collapse(3) shared( \
@@ -26,7 +26,7 @@ void InitFixedDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
             {
                 if (uniform(gen) > sparsity)
                     matrixPtr[matrixIdx * m * paddedN + rowIdx * paddedN +
-                              colIdx] = 1.0f;
+                              colIdx] = static_cast<float>(uniform(gen));
                 else
                     matrixPtr[matrixIdx * m * paddedN + rowIdx * paddedN +
                               colIdx] = 0.0f;

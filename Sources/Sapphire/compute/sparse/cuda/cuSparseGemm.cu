@@ -12,11 +12,12 @@
 namespace Sapphire::Compute::Sparse::Cuda
 {
 using namespace Sapphire::Util;
-void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
-                  SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
-                  uint32_t n, size_t numMatrices, int deviceId,
-                  bool copyResultToHost)
+size_t cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
+                    SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
+                    uint32_t n, size_t numMatrices, int deviceId,
+                    bool copyResultToHost)
 {
+    size_t totalElapsedTime;
     cusparseOperation_t opA = CUSPARSE_OPERATION_NON_TRANSPOSE;
     cusparseOperation_t opB = CUSPARSE_OPERATION_NON_TRANSPOSE;
     float alpha = 1.0f;
@@ -68,10 +69,11 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         CHECK_CUSPARSE(cusparseCreateCsr(
             &matOut, m, n, 0, nullptr, nullptr, nullptr, CUSPARSE_INDEX_32I,
             CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_32F))
-        auto cuSparseBegin = std::chrono::system_clock::now();
 
         cusparseSpGEMMDescr_t spgemmDesc;
         CHECK_CUSPARSE(cusparseSpGEMM_createDescr(&spgemmDesc))
+        auto cuSparseBegin = std::chrono::system_clock::now();
+
         CHECK_CUSPARSE(cusparseSpGEMM_workEstimation(
             handle, opA, opB, &alpha, matA, matB, &beta, matOut, computeType,
             CUSPARSE_SPGEMM_DEFAULT, spgemmDesc, &bufferSize1, nullptr))
@@ -103,19 +105,18 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         CHECK_CUSPARSE(cusparseSpGEMM_copy(handle, opA, opB, &alpha, matA, matB,
                                            &beta, matOut, computeType,
                                            CUSPARSE_SPGEMM_DEFAULT, spgemmDesc))
+        auto cuSparseEnd = std::chrono::system_clock::now();
 
         CHECK_CUSPARSE(cusparseSpGEMM_destroyDescr(spgemmDesc))
         CHECK_CUSPARSE(cusparseDestroySpMat(matA))
         CHECK_CUSPARSE(cusparseDestroySpMat(matB))
         CHECK_CUSPARSE(cusparseDestroySpMat(matOut))
         CHECK_CUSPARSE(cusparseDestroy(handle))
-        auto cuSparseEnd = std::chrono::system_clock::now();
 
-        std::cout << "cuSparse (internal) : "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(
-                         cuSparseEnd - cuSparseBegin)
-                         .count()
-                  << std::endl;
+        totalElapsedTime +=
+            std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
+                                                                  cuSparseBegin)
+                .count();
     }
 
     Compute::Cuda::CopyHostToDevice(*cudaOutput, outputBuffer,
@@ -155,6 +156,8 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
     MemoryManager::DeReferenceHost(outputBuffer);
     MemoryManager::DeReferenceHost(hostBufferA);
     MemoryManager::DeReferenceHost(hostBufferB);
+
+    return totalElapsedTime;
 }
 
 }  // namespace Sapphire::Compute::Sparse::Cuda

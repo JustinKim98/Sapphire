@@ -227,7 +227,9 @@ TEST_CASE("Sparse Performance Test")
     SUBCASE("Correctness test")
     {
         std::cout << "Testing correctness ..." << std::endl;
-        SparseTestCorrectness(820, 832, 839, 3, 0.5, false);
+        //SparseTestCorrectness(1000, 1000, 50, 3, 0.5, false);
+        SparseTestCorrectness(40, 50, 500, 3, 0.5, true);
+
         std::cout << " Done" << std::endl;
     }
 
@@ -237,7 +239,7 @@ TEST_CASE("Sparse Performance Test")
         float sparsity = 0.0f;
         while (sparsity <= 1.0f)
         {
-            PerformanceTest(100, 100, 300, 50, sparsity);
+            PerformanceTest(500, 500, 50, 1, sparsity);
             sparsity += 0.1f;
         }
         std::cout << " Done" << std::endl;

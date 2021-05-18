@@ -545,8 +545,6 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
         MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
     auto* dstPtr = *dst;
 
-#pragma omp parallel for default(none) \
-    shared(numMatrices, dstPtr, src, m, n, paddedN)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; matrixIdx++)
     {
         uint32_t nnz = 0;
@@ -586,6 +584,41 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
         }
 
         dstPtr[matrixIdx].ROW[m] = nnz;
+    }
+}
+
+void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
+                                      uint32_t m, uint32_t n, uint32_t paddedN,
+                                      uint32_t numMatrices)
+{
+#pragma omp parallel for default(none) shared(dst, numMatrices, m, n, paddedN) \
+    collapse(3)
+    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
+            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
+                dst[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] = 0.0f;
+
+#pragma omp parallel for default(none) \
+    shared(src, dst, numMatrices, m, n, paddedN)
+    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+    {
+        const auto* rows = src[matrixIdx].ROW;
+        const auto* cols = src[matrixIdx].COL;
+        const auto* values = src[matrixIdx].V;
+
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
+        {
+            const auto sparseColIdxBegin = rows[rowIdx];
+            const auto sparseColIdxEnd = rows[rowIdx + 1];
+            for (uint32_t sparseColIdx = sparseColIdxBegin;
+                 sparseColIdx < sparseColIdxEnd; ++sparseColIdx)
+            {
+                const auto colIdx = cols[sparseColIdx];
+                const auto value = values[sparseColIdx];
+                dst[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] =
+                    value;
+            }
+        }
     }
 }
 
