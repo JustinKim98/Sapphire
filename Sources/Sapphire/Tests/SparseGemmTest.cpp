@@ -18,11 +18,13 @@
 
 namespace Sapphire::Test
 {
-void PrintSparseMatrix(SparseMatrix *sparseMatrix, bool printVerbose)
+void PrintSparseMatrix(SparseMatrix *sparseMatrix, bool print,
+                       bool printVerbose)
 {
-    std::cout << "# rows : " << sparseMatrix->M
-              << " # columns : " << sparseMatrix->N
-              << " # nnz : " << sparseMatrix->NNZ << std::endl;
+    if (print)
+        std::cout << "# rows : " << sparseMatrix->M
+                  << " # columns : " << sparseMatrix->N
+                  << " # nnz : " << sparseMatrix->NNZ << std::endl;
     for (uint32_t rowIdx = 0; rowIdx < sparseMatrix->M; ++rowIdx)
     {
         const auto sparseColIdxBegin = sparseMatrix->ROW[rowIdx];
@@ -121,9 +123,6 @@ void LoadDistTest(bool printVerbose)
 void LoadDistTestFixed(bool printVerbose)
 {
     std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> uniform(1, 50);
-    std::normal_distribution<float> normal(0, 100);
 
     SparseMatrix *hostA, *hostB;
     SparseMatrix *cudaA, *cudaB;
@@ -156,14 +155,11 @@ void LoadDistTestFixed(bool printVerbose)
     Util::MemoryManager::ClearCudaMemoryPool();
 }
 
-long SparseGemmTestSimple(bool printVerbose)
+long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
+                          size_t numMatrices, bool print, bool printVerbose)
 {
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = 2;
-    const auto m = 10;
-    const auto n = 5;
-    const auto k = 7;
 
     GenerateFixedSparseArray(&A, m, k, numMatrices);
     GenerateFixedSparseArray(&B, k, n, numMatrices);
@@ -181,8 +177,9 @@ long SparseGemmTestSimple(bool printVerbose)
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        std::cout << "\nMatrix " << i << std::endl;
-        PrintSparseMatrix(C + i, printVerbose);
+        if (print)
+            std::cout << "\nMatrix " << i << " ";
+        PrintSparseMatrix(C + i, print, printVerbose);
     }
 
     Compute::DeepFreeSparseHost(C, numMatrices);
@@ -197,18 +194,17 @@ long SparseGemmTestSimple(bool printVerbose)
     return elapsedTime;
 }
 
-long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices)
+long SparseGemmTestComplex(uint32_t m, uint32_t n, uint32_t k,
+                           size_t minimumNumMatrices, bool print,
+                           bool printVerbose)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> uniform(32, 64);
+    std::uniform_int_distribution<uint32_t> uniform(0, 30);
 
     SparseMatrix *A, *B, *C = nullptr;
     SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
     const uint32_t numMatrices = uniform(gen) % 50 + minimumNumMatrices;
-    const auto m = uniform(gen);
-    const auto n = uniform(gen);
-    const auto k = uniform(gen);
 
     GenerateRandomSparseArray(&A, m, k, numMatrices);
     GenerateRandomSparseArray(&B, k, n, numMatrices);
@@ -226,53 +222,9 @@ long SparseGemmTestComplex(bool printVerbose, size_t minimumNumMatrices)
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
-        std::cout << "\nMatrix " << i << std::endl;
-        PrintSparseMatrix(C + i, printVerbose);
-    }
-
-    Compute::DeepFreeSparseHost(C, numMatrices);
-    Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
-
-    Util::MemoryManager::ClearHostMemoryPool();
-    Util::MemoryManager::ClearCudaMemoryPool();
-
-    auto elapsedTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
-    return elapsedTime;
-}
-
-long SparseGemmTestCorrectness(bool printVerbose, size_t minimumNumMatrices)
-{
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> uniform(32, 64);
-
-    SparseMatrix *A, *B, *C = nullptr;
-    SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
-    const uint32_t numMatrices = uniform(gen) % 10 + minimumNumMatrices;
-    const auto m = uniform(gen);
-    const auto n = uniform(gen);
-    const auto k = uniform(gen);
-
-    GenerateRandomSparseArray(&A, m, k, numMatrices);
-    GenerateRandomSparseArray(&B, k, n, numMatrices);
-
-    Compute::DeepAllocateSparseCuda(&cudaA, A, numMatrices, 0);
-    Compute::DeepAllocateSparseCuda(&cudaB, B, numMatrices, 0);
-
-    Compute::DeepCopyHostToDevice(cudaA, A, numMatrices, 0);
-    Compute::DeepCopyHostToDevice(cudaB, B, numMatrices, 0);
-
-    auto start = std::chrono::system_clock::now();
-    Compute::Sparse::Cuda::Gemm(&C, &cudaC, cudaA, cudaB, m, n, numMatrices, 0,
-                                true);
-    auto end = std::chrono::system_clock::now();
-
-    for (uint32_t i = 0; i < numMatrices; ++i)
-    {
-        std::cout << "\nMatrix " << i << std::endl;
-        PrintSparseMatrix(C + i, printVerbose);
+        if (print)
+            std::cout << "\nMatrix " << i << " ";
+        PrintSparseMatrix(C + i, print, printVerbose);
     }
 
     Compute::DeepFreeSparseHost(C, numMatrices);
@@ -483,8 +435,8 @@ void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
     Util::MemoryManager::ClearHostMemoryPool();
 }
 
-void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
-                     float sparsity)
+PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
+                                size_t numMatrices, float sparsity)
 {
     size_t paddedK = k;
     size_t paddedN = n;
@@ -577,28 +529,27 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
         std::chrono::duration_cast<std::chrono::microseconds>(naiveSparseEnd -
                                                               naiveSparseBegin)
             .count();
-    auto cuSparseGemmElapsedTimeTotal =
+    auto cuSparseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
                                                               cuSparseBegin)
             .count();
-    auto cudaSparseGemmElapsedTime =
+    auto cudaSparseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(cudaSparseEnd -
                                                               cudaSparseBegin)
             .count();
 
-    std::cout << "--- Results (time in microseconds) ---" << std::endl;
-    std::cout << "* Sparsity : " << sparsity << std::endl;
-    std::cout << "* Naive Dense : " << naiveDenseElapsedTime << std::endl;
-    std::cout << "* Naive Sparse : " << naiveSparseElapsedTime << std::endl;
-    std::cout << "* Cuda Dense : " << cudaDenseElapsedTime << std::endl;
-    std::cout << "* Cuda Sparse (custom) : " << cudaSparseGemmElapsedTime
-              << std::endl;
-    std::cout << "* Cuda Sparse (cuSparse) : " << cuSparseGemmElapsedTimeTotal
-              << std::endl;
-    std::cout << "-------------------------------------\n" << std::endl;
-
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();
+
+    return PerformanceData{ m,
+                            n,
+                            k,
+                            sparsity,
+                            naiveDenseElapsedTime,
+                            cudaDenseElapsedTime,
+                            naiveSparseElapsedTime,
+                            cudaSparseElapsedTime,
+                            cuSparseElapsedTime };
 }
 
 }  // namespace Sapphire::Test
