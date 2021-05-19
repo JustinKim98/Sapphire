@@ -47,7 +47,7 @@ void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices);
 //! \param numMatrices : number of matrices
 //! \param deviceId : ID of the device to allocate
 void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
-                            SparseMatrix* hostSparseMatrixArray,
+                            const SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId);
 
 //! Allocates load distribution matrix array on the Device
@@ -109,7 +109,7 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
 //! \param hostSrcArray : source host array
 //! \param numMatrices : Number of sparse matrices to copy
 void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
-                          SparseMatrix* hostSrcArray, uint32_t numMatrices,
+                          const SparseMatrix* hostSrcArray, uint32_t numMatrices,
                           int deviceId);
 
 //! Deep copies load distribution matrix to Device from Host

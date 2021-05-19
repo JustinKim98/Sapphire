@@ -25,6 +25,9 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
 void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
                                float sparsity, bool printResult);
 
+void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
+                                float sparsity, bool printResult);
+
 void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
                      float sparsity);
 

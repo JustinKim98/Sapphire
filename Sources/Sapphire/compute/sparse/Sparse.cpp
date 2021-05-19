@@ -90,7 +90,7 @@ void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices)
 }
 
 void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
-                            SparseMatrix* hostSparseMatrixArray,
+                            const SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId)
 {
     *deviceSparseArray =
@@ -291,8 +291,8 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
 }
 
 void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
-                          SparseMatrix* hostSrcArray, uint32_t numMatrices,
-                          int deviceId)
+                          const SparseMatrix* hostSrcArray,
+                          uint32_t numMatrices, int deviceId)
 {
     auto* dstArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
@@ -545,6 +545,8 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
         MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
     auto* dstPtr = *dst;
 
+#pragma omp parallel for default(none) \
+    shared(numMatrices, m, n, paddedN, src, dstPtr) schedule(static)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; matrixIdx++)
     {
         uint32_t nnz = 0;

@@ -7,6 +7,7 @@
 #include <Sapphire/compute/sparse/naive/SparseGemm.hpp>
 #include <Sapphire/util/MemoryManager.hpp>
 #include <Sapphire/util/Spinlock.hpp>
+#include <algorithm>
 #include <atomic>
 #include <vector>
 
@@ -22,17 +23,17 @@ void Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer, uint32_t m,
             uint32_t* nnz)
 {
     auto key = Hash1(colIdx, MAX_NNZ_PER_ROW_HOST);
-    auto offset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
-                  rowIdx * MAX_NNZ_PER_ROW_HOST + key;
 
     // Util::SpinLock::Lock(flagBuffer + offset);
 
     while (true)
     {
+        auto offset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
+                      rowIdx * MAX_NNZ_PER_ROW_HOST + key;
         if (tempIdxBuffer[offset] == static_cast<uint32_t>(INF) ||
             tempIdxBuffer[offset] == colIdx)
         {
-            if (tempIdxBuffer[offset] == static_cast<uint32_t>(INF))
+            if (tempIdxBuffer[offset] != colIdx)
                 *nnz += 1;
             tempIdxBuffer[offset] = colIdx;
             tempValueBuffer[offset] += value;
@@ -50,7 +51,7 @@ void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,
     if (beginIdx >= endIdx || endIdx == beginIdx + 1)
         return;
 
-    const auto midIdx = (beginIdx + endIdx) / 2;
+    const auto midIdx = beginIdx + (endIdx - beginIdx) / 2;
     Sort(tempIdxBuffer, tempValueBuffer, beginIdx, midIdx);
     Sort(tempIdxBuffer, tempValueBuffer, midIdx, endIdx);
 
@@ -60,8 +61,19 @@ void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,
 
     for (size_t vectorIdx = 0; vectorIdx < endIdx - beginIdx; ++vectorIdx)
     {
-        if (tempIdxBuffer[beginIdx + left] < tempIdxBuffer[midIdx + right] &&
-            beginIdx + left < midIdx)
+        if (right == endIdx - midIdx)
+        {
+            indices[vectorIdx] = tempIdxBuffer[beginIdx + left];
+            values[vectorIdx] = tempValueBuffer[beginIdx + left];
+            left++;
+        }
+        else if (left == midIdx - beginIdx)
+        {
+            indices[vectorIdx] = tempIdxBuffer[midIdx + right];
+            values[vectorIdx] = tempValueBuffer[midIdx + right];
+            right++;
+        }
+        else if (tempIdxBuffer[beginIdx + left] < tempIdxBuffer[midIdx + right])
         {
             indices[vectorIdx] = tempIdxBuffer[beginIdx + left];
             values[vectorIdx] = tempValueBuffer[beginIdx + left];
@@ -100,9 +112,9 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
         (*output)[i].ROW = static_cast<uint32_t*>(
             Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
 
-    //#pragma omp parallel for schedule(static) default(none)
-    //    shared(numMatrices, m, n, a, b, output, tempIdxBuffer,
-    //    tempValueBuffer)
+#pragma omp parallel for default(none)                                      \
+    shared(numMatrices, m, n, a, b, output, tempIdxBuffer, tempValueBuffer) \
+        schedule(static)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
         auto* curMatrixA = a + matrixIdx;
@@ -134,6 +146,9 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
                                      rowIdx * MAX_NNZ_PER_ROW_HOST;
             const auto endOffset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
                                    (rowIdx + 1) * MAX_NNZ_PER_ROW_HOST;
+
+            // std::sort(tempIdxBuffer + beginOffset, tempIdxBuffer +
+            // endOffset);
             Sort(tempIdxBuffer, tempValueBuffer, beginOffset, endOffset);
 
             matrixNNZ += rowNNZ;

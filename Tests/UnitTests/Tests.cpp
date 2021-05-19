@@ -15,7 +15,7 @@
 #include <Sapphire/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
-//#define EnableAllTest
+#define EnableAllTest
 
 namespace Sapphire::Test
 {
@@ -224,9 +224,16 @@ TEST_CASE("Device Sparse Gemm Test")
 #endif
 TEST_CASE("Sparse Performance Test")
 {
+    SUBCASE("Matrix conversion test")
+    {
+        std::cout << "Testing conversion ..." << std::endl;
+        SparseMatrixConversionTest(100, 100, 10, 0.1, false);
+        std::cout << " Done" << std::endl;
+    }
+
     SUBCASE("Correctness test (Cuda)")
     {
-        std::cout << "Testing correctness ..." << std::endl;
+        std::cout << "Testing correctness (Cuda) ..." << std::endl;
         SparseTestCorrectnessCuda(1000, 1000, 50, 3, 0.5, false);
         SparseTestCorrectnessCuda(40, 50, 500, 3, 0.5, false);
         std::cout << " Done" << std::endl;
@@ -234,9 +241,9 @@ TEST_CASE("Sparse Performance Test")
 
     SUBCASE("Correctness test (Host)")
     {
-        std::cout << "Testing correctness ..." << std::endl;
-        SparseTestCorrectnessHost(10, 10, 50, 3, 0.9, true);
-        // SparseTestCorrectnessHost(40, 50, 500, 3, 0.5, false);
+        std::cout << "Testing correctness (Host) ..." << std::endl;
+        SparseTestCorrectnessHost(5, 5, 50, 3, 0.9, false);
+        SparseTestCorrectnessHost(500, 500, 500, 3, 0.5, false);
         std::cout << " Done" << std::endl;
     }
 
@@ -246,7 +253,7 @@ TEST_CASE("Sparse Performance Test")
         float sparsity = 0.0f;
         while (sparsity <= 1.0f)
         {
-            PerformanceTest(500, 500, 250, 1, sparsity);
+            PerformanceTest(50, 500, 250, 12, sparsity);
             sparsity += 0.1f;
         }
         std::cout << " Done" << std::endl;
