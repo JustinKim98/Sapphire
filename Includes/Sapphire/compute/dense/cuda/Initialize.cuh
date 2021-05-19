@@ -10,7 +10,7 @@
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/dense/cuda/InitializeKernel.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void Normal(float* data, float mean, float sd, unsigned int size,
                      int seed);

@@ -6,7 +6,7 @@
 
 #include <Sapphire/compute/dense/cuda/BasicKernel.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 //! (x,y) : (TILE_DIM*8) threads per block
 //! Assuming input is M x N, (nx, ny, nz) : (N/TILE_DIM, M/TILE_DIM, batchSize)

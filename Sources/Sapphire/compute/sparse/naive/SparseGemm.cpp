@@ -24,8 +24,6 @@ void Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer, uint32_t m,
 {
     auto key = Hash1(colIdx, MAX_NNZ_PER_ROW_HOST);
 
-    // Util::SpinLock::Lock(flagBuffer + offset);
-
     while (true)
     {
         auto offset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
@@ -41,8 +39,6 @@ void Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer, uint32_t m,
         }
         key = (key + 1) % (MAX_NNZ_PER_ROW_HOST - 1);
     }
-
-    // Util::SpinLock::Release(flagBuffer + offset);
 }
 
 void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,

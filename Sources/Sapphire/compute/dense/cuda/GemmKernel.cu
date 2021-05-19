@@ -10,7 +10,7 @@
 
 #define WARP_SIZE 32
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 
 __global__ void Gemm(float* out, const float* A, const float* B, const float* C,

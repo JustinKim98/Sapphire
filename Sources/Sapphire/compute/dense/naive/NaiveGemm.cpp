@@ -6,9 +6,8 @@
 
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <cstdlib>
-#include <iostream>
 
-namespace Sapphire::Compute::Naive::Dense
+namespace Sapphire::Compute::Dense::Naive
 {
 void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
                float* C, unsigned int M, unsigned int N, unsigned int paddedN,

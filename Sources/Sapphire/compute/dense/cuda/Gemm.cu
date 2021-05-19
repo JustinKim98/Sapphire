@@ -12,7 +12,7 @@
 #include <Sapphire/compute/dense/cuda/GemmKernel.cuh>
 #include <cassert>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 //! All size parameters should be at least 1
 //! batch sizes must be multiple of each other
@@ -34,7 +34,7 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
     float* ptrC = C;
     float* ptrOut = out;
 
-    CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
+    Compute::Cuda::CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
 
     auto status = cublasGemmStridedBatchedEx(
         *handle, CUBLAS_OP_N, CUBLAS_OP_N, static_cast<int>(N),
@@ -69,11 +69,12 @@ __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
 
     if (broadcastC)
     {
-        CopyDeviceToDeviceBroadcast(out, C, M * N * batchSize * sizeof(float),
-                                    M * N * sizeof(float));
+        Compute::Cuda::CopyDeviceToDeviceBroadcast(
+            out, C, M * N * batchSize * sizeof(float), M * N * sizeof(float));
     }
     else
-        CopyDeviceToDevice(out, C, M * N * batchSize * sizeof(float));
+        Compute::Cuda::CopyDeviceToDevice(out, C,
+                                          M * N * batchSize * sizeof(float));
 
     cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
                                &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
@@ -135,4 +136,4 @@ __host__ void GemmNormal(float* out, float* A, float* B, float* C,
 
     free(streams);
 }
-}  // namespace Sapphire::Compute::Cuda::Dense
+}  // namespace Sapphire::Compute::Dense::Cuda

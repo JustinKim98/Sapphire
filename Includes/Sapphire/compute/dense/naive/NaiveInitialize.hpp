@@ -9,7 +9,7 @@
 #include "Sapphire/tensor/Shape.hpp"
 #include "cstdlib"
 
-namespace Sapphire::Compute::Naive
+namespace Sapphire::Compute::Dense::Naive
 {
 void Normal(float* data, float mean, float sd, const Shape& shape,
             size_t paddedCols, size_t batchSize);

@@ -7,7 +7,7 @@
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/dense/cuda/InitializeKernel.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 //! ByteSize should be divisible by gridDim.x*blockDim.x
 //! Both block and thread should be in one dimension
@@ -59,4 +59,4 @@ __global__ void ScalarKernel(float* data, float value, unsigned int size)
     }
 }
 
-}  // namespace Sapphire::Compute::Cuda::Dense
+}  // namespace Sapphire::Compute::Dense::Cuda

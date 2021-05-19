@@ -7,7 +7,7 @@
 #ifndef Sapphire_COMPUTE_NAIVEGEMM_HPP
 #define Sapphire_COMPUTE_NAIVEGEMM_HPP
 
-namespace Sapphire::Compute::Naive::Dense
+namespace Sapphire::Compute::Dense::Naive
 {
 void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B, float* C,
                unsigned int M, unsigned int N, unsigned int paddedN,

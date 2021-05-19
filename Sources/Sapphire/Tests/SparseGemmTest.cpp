@@ -344,7 +344,7 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
 
     cublasHandle_t handle;
     cublasCreate(&handle);
-    Compute::Cuda::Dense::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
+    Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
                                cudaDenseB, cudaDenseOut, m, n, k, &handle);
     cublasDestroy(handle);
 
@@ -410,7 +410,7 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseB, hostDenseB, k, n,
                                                paddedN, numMatrices);
 
-    Compute::Naive::Dense::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
+    Compute::Dense::Naive::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
                                      hostDenseA, hostDenseB, hostDenseOut, m, n,
                                      paddedN, k, paddedK);
 
@@ -536,7 +536,7 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
     Compute::DeepCopyHostToDevice(cudaSparseB, hostSparseB, numMatrices, 0);
 
     auto naiveDenseBegin = std::chrono::system_clock::now();
-    Compute::Naive::Dense::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
+    Compute::Dense::Naive::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
                                      hostDenseA, hostDenseB, hostDenseOut, m, n,
                                      paddedN, k, paddedK);
     auto naiveDenseEnd = std::chrono::system_clock::now();
@@ -548,7 +548,7 @@ void PerformanceTest(size_t m, size_t n, size_t k, size_t numMatrices,
     auto cudaDenseBegin = std::chrono::system_clock::now();
     cublasHandle_t handle;
     cublasCreate(&handle);
-    Compute::Cuda::Dense::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
+    Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
                                cudaDenseB, cudaDenseOut, m, n, k, &handle);
     cublasDestroy(handle);
     auto cudaDenseEnd = std::chrono::system_clock::now();

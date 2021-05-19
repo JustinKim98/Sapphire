@@ -7,7 +7,7 @@
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <cmath>
 
-namespace Sapphire::Compute::Naive::Dense
+namespace Sapphire::Compute::Dense::Naive
 {
 void Add(unsigned int totalSize, float* output, const float* inputA,
          const float* inputB, unsigned int inputStride, bool broadcastInputA,
