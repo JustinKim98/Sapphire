@@ -35,15 +35,9 @@ int PrintCudaVersion()
 int MallocTest()
 {
     float* ptr;
-    if (!Compute::Cuda::CudaMalloc((void**)&ptr, 100))
-    {
-        return EXIT_FAILURE;
-    }
 
-    if (!Compute::Cuda::CudaFree(ptr))
-    {
-        return EXIT_FAILURE;
-    }
+    Compute::Cuda::CudaMalloc((void**)&ptr, 100);
+    Compute::Cuda::CudaFree(ptr);
 
     return EXIT_SUCCESS;
 }

@@ -10,7 +10,7 @@
 #include <Sapphire/compute/dense/cuda/Basic.cuh>
 #include <Sapphire/compute/dense/cuda/BasicKernel.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void Add(unsigned int totalSize, float* output, const float* inputA,
                   const float* inputB, unsigned int inputStride,

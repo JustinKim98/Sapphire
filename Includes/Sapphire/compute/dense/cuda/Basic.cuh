@@ -9,7 +9,7 @@
 
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 //! out = A + B
 __host__ void Add(unsigned int totalSize, float* output, const float* inputA,

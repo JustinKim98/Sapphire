@@ -9,7 +9,7 @@
 
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 //! Computes NaiveGemm operation on the chunk (Out = A x B + Out)
 //! Chunk represents sub matrix that can be computed using one block

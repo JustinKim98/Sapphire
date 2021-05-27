@@ -62,7 +62,8 @@ void Gemm1()
 
         float cpuGemmResult[Out.DenseTotalLengthHost];
 
-#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(none) schedule(static) \
+    shared(Out, cpuGemmResult)
         for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];
@@ -81,7 +82,8 @@ void Gemm1()
 
         std::atomic<float> largestError = 0.0f;
 
-#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(none) schedule(static) \
+    shared(Out, cpuGemmResult, largestError)
         for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
         {
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);

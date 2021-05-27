@@ -7,7 +7,7 @@
 #ifndef Sapphire_NAIVEBASIC_HPP
 #define Sapphire_NAIVEBASIC_HPP
 
-namespace Sapphire::Compute::Naive::Dense
+namespace Sapphire::Compute::Dense::Naive
 {
 void Add(unsigned int totalSize, float* output, const float* inputA,
          const float* inputB, unsigned int inputStride, bool broadcastInputA,

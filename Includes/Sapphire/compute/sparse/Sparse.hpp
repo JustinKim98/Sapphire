@@ -47,7 +47,7 @@ void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices);
 //! \param numMatrices : number of matrices
 //! \param deviceId : ID of the device to allocate
 void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
-                            SparseMatrix* hostSparseMatrixArray,
+                            const SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId);
 
 //! Allocates load distribution matrix array on the Device
@@ -70,12 +70,11 @@ void DeepFreeSparseCuda(SparseMatrix* deviceSparseArray, uint32_t numMatrices,
                         int deviceId);
 
 //! Frees load distribution matrix allocated on the Device
-//! \param deviceLoadDistArray : Array of deviceLoadDistArray load distribution matrix to
-//! free on the device
-//! \param deviceId : ID of the device that owns the
-//! deviceLoadDistArray
-void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray, uint32_t numMatrices,
-                          int deviceId);
+//! \param deviceLoadDistArray : Array of deviceLoadDistArray load distribution
+//! matrix to free on the device \param deviceId : ID of the device that owns
+//! the deviceLoadDistArray
+void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray,
+                          uint32_t numMatrices, int deviceId);
 
 //! Deep copies sparse matrix to Device from Host
 //! All pointers given as parameters must be allocated with size of
@@ -110,7 +109,7 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
 //! \param hostSrcArray : source host array
 //! \param numMatrices : Number of sparse matrices to copy
 void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
-                          SparseMatrix* hostSrcArray, uint32_t numMatrices,
+                          const SparseMatrix* hostSrcArray, uint32_t numMatrices,
                           int deviceId);
 
 //! Deep copies load distribution matrix to Device from Host
@@ -142,8 +141,8 @@ void DeepCopyDeviceToHost(LoadDistMatrix* hostDstArray,
 //! \param hostDstArray : destination host array
 //! \param hostSrcArray : source host array
 //! \param numMatrices : number of sparse matrices to copy
-void DeepCopyHostToHost(SparseMatrix* hostDstArray,
-                        SparseMatrix* hostSrcArray, uint32_t numMatrices);
+void DeepCopyHostToHost(SparseMatrix* hostDstArray, SparseMatrix* hostSrcArray,
+                        uint32_t numMatrices);
 
 //! Deep copies host matrix to Host from Host
 //! \param hostDstArray : destination host array
@@ -152,27 +151,14 @@ void DeepCopyHostToHost(SparseMatrix* hostDstArray,
 void DeepCopyHostToHost(LoadDistMatrix* hostDstArray,
                         LoadDistMatrix* hostSrcArray, uint32_t numMatrices);
 
-void ConvertDenseToSparseHost(SparseMatrix* dst, const float* src,
-                              uint32_t numRows, uint32_t numCols,
-                              uint32_t numMatrices);
+void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
+                                       uint32_t m, uint32_t n, uint32_t paddedN,
+                                       uint32_t numMatrices);
 
-void ConvertDenseToSparseCuda(SparseMatrix* dst, float* src, uint32_t numRows,
-                              uint32_t numCols, uint32_t numMatrices);
+void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
+                                      uint32_t m, uint32_t n, uint32_t paddedN,
+                                      uint32_t numMatrices);
 
-void ConvertSparseToDenseHost(float* dst, const SparseMatrix* src,
-                              uint32_t numRows, uint32_t numCols,
-                              uint32_t numMatrices);
-
-void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, uint32_t numRows,
-                              uint32_t numCols, uint32_t numMatrices);
-
-//! Copies sparse matrix from device to host
-void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
-                            size_t numMatrices);
-//! Copies sparse matrix from host to device
-void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
-                            size_t numMatrices, int deviceId);
-
-}  // namespace Sapphire::Compute::Sparse
+}  // namespace Sapphire::Compute
 
 #endif  // Sapphire_MATRIXFORMAT_HPP

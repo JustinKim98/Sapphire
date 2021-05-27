@@ -6,12 +6,11 @@
 
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <cstdlib>
-#include <iostream>
 
-namespace Sapphire::Compute::Naive::Dense
+namespace Sapphire::Compute::Dense::Naive
 {
-void NaiveGemm(unsigned int totalSize, float* out, float* A, float* B, float* C,
-               unsigned int M, unsigned int N, unsigned int paddedN,
+void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
+               float* C, unsigned int M, unsigned int N, unsigned int paddedN,
                unsigned int K, unsigned int paddedK)
 {
     const auto strideA = M * paddedK;
@@ -19,7 +18,10 @@ void NaiveGemm(unsigned int totalSize, float* out, float* A, float* B, float* C,
     const auto strideC = M * paddedN;
     const auto strideOut = M * paddedN;
 
-    for (size_t chunkIdx = 0; chunkIdx < totalSize / strideOut; ++chunkIdx)
+#pragma omp parallel for default(none) schedule(static) collapse(3)           \
+    shared(paddedSizeOut, strideOut, M, N, paddedN, K, paddedK, A, B, C, out, \
+           strideA, strideB, strideC)
+    for (size_t chunkIdx = 0; chunkIdx < paddedSizeOut / strideOut; ++chunkIdx)
         for (size_t mIdx = 0; mIdx < M; ++mIdx)
             for (size_t nIdx = 0; nIdx < N; ++nIdx)
             {
@@ -34,7 +36,6 @@ void NaiveGemm(unsigned int totalSize, float* out, float* A, float* B, float* C,
                            batchPtrB[paddedN * kIdx + nIdx];
 
                 batchPtrOut[paddedN * mIdx + nIdx] = sum;
-                // std::cout << "sum : " << sum << std::endl;
             }
 }
 

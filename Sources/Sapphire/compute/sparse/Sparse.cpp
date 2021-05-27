@@ -90,7 +90,7 @@ void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices)
 }
 
 void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
-                            SparseMatrix* hostSparseMatrixArray,
+                            const SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId)
 {
     *deviceSparseArray =
@@ -101,14 +101,15 @@ void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
+        const auto nnz = hostSparseMatrixArray[i].NNZ;
         hostDstBuffer[i].M = hostSparseMatrixArray[i].M;
         hostDstBuffer[i].N = hostSparseMatrixArray[i].N;
         hostDstBuffer[i].NNZ = hostSparseMatrixArray[i].NNZ;
         hostDstBuffer[i].V = static_cast<float*>(MemoryManager::GetMemoryCuda(
-            hostSparseMatrixArray[i].NNZ * sizeof(float), deviceId));
+            (!nnz ? 1 : nnz) * sizeof(float), deviceId));
         hostDstBuffer[i].COL =
             static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
-                hostSparseMatrixArray[i].NNZ * sizeof(uint32_t), deviceId));
+                (!nnz ? 1 : nnz) * sizeof(uint32_t), deviceId));
         hostDstBuffer[i].ROW =
             static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
                 (hostSparseMatrixArray[i].M + 1) * sizeof(uint32_t), deviceId));
@@ -290,8 +291,8 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
 }
 
 void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
-                          SparseMatrix* hostSrcArray, uint32_t numMatrices,
-                          int deviceId)
+                          const SparseMatrix* hostSrcArray,
+                          uint32_t numMatrices, int deviceId)
 {
     auto* dstArrayBuffer = static_cast<SparseMatrix*>(
         MemoryManager::GetMemoryHost(numMatrices * sizeof(SparseMatrix)));
@@ -536,115 +537,90 @@ void DeepCopyHostToHost(LoadDistMatrix* hostDstArray,
     }
 }
 
-void ConvertDenseToSparseHost(SparseMatrix* dst, const float* src,
-                              uint32_t numRows, uint32_t numCols,
-                              uint32_t numMatrices)
+void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
+                                       uint32_t m, uint32_t n, uint32_t paddedN,
+                                       uint32_t numMatrices)
 {
-    const auto matrixSize = numRows * numCols;
+    *dst = static_cast<SparseMatrix*>(
+        MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+    auto* dstPtr = *dst;
+
+#pragma omp parallel for default(none) \
+    shared(numMatrices, m, n, paddedN, src, dstPtr) schedule(static)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; matrixIdx++)
     {
         uint32_t nnz = 0;
-        dst[matrixIdx].ROW[0] = 0;
-        for (uint32_t rowIdx = 0; rowIdx < numRows; ++rowIdx)
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
         {
-            for (uint32_t colIdx = 0; colIdx < numCols; ++colIdx)
+            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
+                if (src[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] !=
+                    0)
+                    nnz++;
+        }
+
+        dstPtr[matrixIdx].ROW = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
+        dstPtr[matrixIdx].COL = static_cast<uint32_t*>(
+            MemoryManager::GetMemoryHost(sizeof(uint32_t) * (!nnz ? 1 : nnz)));
+        dstPtr[matrixIdx].V = static_cast<float*>(
+            MemoryManager::GetMemoryHost(sizeof(uint32_t) * (!nnz ? 1 : nnz)));
+        dstPtr[matrixIdx].M = m;
+        dstPtr[matrixIdx].N = n;
+        dstPtr[matrixIdx].NNZ = nnz;
+
+        nnz = 0;
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
+        {
+            dstPtr[matrixIdx].ROW[rowIdx] = nnz;
+            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
             {
-                if (src[matrixIdx * matrixSize + rowIdx] != 0)
+                if (src[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] !=
+                    0)
                 {
-                    dst[matrixIdx].V[nnz] =
-                        src[matrixIdx * matrixSize + rowIdx * numRows + colIdx];
-                    dst[matrixIdx].COL[nnz] = colIdx;
+                    dstPtr[matrixIdx].V[nnz] = src[matrixIdx * m * paddedN +
+                                                   rowIdx * paddedN + colIdx];
+                    dstPtr[matrixIdx].COL[nnz] = colIdx;
                     nnz++;
                 }
             }
-            dst[matrixIdx].NNZ = nnz;
-            dst[matrixIdx].M = numRows;
         }
+
+        dstPtr[matrixIdx].ROW[m] = nnz;
     }
 }
 
-void ConvertDenseToSparseCuda(SparseMatrix* dst, float* src, uint32_t numRows,
-                              uint32_t numCols, uint32_t numMatrices)
+void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
+                                      uint32_t m, uint32_t n, uint32_t paddedN,
+                                      uint32_t numMatrices)
 {
-}
+#pragma omp parallel for default(none) shared(dst, numMatrices, m, n, paddedN) \
+    collapse(3)
+    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
+            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
+                dst[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] = 0.0f;
 
-void ConvertSparseToDenseHost(float* dst, const SparseMatrix* src,
-                              uint32_t numRows, uint32_t numCols,
-                              uint32_t numMatrices)
-{
-    const auto matrixSize = numRows * numCols;
+#pragma omp parallel for default(none) \
+    shared(src, dst, numMatrices, m, n, paddedN)
     for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
     {
-        for (uint32_t rowIdx = 0; rowIdx < src[matrixIdx].M; ++rowIdx)
+        const auto* rows = src[matrixIdx].ROW;
+        const auto* cols = src[matrixIdx].COL;
+        const auto* values = src[matrixIdx].V;
+
+        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
         {
-            const auto sparseColIdxBegin = src[matrixIdx].ROW[rowIdx];
-            const auto sparseColIdxEnd = src[matrixIdx].ROW[rowIdx + 1];
-            for (auto sparseColIdx = sparseColIdxBegin;
+            const auto sparseColIdxBegin = rows[rowIdx];
+            const auto sparseColIdxEnd = rows[rowIdx + 1];
+            for (uint32_t sparseColIdx = sparseColIdxBegin;
                  sparseColIdx < sparseColIdxEnd; ++sparseColIdx)
             {
-                const auto denseColIdx = src[matrixIdx].ROW[sparseColIdx];
-                const auto value = src[matrixIdx].V[sparseColIdx];
-                dst[matrixIdx * matrixSize + rowIdx * numCols + denseColIdx] =
+                const auto colIdx = cols[sparseColIdx];
+                const auto value = values[sparseColIdx];
+                dst[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] =
                     value;
             }
         }
-    }
-}
-
-void ConvertSparseToDenseCuda(float* dst, SparseMatrix* src, uint32_t numRows,
-                              uint32_t numCols, uint32_t numMatrices)
-{
-}
-
-void CopySparseDeviceToHost(SparseMatrix* dst, SparseMatrix* src,
-                            size_t numMatrices)
-{
-    Cuda::CopyDeviceToHost(dst, src, numMatrices * sizeof(SparseMatrix));
-
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-    {
-        Cuda::CopyDeviceToHost(dst[matrixIdx].ROW, src[matrixIdx].ROW,
-                               sizeof(uint32_t) * (src[matrixIdx].M + 1));
-
-        MemoryManager::DeReferenceHost(dst[matrixIdx].COL);
-        MemoryManager::DeReferenceHost(dst[matrixIdx].V);
-
-        dst[matrixIdx].COL =
-            static_cast<uint32_t*>(MemoryManager::GetMemoryHost(
-                sizeof(uint32_t) * src[matrixIdx].NNZ));
-        dst[matrixIdx].V = static_cast<float*>(
-            MemoryManager::GetMemoryHost(sizeof(float) * src[matrixIdx].NNZ));
-
-        Cuda::CopyDeviceToHost(dst[matrixIdx].V, src[matrixIdx].V,
-                               sizeof(float) * dst[matrixIdx].NNZ);
-        Cuda::CopyDeviceToHost(dst[matrixIdx].COL, src[matrixIdx].COL,
-                               sizeof(uint32_t) * dst[matrixIdx].NNZ);
-    }
-}
-
-void CopySparseHostToDevice(SparseMatrix* dst, SparseMatrix* src,
-                            size_t numMatrices, int deviceId)
-{
-    Cuda::CopyHostToDevice(dst, src, numMatrices * sizeof(SparseMatrix));
-
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-    {
-        Cuda::CopyHostToDevice(dst[matrixIdx].ROW, src[matrixIdx].ROW,
-                               sizeof(uint32_t) * (src[matrixIdx].M + 1));
-
-        MemoryManager::DeReferenceCuda(dst[matrixIdx].COL, deviceId);
-        MemoryManager::DeReferenceCuda(dst[matrixIdx].V, deviceId);
-
-        dst[matrixIdx].COL =
-            static_cast<uint32_t*>(MemoryManager::GetMemoryCuda(
-                sizeof(uint32_t) * src[matrixIdx].NNZ, deviceId));
-        dst[matrixIdx].V = static_cast<float*>(MemoryManager::GetMemoryCuda(
-            sizeof(float) * src[matrixIdx].NNZ, deviceId));
-
-        Cuda::CopyHostToDevice(dst[matrixIdx].V, src[matrixIdx].V,
-                               sizeof(float) * dst[matrixIdx].NNZ);
-        Cuda::CopyHostToDevice(dst[matrixIdx].COL, src[matrixIdx].COL,
-                               sizeof(uint32_t) * dst[matrixIdx].NNZ);
     }
 }
 

@@ -12,7 +12,7 @@
 #include <Sapphire/compute/dense/cuda/GemmKernel.cuh>
 #include <cassert>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 //! All size parameters should be at least 1
 //! batch sizes must be multiple of each other
@@ -34,12 +34,14 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
     float* ptrC = C;
     float* ptrOut = out;
 
-    CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
+    Compute::Cuda::CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
 
     auto status = cublasGemmStridedBatchedEx(
-        *handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K, &alpha, ptrB, CUDA_R_32F, N,
-        strideB, ptrA, CUDA_R_32F, K, strideA, &beta, ptrOut, CUDA_R_32F, N,
-        strideOut, totalSize / strideOut, CUBLAS_COMPUTE_32F_FAST_TF32,
+        *handle, CUBLAS_OP_N, CUBLAS_OP_N, static_cast<int>(N),
+        static_cast<int>(M), static_cast<int>(K), &alpha, ptrB, CUDA_R_32F,
+        static_cast<int>(N), strideB, ptrA, CUDA_R_32F, static_cast<int>(K),
+        strideA, &beta, ptrOut, CUDA_R_32F, static_cast<int>(N), strideOut,
+        static_cast<int>(totalSize / strideOut), CUBLAS_COMPUTE_32F_FAST_TF32,
         CUBLAS_GEMM_DEFAULT_TENSOR_OP);
 
     assert(status == CUBLAS_STATUS_SUCCESS);
@@ -67,11 +69,12 @@ __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
 
     if (broadcastC)
     {
-        CopyDeviceToDeviceBroadcast(out, C, M * N * batchSize * sizeof(float),
-                                    M * N * sizeof(float));
+        Compute::Cuda::CopyDeviceToDeviceBroadcast(
+            out, C, M * N * batchSize * sizeof(float), M * N * sizeof(float));
     }
     else
-        CopyDeviceToDevice(out, C, M * N * batchSize * sizeof(float));
+        Compute::Cuda::CopyDeviceToDevice(out, C,
+                                          M * N * batchSize * sizeof(float));
 
     cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
                                &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
@@ -104,74 +107,6 @@ __host__ unsigned int FindGCD(unsigned int arr[], int n)
     return result;
 }
 
-__host__ void GemmTensor(float* out, float* A, float* B, float* C,
-                         unsigned int paddedM, unsigned int paddedN,
-                         unsigned int paddedK, unsigned int batchSize,
-                         bool broadcastA, bool broadcastB, bool broadcastC)
-{
-    static constexpr unsigned int tileDim = 16;
-    const auto chunkDimM = paddedM / 16;
-    const auto chunkDimK = paddedK / 16;
-    const auto chunkDimN = paddedN / 16;
-
-    unsigned int arr[] = { chunkDimM, chunkDimK, chunkDimN };
-
-    const auto maxTileSize = FindGCD(arr, sizeof(arr) / sizeof(arr[0]));
-
-    unsigned int chunkSize;
-    if (maxTileSize % 2 == 1)
-    {
-        chunkSize = 1;
-    }
-    else
-    {
-        if (maxTileSize % 4 == 0)
-            chunkSize = 4;
-        else
-            chunkSize = 2;
-    }
-
-    auto* streams =
-        static_cast<cudaStream_t*>(malloc(sizeof(cudaStream_t) * batchSize));
-
-    for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-    {
-        cudaStreamCreate(&streams[batchIdx]);
-    }
-    for (unsigned int chunkIdxK = 0; chunkIdxK * chunkSize * tileDim < paddedN;
-         ++chunkIdxK)
-    {
-        for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            float* ptrOut = out + paddedM * paddedN * batchIdx;
-            const float* ptrA =
-                A + paddedM * paddedK * (broadcastA ? 1 : batchIdx);
-            const float* ptrB =
-                B + paddedK * paddedN * (broadcastB ? 1 : batchIdx);
-            const float* ptrC =
-                C + paddedM * paddedN * (broadcastC ? 1 : batchIdx);
-
-            const dim3 numBlocks(chunkDimM, chunkDimN);
-
-            WmmaGemm<<<numBlocks, chunkSize * chunkSize * 32, 0,
-                       streams[batchIdx]>>>(ptrOut, ptrA, ptrB, ptrC, paddedK,
-                                            paddedN, chunkIdxK, chunkSize);
-        }
-
-        for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            cudaStreamSynchronize(streams[batchIdx]);
-        }
-    }
-
-    for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-    {
-        cudaStreamDestroy(streams[batchIdx]);
-    }
-
-    free(streams);
-}
-
 __host__ void GemmNormal(float* out, float* A, float* B, float* C,
                          unsigned int paddedM, unsigned int paddedN,
                          unsigned int paddedK, unsigned int batchSize,
@@ -201,4 +136,4 @@ __host__ void GemmNormal(float* out, float* A, float* B, float* C,
 
     free(streams);
 }
-}  // namespace Sapphire::Compute::Cuda::Dense
+}  // namespace Sapphire::Compute::Dense::Cuda

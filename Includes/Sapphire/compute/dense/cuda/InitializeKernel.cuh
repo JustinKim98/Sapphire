@@ -10,7 +10,7 @@
 #include <cuda_fp16.h>
 #include <curand_kernel.h>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 __global__ void NormalKernel(float* data, float mean, float sd,
                              unsigned int size, int seed);
@@ -19,6 +19,6 @@ __global__ void UniformKernel(float* data, float min, float max,
                               unsigned int size, int seed);
 
 __global__ void ScalarKernel(float* data, float value, unsigned int size);
-}  // namespace Sapphire::Compute::Cuda::Dense
+}  // namespace Sapphire::Compute::Dense::Cuda
 
 #endif

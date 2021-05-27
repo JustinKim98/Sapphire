@@ -6,7 +6,7 @@
 
 #include <Sapphire/compute/dense/cuda/Initialize.cuh>
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void Normal(float* data, float mean, float sd, unsigned int size,
                      int seed)

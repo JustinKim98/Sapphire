@@ -11,7 +11,7 @@
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <cassert>
 
-namespace Sapphire::Compute::Cuda
+namespace Sapphire::Compute::Dense::Cuda
 {
 struct Shape4D
 {

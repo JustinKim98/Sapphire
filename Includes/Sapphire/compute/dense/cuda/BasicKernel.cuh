@@ -9,7 +9,7 @@
 
 #define TILE_DIM 8
 
-namespace Sapphire::Compute::Cuda::Dense
+namespace Sapphire::Compute::Dense::Cuda
 {
 __global__ void AddKernel(float* output, const float* inputA,
                           const float* inputB, unsigned int offset,

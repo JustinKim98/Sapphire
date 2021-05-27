@@ -157,7 +157,7 @@ TensorData::~TensorData()
     }
 }
 
-bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
+void TensorData::CopyTensorData(TensorData dest, const TensorData &src)
 {
     if (src.GetDevice() != dest.GetDevice())
     {
@@ -175,7 +175,6 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
     }
 
     const bool sparse = src.GetType() == Type::Sparse;
-    bool success = true;
     const auto device = src.GetDevice();
 
     const Shape shape = dest.TensorShape;
@@ -196,7 +195,7 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        success &= Compute::Cuda::CudaSetDevice(device.GetID());
+        Compute::Cuda::CudaSetDevice(device.GetID());
 
         if (sparse)
         {
@@ -211,7 +210,6 @@ bool TensorData::CopyTensorData(TensorData dest, const TensorData &src)
         }
     }
 
-    return success;
 }
 
 TensorData TensorData::CreateCopy() const
@@ -299,10 +297,7 @@ void TensorData::m_toGpu(const TensorData &tensorData)
     {
         cudaDeviceSynchronize();
 
-        if (!Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID()))
-        {
-            throw std::runtime_error("m_toHost - illegalDeviceID");
-        }
+        Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID());
 
         const auto colSize = tensorData.Cols();
         const auto totalSize =
@@ -315,11 +310,8 @@ void TensorData::m_toGpu(const TensorData &tensorData)
                 tensorData.DenseMatHost + rowIdx * tensorData.PaddedHostColSize;
             const size_t bytesToCopy = colSize * sizeof(float);
 
-            if (!Compute::Cuda::CopyHostToDevice((void *)cudaPtr,
-                                                 (void *)hostPtr, bytesToCopy))
-            {
-                throw std::runtime_error("m_toGpu - cudaMemCopy failed");
-            }
+            Compute::Cuda::CopyHostToDevice((void *)cudaPtr, (void *)hostPtr,
+                                            bytesToCopy);
         }
         cudaDeviceSynchronize();
     }
@@ -352,11 +344,8 @@ void TensorData::m_toHost(const TensorData &tensorData)
                 tensorData.DenseMatHost + rowIdx * tensorData.PaddedHostColSize;
             const size_t bytesToCopy = colSize * sizeof(float);
 
-            if (!Compute::Cuda::CopyDeviceToHost((void *)hostPtr,
-                                                 (void *)cudaPtr, bytesToCopy))
-            {
-                throw std::runtime_error("m_toGpu - cudaMemCopy failed");
-            }
+            Compute::Cuda::CopyDeviceToHost((void *)hostPtr, (void *)cudaPtr,
+                                            bytesToCopy);
         }
         cudaDeviceSynchronize();
     }
@@ -375,15 +364,13 @@ void TensorData::m_freeHost()
     }
 }
 
-bool TensorData::m_freeCuda()
+void TensorData::m_freeCuda()
 {
-    bool isSuccess = true;
-
-    isSuccess &= Compute::Cuda::CudaSetDevice(m_device.GetID());
+    Compute::Cuda::CudaSetDevice(m_device.GetID());
 
     if (m_type == Type::Sparse && SparseMatCuda)
     {
-        isSuccess &= Compute::Cuda::CudaFree((void *)(SparseMatCuda));
+        Compute::Cuda::CudaFree((void *)(SparseMatCuda));
     }
     else if (DenseMatCuda)
     {
@@ -392,8 +379,6 @@ bool TensorData::m_freeCuda()
                                              m_device.GetID());
         DenseTotalLengthCuda = 0;
     }
-
-    return isSuccess;
 }
 
 void TensorData::m_allocateHost(unsigned int batchSize)
@@ -427,7 +412,8 @@ void TensorData::m_allocateHost(unsigned int batchSize)
         DenseMatHost = static_cast<float *>(
             Util::MemoryManager::GetMemoryHost(totalSize * sizeof(float)));
 
-#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(none) schedule(static) \
+    shared(totalSize, padUnitSize)
         for (size_t i = 0; i < totalSize / padUnitSize; ++i)
             _mm256_store_ps(DenseMatHost + i * padUnitSize,
                             _mm256_set1_ps(0.0f));

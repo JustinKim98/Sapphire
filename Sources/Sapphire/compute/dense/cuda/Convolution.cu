@@ -6,7 +6,7 @@
 
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
 
-namespace Sapphire::Compute::Cuda
+namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void CreateConvDescriptors(CudnnMetaData* metadata,
                                     Shape4D inputShape, Shape4D filterShape,

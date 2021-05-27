@@ -7,15 +7,15 @@
 #ifndef Sapphire_COMPUTE_CALCULATE_LOAD_CUH
 #define Sapphire_COMPUTE_CALCULATE_LOAD_CUH
 
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/sparse/Sparse.hpp>
-#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
-namespace Sapphire::Compute::Cuda::Sparse
+namespace Sapphire::Compute::Sparse::Cuda
 {
-__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
-                          SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
-                          size_t numMatrices, int deviceId);
+__host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
+                          SparseMatrix* cudaB, uint32_t m, size_t numMatrices,
+                          int deviceId);
 
 //! Calculates Gemm by launching LoadDistKernel on the GPU
 //! \param hostOutput : Array of output sparse matrices on the host memory
@@ -24,8 +24,6 @@ __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
 //! \param cudaOutput : Array of output sparse matrices on the device Memory
 //! Required memory is automatically allocated
 //! It's caller's responsibility to free the allocated memory
-//! \param hostA : Array of sparse matrix for operand a on host memory.
-//! Must be dense allocated
 //! \param cudaA : Array of sparse matrix for operand a on device memory.
 //! Must be dense allocated
 //! \param hostB : Array of sparse matrix for operand a on host memory.
@@ -38,17 +36,14 @@ __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* hostA,
 //! \param deviceId : Device to perform the computation
 //! \param copyResultToHost : If true, copies the result to host output.
 __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
-                   SparseMatrix* hostA, SparseMatrix* cudaA,
-                   SparseMatrix* cudaB, uint32_t m, uint32_t n,
-                   size_t numMatrices, int deviceId, bool copyResultToHost);
+                   SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,
+                   uint32_t n, size_t numMatrices, int deviceId,
+                   bool copyResultToHost);
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
                            LoadDistMatrix* loadDist, uint32_t M,
                            uint32_t* nnzArray, size_t numMatrices,
                            int deviceId);
-
-__host__ void AllocateOutput(SparseMatrix* output, uint32_t m, uint32_t n,
-                             size_t numMatrices, const uint32_t* nnzArray);
 
 //! Each block works for each matrix
 //! Assigns number of calculation for each element
@@ -79,11 +74,11 @@ __global__ void LoadDistKernel(LoadDistMatrix* loadDist, SparseMatrix* a,
 //! \param loadDist : Array of load distribution matrices.
 //! \param sparseColIdxBegin : Start index of computation for matrix A.
 //! \param sparseColIdxEnd : Last index + 1 of computation for matrix A.
-__global__ void Calculate(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
-                          LoadDistMatrix* loadDist, uint32_t* idxArray,
-                          float* valArray, uint32_t m, uint32_t numMatrices);
+__global__ void GemmKernel(SparseMatrix* out, SparseMatrix* a, SparseMatrix* b,
+                           uint32_t* idxArray, float* valArray, uint32_t m);
 
-__global__ void StackRowKernel(SparseMatrix* out, uint32_t numMatrices);
+__global__ void StackRowKernel(SparseMatrix* out, uint32_t m,
+                               uint32_t numMatrices);
 
 __global__ void StoreOutput(SparseMatrix* out, const uint32_t* idxArray,
                             const float* valArray, uint32_t M,
@@ -104,8 +99,6 @@ __device__ void Merge(float* tempValArray, uint32_t* tempIdxArray,
 __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
                            float value, uint32_t index, uint32_t arraySize);
 
-__device__ void InitIdxArray(uint32_t* idxArray, uint32_t arraySize);
-
 template <typename T>
 __device__ void Swap(T* a, T* b)
 {
@@ -114,6 +107,6 @@ __device__ void Swap(T* a, T* b)
     *b = temp;
 }
 
-}  // namespace Sapphire::Compute::Cuda::Sparse
+}  // namespace Sapphire::Compute::Sparse::Cuda
 
 #endif  // Sapphire_CALCULATELOAD_CUH

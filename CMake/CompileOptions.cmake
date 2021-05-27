@@ -3,8 +3,10 @@
 #
 
 # Set warnings as errors flag
-option(MOTUTAPU_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
-if (MOTUTAPU_WARNINGS_AS_ERRORS)
+option(SAPPHIRE_WARNINGS_AS_ERRORS "Treat all warnings as errors" ON)
+option(GEN_OLD_ARCH OFF)
+
+if (SAPPHIRE_WARNINGS_AS_ERRORS)
     if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         set(WARN_AS_ERROR_FLAGS "/WX")
     else ()
@@ -42,6 +44,7 @@ set(DEFAULT_INCLUDE_DIRECTORIES)
 #
 
 set(DEFAULT_LIBRARIES)
+set(OMP_NESTED TRUE)
 
 #
 # Compile definitions
@@ -188,38 +191,82 @@ endif ()
 if (USE_CUDA)
     # Turn off optimizations and generate debug information
     if (CMAKE_BUILD_TYPE MATCHES Debug)
-        set(
-                CUDA_NVCC_FLAGS
-                ${CUDA_NVCC_FLAGS};
-                -arch=sm_86
-                -gencode=arch=compute_70,code=sm_70
-                -gencode=arch=compute_75,code=sm_75
-                -gencode=arch=compute_80,code=sm_80
-                -gencode=arch=compute_86,code=sm_86
-                -gencode=arch=compute_86,code=compute_86
-                --default-stream per-thread
-                #--device-c
-                --cudart=shared
-                --cudadevrt=static
-                --std=c++17
-                -g
-                -G
-        )
+        if (GEN_OLD_ARCH MATCHES ON)
+
+            set(
+                    CUDA_NVCC_FLAGS
+                    ${CUDA_NVCC_FLAGS};
+                    -arch=sm_50
+                    -gencode=arch=compute_50,code=sm_50
+                    -gencode=arch=compute_52,code=sm_52
+                    -gencode=arch=compute_53,code=sm_53
+                    -gencode=arch=compute_60,code=sm_60
+                    -gencode=arch=compute_70,code=sm_70
+                    -gencode=arch=compute_75,code=sm_75
+                    -gencode=arch=compute_80,code=sm_80
+                    -gencode=arch=compute_86,code=sm_86
+                    -gencode=arch=compute_86,code=compute_86
+                    --default-stream per-thread
+                    --cudart=shared
+                    --cudadevrt=static
+                    --std=c++17
+                    -g
+                    -G
+            )
+        else ()
+            set(
+                    CUDA_NVCC_FLAGS
+                    ${CUDA_NVCC_FLAGS};
+                    -arch=sm_70
+                    -gencode=arch=compute_70,code=sm_70
+                    -gencode=arch=compute_75,code=sm_75
+                    -gencode=arch=compute_80,code=sm_80
+                    -gencode=arch=compute_86,code=sm_86
+                    -gencode=arch=compute_86,code=compute_86
+                    --default-stream per-thread
+                    --cudart=shared
+                    --cudadevrt=static
+                    --std=c++17
+            )
+        endif ()
     else ()
-        set(
-                CUDA_NVCC_FLAGS
-                ${CUDA_NVCC_FLAGS};
-                -arch=sm_86
-                -gencode=arch=compute_70,code=sm_70
-                -gencode=arch=compute_75,code=sm_75
-                -gencode=arch=compute_80,code=sm_80
-                -gencode=arch=compute_86,code=sm_86
-                -gencode=arch=compute_86,code=compute_86
-                --default-stream per-thread
-                --cudart=shared
-                --cudadevrt=static
-                --std=c++17
-        )
+        if (GEN_OLD_ARCH MATCHES ON)
+            set(
+                    CUDA_NVCC_FLAGS
+                    ${CUDA_NVCC_FLAGS};
+                    -arch=sm_50
+                    -gencode=arch=compute_50,code=sm_50
+                    -gencode=arch=compute_52,code=sm_52
+                    -gencode=arch=compute_53,code=sm_53
+                    -gencode=arch=compute_60,code=sm_60
+                    -gencode=arch=compute_70,code=sm_70
+                    -gencode=arch=compute_75,code=sm_75
+                    -gencode=arch=compute_80,code=sm_80
+                    -gencode=arch=compute_86,code=sm_86
+                    -gencode=arch=compute_86,code=compute_86
+                    --default-stream per-thread
+                    --cudart=shared
+                    --cudadevrt=static
+                    --std=c++17
+                    -g
+                    -G
+            )
+        else ()
+            set(
+                    CUDA_NVCC_FLAGS
+                    ${CUDA_NVCC_FLAGS};
+                    -arch=sm_70
+                    -gencode=arch=compute_70,code=sm_70
+                    -gencode=arch=compute_75,code=sm_75
+                    -gencode=arch=compute_80,code=sm_80
+                    -gencode=arch=compute_86,code=sm_86
+                    -gencode=arch=compute_86,code=compute_86
+                    --default-stream per-thread
+                    --cudart=shared
+                    --cudadevrt=static
+                    --std=c++17
+            )
+        endif ()
 
     endif ()
 endif ()
