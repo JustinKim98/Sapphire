@@ -8,13 +8,14 @@
 [![codecov](https://codecov.io/gh/jwkim98/Motutapu/branch/master/graph/badge.svg?token=TABTFS9WBN)](https://codecov.io/gh/jwkim98/Motutapu)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d81d09c4b414983b5a99110dfb2a183)](https://www.codacy.com/gh/jwkim98/Motutapu/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jwkim98/Motutapu&amp;utm_campaign=Badge_Grade)
 
-Motutapu is a Deep learning framework used in 
-This repository was created for research purpose
+Sapphire is a Flexible and efficient Deep learning framework built for research purpose.
 
 ## Aim of this project
-* Effivient Sparse-Sparse, Dense-Dense matrix multiplication
-* Takes benefit of SIMD (HOST) and SIMT (CUDA)
+* Efficient Sparse-Sparse, Dense-Dense matrix operations on CPU and GPU
+* Designed and optimized for x86-64 processors with AVX instructions and Nvidia GPUs supporting CUDA
 * Support for deep-learning operations
+* Supports flexible modeling and custom operations
+* Intuitive and easy to use interface with C++17 support
 
 ## Contact
 

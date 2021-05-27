@@ -106,7 +106,7 @@ __device__ void InsertHash(float* valueArray, uint32_t* idxArray, uint32_t* nnz,
                 atomicAdd_block(nnz, 1);
             break;
         }
-        key = (key + 1) & (arraySize - 1);
+        key = (key + 1) % (arraySize - 1);
     }
 #endif
 }

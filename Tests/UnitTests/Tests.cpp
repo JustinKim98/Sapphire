@@ -15,7 +15,7 @@
 #include <Sapphire/Tests/Test.hpp>
 #include <iostream>
 #include "doctest.h"
-//#define EnableAllTest
+#define EnableAllTest
 
 namespace Sapphire::Test
 {
@@ -250,8 +250,8 @@ TEST_CASE("Sparse Performance Test")
         size_t count = 0;
         for (size_t i = 0; i < iterations; ++i)
         {
-            float sparsity = 0.1f;
-            while (sparsity <= 1.05f)
+            float sparsity = 0.0f;
+            while (sparsity < 1.0f)
             {
                 performanceData[count] = PerformanceTest(
                     uniform(gen), uniform(gen), uniform(gen), 10, sparsity);
