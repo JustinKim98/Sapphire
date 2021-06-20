@@ -80,6 +80,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX512")
         add_compile_definitions(WITH_AVX512)
     endif ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
+
 endif ()
 
 # MSVC compiler options
@@ -87,6 +89,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
             /MP           # -> build with multiple processes
             /W4           # -> warning level 3
+            /FS
             ${WARN_AS_ERROR_FLAGS}
 
             /wd4819       # -> disable warning: The file contains a character that cannot be represented in the current code page (949) (caused by pybind11)

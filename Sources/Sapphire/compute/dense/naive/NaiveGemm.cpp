@@ -18,22 +18,24 @@ void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
     const auto strideC = M * paddedN;
     const auto strideOut = M * paddedN;
 
-#pragma omp parallel for default(none) schedule(static) collapse(3)           \
+#pragma omp parallel for default(none) schedule(static)            \
     shared(paddedSizeOut, strideOut, M, N, paddedN, K, paddedK, A, B, C, out, \
            strideA, strideB, strideC)
-    for (size_t chunkIdx = 0; chunkIdx < paddedSizeOut / strideOut; ++chunkIdx)
+    for (long chunkIdx = 0; chunkIdx < static_cast<long>(
+                                paddedSizeOut / strideOut); ++chunkIdx)
         for (size_t mIdx = 0; mIdx < M; ++mIdx)
             for (size_t nIdx = 0; nIdx < N; ++nIdx)
             {
-                auto* batchPtrA = A + strideA * chunkIdx;
-                auto* batchPtrB = B + strideB * chunkIdx;
-                auto* batchPtrC = C + strideC * chunkIdx;
-                auto* batchPtrOut = out + strideOut * chunkIdx;
+                auto* batchPtrA = A + static_cast<size_t>(strideA) * chunkIdx;
+                auto* batchPtrB = B + static_cast<size_t>(strideB) * chunkIdx;
+                auto* batchPtrC = C + static_cast<size_t>(strideC) * chunkIdx;
+                auto* batchPtrOut =
+                    out + static_cast<size_t>(strideOut) * chunkIdx;
 
                 float sum = batchPtrC[paddedN * mIdx + nIdx];
                 for (size_t kIdx = 0; kIdx < K; ++kIdx)
                     sum += batchPtrA[paddedK * mIdx + kIdx] *
-                           batchPtrB[paddedN * kIdx + nIdx];
+                        batchPtrB[paddedN * kIdx + nIdx];
 
                 batchPtrOut[paddedN * mIdx + nIdx] = sum;
             }
@@ -66,9 +68,9 @@ void Gemm(float* out, float* A, float* B, float* C, unsigned int M,
                     float sum = batchPtrC[paddedN * mIdx + nIdx];
                     for (size_t kIdx = 0; kIdx < K; ++kIdx)
                         sum += batchPtrA[paddedK * mIdx + kIdx] *
-                               batchPtrB[paddedN * kIdx + nIdx];
+                            batchPtrB[paddedN * kIdx + nIdx];
 
                     batchPtrOut[paddedN * mIdx + nIdx] = sum;
                 }
 }
-}  // namespace Sapphire::Compute::Naive::Dense
+} // namespace Sapphire::Compute::Naive::Dense

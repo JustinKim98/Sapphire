@@ -5,7 +5,9 @@
 // property of any third parties.
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <stdexcept>
+#include <string>
 
 namespace Sapphire::Compute::Cuda
 {

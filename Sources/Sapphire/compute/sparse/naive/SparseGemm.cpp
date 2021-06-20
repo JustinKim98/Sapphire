@@ -41,9 +41,13 @@ void Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer, uint32_t m,
     }
 }
 
-void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,
-          size_t endIdx)
+void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer,
+          const size_t beginIdx,
+          const size_t endIdx)
 {
+    uint32_t indices[MAX_NNZ_PER_ROW_HOST + 1];
+    float values[MAX_NNZ_PER_ROW_HOST + 1];
+
     if (beginIdx >= endIdx || endIdx == beginIdx + 1)
         return;
 
@@ -52,8 +56,6 @@ void Sort(uint32_t* tempIdxBuffer, float* tempValueBuffer, size_t beginIdx,
     Sort(tempIdxBuffer, tempValueBuffer, midIdx, endIdx);
 
     size_t left = 0, right = 0;
-    uint32_t indices[endIdx - beginIdx];
-    float values[endIdx - beginIdx];
 
     for (size_t vectorIdx = 0; vectorIdx < endIdx - beginIdx; ++vectorIdx)
     {
@@ -111,7 +113,8 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
 #pragma omp parallel for default(none)                                      \
     shared(numMatrices, m, n, a, b, output, tempIdxBuffer, tempValueBuffer) \
         schedule(static)
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+    for (long matrixIdx = 0; matrixIdx < static_cast<long>(numMatrices); ++
+         matrixIdx)
     {
         auto* curMatrixA = a + matrixIdx;
         auto* curMatrixB = b + matrixIdx;
@@ -180,5 +183,4 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
     delete[] tempIdxBuffer;
     delete[] tempValueBuffer;
 }
-
-}  // namespace Sapphire::Compute::Sparse::Naive
+} // namespace Sapphire::Compute::Sparse::Naive

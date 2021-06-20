@@ -19,8 +19,8 @@ void Normal(float* data, float mean, float sd, const Shape& shape,
     std::normal_distribution<float> dist(mean, sd);
 
 #pragma omp parallel for default(none) shared( \
-    totalSize, cols, paddedCols, data, dist, gen) schedule(static) collapse(2)
-    for (unsigned int i = 0; i < totalSize / cols; ++i)
+    totalSize, cols, paddedCols, data, dist, gen) schedule(static)
+    for (long i = 0; i < static_cast<long>(totalSize / cols); ++i)
         for (size_t j = 0; j < cols; ++j)
             data[paddedCols * i + j] = dist(gen);
 }
@@ -35,8 +35,8 @@ void Uniform(float* data, float min, float max, const Shape& shape,
     std::uniform_real_distribution<float> dist(min, max);
 
 #pragma omp parallel for default(none) shared( \
-    totalSize, cols, paddedCols, data, dist, gen) schedule(static) collapse(2)
-    for (unsigned int i = 0; i < totalSize / cols; ++i)
+    totalSize, cols, paddedCols, data, dist, gen) schedule(static)
+    for (long i = 0; i < static_cast<long>(totalSize / cols); ++i)
         for (size_t j = 0; j < cols; ++j)
             data[paddedCols * i + j] = dist(gen);
 }
@@ -48,9 +48,9 @@ void Scalar(float* data, float value, const Shape& shape, size_t paddedCols,
     const auto cols = shape.At(shape.Dim() - 1);
 
 #pragma omp parallel for default(none) shared( \
-    totalSize, cols, paddedCols, data, value) schedule(static) collapse(2)
-    for (unsigned int i = 0; i < totalSize / cols; ++i)
+    totalSize, cols, paddedCols, data, value) schedule(static)
+    for (long i = 0; i < static_cast<long>(totalSize / cols); ++i)
         for (size_t j = 0; j < cols; ++j)
             data[paddedCols * i + j] = value;
 }
-}  // namespace Sapphire::Compute::Dense::Naive
+} // namespace Sapphire::Compute::Dense::Naive
