@@ -547,7 +547,8 @@ void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
 
 #pragma omp parallel for default(none) \
     shared(numMatrices, m, n, paddedN, src, dstPtr) schedule(static)
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; matrixIdx++)
+    for (long matrixIdx = 0; matrixIdx < static_cast<long>(numMatrices);
+         matrixIdx++)
     {
         uint32_t nnz = 0;
         for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
@@ -593,16 +594,17 @@ void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
                                       uint32_t m, uint32_t n, uint32_t paddedN,
                                       uint32_t numMatrices)
 {
-#pragma omp parallel for default(none) shared(dst, numMatrices, m, n, paddedN) \
-    collapse(3)
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
-        for (uint32_t rowIdx = 0; rowIdx < m; ++rowIdx)
-            for (uint32_t colIdx = 0; colIdx < n; ++colIdx)
+#pragma omp parallel for default(none) shared(dst, numMatrices, m, n, paddedN)
+    for (long matrixIdx = 0; matrixIdx < static_cast<long>(numMatrices); ++
+         matrixIdx)
+        for (long rowIdx = 0; rowIdx < static_cast<long>(m); ++rowIdx)
+            for (long colIdx = 0; colIdx < static_cast<long>(n); ++colIdx)
                 dst[matrixIdx * m * paddedN + rowIdx * paddedN + colIdx] = 0.0f;
 
 #pragma omp parallel for default(none) \
     shared(src, dst, numMatrices, m, n, paddedN)
-    for (uint32_t matrixIdx = 0; matrixIdx < numMatrices; ++matrixIdx)
+    for (long matrixIdx = 0; matrixIdx < static_cast<long>(numMatrices); ++
+         matrixIdx)
     {
         const auto* rows = src[matrixIdx].ROW;
         const auto* cols = src[matrixIdx].COL;
@@ -623,5 +625,4 @@ void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
         }
     }
 }
-
-}  // namespace Sapphire::Compute
+} // namespace Sapphire::Compute

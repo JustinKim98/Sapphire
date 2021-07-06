@@ -7,6 +7,7 @@
 #ifndef SAPPHIRE_UTIL_SPINLOCK_HPP
 #define SAPPHIRE_UTIL_SPINLOCK_HPP
 #include <atomic>
+#include <emmintrin.h>
 namespace Sapphire::Util
 {
 class SpinLock

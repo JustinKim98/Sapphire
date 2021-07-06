@@ -13,12 +13,12 @@
 namespace Sapphire::Util
 {
 std::unordered_multimap<size_t, MemoryChunk>
-    MemoryManager::m_hostFreeMemoryPool;
+MemoryManager::m_hostFreeMemoryPool;
 std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_hostBusyMemoryPool;
 std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, pair_hash_free>
-    MemoryManager::m_cudaFreeMemoryPool;
+MemoryManager::m_cudaFreeMemoryPool;
 std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, pair_hash_busy>
-    MemoryManager::m_cudaBusyMemoryPool;
+MemoryManager::m_cudaBusyMemoryPool;
 
 std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
@@ -77,10 +77,13 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
         return dataPtr;
     }
 
+#ifdef _MSC_VER
+    dataPtr = _aligned_malloc(allocationSize, 32);
+#else
     dataPtr = aligned_alloc(32, allocationSize);
+#endif
     m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
                                  MemoryChunk(allocationSize, dataPtr, 1));
-
     return dataPtr;
 }
 
@@ -133,9 +136,9 @@ void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
 
     if (chunk.RefCount == 0)
     {
-        m_cudaBusyMemoryPool.erase(itr);
         m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.ByteSize),
                                      chunk);
+        m_cudaBusyMemoryPool.erase(itr);
     }
 }
 
@@ -157,8 +160,8 @@ void MemoryManager::DeReferenceHost(void* ptr)
 
     if (chunk.RefCount == 0)
     {
-        m_hostBusyMemoryPool.erase(itr);
         m_hostFreeMemoryPool.emplace(chunk.ByteSize, chunk);
+        m_hostBusyMemoryPool.erase(itr);
     }
 }
 
@@ -180,7 +183,11 @@ void MemoryManager::ClearUnusedHostMemoryPool()
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
+#ifdef _MSC_VER
+        _aligned_free(memoryChunk.Data);
+ #else
         free(memoryChunk.Data);
+ #endif
     }
 
     m_hostFreeMemoryPool.clear();
@@ -206,7 +213,7 @@ void MemoryManager::ClearCudaMemoryPool()
     m_cudaBusyMemoryPool.clear();
 
     assert(m_cudaBusyMemoryPool.empty() && m_cudaFreeMemoryPool.empty() &&
-           "CudaPool Not empty!");
+        "CudaPool Not empty!");
 
     cudaDeviceSynchronize();
 }
@@ -217,12 +224,20 @@ void MemoryManager::ClearHostMemoryPool()
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
+#ifdef _MSC_VER
+        _aligned_free(memoryChunk.Data);
+#else
         free(memoryChunk.Data);
+#endif
     }
 
     for (auto& [key, memoryChunk] : m_hostBusyMemoryPool)
     {
+#ifdef _MSC_VER
+        _aligned_free(memoryChunk.Data);
+#else
         free(memoryChunk.Data);
+#endif
     }
 
     m_hostFreeMemoryPool.clear();
@@ -314,5 +329,4 @@ size_t MemoryManager::GetFreeByteSizeHost()
     }
     return size;
 }
-
-}  // namespace Sapphire::Util
+} // namespace Sapphire::Util

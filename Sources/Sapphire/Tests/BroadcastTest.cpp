@@ -38,7 +38,7 @@ void BroadcastWithOneDimension()
         const Shape shapeOut({ M, M, N });
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Device cuda(0, "device0");
         const Device host("host");
@@ -59,10 +59,10 @@ void BroadcastWithOneDimension()
 
         Compute::Gemm(Out, A, B, C);
 
-        float cpuGemmResult[Out.DenseTotalLengthHost];
+        float* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];
         }
@@ -78,10 +78,10 @@ void BroadcastWithOneDimension()
 
         Out.SendTo(host);
 
-        std::atomic<float> largestError = 0.0f;
+        std::atomic largestError = 0.0f;
 
         //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
@@ -95,6 +95,7 @@ void BroadcastWithOneDimension()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cpuGemmResult;
     }
 
     Util::MemoryManager::ClearCudaMemoryPool();
@@ -106,7 +107,7 @@ void BroadcastWithMissingDimension()
     for (int j = 0; j < 1; j++)
     {
         std::random_device rd;
-        std::mt19937 gen(rd());  // Standard mersenne_twister_engine seeded with
+        std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with
         std::uniform_int_distribution<> distrib(1, 16);
 
         const unsigned int M = distrib(gen);
@@ -120,7 +121,7 @@ void BroadcastWithMissingDimension()
         const Shape shapeOut({ M, M, N });
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Device cuda(0, "device0");
         const Device host("host");
@@ -141,10 +142,10 @@ void BroadcastWithMissingDimension()
 
         Compute::Gemm(Out, A, B, C);
 
-        float cpuGemmResult[Out.DenseTotalLengthHost];
+        auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];
         }
@@ -162,7 +163,6 @@ void BroadcastWithMissingDimension()
 
         std::atomic<float> largestError = 0.0f;
 
-        //#pragma omp parallel for default(shared) schedule(static)
         for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
         {
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
@@ -177,6 +177,7 @@ void BroadcastWithMissingDimension()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cpuGemmResult;
     }
 
     Util::MemoryManager::ClearCudaMemoryPool();
@@ -202,7 +203,7 @@ void BroadcastMixed()
         const Shape shapeOut({ N, M, M, N });
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Device cuda(0, "device0");
         const Device host("host");
@@ -222,10 +223,10 @@ void BroadcastMixed()
 
         Compute::Gemm(Out, A, B, C);
 
-        float cpuGemmResult[Out.DenseTotalLengthHost];
+        auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];
         }
@@ -254,9 +255,10 @@ void BroadcastMixed()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cpuGemmResult;
     }
 
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
 }
-}  // namespace Sapphire::Test
+} // namespace Sapphire::Test

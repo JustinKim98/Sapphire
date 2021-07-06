@@ -36,7 +36,7 @@ void TestTranspose(bool printResult)
         const Shape shapeOut({ M, N });
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
-                  << std::endl;
+            << std::endl;
 
         const Device cuda(0, "device0");
         const Device host("host");
@@ -54,10 +54,11 @@ void TestTranspose(bool printResult)
         Compute::Scale(out, out, 2);
         Compute::Transpose(transposedOut, out);
 
-        float cpuResult[transposedOut.DenseTotalLengthHost];
+        auto* cpuResult = new float[transposedOut.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < transposedOut.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(transposedOut.
+                             DenseTotalLengthHost); ++i)
         {
             cpuResult[i] = transposedOut.DenseMatHost[i];
         }
@@ -119,17 +120,18 @@ void TestTranspose(bool printResult)
                 for (size_t colIdx = 0; colIdx < transposedOut.Cols(); ++colIdx)
                 {
                     std::cout << transposedOut.DenseMatHost
-                                     [offsetTransposed +
-                                      rowIdx * transposedOut.PaddedHostColSize +
-                                      colIdx]
-                              << " ";
+                        [offsetTransposed +
+                         rowIdx * transposedOut.PaddedHostColSize +
+                         colIdx]
+                        << " ";
                 }
                 std::cout << std::endl;
             }
         }
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < transposedOut.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(transposedOut.
+                             DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cpuResult[i] - transposedOut.DenseMatHost[i]);
             if (largestError < error)
@@ -139,10 +141,12 @@ void TestTranspose(bool printResult)
             if (error > 1.0f)
                 std::cout << i / (transposedOut.Rows() *
                                   transposedOut.PaddedHostColSize)
-                          << std::endl;
+                    << std::endl;
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+
+        delete[] cpuResult;
     }
 
     Util::MemoryManager::ClearCudaMemoryPool();
@@ -166,7 +170,7 @@ void TestBasics1()
         const Shape shapeOut({ M, N });
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
-                  << std::endl;
+            << std::endl;
 
         const Device cuda(0, "device0");
         const Device host("host");
@@ -183,10 +187,10 @@ void TestBasics1()
         Compute::Sub(Out, Out, A);
         Compute::tanh(Out, Out);
 
-        float cpuGemmResult[Out.DenseTotalLengthHost];
+        auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];
         }
@@ -207,7 +211,7 @@ void TestBasics1()
         std::atomic<float> largestError = 0.0f;
 
         //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
@@ -221,6 +225,8 @@ void TestBasics1()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+
+        delete[] cpuGemmResult;
     }
 
     Util::MemoryManager::ClearCudaMemoryPool();
@@ -232,21 +238,21 @@ void TestBasics2()
     for (int j = 0; j < 5; j++)
     {
         std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
+            rd; // Will be used to obtain a seed for the random number engine
         std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+            rd()); // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(8, 16);
 
-        const unsigned int M = 16;  // distrib(gen);
-        const unsigned int N = 7;   // distrib(gen);
-        const auto batchSize = 3;   // distrib(gen) % 3 + 1;
+        const unsigned int M = 16; // distrib(gen);
+        const unsigned int N = 7;  // distrib(gen);
+        const auto batchSize = 3;  // distrib(gen) % 3 + 1;
 
         //        const unsigned int M = distrib(gen);
         //        const unsigned int N = distrib(gen);
         //        const auto batchSize = distrib(gen) % 5 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
-                  << std::endl;
+            << std::endl;
 
         const Shape shapeA({ M, N });
         const Shape shapeB({ M, N });
@@ -273,10 +279,10 @@ void TestBasics2()
         B.SendTo(host);
         out.SendTo(host);
 
-        float cudaGemmResult[out.DenseTotalLengthHost];
+        auto* cudaGemmResult = new float[out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             cudaGemmResult[i] = out.DenseMatHost[i];
         }
@@ -291,7 +297,7 @@ void TestBasics2()
         std::atomic<float> largestError = 0.0f;
 
         //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
@@ -305,6 +311,7 @@ void TestBasics2()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cudaGemmResult;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
@@ -323,7 +330,7 @@ void TestAddBroadcast1()
         const auto batchSize = distrib(gen) % 5 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
-                  << std::endl;
+            << std::endl;
 
         const Shape shapeA({ M, M, N });
         const Shape shapeB({ 1, M, N });
@@ -345,7 +352,7 @@ void TestAddBroadcast1()
         const auto batchSize2 = distrib(gen) % 5 + 1;
 
         std::cout << "M2 : " << M2 << " N2: " << N2
-                  << " batchSize : " << batchSize2 << std::endl;
+            << " batchSize : " << batchSize2 << std::endl;
 
         TensorUtil::TensorData A2(shapeA, Type::Dense, cuda, batchSize2);
         TensorUtil::TensorData B2(shapeB, Type::Dense, cuda, batchSize2);
@@ -371,12 +378,11 @@ void TestAddBroadcast1()
         B.SendTo(host);
         out.SendTo(host);
 
-        float cudaGemmResult[out.DenseTotalLengthHost];
-
-        float cudaGemmResult2[out2.DenseTotalLengthHost];
+        auto* cudaGemmResult1 = new float[out.DenseTotalLengthHost];
+        auto* cudaGemmResult2 = new float[out2.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out2.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out2.DenseTotalLengthHost); ++i)
         {
             cudaGemmResult2[i] = out2.DenseMatHost[i];
         }
@@ -387,9 +393,9 @@ void TestAddBroadcast1()
         Compute::Add(out2, B2, out2);
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult[i] = out.DenseMatHost[i];
+            cudaGemmResult1[i] = out.DenseMatHost[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -397,12 +403,12 @@ void TestAddBroadcast1()
         Compute::Add(out, A, out);
         Compute::Add(out, B, out);
 
-        std::atomic<float> largestError = 0.0f;
+        std::atomic largestError = 0.0f;
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult1[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
             //            std::cout << "cuda : " << cudaGemmResult[i]
@@ -414,10 +420,8 @@ void TestAddBroadcast1()
 
         std::cout << "Largest error : " << largestError << std::endl;
 
-        std::atomic<float> largestError2 = 0.0f;
-
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out2.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out2.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cudaGemmResult2[i] - out2.DenseMatHost[i]);
             if (largestError < error)
@@ -431,6 +435,9 @@ void TestAddBroadcast1()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+
+        delete[] cudaGemmResult1;
+        delete[] cudaGemmResult2;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
@@ -444,12 +451,12 @@ void TestAddBroadcast2()
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> distrib(1, 32);
 
-        const unsigned int M = 8;   // distrib(gen);
-        const unsigned int N = 24;  // distrib(gen);
-        const auto batchSize = 3;   // distrib(gen) % 10 + 1;
+        const unsigned int M = 8;  // distrib(gen);
+        const unsigned int N = 24; // distrib(gen);
+        const auto batchSize = 3;  // distrib(gen) % 10 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
-                  << std::endl;
+            << std::endl;
 
         const Shape shapeA({ 1, M, N });
         const Shape shapeB({ N, M, N });
@@ -473,10 +480,10 @@ void TestAddBroadcast2()
         B.SendTo(host);
         out.SendTo(host);
 
-        float cudaGemmResult[out.DenseTotalLengthHost];
+        auto* cudaGemmResult = new float[out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             cudaGemmResult[i] = out.DenseMatHost[i];
         }
@@ -504,9 +511,9 @@ void TestAddBroadcast2()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cudaGemmResult;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
 }
-
-}  // namespace Sapphire::Test
+} // namespace Sapphire::Test

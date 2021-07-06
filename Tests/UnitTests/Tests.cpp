@@ -215,23 +215,23 @@ TEST_CASE("Sparse Performance Test")
     SUBCASE("Matrix conversion test")
     {
         std::cout << "Testing conversion ..." << std::endl;
-        SparseMatrixConversionTest(100, 100, 10, 0.1, false);
+        SparseMatrixConversionTest(100, 100, 10, 0.1f, false);
         std::cout << " Done" << std::endl;
     }
 
     SUBCASE("Correctness test (Cuda)")
     {
         std::cout << "Testing correctness (Cuda) ..." << std::endl;
-        SparseTestCorrectnessCuda(1000, 1000, 50, 3, 0.5, false);
-        SparseTestCorrectnessCuda(40, 50, 500, 3, 0.5, false);
+        SparseTestCorrectnessCuda(1000, 1000, 50, 3, 0.5f, false);
+        SparseTestCorrectnessCuda(40, 50, 500, 3, 0.5f, false);
         std::cout << " Done" << std::endl;
     }
 
     SUBCASE("Correctness test (Host)")
     {
         std::cout << "Testing correctness (Host) ..." << std::endl;
-        SparseTestCorrectnessHost(5, 5, 50, 3, 0.9, false);
-        SparseTestCorrectnessHost(500, 500, 500, 3, 0.5, false);
+        SparseTestCorrectnessHost(5, 5, 50, 3, 0.9f, false);
+        SparseTestCorrectnessHost(500, 500, 500, 3, 0.5f, false);
         std::cout << " Done" << std::endl;
     }
 

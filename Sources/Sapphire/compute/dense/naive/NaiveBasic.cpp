@@ -162,7 +162,7 @@ void ReLUDerivative(float* output, const float* input, unsigned int totalSize)
 {
     for (unsigned int i = 0; i < totalSize; i++)
     {
-        output[i] = input[i] > 0 ? 1 : 0;
+        output[i] = input[i] > 0.0f ? 1.0f : 0.0f;
     }
 }
 

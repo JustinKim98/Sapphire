@@ -18,13 +18,13 @@
 
 namespace Sapphire::Test
 {
-void PrintSparseMatrix(SparseMatrix *sparseMatrix, bool print,
+void PrintSparseMatrix(SparseMatrix* sparseMatrix, bool print,
                        bool printVerbose)
 {
     if (print)
         std::cout << "# rows : " << sparseMatrix->M
-                  << " # columns : " << sparseMatrix->N
-                  << " # nnz : " << sparseMatrix->NNZ << std::endl;
+            << " # columns : " << sparseMatrix->N
+            << " # nnz : " << sparseMatrix->NNZ << std::endl;
     for (uint32_t rowIdx = 0; rowIdx < sparseMatrix->M; ++rowIdx)
     {
         const auto sparseColIdxBegin = sparseMatrix->ROW[rowIdx];
@@ -40,22 +40,22 @@ void PrintSparseMatrix(SparseMatrix *sparseMatrix, bool print,
 
             if (printVerbose)
                 std::cout << "rowIdx : " << rowIdx
-                          << " rowOffset : " << sparseMatrix->ROW[rowIdx]
-                          << " colIdx : " << colIdx << " value : " << value
-                          << std::endl;
+                    << " rowOffset : " << sparseMatrix->ROW[rowIdx]
+                    << " colIdx : " << colIdx << " value : " << value
+                    << std::endl;
         }
     }
     CHECK_EQ(sparseMatrix->NNZ, sparseMatrix->ROW[sparseMatrix->M]);
     if (printVerbose)
         std::cout << "rowOffset : " << sparseMatrix->ROW[sparseMatrix->M]
-                  << std::endl;
+            << std::endl;
 }
 
-void PrintLoadDistMatrix(LoadDistMatrix *loadDistMatrix, bool printVerbose)
+void PrintLoadDistMatrix(LoadDistMatrix* loadDistMatrix, bool printVerbose)
 {
     std::cout << "# rows : " << loadDistMatrix->M
-              << " # columns : " << loadDistMatrix->N
-              << " # nnz : " << loadDistMatrix->NNZ << std::endl;
+        << " # columns : " << loadDistMatrix->N
+        << " # nnz : " << loadDistMatrix->NNZ << std::endl;
     for (uint32_t rowIdx = 0; rowIdx < loadDistMatrix->M; ++rowIdx)
     {
         const auto sparseColIdxBegin = loadDistMatrix->ROW[rowIdx];
@@ -71,16 +71,16 @@ void PrintLoadDistMatrix(LoadDistMatrix *loadDistMatrix, bool printVerbose)
             colIdxPrev = colIdx;
             if (printVerbose)
                 std::cout << "rowIdx : " << rowIdx
-                          << " rowOffset : " << loadDistMatrix->ROW[rowIdx]
-                          << " colIdx : " << colIdx << " load : " << value
-                          << std::endl;
+                    << " rowOffset : " << loadDistMatrix->ROW[rowIdx]
+                    << " colIdx : " << colIdx << " load : " << value
+                    << std::endl;
         }
     }
 
     CHECK_EQ(loadDistMatrix->NNZ, loadDistMatrix->ROW[loadDistMatrix->M]);
     if (printVerbose)
         std::cout << "rowOffset : " << loadDistMatrix->ROW[loadDistMatrix->M]
-                  << std::endl;
+            << std::endl;
 }
 
 void LoadDistTest(bool printVerbose)
@@ -90,8 +90,8 @@ void LoadDistTest(bool printVerbose)
     std::uniform_int_distribution<uint32_t> uniform(1, 50);
     std::normal_distribution<float> normal(0, 100);
 
-    SparseMatrix *hostA, *hostB;
-    SparseMatrix *cudaA, *cudaB;
+    SparseMatrix* hostA,* hostB;
+    SparseMatrix* cudaA,* cudaB;
     const uint32_t numMatrices = uniform(gen) % 3 + 1;
     const auto m = uniform(gen);
     const auto n = uniform(gen);
@@ -106,7 +106,7 @@ void LoadDistTest(bool printVerbose)
     Compute::DeepCopyHostToDevice(cudaA, hostA, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaB, hostB, numMatrices, 0);
 
-    LoadDistMatrix *loadDist;
+    LoadDistMatrix* loadDist;
     Compute::DeepAllocateLoadDistHost(&loadDist, hostA, numMatrices);
     Compute::Sparse::Cuda::GetLoadDist(loadDist, cudaA, cudaB, m, numMatrices,
                                        0);
@@ -124,8 +124,8 @@ void LoadDistTestFixed(bool printVerbose)
 {
     std::random_device rd;
 
-    SparseMatrix *hostA, *hostB;
-    SparseMatrix *cudaA, *cudaB;
+    SparseMatrix* hostA,* hostB;
+    SparseMatrix* cudaA,* cudaB;
     const uint32_t numMatrices = 1;
     const auto m = 5;
     const auto n = 5;
@@ -140,7 +140,7 @@ void LoadDistTestFixed(bool printVerbose)
     Compute::DeepCopyHostToDevice(cudaA, hostA, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaB, hostB, numMatrices, 0);
 
-    LoadDistMatrix *loadDist;
+    LoadDistMatrix* loadDist;
     Compute::DeepAllocateLoadDistHost(&loadDist, hostA, numMatrices);
     Compute::Sparse::Cuda::GetLoadDist(loadDist, cudaA, cudaB, m, numMatrices,
                                        0);
@@ -158,8 +158,8 @@ void LoadDistTestFixed(bool printVerbose)
 long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
                           size_t numMatrices, bool print, bool printVerbose)
 {
-    SparseMatrix *A, *B, *C = nullptr;
-    SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
+    SparseMatrix* A,* B,* C = nullptr;
+    SparseMatrix* cudaA,* cudaB,* cudaC = nullptr;
 
     GenerateFixedSparseArray(&A, m, k, numMatrices);
     GenerateFixedSparseArray(&B, k, n, numMatrices);
@@ -188,9 +188,10 @@ long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();
 
-    auto elapsedTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
+    const long elapsedTime =
+        static_cast<long>
+        (std::chrono::duration_cast<std::chrono::microseconds>(end - start)
+            .count());
     return elapsedTime;
 }
 
@@ -202,8 +203,8 @@ long SparseGemmTestComplex(uint32_t m, uint32_t n, uint32_t k,
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> uniform(0, 30);
 
-    SparseMatrix *A, *B, *C = nullptr;
-    SparseMatrix *cudaA, *cudaB, *cudaC = nullptr;
+    SparseMatrix* A,* B,* C = nullptr;
+    SparseMatrix* cudaA,* cudaB,* cudaC = nullptr;
     const uint32_t numMatrices = uniform(gen) % 50 + minimumNumMatrices;
 
     GenerateRandomSparseArray(&A, m, k, numMatrices);
@@ -233,34 +234,35 @@ long SparseGemmTestComplex(uint32_t m, uint32_t n, uint32_t k,
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();
 
-    auto elapsedTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(end - start)
-            .count();
+    const auto elapsedTime =
+        static_cast<long>(std::chrono::duration_cast<std::chrono::microseconds>(
+                end - start)
+            .count());
     return elapsedTime;
 }
 
 void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
                                float sparsity, bool printResult)
 {
-    size_t paddedK = k;
-    size_t paddedN = n;
-    auto *hostDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    const size_t paddedK = k;
+    const size_t paddedN = n;
+    auto* hostDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
         sizeof(float) * m * paddedK * numMatrices));
-    auto *hostDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
         sizeof(float) * k * paddedN * numMatrices));
-    auto *hostDenseOut =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseOut =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
-    auto *hostSparseConverted =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostSparseConverted =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
-    auto *cudaDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
         sizeof(float) * m * k * numMatrices, 0));
-    auto *cudaDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
         sizeof(float) * k * n * numMatrices, 0));
-    auto *cudaDenseOut =
-        static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseOut =
+        static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
@@ -268,7 +270,7 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
 
 #pragma omp parallel for default(none) \
     shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
-    for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
+    for (long i = 0; i < static_cast<long>(m * paddedN * numMatrices); ++i)
         hostDenseOut[i] = 0.0f;
     //! Copy data to device
     Compute::Cuda::CopyHostToDevice(cudaDenseA, hostDenseA,
@@ -278,10 +280,10 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
     Compute::Cuda::CopyHostToDevice(cudaDenseOut, hostDenseOut,
                                     sizeof(float) * m * n * numMatrices);
 
-    SparseMatrix *hostSparseA = nullptr, *hostSparseB = nullptr,
-                 *hostSparseOut = nullptr;
-    SparseMatrix *cudaSparseA = nullptr, *cudaSparseB = nullptr,
-                 *cudaSparseOut = nullptr;
+    SparseMatrix* hostSparseA = nullptr,* hostSparseB = nullptr,
+                * hostSparseOut = nullptr;
+    SparseMatrix* cudaSparseA = nullptr,* cudaSparseB = nullptr,
+                * cudaSparseOut = nullptr;
 
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
                                                paddedK, numMatrices);
@@ -322,9 +324,9 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
 
                 if (printResult)
                     std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
-                              << " col : " << colIdx
-                              << " dense : " << denseResult
-                              << " sparse : " << sparseResult << std::endl;
+                        << " col : " << colIdx
+                        << " dense : " << denseResult
+                        << " sparse : " << sparseResult << std::endl;
             }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
@@ -333,17 +335,17 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
 void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
                                float sparsity, bool printResult)
 {
-    size_t paddedK = k;
-    size_t paddedN = n;
-    auto *hostDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    const size_t paddedK = k;
+    const size_t paddedN = n;
+    auto* hostDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
         sizeof(float) * m * paddedK * numMatrices));
-    auto *hostDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
         sizeof(float) * k * paddedN * numMatrices));
-    auto *hostDenseOut =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseOut =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
-    auto *hostSparseConverted =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostSparseConverted =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
@@ -351,11 +353,11 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
 
 #pragma omp parallel for default(none) \
     shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
-    for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
+    for (long i = 0; i < static_cast<long>(m * paddedN * numMatrices); ++i)
         hostDenseOut[i] = 0.0f;
 
-    SparseMatrix *hostSparseA = nullptr, *hostSparseB = nullptr,
-                 *hostSparseOut = nullptr;
+    SparseMatrix* hostSparseA = nullptr,* hostSparseB = nullptr,
+                * hostSparseOut = nullptr;
 
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
                                                paddedK, numMatrices);
@@ -385,9 +387,9 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
 
                 if (printResult)
                     std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
-                              << " col : " << colIdx
-                              << " dense : " << denseResult
-                              << " sparse : " << sparseResult << std::endl;
+                        << " col : " << colIdx
+                        << " dense : " << denseResult
+                        << " sparse : " << sparseResult << std::endl;
             }
     Util::MemoryManager::ClearHostMemoryPool();
 }
@@ -395,19 +397,19 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
 void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
                                 float sparsity, bool printResult)
 {
-    size_t paddedN = n;
-    auto *hostDenseOrigin =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    const size_t paddedN = n;
+    auto* hostDenseOrigin =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
-    auto *hostSparseConverted =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostSparseConverted =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
     InitIntegerDenseMatrix(hostDenseOrigin, m, n, paddedN, numMatrices,
                            sparsity);
 
-    SparseMatrix *convertedSparse;
+    SparseMatrix* convertedSparse;
     Compute::CreateSparseMatrixWithDenseMatrix(
         &convertedSparse, hostDenseOrigin, m, n, paddedN, numMatrices);
 
@@ -427,9 +429,9 @@ void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
 
                 if (printResult)
                     std::cout << "matrix : " << matrixIdx << " row : " << rowIdx
-                              << " col : " << colIdx
-                              << " dense : " << denseResult
-                              << " sparse : " << sparseResult << std::endl;
+                        << " col : " << colIdx
+                        << " dense : " << denseResult
+                        << " sparse : " << sparseResult << std::endl;
             }
 
     Util::MemoryManager::ClearHostMemoryPool();
@@ -438,22 +440,22 @@ void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
 PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
                                 size_t numMatrices, float sparsity)
 {
-    size_t paddedK = k;
-    size_t paddedN = n;
-    auto *hostDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    const size_t paddedK = k;
+    const size_t paddedN = n;
+    auto* hostDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
         sizeof(float) * m * paddedK * numMatrices));
-    auto *hostDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
         sizeof(float) * k * paddedN * numMatrices));
-    auto *hostDenseOut =
-        static_cast<float *>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseOut =
+        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
-    auto *cudaDenseA = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
         sizeof(float) * m * k * numMatrices, 0));
-    auto *cudaDenseB = static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
         sizeof(float) * k * n * numMatrices, 0));
-    auto *cudaDenseOut =
-        static_cast<float *>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseOut =
+        static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
@@ -461,7 +463,7 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
 
 #pragma omp parallel for default(none) \
     shared(hostDenseOut, m, paddedN, numMatrices) schedule(static)
-    for (size_t i = 0; i < m * paddedN * numMatrices; ++i)
+    for (long i = 0; i < static_cast<long>(m * paddedN * numMatrices); ++i)
         hostDenseOut[i] = 0.0f;
     //! Copy data to device
     Compute::Cuda::CopyHostToDevice(cudaDenseA, hostDenseA,
@@ -471,10 +473,10 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
     Compute::Cuda::CopyHostToDevice(cudaDenseOut, hostDenseOut,
                                     sizeof(float) * m * n * numMatrices);
 
-    SparseMatrix *hostSparseA = nullptr, *hostSparseB = nullptr,
-                 *hostSparseOut = nullptr;
-    SparseMatrix *cudaSparseA = nullptr, *cudaSparseB = nullptr,
-                 *cudaSparseOut = nullptr;
+    SparseMatrix* hostSparseA = nullptr,* hostSparseB = nullptr,
+                * hostSparseOut = nullptr;
+    SparseMatrix* cudaSparseA = nullptr,* cudaSparseB = nullptr,
+                * cudaSparseOut = nullptr;
 
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseA, hostDenseA, m, k,
                                                paddedK, numMatrices);
@@ -487,56 +489,56 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
     Compute::DeepCopyHostToDevice(cudaSparseA, hostSparseA, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaSparseB, hostSparseB, numMatrices, 0);
 
-    auto naiveDenseBegin = std::chrono::system_clock::now();
+    const auto naiveDenseBegin = std::chrono::system_clock::now();
     Compute::Dense::Naive::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
                                      hostDenseA, hostDenseB, hostDenseOut, m, n,
                                      paddedN, k, paddedK);
-    auto naiveDenseEnd = std::chrono::system_clock::now();
-    auto naiveDenseElapsedTime =
+    const auto naiveDenseEnd = std::chrono::system_clock::now();
+    const auto naiveDenseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(naiveDenseEnd -
-                                                              naiveDenseBegin)
-            .count();
+            naiveDenseBegin)
+        .count();
 
-    auto cudaDenseBegin = std::chrono::system_clock::now();
+    const auto cudaDenseBegin = std::chrono::system_clock::now();
     cublasHandle_t handle;
     cublasCreate(&handle);
     Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
                                cudaDenseB, cudaDenseOut, m, n, k, &handle);
     cublasDestroy(handle);
-    auto cudaDenseEnd = std::chrono::system_clock::now();
+    const auto cudaDenseEnd = std::chrono::system_clock::now();
 
-    auto naiveSparseBegin = std::chrono::system_clock::now();
+    const auto naiveSparseBegin = std::chrono::system_clock::now();
     Compute::Sparse::Naive::Gemm(&hostSparseOut, hostSparseA, hostSparseB, m, n,
                                  numMatrices);
-    auto naiveSparseEnd = std::chrono::system_clock::now();
+    const auto naiveSparseEnd = std::chrono::system_clock::now();
 
-    auto cuSparseBegin = std::chrono::system_clock::now();
+    const auto cuSparseBegin = std::chrono::system_clock::now();
     Compute::Sparse::Cuda::cuSparseGemm(&hostSparseOut, &cudaSparseOut,
                                         cudaSparseA, cudaSparseB, m, n,
                                         numMatrices, 0, false);
-    auto cuSparseEnd = std::chrono::system_clock::now();
+    const auto cuSparseEnd = std::chrono::system_clock::now();
 
-    auto cudaSparseBegin = std::chrono::system_clock::now();
+    const auto cudaSparseBegin = std::chrono::system_clock::now();
     Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, cudaSparseA,
                                 cudaSparseB, m, n, numMatrices, 0, false);
-    auto cudaSparseEnd = std::chrono::system_clock::now();
+    const auto cudaSparseEnd = std::chrono::system_clock::now();
 
-    auto cudaDenseElapsedTime =
+    const auto cudaDenseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(cudaDenseEnd -
-                                                              cudaDenseBegin)
-            .count();
-    auto naiveSparseElapsedTime =
+            cudaDenseBegin)
+        .count();
+    const auto naiveSparseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(naiveSparseEnd -
-                                                              naiveSparseBegin)
-            .count();
-    auto cuSparseElapsedTime =
+            naiveSparseBegin)
+        .count();
+    const auto cuSparseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(cuSparseEnd -
-                                                              cuSparseBegin)
-            .count();
-    auto cudaSparseElapsedTime =
+            cuSparseBegin)
+        .count();
+    const auto cudaSparseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(cudaSparseEnd -
-                                                              cudaSparseBegin)
-            .count();
+            cudaSparseBegin)
+        .count();
 
     Util::MemoryManager::ClearHostMemoryPool();
     Util::MemoryManager::ClearCudaMemoryPool();
@@ -545,11 +547,10 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
                             n,
                             k,
                             sparsity,
-                            naiveDenseElapsedTime,
-                            cudaDenseElapsedTime,
-                            naiveSparseElapsedTime,
-                            cudaSparseElapsedTime,
-                            cuSparseElapsedTime };
+                            static_cast<long>(naiveDenseElapsedTime),
+                            static_cast<long>(cudaDenseElapsedTime),
+                            static_cast<long>(naiveSparseElapsedTime),
+                            static_cast<long>(cudaSparseElapsedTime),
+                            static_cast<long>(cuSparseElapsedTime) };
 }
-
-}  // namespace Sapphire::Test
+} // namespace Sapphire::Test

@@ -24,9 +24,9 @@ void Gemm1()
     for (int j = 0; j < 10; j++)
     {
         std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
+            rd; // Will be used to obtain a seed for the random number engine
         std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+            rd()); // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(1, 100);
 
         const unsigned int M = distrib(gen);
@@ -40,7 +40,7 @@ void Gemm1()
         const Shape shapeOut({ M, N });
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Device cuda(0, "device0");
         const Device host("host");
@@ -60,11 +60,11 @@ void Gemm1()
 
         Compute::Gemm(Out, A, B, C);
 
-        float cpuGemmResult[Out.DenseTotalLengthHost];
+        auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(none) schedule(static) \
     shared(Out, cpuGemmResult)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];
         }
@@ -84,7 +84,7 @@ void Gemm1()
 
 #pragma omp parallel for default(none) schedule(static) \
     shared(Out, cpuGemmResult, largestError)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
@@ -93,6 +93,7 @@ void Gemm1()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cpuGemmResult;
     }
 
     Util::MemoryManager::ClearCudaMemoryPool();
@@ -104,9 +105,9 @@ void Gemm2()
     for (int j = 0; j < 10; j++)
     {
         std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
+            rd; // Will be used to obtain a seed for the random number engine
         std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+            rd()); // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(8, 16);
 
         const unsigned int M = distrib(gen);
@@ -115,7 +116,7 @@ void Gemm2()
         const auto batchSize = distrib(gen) % 3 + 1;
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Shape shapeA({ M, K });
         const Shape shapeB({ K, N });
@@ -149,10 +150,10 @@ void Gemm2()
         C.SendTo(host);
         out.SendTo(host);
 
-        float cudaGemmResult[out.DenseTotalLengthHost];
+        auto* cudaGemmResult = new float[out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             cudaGemmResult[i] = out.DenseMatHost[i];
         }
@@ -160,10 +161,10 @@ void Gemm2()
         Compute::Initialize::Zeros(out);
         Compute::Gemm(out, A, B, C);
 
-        std::atomic<float> largestError = 0.0f;
+        std::atomic largestError = 0.0f;
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
@@ -173,6 +174,7 @@ void Gemm2()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cudaGemmResult;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
@@ -183,9 +185,9 @@ void GemmBroadcast()
     for (int j = 0; j < 10; j++)
     {
         std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
+            rd; // Will be used to obtain a seed for the random number engine
         std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+            rd()); // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(1, 16);
 
         const unsigned int M = distrib(gen);
@@ -194,7 +196,7 @@ void GemmBroadcast()
         const auto batchSize = distrib(gen) % 3 + 1;
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Shape shapeA({ M, K });
         const Shape shapeB({ K, N });
@@ -229,10 +231,10 @@ void GemmBroadcast()
         C.SendTo(host);
         out.SendTo(host);
 
-        float cudaGemmResult[out.DenseTotalLengthHost];
+        auto* cudaGemmResult = new float[out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             cudaGemmResult[i] = out.DenseMatHost[i];
         }
@@ -243,7 +245,7 @@ void GemmBroadcast()
         std::atomic<float> largestError = 0.0f;
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
@@ -253,6 +255,8 @@ void GemmBroadcast()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+
+        delete[] cudaGemmResult;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
@@ -263,9 +267,9 @@ void GemmBroadcastOnOutput()
     for (int j = 0; j < 1; j++)
     {
         std::random_device
-            rd;  // Will be used to obtain a seed for the random number engine
+            rd; // Will be used to obtain a seed for the random number engine
         std::mt19937 gen(
-            rd());  // Standard mersenne_twister_engine seeded with rd()
+            rd()); // Standard mersenne_twister_engine seeded with rd()
         std::uniform_int_distribution<> distrib(1, 16);
 
         const unsigned int M = distrib(gen);
@@ -274,7 +278,7 @@ void GemmBroadcastOnOutput()
         const auto batchSize = distrib(gen) % 3 + 1;
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
-                  << " batchSize : " << batchSize << std::endl;
+            << " batchSize : " << batchSize << std::endl;
 
         const Shape shapeA({ M, K });
         const Shape shapeB({ K, N });
@@ -305,10 +309,10 @@ void GemmBroadcastOnOutput()
         B.SendTo(host);
         out.SendTo(host);
 
-        float cudaGemmResult[out.DenseTotalLengthHost];
+        auto* cudaGemmResult = new float[out.DenseTotalLengthHost];
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             cudaGemmResult[i] = out.DenseMatHost[i];
         }
@@ -316,10 +320,10 @@ void GemmBroadcastOnOutput()
         Compute::Initialize::Zeros(out);
         Compute::Gemm(out, A, B, out);
 
-        std::atomic<float> largestError = 0.0f;
+        std::atomic largestError = 0.0f;
 
 #pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
+        for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
@@ -329,9 +333,9 @@ void GemmBroadcastOnOutput()
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
+        delete[] cudaGemmResult;
     }
     Util::MemoryManager::ClearCudaMemoryPool();
     Util::MemoryManager::ClearHostMemoryPool();
 }
-
-}  // namespace Sapphire::Test
+} // namespace Sapphire::Test
