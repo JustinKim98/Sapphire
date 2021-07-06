@@ -21,7 +21,7 @@ TensorData::TensorData(Shape shape, Type type, Device device,
       m_type(type),
       m_device(std::move(device))
 {
-    if (device.Type() == DeviceType::CUDA)
+    if (m_device.Type() == DeviceType::CUDA)
     {
         m_allocateCuda(batchSize);
     }
@@ -36,7 +36,7 @@ TensorData::TensorData(Shape shape, Type type, Device device,
       m_type(type),
       m_device(std::move(device))
 {
-    if (device.Type() == DeviceType::CUDA)
+    if (m_device.Type() == DeviceType::CUDA)
     {
         m_allocateCuda(batchSize);
     }

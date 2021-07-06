@@ -8,6 +8,7 @@
 #include <Sapphire/compute/dense/cuda/Initialize.cuh>
 #include <Sapphire/compute/dense/naive/NaiveInitialize.hpp>
 #include <chrono>
+#include <cmath>
 
 namespace Sapphire::Compute::Initialize
 {

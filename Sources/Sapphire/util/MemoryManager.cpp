@@ -136,9 +136,9 @@ void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
 
     if (chunk.RefCount == 0)
     {
-        m_cudaBusyMemoryPool.erase(itr);
         m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.ByteSize),
                                      chunk);
+        m_cudaBusyMemoryPool.erase(itr);
     }
 }
 
@@ -160,8 +160,8 @@ void MemoryManager::DeReferenceHost(void* ptr)
 
     if (chunk.RefCount == 0)
     {
-        m_hostBusyMemoryPool.erase(itr);
         m_hostFreeMemoryPool.emplace(chunk.ByteSize, chunk);
+        m_hostBusyMemoryPool.erase(itr);
     }
 }
 
@@ -183,7 +183,11 @@ void MemoryManager::ClearUnusedHostMemoryPool()
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
+#ifdef _MSC_VER
+        _aligned_free(memoryChunk.Data);
+ #else
         free(memoryChunk.Data);
+ #endif
     }
 
     m_hostFreeMemoryPool.clear();
@@ -220,12 +224,20 @@ void MemoryManager::ClearHostMemoryPool()
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
+#ifdef _MSC_VER
+        _aligned_free(memoryChunk.Data);
+#else
         free(memoryChunk.Data);
+#endif
     }
 
     for (auto& [key, memoryChunk] : m_hostBusyMemoryPool)
     {
+#ifdef _MSC_VER
+        _aligned_free(memoryChunk.Data);
+#else
         free(memoryChunk.Data);
+#endif
     }
 
     m_hostFreeMemoryPool.clear();
