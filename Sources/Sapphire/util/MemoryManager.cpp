@@ -19,7 +19,9 @@ std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, pair_hash_free>
 MemoryManager::m_cudaFreeMemoryPool;
 std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, pair_hash_busy>
 MemoryManager::m_cudaBusyMemoryPool;
-
+std::unordered_map<Compute::Dense::Cuda::ConvConfig,
+                   Compute::Dense::Cuda::CudnnMetaData*, hash_convConfig>
+MemoryManager::m_cudnnMetaData;
 std::mutex MemoryManager::m_hostPoolMtx;
 std::mutex MemoryManager::m_cudaPoolMtx;
 unsigned int MemoryManager::m_allocationUnitByteSize = 256;
@@ -87,6 +89,12 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
     return dataPtr;
 }
 
+Compute::Dense::Cuda::CudnnMetaData* MemoryManager::GetCudnnMetaData(
+    Compute::Dense::Cuda::ConvConfig convConfig)
+{
+    return m_cudnnMetaData.at(convConfig);
+}
+
 void MemoryManager::AddReferenceCuda(void* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
@@ -114,6 +122,13 @@ void MemoryManager::AddReferenceHost(void* ptr)
 
     auto& chunk = itr->second;
     chunk.RefCount += 1;
+}
+
+void MemoryManager::AddCudnnMetaData(
+    Compute::Dense::Cuda::ConvConfig convConfig,
+    Compute::Dense::Cuda::CudnnMetaData* metaData)
+{
+    m_cudnnMetaData[convConfig] = metaData;
 }
 
 void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
@@ -185,9 +200,9 @@ void MemoryManager::ClearUnusedHostMemoryPool()
     {
 #ifdef _MSC_VER
         _aligned_free(memoryChunk.Data);
- #else
+#else
         free(memoryChunk.Data);
- #endif
+#endif
     }
 
     m_hostFreeMemoryPool.clear();
@@ -328,5 +343,10 @@ size_t MemoryManager::GetFreeByteSizeHost()
         size += chunk.ByteSize;
     }
     return size;
+}
+
+bool MemoryManager::HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig)
+{
+    return m_cudnnMetaData.find(convConfig) != m_cudnnMetaData.end();
 }
 } // namespace Sapphire::Util

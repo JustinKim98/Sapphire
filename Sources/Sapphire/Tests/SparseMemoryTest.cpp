@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
+#include <list>
 #include <iostream>
 
 namespace Sapphire::Test
