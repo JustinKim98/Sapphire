@@ -5,225 +5,186 @@
 // property of any third parties.
 
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-bool Shape4D::operator==(const Shape4D& shape4D) const
+__host__ void CreateCudnnConvMetaData(CudnnConv2DMetaData* metaData,
+                                      Shape4D xShape, Shape4D filterShape,
+                                      int strideRow, int strideCol,
+                                      int dilationRow, int dilationCol,
+                                      int rowPadding, int columnPadding,
+                                      int deviceId)
 {
-    return std::tie(N, Channels, Height, Width) ==
-           std::tie(shape4D.N, shape4D.Channels, shape4D.Height, shape4D.Width);
-}
-
-bool Shape4D::operator!=(const Shape4D& shape4D) const
-{
-    return !(*this == shape4D);
-}
-
-bool ConvConfig::operator==(const ConvConfig& convConfig) const
-{
-    return std::tie(InputShape, FilterShape, StrideRow, StrideCol, DilationRow,
-                    DilationCol, PaddedRow, PaddedCol) ==
-           std::tie(convConfig.InputShape, convConfig.FilterShape,
-                    convConfig.StrideRow, convConfig.StrideCol,
-                    convConfig.DilationRow, convConfig.DilationCol,
-                    convConfig.PaddedRow, convConfig.PaddedCol);
-}
-
-bool ConvConfig::operator!=(const ConvConfig& convConfig) const
-{
-    return !(*this == convConfig);
-}
-
-bool CudnnMetaData::operator==(const CudnnMetaData& cudnnMetaData) const
-{
-    return this->Handle == cudnnMetaData.Handle && this->ConvDesc ==
-           cudnnMetaData.ConvDesc &&
-           this->InputDesc == cudnnMetaData.InputDesc &&
-           this->FilterDesc == cudnnMetaData.FilterDesc &&
-           this->OutputDesc == cudnnMetaData.OutputDesc &&
-           this->ForwardWorkSpace == cudnnMetaData.ForwardWorkSpace &&
-           this->ForwardWorkSpaceBytes == cudnnMetaData.ForwardWorkSpaceBytes &&
-           this->BackwardDataWorkSpace == cudnnMetaData.BackwardDataWorkSpace &&
-           this->BackwardDataWorkSpaceBytes == cudnnMetaData.
-           BackwardDataWorkSpaceBytes &&
-           this->BackwardFilterWorkSpace == cudnnMetaData.
-           BackwardFilterWorkSpace &&
-           this->BackwardFilterWorkSpaceBytes ==
-           cudnnMetaData.BackwardFilterWorkSpaceBytes;
-}
-
-bool CudnnMetaData::operator!=(const CudnnMetaData& cudnnMetaData) const
-{
-    return !(*this == cudnnMetaData);
-}
-
-__host__ void CreateCudnnMetaData(CudnnMetaData* metadata,
-                                  Shape4D inputShape, Shape4D filterShape,
-                                  int strideRow, int strideCol,
-                                  int dilationRow, int dilationCol,
-                                  int paddedRow, int paddedCol)
-{
-    const int outputN = inputShape.N;
-    const int outputChannels = filterShape.N;
-    const int outputHeight = (inputShape.Height + 2 * paddedRow -
-                              dilationRow * (filterShape.Height - 1) - 1) /
-                             strideRow +
-                             1;
-    const int outputWidth = (inputShape.Width + 2 * paddedCol -
-                             dilationCol * (filterShape.Width - 1) - 1) /
-                            strideCol +
-                            1;
-
-    checkCuDNN(cudnnCreate(&metadata->Handle));
-    checkCuDNN(cudnnCreateConvolutionDescriptor(&metadata->ConvDesc));
-    checkCuDNN(cudnnCreateTensorDescriptor(&metadata->InputDesc));
-    checkCuDNN(cudnnCreateFilterDescriptor(&metadata->FilterDesc));
-    checkCuDNN(cudnnCreateTensorDescriptor(&metadata->OutputDesc));
+    int outputN = xShape.N;
+    int outputChannels = filterShape.N;
+    int outputHeight = (xShape.Height + 2 * rowPadding -
+                        dilationRow * (filterShape.Height - 1) - 1) /
+                       strideRow +
+                       1;
+    int outputWidth = (xShape.Width + 2 * columnPadding -
+                       dilationCol * (filterShape.Width - 1) - 1) /
+                      strideCol +
+                      1;
+    cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
+        deviceId, std::this_thread::get_id());
+    checkCuDNN(cudnnCreateConvolutionDescriptor(&metaData->ConvDesc));
+    checkCuDNN(cudnnCreateTensorDescriptor(&metaData->InputDesc));
+    checkCuDNN(cudnnCreateFilterDescriptor(&metaData->FilterDesc));
+    checkCuDNN(cudnnCreateTensorDescriptor(&metaData->OutputDesc));
 
     checkCuDNN(cudnnSetConvolution2dDescriptor(
-        metadata->ConvDesc, paddedRow, paddedCol, strideRow, strideCol,
+        metaData->ConvDesc, rowPadding, columnPadding, strideRow, strideCol,
         dilationRow, dilationCol, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 
     checkCuDNN(cudnnSetTensor4dDescriptor(
-        metadata->InputDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, inputShape.N,
-        inputShape.Channels, inputShape.Height, inputShape.Width));
+        metaData->InputDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, xShape.N,
+        xShape.Channels, xShape.Height, xShape.Width));
 
     checkCuDNN(cudnnSetFilter4dDescriptor(
-        metadata->FilterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
+        metaData->FilterDesc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
         filterShape.N, filterShape.Channels, filterShape.Height,
         filterShape.Width));
 
+    checkCuDNN(cudnnGetConvolution2dForwardOutputDim(
+        metaData->ConvDesc, metaData->InputDesc, metaData->FilterDesc, &outputN,
+        &outputChannels, &outputHeight, &outputWidth));
+
     checkCuDNN(cudnnSetTensor4dDescriptor(
-        metadata->OutputDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, outputN,
+        metaData->OutputDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, outputN,
         outputChannels, outputHeight, outputWidth));
 
     int numAlgo;
 
     cudnnConvolutionFwdAlgoPerf_t forwardPerf;
     checkCuDNN(cudnnGetConvolutionForwardAlgorithm_v7(
-        metadata->Handle, metadata->InputDesc, metadata->FilterDesc,
-        metadata->ConvDesc, metadata->OutputDesc, 1, &numAlgo, &forwardPerf));
-    metadata->ForwardAlgo = forwardPerf.algo;
+        *handle, metaData->InputDesc, metaData->FilterDesc,
+        metaData->ConvDesc, metaData->OutputDesc, 1, &numAlgo, &forwardPerf));
+    metaData->ForwardAlgo = forwardPerf.algo;
 
     cudnnConvolutionBwdDataAlgoPerf_t backDataPerf;
     checkCuDNN(cudnnGetConvolutionBackwardDataAlgorithm_v7(
-        metadata->Handle, metadata->FilterDesc, metadata->OutputDesc,
-        metadata->ConvDesc, metadata->InputDesc, 1, &numAlgo, &backDataPerf));
-    metadata->BackwardDataAlgo = backDataPerf.algo;
+        *handle, metaData->FilterDesc, metaData->OutputDesc,
+        metaData->ConvDesc, metaData->InputDesc, 1, &numAlgo, &backDataPerf));
+    metaData->BackwardDataAlgo = backDataPerf.algo;
 
     cudnnConvolutionBwdFilterAlgoPerf_t backFilterPerf;
     checkCuDNN(cudnnGetConvolutionBackwardFilterAlgorithm_v7(
-        metadata->Handle, metadata->InputDesc, metadata->OutputDesc,
-        metadata->ConvDesc, metadata->FilterDesc, 1, &numAlgo,
+        *handle, metaData->InputDesc, metaData->OutputDesc,
+        metaData->ConvDesc, metaData->FilterDesc, 1, &numAlgo,
         &backFilterPerf));
-    metadata->BackwardFilterAlgo = backFilterPerf.algo;
+    metaData->BackwardFilterAlgo = backFilterPerf.algo;
 
     checkCuDNN(cudnnGetConvolutionForwardWorkspaceSize(
-        metadata->Handle, metadata->InputDesc, metadata->FilterDesc,
-        metadata->ConvDesc, metadata->OutputDesc, metadata->ForwardAlgo,
-        &metadata->ForwardWorkSpaceBytes));
+        *handle, metaData->InputDesc, metaData->FilterDesc,
+        metaData->ConvDesc, metaData->OutputDesc, metaData->ForwardAlgo,
+        &metaData->ForwardWorkSpaceBytes));
 
     checkCuDNN(cudnnGetConvolutionBackwardDataWorkspaceSize(
-        metadata->Handle, metadata->FilterDesc, metadata->OutputDesc,
-        metadata->ConvDesc, metadata->InputDesc, metadata->BackwardDataAlgo,
-        &metadata->BackwardDataWorkSpaceBytes));
+        *handle, metaData->FilterDesc, metaData->OutputDesc,
+        metaData->ConvDesc, metaData->InputDesc, metaData->BackwardDataAlgo,
+        &metaData->BackwardDataWorkSpaceBytes));
 
     checkCuDNN(cudnnGetConvolutionBackwardFilterWorkspaceSize(
-        metadata->Handle, metadata->InputDesc, metadata->OutputDesc,
-        metadata->ConvDesc, metadata->FilterDesc, metadata->BackwardFilterAlgo,
-        &metadata->BackwardFilterWorkSpaceBytes));
+        *handle, metaData->InputDesc, metaData->OutputDesc,
+        metaData->ConvDesc, metaData->FilterDesc, metaData->BackwardFilterAlgo,
+        &metaData->BackwardFilterWorkSpaceBytes));
 
-    checkCuda(cudaMalloc(static_cast<void**>(&metadata->ForwardWorkSpace),
-                         metadata->ForwardWorkSpaceBytes));
+    checkCuda(cudaMalloc(static_cast<void**>(&metaData->ForwardWorkSpace),
+                         metaData->ForwardWorkSpaceBytes));
 
-    checkCuda(cudaMalloc(static_cast<void**>(&metadata->BackwardDataWorkSpace),
-                         metadata->BackwardDataWorkSpaceBytes));
+    checkCuda(cudaMalloc(static_cast<void**>(&metaData->BackwardDataWorkSpace),
+                         metaData->BackwardDataWorkSpaceBytes));
 
     checkCuda(cudaMalloc(
-        static_cast<void**>(&metadata->BackwardFilterWorkSpace),
-        metadata->BackwardFilterWorkSpaceBytes));
+        static_cast<void**>(&metaData->BackwardFilterWorkSpace),
+        metaData->BackwardFilterWorkSpaceBytes));
 }
 
-__host__ void ConvolutionForward2D(CudnnMetaData* metadata, float* output,
-                                   float* input, float* filter)
+__host__ void CudnnConvolutionForward2D(CudnnConv2DMetaData* metadata,
+                                        float* output,
+                                        float* input, float* filter,
+                                        int deviceId)
 {
     float alpha = 1.0f;
     float beta = 0.0f;
+    cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
+        deviceId, std::this_thread::get_id());
     checkCuDNN(cudnnConvolutionForward(
-        metadata->Handle, &alpha, metadata->InputDesc, input,
+        *handle, &alpha, metadata->InputDesc, input,
         metadata->FilterDesc, filter, metadata->ConvDesc, metadata->ForwardAlgo,
         metadata->ForwardWorkSpace, metadata->ForwardWorkSpaceBytes, &beta,
         metadata->OutputDesc, output));
 }
 
-__host__ void ConvolutionBackward2D(
-    CudnnMetaData* descriptors, float* dataGradientOut, float* filter,
-    float* filterGradientOut, float* input, float* gradientInput)
+__host__ void CudnnConvolutionBackward2D(
+    CudnnConv2DMetaData* descriptors, float* dataGradientOut, float* filter,
+    float* filterGradientOut, float* input, float* gradientInput, int deviceId)
 {
     float alpha = 1.0f;
     float beta = 0.0f;
+    cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
+        deviceId, std::this_thread::get_id());
     checkCuDNN(cudnnConvolutionBackwardData(
-        descriptors->Handle, &alpha, descriptors->FilterDesc, filter,
+        *handle, &alpha, descriptors->FilterDesc, filter,
         descriptors->OutputDesc, gradientInput, descriptors->ConvDesc,
         descriptors->BackwardDataAlgo, descriptors->BackwardDataWorkSpace,
         descriptors->BackwardDataWorkSpaceBytes, &beta, descriptors->InputDesc,
         dataGradientOut));
 
     checkCuDNN(cudnnConvolutionBackwardFilter(
-        descriptors->Handle, &alpha, descriptors->InputDesc, input,
+        *handle, &alpha, descriptors->InputDesc, input,
         descriptors->OutputDesc, gradientInput, descriptors->ConvDesc,
         descriptors->BackwardFilterAlgo, descriptors->BackwardFilterWorkSpace,
         descriptors->BackwardFilterWorkSpaceBytes, &beta,
         descriptors->FilterDesc, filterGradientOut));
 }
 
-__host__ void ConvForward2D(float* output, float* input,
+__host__ void ConvForward2D(float* y, float* x,
                             float
                             * filter, Shape4D inputShape, Shape4D filterShape,
                             int strideRow, int strideCol, int dilationRow,
-                            int dilationCol, int paddedRow, int paddedCol)
+                            int dilationCol, int rowPadding, int columnPadding,
+                            int deviceId)
 {
     const ConvConfig convConfig = { inputShape, filterShape, strideRow,
                                     strideCol,
-                                    dilationRow, dilationCol, paddedRow,
-                                    paddedCol };
+                                    dilationRow, dilationCol, rowPadding,
+                                    columnPadding };
 
-    if (!Util::MemoryManager::HasConvConfig(convConfig))
+    if (!Util::ResourceManager::HasConvConfig(convConfig))
     {
-        auto* metaData = new CudnnMetaData();
-        CreateCudnnMetaData(metaData, inputShape, filterShape, strideRow,
-                            strideCol, dilationRow, dilationCol, paddedRow,
-                            paddedCol);
-        Util::MemoryManager::AddCudnnMetaData(convConfig, metaData);
+        auto* metaData = new CudnnConv2DMetaData();
+        CreateCudnnConvMetaData(metaData, inputShape, filterShape, strideRow,
+                                strideCol, dilationRow, dilationCol, rowPadding,
+                                columnPadding, deviceId);
+        Util::ResourceManager::AddCudnnConv2DMetaData(convConfig, metaData);
     }
 
-    auto* metaData = Util::MemoryManager::GetCudnnMetaData(convConfig);
-    ConvolutionForward2D(metaData, output, input, filter);
+    auto* metaData = Util::ResourceManager::GetCudnnConvMetaData(convConfig);
+    CudnnConvolutionForward2D(metaData, y, x, filter, deviceId);
 }
 
-void ConvBackward2D(float* dataGradientOut, float* filter,
-                    float* filterGradientOut, float* input,
-                    float* gradientInput, Shape4D inputShape,
-                    Shape4D filterShape, int strideRow, int strideCol,
-                    int dilationRow, int dilationCol, int paddedRow,
-                    int paddedCol)
+__host__ void ConvBackward2D(float* dx, float* filter,
+                             float* dFilter, float* x,
+                             float* dy, Shape4D inputShape,
+                             Shape4D filterShape, int strideRow, int strideCol,
+                             int dilationRow, int dilationCol, int rowPadding,
+                             int columnPadding, int deviceId)
 {
     const ConvConfig convConfig = { inputShape, filterShape, strideRow,
                                     strideCol, dilationRow, dilationCol,
-                                    paddedRow, paddedCol };
+                                    rowPadding, columnPadding };
 
-    if (!Util::MemoryManager::HasConvConfig(convConfig))
+    if (!Util::ResourceManager::HasConvConfig(convConfig))
     {
-        auto* metaData = new CudnnMetaData();
-        CreateCudnnMetaData(metaData, inputShape, filterShape, strideRow,
-                            strideCol, dilationRow, dilationCol, paddedRow,
-                            paddedCol);
-        Util::MemoryManager::AddCudnnMetaData(convConfig, metaData);
+        throw std::runtime_error(
+            "Compute::Dense::Cuda::ConvBackward2D - CudnnConv2DMetaData was "
+            "not found");
     }
 
-    auto* metaData = Util::MemoryManager::GetCudnnMetaData(convConfig);
-    ConvolutionBackward2D(metaData, dataGradientOut, filter, filterGradientOut,
-                          input, gradientInput);
+    auto* metaData = Util::ResourceManager::GetCudnnConvMetaData(convConfig);
+    CudnnConvolutionBackward2D(metaData, dx, filter, dFilter,
+                               x, dy, deviceId);
 }
 } // namespace Sapphire::Compute::Cuda
