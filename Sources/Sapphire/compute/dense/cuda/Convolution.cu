@@ -9,12 +9,12 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-__host__ void CreateCudnnConvMetaData(CudnnConv2DMetaData* metaData,
-                                      Shape4D xShape, Shape4D filterShape,
-                                      int strideRow, int strideCol,
-                                      int dilationRow, int dilationCol,
-                                      int rowPadding, int columnPadding,
-                                      int deviceId)
+__host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,
+                                        Shape4D xShape, Shape4D filterShape,
+                                        int strideRow, int strideCol,
+                                        int dilationRow, int dilationCol,
+                                        int rowPadding, int columnPadding,
+                                        int deviceId)
 {
     int outputN = xShape.N;
     int outputChannels = filterShape.N;
@@ -26,6 +26,7 @@ __host__ void CreateCudnnConvMetaData(CudnnConv2DMetaData* metaData,
                        dilationCol * (filterShape.Width - 1) - 1) /
                       strideCol +
                       1;
+    cudaSetDevice(deviceId);
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
     checkCuDNN(cudnnCreateConvolutionDescriptor(&metaData->ConvDesc));
@@ -140,7 +141,7 @@ __host__ void CudnnConvolutionBackward2D(
         descriptors->FilterDesc, filterGradientOut));
 }
 
-__host__ void ConvForward2D(float* y, float* x,
+__host__ void Conv2DForward(float* y, float* x,
                             float
                             * filter, Shape4D inputShape, Shape4D filterShape,
                             int strideRow, int strideCol, int dilationRow,
@@ -152,20 +153,24 @@ __host__ void ConvForward2D(float* y, float* x,
                                     dilationRow, dilationCol, rowPadding,
                                     columnPadding };
 
+    cudaSetDevice(deviceId);
+    const auto tid = std::this_thread::get_id();
+    if (!Util::ResourceManager::HasCudnnHandle(deviceId, tid))
+    {
+        Util::ResourceManager::AddCudnnHandle(deviceId, tid);
+    }
     if (!Util::ResourceManager::HasConvConfig(convConfig))
     {
-        auto* metaData = new CudnnConv2DMetaData();
-        CreateCudnnConvMetaData(metaData, inputShape, filterShape, strideRow,
-                                strideCol, dilationRow, dilationCol, rowPadding,
-                                columnPadding, deviceId);
-        Util::ResourceManager::AddCudnnConv2DMetaData(convConfig, metaData);
+        Util::ResourceManager::AddCudnnConv2DMetaData(
+            convConfig, inputShape, filterShape, strideRow, strideCol,
+            dilationRow, dilationCol, rowPadding, columnPadding, deviceId);
     }
 
     auto* metaData = Util::ResourceManager::GetCudnnConvMetaData(convConfig);
     CudnnConvolutionForward2D(metaData, y, x, filter, deviceId);
 }
 
-__host__ void ConvBackward2D(float* dx, float* filter,
+__host__ void Conv2DBackward(float* dx, float* filter,
                              float* dFilter, float* x,
                              float* dy, Shape4D inputShape,
                              Shape4D filterShape, int strideRow, int strideCol,
@@ -176,10 +181,19 @@ __host__ void ConvBackward2D(float* dx, float* filter,
                                     strideCol, dilationRow, dilationCol,
                                     rowPadding, columnPadding };
 
+    cudaSetDevice(deviceId);
+    const auto tid = std::this_thread::get_id();
+    if (!Util::ResourceManager::HasCudnnHandle(deviceId, tid))
+    {
+        throw std::runtime_error(
+            "Compute::Dense::Cuda::Conv2DBackward - CudnnHandle was not "
+            "found");
+    }
+
     if (!Util::ResourceManager::HasConvConfig(convConfig))
     {
         throw std::runtime_error(
-            "Compute::Dense::Cuda::ConvBackward2D - CudnnConv2DMetaData was "
+            "Compute::Dense::Cuda::Conv2DBackward - CudnnConv2DMetaData was "
             "not found");
     }
 

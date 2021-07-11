@@ -7,7 +7,7 @@
 #include <cublas_v2.h>
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
-#include <Sapphire/compute/dense/cuda/Basic.cuh>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/compute/dense/cuda/Gemm.cuh>
 #include <Sapphire/compute/dense/cuda/GemmKernel.cuh>
 #include <cassert>
@@ -18,8 +18,15 @@ namespace Sapphire::Compute::Dense::Cuda
 //! batch sizes must be multiple of each other
 __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
                    float* C, unsigned int M, unsigned int N, unsigned int K,
-                   cublasHandle_t* handle)
+                   int deviceId)
 {
+    const auto tid = std::this_thread::get_id();
+    if (!Util::ResourceManager::HasCublasHandle(deviceId, tid))
+    {
+        Util::ResourceManager::AddCublasHandle(deviceId, tid);
+    }
+    auto* handle = Util::ResourceManager::GetCublasHandle(
+        deviceId, tid);
     cublasSetMathMode(*handle, CUBLAS_TF32_TENSOR_OP_MATH);
 
     const float alpha = 1.0f;
@@ -36,7 +43,7 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
 
     Compute::Cuda::CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
 
-    auto status = cublasGemmStridedBatchedEx(
+    const auto status = cublasGemmStridedBatchedEx(
         *handle, CUBLAS_OP_N, CUBLAS_OP_N, static_cast<int>(N),
         static_cast<int>(M), static_cast<int>(K), &alpha, ptrB, CUDA_R_32F,
         static_cast<int>(N), strideB, ptrA, CUDA_R_32F, static_cast<int>(K),
@@ -53,12 +60,17 @@ __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
                                       unsigned int M, unsigned int N,
                                       unsigned int K, unsigned int batchSize,
                                       bool broadcastA, bool broadcastB,
-                                      bool broadcastC)
+                                      bool broadcastC, int deviceId)
 {
-    cublasHandle_t handle;
-    cublasStatus_t stat = cublasCreate(&handle);
+    const auto tid = std::this_thread::get_id();
+    if (!Util::ResourceManager::HasCublasHandle(deviceId, tid))
+    {
+        auto* handle = new cublasHandle_t();
+        Util::ResourceManager::AddCublasHandle(deviceId, tid);
+    }
+    auto* handle = Util::ResourceManager::GetCublasHandle(deviceId, tid);
 
-    cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH);
+    cublasSetMathMode(*handle, CUBLAS_TF32_TENSOR_OP_MATH);
 
     const float alpha = 1.0f;
     const float beta = 1.0f;
@@ -76,35 +88,11 @@ __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
         Compute::Cuda::CopyDeviceToDevice(out, C,
                                           M * N * batchSize * sizeof(float));
 
-    cublasGemmStridedBatchedEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
+    cublasGemmStridedBatchedEx(*handle, CUBLAS_OP_N, CUBLAS_OP_N, N, M, K,
                                &alpha, B, CUDA_R_32F, N, strideB, A, CUDA_R_32F,
                                K, strideA, &beta, out, CUDA_R_32F, N, strideOut,
                                batchSize, CUBLAS_COMPUTE_32F_FAST_TF32,
                                CUBLAS_GEMM_DEFAULT_TENSOR_OP);
-
-    cublasDestroy(handle);
-}
-
-__host__ unsigned int Gcd(unsigned int a, unsigned int b)
-{
-    if (!a)
-        return b;
-    return Gcd(b % a, a);
-}
-
-__host__ unsigned int FindGCD(unsigned int arr[], int n)
-{
-    unsigned int result = arr[0];
-    for (int i = 1; i < n; i++)
-    {
-        result = Gcd(arr[i], result);
-
-        if (result == 1)
-        {
-            return 1;
-        }
-    }
-    return result;
 }
 
 __host__ void GemmNormal(float* out, float* A, float* B, float* C,
@@ -136,4 +124,4 @@ __host__ void GemmNormal(float* out, float* A, float* B, float* C,
 
     free(streams);
 }
-}  // namespace Sapphire::Compute::Dense::Cuda
+} // namespace Sapphire::Compute::Dense::Cuda

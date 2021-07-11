@@ -165,8 +165,7 @@ void SparseMemoryAllocationHost()
 
     DeepFreeSparseHost(sparse, numMatrices);
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
     delete[] nnz;
 }
 
@@ -214,8 +213,7 @@ void LoadDistMemoryAllocationHost()
 
     DeepFreeSparseHost(sparse, numMatrices);
     DeepFreeLoadDistHost(loadDist, numMatrices);
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();;
 }
 
 void SparseMemoryAllocationDevice()
@@ -286,8 +284,7 @@ void SparseMemoryAllocationDevice()
     CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeCuda(), 0);
     CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeHost(), 0);
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void SparseMemoryCopyDeviceToDevice()
@@ -363,8 +360,7 @@ void SparseMemoryCopyDeviceToDevice()
     CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeCuda(), 0);
     CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeHost(), 0);
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 }  // namespace Sapphire::Test

@@ -17,7 +17,7 @@ ResourceManager::m_hostFreeMemoryPool;
 std::unordered_map<intptr_t, MemoryChunk> ResourceManager::m_hostBusyMemoryPool;
 std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, FreePoolHash>
 ResourceManager::m_cudaFreeMemoryPool;
-std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, BusyPoolHash>
+std::unordered_map<intptr_t, MemoryChunk, std::hash<intptr_t>>
 ResourceManager::m_cudaBusyMemoryPool;
 std::unordered_map<Compute::Dense::Cuda::ConvConfig,
                    Compute::Dense::Cuda::CudnnConv2DMetaData*, ConvMetaDataHash>
@@ -43,7 +43,7 @@ unsigned int ResourceManager::m_allocationUnitByteSize = 256;
 
 void* ResourceManager::GetMemoryCuda(size_t byteSize, int deviceId)
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
     void* cudaPtr = nullptr;
 
     auto allocationSize =
@@ -59,16 +59,17 @@ void* ResourceManager::GetMemoryCuda(size_t byteSize, int deviceId)
         cudaPtr = targetChunk.Data;
         targetChunk.RefCount += 1;
         m_cudaFreeMemoryPool.erase(itr);
-        m_cudaBusyMemoryPool.emplace(
-            std::make_pair(deviceId, intptr_t(cudaPtr)), targetChunk);
+        m_cudaBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(cudaPtr),
+                                     targetChunk);
 
         return cudaPtr;
     }
 
     Compute::Cuda::CudaSetDevice(deviceId);
-    Compute::Cuda::CudaMalloc((void**)&cudaPtr, allocationSize);
+    Compute::Cuda::CudaMalloc(&cudaPtr,
+                              static_cast<unsigned int>(allocationSize));
 
-    m_cudaBusyMemoryPool.emplace(std::make_pair(deviceId, intptr_t(cudaPtr)),
+    m_cudaBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(cudaPtr),
                                  MemoryChunk(allocationSize, cudaPtr, 1));
 
     return cudaPtr;
@@ -76,7 +77,7 @@ void* ResourceManager::GetMemoryCuda(size_t byteSize, int deviceId)
 
 void* ResourceManager::GetMemoryHost(size_t byteSize)
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
     void* dataPtr;
 
     const auto allocationSize =
@@ -90,7 +91,8 @@ void* ResourceManager::GetMemoryHost(size_t byteSize)
         targetChunk.RefCount += 1;
         dataPtr = targetChunk.Data;
         m_hostFreeMemoryPool.erase(itr);
-        m_hostBusyMemoryPool.emplace(intptr_t(dataPtr), targetChunk);
+        m_hostBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(dataPtr),
+                                     targetChunk);
         return dataPtr;
     }
 
@@ -99,7 +101,7 @@ void* ResourceManager::GetMemoryHost(size_t byteSize)
 #else
     dataPtr = aligned_alloc(32, allocationSize);
 #endif
-    m_hostBusyMemoryPool.emplace(intptr_t(dataPtr),
+    m_hostBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(dataPtr),
                                  MemoryChunk(allocationSize, dataPtr, 1));
     return dataPtr;
 }
@@ -134,15 +136,16 @@ cudnnHandle_t* ResourceManager::GetCudnnHandle(
     return m_cudnnHandlePool.at(std::make_pair(deviceId, threadId));
 }
 
-void ResourceManager::AddReferenceCuda(void* ptr, int deviceId)
+void ResourceManager::AddReferenceCuda(void* ptr)
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
 
     const auto itr =
-        m_cudaBusyMemoryPool.find(std::make_pair(deviceId, intptr_t(ptr)));
+        m_cudaBusyMemoryPool.find(reinterpret_cast<intptr_t>(ptr));
     if (itr == m_cudaBusyMemoryPool.end())
     {
-        throw std::runtime_error("AddReferenceCuda - Reference was not found");
+        throw std::runtime_error(
+            "Util::ResourceManager::AddReferenceCuda - Reference was not found");
     }
 
     auto& chunk = itr->second;
@@ -151,61 +154,49 @@ void ResourceManager::AddReferenceCuda(void* ptr, int deviceId)
 
 void ResourceManager::AddReferenceHost(void* ptr)
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
 
-    const auto itr = m_hostBusyMemoryPool.find(intptr_t(ptr));
+    const auto itr = m_hostBusyMemoryPool.find(reinterpret_cast<intptr_t>(ptr));
     if (itr == m_hostBusyMemoryPool.end())
     {
-        throw std::runtime_error("AddReferenceHost - Reference was not found");
+        throw std::runtime_error(
+            "Util::ResourceManager::AddReferenceHost - Reference was not found");
     }
 
     auto& chunk = itr->second;
     chunk.RefCount += 1;
 }
 
-void ResourceManager::AddCudnnConv2DMetaData(
-    Compute::Dense::Cuda::ConvConfig convConfig,
-    Compute::Dense::Cuda::CudnnConv2DMetaData* metaData)
-{
-    std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
-    m_cudnnConv2DMetaDataPool[convConfig] = metaData;
-}
-
-void ResourceManager::AddCudnnPool2DMetaData(
-    Compute::Dense::Cuda::PoolConfig poolConfig,
-    Compute::Dense::Cuda::CudnnPool2DMetaData* metaData)
-{
-    std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
-    m_cudnnPool2DMetaDataPool[poolConfig] = metaData;
-}
-
-void ResourceManager::AddCublasHandle(int deviceId, std::thread::id threadId,
-                                      cublasHandle_t* handle)
+void ResourceManager::AddCublasHandle(int deviceId, std::thread::id threadId)
 {
     std::lock_guard lock(m_cublasHandlePoolMtx);
+    auto* handle = new cublasHandle_t();
+    cublasCreate(handle);
     m_cublasHandlePool[std::make_pair(deviceId, threadId)] = handle;
 }
 
-void ResourceManager::AddCudnnHandle(int deviceId, std::thread::id threadId,
-                                     cudnnHandle_t* handle)
+void ResourceManager::AddCudnnHandle(int deviceId, std::thread::id threadId)
 {
     std::lock_guard lock(m_cudnnHandlePoolMtx);
+    auto* handle = new cudnnHandle_t();
+    cudnnCreate(handle);
     m_cudnnHandlePool[std::make_pair(deviceId, threadId)] = handle;
 }
 
 void ResourceManager::DeReferenceCuda(void* ptr, int deviceId)
 {
     if (!ptr)
-        throw std::runtime_error("DereferenceCuda - Attempted to free nullptr");
+        throw std::runtime_error(
+            "Util::ResourceManager::DereferenceCuda - Attempted to free nullptr");
 
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
 
-    const auto itr =
-        m_cudaBusyMemoryPool.find(std::make_pair(deviceId, intptr_t(ptr)));
+    const auto itr = m_cudaBusyMemoryPool.find(reinterpret_cast<intptr_t>(ptr));
 
     if (itr == m_cudaBusyMemoryPool.end())
     {
-        throw std::runtime_error("DeReferenceCuda - Reference was not found");
+        throw std::runtime_error(
+            "Util::ResourceManager::DeReferenceCuda - Reference was not found");
     }
 
     auto& chunk = itr->second;
@@ -222,14 +213,16 @@ void ResourceManager::DeReferenceCuda(void* ptr, int deviceId)
 void ResourceManager::DeReferenceHost(void* ptr)
 {
     if (!ptr)
-        throw std::runtime_error("DeReferenceHost - Attempted to free nullptr");
+        throw std::runtime_error(
+            "Util::ResourceManager::DeReferenceHost - Attempted to free nullptr");
 
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
 
-    const auto itr = m_hostBusyMemoryPool.find(intptr_t(ptr));
+    const auto itr = m_hostBusyMemoryPool.find(reinterpret_cast<intptr_t>(ptr));
     if (itr == m_hostBusyMemoryPool.end())
     {
-        throw std::runtime_error("DeReferenceHost - Reference was not found");
+        throw std::runtime_error(
+            "Util::ResourceManager::DeReferenceHost - Reference was not found");
     }
 
     auto& chunk = itr->second;
@@ -242,9 +235,9 @@ void ResourceManager::DeReferenceHost(void* ptr)
     }
 }
 
-void ResourceManager::ClearUnusedCudaMemoryPool()
+void ResourceManager::ClearFreeCudaMemoryPool()
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
 
     for (auto& [key, memoryChunk] : m_cudaFreeMemoryPool)
     {
@@ -254,9 +247,9 @@ void ResourceManager::ClearUnusedCudaMemoryPool()
     m_cudaFreeMemoryPool.clear();
 }
 
-void ResourceManager::ClearUnusedHostMemoryPool()
+void ResourceManager::ClearFreeHostMemoryPool()
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
@@ -272,7 +265,7 @@ void ResourceManager::ClearUnusedHostMemoryPool()
 
 void ResourceManager::ClearCudaMemoryPool()
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
 
     cudaDeviceSynchronize();
 
@@ -289,15 +282,12 @@ void ResourceManager::ClearCudaMemoryPool()
 
     m_cudaBusyMemoryPool.clear();
 
-    assert(m_cudaBusyMemoryPool.empty() && m_cudaFreeMemoryPool.empty() &&
-        "CudaPool Not empty!");
-
     cudaDeviceSynchronize();
 }
 
 void ResourceManager::ClearHostMemoryPool()
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
 
     for (auto& [key, memoryChunk] : m_hostFreeMemoryPool)
     {
@@ -321,9 +311,76 @@ void ResourceManager::ClearHostMemoryPool()
     m_hostBusyMemoryPool.clear();
 }
 
+void ResourceManager::ClearCudnnConv2DMetaDataPool()
+{
+    std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
+
+    for (auto& [key, metaData] : m_cudnnConv2DMetaDataPool)
+    {
+        Compute::Cuda::CudaFree(metaData->ForwardWorkSpace);
+        Compute::Cuda::CudaFree(metaData->BackwardDataWorkSpace);
+        Compute::Cuda::CudaFree(metaData->BackwardFilterWorkSpace);
+        free(metaData);
+    }
+
+    m_cudnnConv2DMetaDataPool.clear();
+}
+
+void ResourceManager::ClearCudnnPool2DMetaDataPool()
+{
+    std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
+    for (auto& [key, metaData] : m_cudnnPool2DMetaDataPool)
+    {
+        free(metaData);
+    }
+    m_cudnnPool2DMetaDataPool.clear();
+}
+
+void ResourceManager::ClearCublasHandlePool()
+{
+    std::lock_guard lock(m_cublasHandlePoolMtx);
+
+    for (auto& [key, handle] : m_cublasHandlePool)
+    {
+        cublasDestroy(*handle);
+        free(handle);
+    }
+
+    m_cublasHandlePool.clear();
+}
+
+void ResourceManager::ClearCudnnHandlePool()
+{
+    std::lock_guard lock(m_cudnnHandlePoolMtx);
+
+    for (auto& [key, handle] : m_cudnnHandlePool)
+    {
+        cudnnDestroy(*handle);
+        free(handle);
+    }
+
+    m_cudnnHandlePool.clear();
+}
+
+void ResourceManager::ClearAll()
+{
+
+    ClearCudaMemoryPool();
+
+    ClearHostMemoryPool();
+
+    ClearCudnnConv2DMetaDataPool();
+
+    ClearCudnnPool2DMetaDataPool();
+
+    ClearCublasHandlePool();
+
+    ClearCudnnHandlePool();
+}
+
 size_t ResourceManager::GetTotalByteSizeCuda()
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
 
     size_t size = 0;
 
@@ -342,7 +399,7 @@ size_t ResourceManager::GetTotalByteSizeCuda()
 
 size_t ResourceManager::GetTotalByteSizeHost()
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
 
     size_t size = 0;
 
@@ -361,7 +418,7 @@ size_t ResourceManager::GetTotalByteSizeHost()
 
 size_t ResourceManager::GetAllocatedByteSizeCuda()
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
     size_t size = 0;
 
     for (const auto& [key, chunk] : m_cudaBusyMemoryPool)
@@ -373,7 +430,7 @@ size_t ResourceManager::GetAllocatedByteSizeCuda()
 
 size_t ResourceManager::GetAllocatedByteSizeHost()
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
     size_t size = 0;
 
     for (const auto& [key, chunk] : m_hostBusyMemoryPool)
@@ -385,7 +442,7 @@ size_t ResourceManager::GetAllocatedByteSizeHost()
 
 size_t ResourceManager::GetFreeByteSizeCuda()
 {
-    std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
+    std::lock_guard lock(m_cudaPoolMtx);
     size_t size = 0;
 
     for (const auto& [key, chunk] : m_cudaFreeMemoryPool)
@@ -397,7 +454,7 @@ size_t ResourceManager::GetFreeByteSizeCuda()
 
 size_t ResourceManager::GetFreeByteSizeHost()
 {
-    std::lock_guard<std::mutex> lock(m_hostPoolMtx);
+    std::lock_guard lock(m_hostPoolMtx);
     size_t size = 0;
 
     for (const auto& [key, chunk] : m_hostFreeMemoryPool)

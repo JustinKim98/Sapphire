@@ -151,8 +151,7 @@ void LoadDistTestFixed(bool printVerbose)
         PrintLoadDistMatrix(loadDist + i, printVerbose);
     }
 
-    Util::ResourceManager::ClearHostMemoryPool();
-    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
@@ -185,8 +184,7 @@ long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
     Compute::DeepFreeSparseHost(C, numMatrices);
     Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
 
-    Util::ResourceManager::ClearHostMemoryPool();
-    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearAll();
 
     const long elapsedTime =
         static_cast<long>
@@ -231,8 +229,7 @@ long SparseGemmTestComplex(uint32_t m, uint32_t n, uint32_t k,
     Compute::DeepFreeSparseHost(C, numMatrices);
     Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
 
-    Util::ResourceManager::ClearHostMemoryPool();
-    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearAll();
 
     const auto elapsedTime =
         static_cast<long>(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -299,7 +296,7 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
     cublasHandle_t handle;
     cublasCreate(&handle);
     Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
-                               cudaDenseB, cudaDenseOut, m, n, k, &handle);
+                               cudaDenseB, cudaDenseOut, m, n, k, 0);
     cublasDestroy(handle);
 
     Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, cudaSparseA,
@@ -328,8 +325,8 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
                         << " dense : " << denseResult
                         << " sparse : " << sparseResult << std::endl;
             }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+
+    Util::ResourceManager::ClearAll();
 }
 
 void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
@@ -391,7 +388,8 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
                         << " dense : " << denseResult
                         << " sparse : " << sparseResult << std::endl;
             }
-    Util::ResourceManager::ClearHostMemoryPool();
+
+    Util::ResourceManager::ClearAll();
 }
 
 void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
@@ -434,7 +432,7 @@ void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
                         << " sparse : " << sparseResult << std::endl;
             }
 
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
@@ -503,7 +501,7 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
     cublasHandle_t handle;
     cublasCreate(&handle);
     Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
-                               cudaDenseB, cudaDenseOut, m, n, k, &handle);
+                               cudaDenseB, cudaDenseOut, m, n, k, 0);
     cublasDestroy(handle);
     const auto cudaDenseEnd = std::chrono::system_clock::now();
 
@@ -540,8 +538,7 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
             cudaSparseBegin)
         .count();
 
-    Util::ResourceManager::ClearHostMemoryPool();
-    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearAll();
 
     return PerformanceData{ m,
                             n,

@@ -8,6 +8,8 @@
 #define SAPPHIRE_UTIL_MEMORYMANAGER_HPP
 
 #include <Sapphire/compute/dense/cuda/CudnnStruct.cuh>
+#include <Sapphire/compute/dense/cuda/Convolution.cuh>
+#include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <mutex>
 #include <thread>
@@ -20,15 +22,6 @@ struct FreePoolHash
     std::size_t operator()(const std::pair<int, size_t>& key) const
     {
         return std::hash<int>()(key.first) ^ std::hash<size_t>()(key.second);
-    }
-};
-
-struct BusyPoolHash
-{
-    std::size_t operator()(const std::pair<int, intptr_t>& key) const
-    {
-        return std::hash<int>()(key.first) ^
-               std::hash<uintptr_t>()(key.second);
     }
 };
 
@@ -112,37 +105,55 @@ public:
     static cudnnHandle_t*
     GetCudnnHandle(int deviceId, std::thread::id threadId);
 
-    static void AddReferenceCuda(void* ptr, int deviceId);
+    static void AddReferenceCuda(void* ptr);
 
     static void AddReferenceHost(void* ptr);
 
+    template <typename ...Ts>
     static void AddCudnnConv2DMetaData(
-        Compute::Dense::Cuda::ConvConfig convConfig,
-        Compute::Dense::Cuda::CudnnConv2DMetaData* metaData);
+        Compute::Dense::Cuda::ConvConfig convConfig, Ts ... args)
+    {
+        auto* metaData = new Compute::Dense::Cuda::CudnnConv2DMetaData();
+        Compute::Dense::Cuda::CreateCudnnConv2DMetaData(metaData, args...);
+        std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
+        m_cudnnConv2DMetaDataPool[convConfig] = metaData;
+    }
 
+    template <typename... Ts>
     static void AddCudnnPool2DMetaData(
-        Compute::Dense::Cuda::PoolConfig poolConfig,
-        Compute::Dense::Cuda::CudnnPool2DMetaData* metaData);
+        Compute::Dense::Cuda::PoolConfig poolConfig, Ts ... args)
+    {
+        auto* metaData = new Compute::Dense::Cuda::CudnnPool2DMetaData();
+        Compute::Dense::Cuda::CreateCudnnPool2DMetaData(metaData, args...);
+        std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
+        m_cudnnPool2DMetaDataPool[poolConfig] = metaData;
+    }
 
-    static void AddCublasHandle(int deviceId, std::thread::id threadId,
-                                cublasHandle_t* handle);
+    static void AddCublasHandle(int deviceId, std::thread::id threadId);
 
-    static void AddCudnnHandle(int deviceId, std::thread::id threadId,
-                               cudnnHandle_t* handle);
+    static void AddCudnnHandle(int deviceId, std::thread::id threadId);
 
     static void DeReferenceCuda(void* ptr, int deviceId);
 
     static void DeReferenceHost(void* ptr);
 
-    static void ClearUnusedCudaMemoryPool();
+    static void ClearFreeCudaMemoryPool();
 
-    static void ClearUnusedHostMemoryPool();
+    static void ClearFreeHostMemoryPool();
 
     static void ClearCudaMemoryPool();
 
     static void ClearHostMemoryPool();
 
-    static void ClearCudnnMetaData();
+    static void ClearCudnnConv2DMetaDataPool();
+
+    static void ClearCudnnPool2DMetaDataPool();
+
+    static void ClearCublasHandlePool();
+
+    static void ClearCudnnHandlePool();
+
+    static void ClearAll();
 
     static size_t GetTotalByteSizeCuda();
 
@@ -171,8 +182,7 @@ private:
     static std::unordered_multimap<std::pair<int, size_t>, MemoryChunk,
                                    FreePoolHash>
     m_cudaFreeMemoryPool;
-    static std::unordered_map<std::pair<int, intptr_t>, MemoryChunk,
-                              BusyPoolHash>
+    static std::unordered_map<intptr_t, MemoryChunk, std::hash<intptr_t>>
     m_cudaBusyMemoryPool;
 
     static std::unordered_map<Compute::Dense::Cuda::ConvConfig,

@@ -64,8 +64,7 @@ TensorData::TensorData(const TensorData& tensorData)
     }
     if (DenseMatCuda)
     {
-        Util::ResourceManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda),
-                                              m_device.GetID());
+        Util::ResourceManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda));
     }
 }
 
@@ -116,8 +115,7 @@ TensorData& TensorData::operator=(const TensorData& tensorData)
     }
     if (DenseMatCuda)
     {
-        Util::ResourceManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda),
-                                              m_device.GetID());
+        Util::ResourceManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda));
     }
 
     return *this;

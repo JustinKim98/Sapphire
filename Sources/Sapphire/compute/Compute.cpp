@@ -173,7 +173,7 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
             Dense::Cuda::GemmMatrixWiseBroadcast(
                 out.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
                 c.DenseMatCuda, M, N, K, batchSize, a.BatchSize == 1,
-                b.BatchSize == 1, c.BatchSize == 1);
+                b.BatchSize == 1, c.BatchSize == 1, 0);
             return;
         }
     }
@@ -199,15 +199,10 @@ void Gemm(TensorUtil::TensorData& out, const TensorUtil::TensorData& a,
 
     if (device.Type() == DeviceType::CUDA)
     {
-        cublasHandle_t cublasHandle;
-        cublasCreate(&cublasHandle);
-
         BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
                              sizeB, sizeC, out.DenseMatCuda, a.DenseMatCuda,
                              b.DenseMatCuda, c.DenseMatCuda, 0, 2,
-                             Dense::Cuda::Gemm, M, N, K, &cublasHandle);
-
-        cublasDestroy(cublasHandle);
+                             Dense::Cuda::Gemm, M, N, K, 0);
     }
     else
     {
@@ -645,5 +640,4 @@ void Softmax(TensorData& out, const TensorData& x)
                               totalSizeWithPadding, unitSize, paddedN);
     }
 }
-
-}  // namespace Sapphire::Compute
+} // namespace Sapphire::Compute

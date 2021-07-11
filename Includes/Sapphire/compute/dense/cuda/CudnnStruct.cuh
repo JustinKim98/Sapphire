@@ -85,9 +85,6 @@ struct CudnnPool2DMetaData
     cudnnTensorDescriptor_t yDesc;
     cudnnTensorDescriptor_t dxDesc;
     cudnnTensorDescriptor_t dyDesc;
-
-    void* alpha;
-    void* beta;
 };
 
 __host__ inline void checkCuDNN(cudnnStatus_t status)

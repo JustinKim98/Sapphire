@@ -11,13 +11,21 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-__host__ void PoolForward2d(float* y, float* x, Shape4D xShape,
+__host__ void CreateCudnnPool2DMetaData(CudnnPool2DMetaData* metaData,
+                                        Shape4D xShape, int windowHeight,
+                                        int windowWidth, int strideRow,
+                                        int strideCol, int rowPadding,
+                                        int columnPadding,
+                                        cudnnPoolingMode_t mode,
+                                        cudnnNanPropagation_t nanPropagation, int deviceId);
+
+__host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
                             int windowHeight, int windowWidth, int strideRow,
                             int strideCol, int rowPadding, int columnPadding,
                             cudnnPoolingMode_t mode,
                             cudnnNanPropagation_t nanPropagation, int deviceId);
 
-__host__ void PoolBackward2d(float* y, float* dy, float* x, float* dx,
+__host__ void Pool2DBackward(float* y, float* dy, float* x, float* dx,
                              Shape4D xShape, int windowHeight, int windowWidth,
                              int strideRow, int strideCol, int rowPadding,
                              int columnPadding, int deviceId);

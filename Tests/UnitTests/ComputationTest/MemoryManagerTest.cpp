@@ -50,7 +50,7 @@ void hostAllocationTest()
         Util::ResourceManager::DeReferenceHost(static_cast<void*>(data));
     }
 
-    Util::ResourceManager::ClearUnusedHostMemoryPool();
+    Util::ResourceManager::ClearFreeHostMemoryPool();
     CHECK_EQ(Util::ResourceManager::GetTotalByteSizeHost(), 0);
 }
 
@@ -85,7 +85,7 @@ void cudaAllocationTest()
         Util::ResourceManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 
-    Util::ResourceManager::ClearUnusedCudaMemoryPool();
+    Util::ResourceManager::ClearFreeCudaMemoryPool();
     CHECK_EQ(Util::ResourceManager::GetTotalByteSizeCuda(), 0);
 }
 }  // namespace Sapphire::Test

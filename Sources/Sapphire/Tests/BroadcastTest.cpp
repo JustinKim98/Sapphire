@@ -98,8 +98,7 @@ void BroadcastWithOneDimension()
         delete[] cpuGemmResult;
     }
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void BroadcastWithMissingDimension()
@@ -180,8 +179,7 @@ void BroadcastWithMissingDimension()
         delete[] cpuGemmResult;
     }
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void BroadcastMixed()
@@ -258,7 +256,6 @@ void BroadcastMixed()
         delete[] cpuGemmResult;
     }
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 } // namespace Sapphire::Test

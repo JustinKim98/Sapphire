@@ -10,15 +10,17 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-__host__ void CreateCudnnPoolMetaData(CudnnPool2DMetaData* metaData,
-                                      Shape4D xShape, int windowHeight,
-                                      int windowWidth, int strideRow,
-                                      int strideCol, int rowPadding,
-                                      int columnPadding,
-                                      cudnnPoolingMode_t mode,
-                                      cudnnNanPropagation_t nanPropagation)
+__host__ void CreateCudnnPool2DMetaData(CudnnPool2DMetaData* metaData,
+                                        Shape4D xShape, int windowHeight,
+                                        int windowWidth, int strideRow,
+                                        int strideCol, int rowPadding,
+                                        int columnPadding,
+                                        cudnnPoolingMode_t mode,
+                                        cudnnNanPropagation_t nanPropagation,
+                                        int deviceId)
 {
     Shape4D outputShape = { 0, 0, 0, 0 };
+    cudaSetDevice(deviceId);
     checkCuDNN(cudnnCreatePoolingDescriptor(&metaData->PoolDesc));
     checkCuDNN(cudnnCreateTensorDescriptor(&metaData->xDesc));
     checkCuDNN(cudnnCreateTensorDescriptor(&metaData->yDesc));
@@ -42,6 +44,7 @@ __host__ void CudnnPoolForward2d(CudnnPool2DMetaData* metaData, float* y,
 {
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
+    cudaSetDevice(deviceId);
     checkCuDNN(cudnnPoolingForward(*handle, metaData->PoolDesc, alpha,
                                    metaData->xDesc, x, beta, metaData->yDesc,
                                    y));
@@ -54,12 +57,13 @@ __host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, float* y,
 {
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
+    cudaSetDevice(deviceId);
     checkCuDNN(cudnnPoolingBackward(
         *handle, metaData->PoolDesc, alpha, metaData->yDesc, y,
         metaData->dyDesc, dy, metaData->xDesc, x, beta, metaData->dxDesc, dx));
 }
 
-__host__ void PoolForward2d(float* y, float* x, Shape4D xShape,
+__host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
                             int windowHeight, int windowWidth, int strideRow,
                             int strideCol, int rowPadding, int columnPadding,
                             cudnnPoolingMode_t mode,
@@ -68,14 +72,17 @@ __host__ void PoolForward2d(float* y, float* x, Shape4D xShape,
     const PoolConfig poolConfig = { xShape, windowHeight, windowWidth,
                                     strideRow, strideCol, rowPadding,
                                     columnPadding };
+    const auto tid = std::this_thread::get_id();
+    if (!Util::ResourceManager::HasCublasHandle(deviceId, tid))
+    {
+        Util::ResourceManager::AddCublasHandle(deviceId, tid);
+    }
     if (!Util::ResourceManager::HasPoolConfig(poolConfig))
     {
-        auto* metaData = new CudnnPool2DMetaData();
-        CreateCudnnPoolMetaData(metaData, xShape, windowHeight, windowWidth,
-                                strideRow, strideCol, rowPadding, columnPadding,
-                                mode, nanPropagation);
-
-        Util::ResourceManager::AddCudnnPool2DMetaData(poolConfig, metaData);
+        Util::ResourceManager::AddCudnnPool2DMetaData(
+            poolConfig, xShape, windowHeight, windowWidth, strideRow,
+            strideCol, rowPadding, columnPadding, mode, nanPropagation,
+            deviceId);
     }
 
     float alpha = 1.0f, beta = 0.0f;
@@ -83,7 +90,7 @@ __host__ void PoolForward2d(float* y, float* x, Shape4D xShape,
     CudnnPoolForward2d(metaData, y, x, &alpha, &beta, deviceId);
 }
 
-__host__ void PoolBackward2d(float* y, float* dy, float* x, float* dx,
+__host__ void Pool2DBackward(float* y, float* dy, float* x, float* dx,
                              Shape4D xShape,
                              int windowHeight,
                              int windowWidth, int strideRow, int strideCol,
@@ -94,10 +101,17 @@ __host__ void PoolBackward2d(float* y, float* dy, float* x, float* dx,
                                     strideRow, strideCol, rowPadding,
                                     columnPadding };
 
+    const auto tid = std::this_thread::get_id();
+    if (!Util::ResourceManager::HasCudnnHandle(deviceId, tid))
+    {
+        throw std::runtime_error(
+            "Compute::Dense::Cuda::Pool2DBackward - CudnnHandle was not "
+            "found");
+    }
     if (!Util::ResourceManager::HasPoolConfig(poolConfig))
     {
         throw std::runtime_error(
-            "Compute::Dense::Cuda::PoolBackward2d - CudnnPool2DMetaData was not "
+            "Compute::Dense::Cuda::Pool2DBackward - CudnnPool2DMetaData was not "
             "found");
     }
     float alpha = 1.0f, beta = 0.0f;

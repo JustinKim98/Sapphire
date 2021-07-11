@@ -149,8 +149,7 @@ void TestTranspose(bool printResult)
         delete[] cpuResult;
     }
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void TestBasics1()
@@ -229,8 +228,7 @@ void TestBasics1()
         delete[] cpuGemmResult;
     }
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void TestBasics2()
@@ -313,8 +311,8 @@ void TestBasics2()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+
+    Util::ResourceManager::ClearAll();
 }
 
 void TestAddBroadcast1()
@@ -439,8 +437,7 @@ void TestAddBroadcast1()
         delete[] cudaGemmResult1;
         delete[] cudaGemmResult2;
     }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void TestAddBroadcast2()
@@ -513,7 +510,6 @@ void TestAddBroadcast2()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 } // namespace Sapphire::Test

@@ -96,8 +96,7 @@ void Gemm1()
         delete[] cpuGemmResult;
     }
 
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void Gemm2()
@@ -176,8 +175,7 @@ void Gemm2()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void GemmBroadcast()
@@ -258,8 +256,7 @@ void GemmBroadcast()
 
         delete[] cudaGemmResult;
     }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void GemmBroadcastOnOutput()
@@ -335,7 +332,6 @@ void GemmBroadcastOnOutput()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::ResourceManager::ClearCudaMemoryPool();
-    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 } // namespace Sapphire::Test

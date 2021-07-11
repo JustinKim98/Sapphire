@@ -102,7 +102,7 @@ TEST_CASE("Gemm Broadcast Test")
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
             std::cout << "Gemm test Broadcast on Output: " << loopIdx
-                      << std::endl;
+                << std::endl;
             GemmBroadcastOnOutput();
         }
     }
@@ -196,8 +196,8 @@ TEST_CASE("Device Sparse Gemm Test")
         const auto elapsedTime =
             SparseGemmTestComplex(50, 50, 50, 1, false, false);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-                  << "\n"
-                  << std::endl;
+            << "\n"
+            << std::endl;
     }
 
     SUBCASE("Sparse Multiplication Test (simple)")
@@ -205,8 +205,8 @@ TEST_CASE("Device Sparse Gemm Test")
         std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
         const auto elapsedTime = SparseGemmTestSimple(5, 5, 5, 5, false, false);
         std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-                  << "\n"
-                  << std::endl;
+            << "\n"
+            << std::endl;
     }
 }
 #endif
@@ -239,7 +239,8 @@ TEST_CASE("Sparse Performance Test")
     {
         const std::filesystem::path workDir = "/home/jwkim98/Desktop";
         const bool printResults = true;
-        const size_t iterations = 300;
+        const bool writeResults = false;
+        const size_t iterations = 10;
 
         std::cout << "Testing performance ..." << std::endl;
         std::random_device rd;
@@ -263,15 +264,18 @@ TEST_CASE("Sparse Performance Test")
         }
         std::cout << " Done" << std::endl;
 
-        std::filesystem::current_path(workDir);
-        std::ofstream file;
-        file.open("performance.csv", std::ios::out | std::ios::app);
-        PerformanceData::WriteCsvHeader(file);
-        for (const auto& data : performanceData)
+        if (writeResults)
         {
-            data.WriteCsv(file);
+            std::filesystem::current_path(workDir);
+            std::ofstream file;
+            file.open("performance.csv", std::ios::out | std::ios::app);
+            PerformanceData::WriteCsvHeader(file);
+            for (const auto& data : performanceData)
+            {
+                data.WriteCsv(file);
+            }
+            file.close();
         }
-        file.close();
     }
 }
-}  // namespace Sapphire::Test
+} // namespace Sapphire::Test

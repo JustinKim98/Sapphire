@@ -14,13 +14,13 @@ namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
                    float* C, unsigned int M, unsigned int N, unsigned int K,
-                   cublasHandle_t* handle);
+                   int deviceId);
 
 __host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
                                       unsigned int M, unsigned int N,
                                       unsigned int K, unsigned int batchSize,
                                       bool broadcastA, bool broadcastB,
-                                      bool broadcastC);
+                                      bool broadcastC, int deviceId);
 
 __host__ void GemmTensor(float* out, float* A, float* B, float* C,
                          unsigned int paddedM, unsigned int paddedN,
