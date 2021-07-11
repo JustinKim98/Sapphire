@@ -33,7 +33,7 @@ __host__ void GetLoadDist(LoadDistMatrix* hostLoadDist, SparseMatrix* cudaA,
 //! \param m : Expected number of rows for output matrix
 //! \param n : Expected number of columns for output matrix
 //! \param numMatrices : number of matrices to compute Gemm
-//! \param deviceId : Device to perform the computation
+//! \param DeviceId : Device to perform the computation
 //! \param copyResultToHost : If true, copies the result to host output.
 __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                    SparseMatrix* cudaA, SparseMatrix* cudaB, uint32_t m,

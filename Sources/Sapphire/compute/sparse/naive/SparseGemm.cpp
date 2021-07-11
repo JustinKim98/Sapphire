@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/compute/sparse/naive/SparseGemm.hpp>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/util/Spinlock.hpp>
 #include <algorithm>
 #include <atomic>
@@ -104,11 +104,11 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
               0.0f);
 
     *output = static_cast<SparseMatrix*>(
-        Util::MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        Util::ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
 
     for (uint32_t i = 0; i < numMatrices; ++i)
         (*output)[i].ROW = static_cast<uint32_t*>(
-            Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
+            Util::ResourceManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
 
 #pragma omp parallel for default(none)                                      \
     shared(numMatrices, m, n, a, b, output, tempIdxBuffer, tempValueBuffer) \
@@ -155,9 +155,9 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
         curMatrixOut->ROW[m] = matrixNNZ;
 
         curMatrixOut->COL = static_cast<uint32_t*>(
-            Util::MemoryManager::GetMemoryHost(sizeof(uint32_t) * matrixNNZ));
+            Util::ResourceManager::GetMemoryHost(sizeof(uint32_t) * matrixNNZ));
         curMatrixOut->V = static_cast<float*>(
-            Util::MemoryManager::GetMemoryHost(sizeof(float) * matrixNNZ));
+            Util::ResourceManager::GetMemoryHost(sizeof(float) * matrixNNZ));
 
         curMatrixOut->NNZ = matrixNNZ;
         curMatrixOut->M = m;

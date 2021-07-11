@@ -7,7 +7,7 @@
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/sparse/Sparse.hpp>
 #include <Sapphire/compute/sparse/cuda/SparseGemm.cuh>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <cstdlib>
 
 namespace Sapphire::Compute::Sparse::Cuda
@@ -145,22 +145,22 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                    bool copyResultToHost)
 {
     auto* tempValueArray =
-        static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+        static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
             sizeof(float) * numMatrices * m * MAX_NNZ_PER_ROW, deviceId));
 
     auto* tempIdxArray =
-        static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
+        static_cast<uint32_t*>(Util::ResourceManager::GetMemoryCuda(
             sizeof(uint32_t) * numMatrices * m * MAX_NNZ_PER_ROW, deviceId));
 
-    *cudaOutput = static_cast<SparseMatrix*>(MemoryManager::GetMemoryCuda(
+    *cudaOutput = static_cast<SparseMatrix*>(ResourceManager::GetMemoryCuda(
         sizeof(SparseMatrix) * numMatrices, deviceId));
     auto* outputBuffer = static_cast<SparseMatrix*>(
-        MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
         outputBuffer[i].ROW = static_cast<uint32_t*>(
-            MemoryManager::GetMemoryCuda((m + 1) * sizeof(uint32_t), deviceId));
+            ResourceManager::GetMemoryCuda((m + 1) * sizeof(uint32_t), deviceId));
     }
 
     Compute::Cuda::CopyHostToDevice(*cudaOutput, outputBuffer,
@@ -181,9 +181,9 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
                                         sizeof(uint32_t));
 
         (outputBuffer + i)->V = static_cast<float*>(
-            MemoryManager::GetMemoryCuda(sizeof(float) * nnz, deviceId));
+            ResourceManager::GetMemoryCuda(sizeof(float) * nnz, deviceId));
         (outputBuffer + i)->COL = static_cast<uint32_t*>(
-            MemoryManager::GetMemoryCuda(sizeof(uint32_t) * nnz, deviceId));
+            ResourceManager::GetMemoryCuda(sizeof(uint32_t) * nnz, deviceId));
 
         (outputBuffer + i)->M = m;
         (outputBuffer + i)->N = n;
@@ -199,20 +199,20 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
     if (copyResultToHost)
     {
         *hostOutput = static_cast<SparseMatrix*>(
-            MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+            ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
         for (uint32_t i = 0; i < numMatrices; ++i)
         {
             (*hostOutput + i)->ROW = static_cast<uint32_t*>(
-                MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
+                ResourceManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
             Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->ROW,
                                             (outputBuffer + i)->ROW,
                                             sizeof(uint32_t) * (m + 1));
 
             const auto nnz = (*hostOutput + i)->ROW[m];
             (*hostOutput + i)->V = static_cast<float*>(
-                MemoryManager::GetMemoryHost(sizeof(float) * nnz));
+                ResourceManager::GetMemoryHost(sizeof(float) * nnz));
             (*hostOutput + i)->COL = static_cast<uint32_t*>(
-                MemoryManager::GetMemoryHost(sizeof(float) * nnz));
+                ResourceManager::GetMemoryHost(sizeof(float) * nnz));
 
             Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->V,
                                             (outputBuffer + i)->V,
@@ -227,9 +227,9 @@ __host__ void Gemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         }
     }
 
-    MemoryManager::DeReferenceHost(outputBuffer);
-    Util::MemoryManager::DeReferenceCuda(tempValueArray, deviceId);
-    Util::MemoryManager::DeReferenceCuda(tempIdxArray, deviceId);
+    ResourceManager::DeReferenceHost(outputBuffer);
+    Util::ResourceManager::DeReferenceCuda(tempValueArray, deviceId);
+    Util::ResourceManager::DeReferenceCuda(tempIdxArray, deviceId);
 }
 
 __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
@@ -238,7 +238,7 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
 {
     const auto threadDim = 32;
     auto* deviceNNZArray =
-        static_cast<uint32_t*>(Util::MemoryManager::GetMemoryCuda(
+        static_cast<uint32_t*>(Util::ResourceManager::GetMemoryCuda(
             sizeof(uint32_t) * numMatrices, deviceId));
 
     const auto blockDim =
@@ -249,7 +249,7 @@ __host__ void CallLoadDist(SparseMatrix* a, SparseMatrix* b,
 
     cudaMemcpy(nnzArray, deviceNNZArray, sizeof(uint32_t) * numMatrices,
                cudaMemcpyDeviceToHost);
-    Util::MemoryManager::DeReferenceCuda(deviceNNZArray, deviceId);
+    Util::ResourceManager::DeReferenceCuda(deviceNNZArray, deviceId);
 }
 
 //! Should be executed using single block

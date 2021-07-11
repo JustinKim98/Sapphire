@@ -9,7 +9,7 @@
 
 #include <doctest.h>
 #include <Sapphire/compute/sparse/Sparse.hpp>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <random>
 
 namespace Sapphire::Test

@@ -151,8 +151,8 @@ void LoadDistTestFixed(bool printVerbose)
         PrintLoadDistMatrix(loadDist + i, printVerbose);
     }
 
-    Util::MemoryManager::ClearHostMemoryPool();
-    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
 }
 
 long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
@@ -185,8 +185,8 @@ long SparseGemmTestSimple(uint32_t m, uint32_t n, uint32_t k,
     Compute::DeepFreeSparseHost(C, numMatrices);
     Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
 
-    Util::MemoryManager::ClearHostMemoryPool();
-    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
 
     const long elapsedTime =
         static_cast<long>
@@ -231,8 +231,8 @@ long SparseGemmTestComplex(uint32_t m, uint32_t n, uint32_t k,
     Compute::DeepFreeSparseHost(C, numMatrices);
     Compute::DeepFreeSparseCuda(cudaC, numMatrices, 0);
 
-    Util::MemoryManager::ClearHostMemoryPool();
-    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
 
     const auto elapsedTime =
         static_cast<long>(std::chrono::duration_cast<std::chrono::microseconds>(
@@ -246,23 +246,23 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
 {
     const size_t paddedK = k;
     const size_t paddedN = n;
-    auto* hostDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryHost(
         sizeof(float) * m * paddedK * numMatrices));
-    auto* hostDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryHost(
         sizeof(float) * k * paddedN * numMatrices));
     auto* hostDenseOut =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
     auto* hostSparseConverted =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
-    auto* cudaDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
         sizeof(float) * m * k * numMatrices, 0));
-    auto* cudaDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
         sizeof(float) * k * n * numMatrices, 0));
     auto* cudaDenseOut =
-        static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+        static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
@@ -328,8 +328,8 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
                         << " dense : " << denseResult
                         << " sparse : " << sparseResult << std::endl;
             }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
@@ -337,15 +337,15 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
 {
     const size_t paddedK = k;
     const size_t paddedN = n;
-    auto* hostDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryHost(
         sizeof(float) * m * paddedK * numMatrices));
-    auto* hostDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryHost(
         sizeof(float) * k * paddedN * numMatrices));
     auto* hostDenseOut =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
     auto* hostSparseConverted =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
@@ -391,7 +391,7 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
                         << " dense : " << denseResult
                         << " sparse : " << sparseResult << std::endl;
             }
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
@@ -399,11 +399,11 @@ void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
 {
     const size_t paddedN = n;
     auto* hostDenseOrigin =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
     auto* hostSparseConverted =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
     InitIntegerDenseMatrix(hostDenseOrigin, m, n, paddedN, numMatrices,
@@ -434,7 +434,7 @@ void SparseMatrixConversionTest(size_t m, size_t n, size_t numMatrices,
                         << " sparse : " << sparseResult << std::endl;
             }
 
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
@@ -442,20 +442,20 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
 {
     const size_t paddedK = k;
     const size_t paddedN = n;
-    auto* hostDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryHost(
         sizeof(float) * m * paddedK * numMatrices));
-    auto* hostDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+    auto* hostDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryHost(
         sizeof(float) * k * paddedN * numMatrices));
     auto* hostDenseOut =
-        static_cast<float*>(Util::MemoryManager::GetMemoryHost(
+        static_cast<float*>(Util::ResourceManager::GetMemoryHost(
             sizeof(float) * m * paddedN * numMatrices));
 
-    auto* cudaDenseA = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
         sizeof(float) * m * k * numMatrices, 0));
-    auto* cudaDenseB = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+    auto* cudaDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
         sizeof(float) * k * n * numMatrices, 0));
     auto* cudaDenseOut =
-        static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+        static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
             sizeof(float) * m * n * numMatrices, 0));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
@@ -540,8 +540,8 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
             cudaSparseBegin)
         .count();
 
-    Util::MemoryManager::ClearHostMemoryPool();
-    Util::MemoryManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
 
     return PerformanceData{ m,
                             n,

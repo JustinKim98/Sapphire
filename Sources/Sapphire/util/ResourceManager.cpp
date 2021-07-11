@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <cassert>
 #include <iostream>
 #include <utility>
@@ -13,20 +13,35 @@
 namespace Sapphire::Util
 {
 std::unordered_multimap<size_t, MemoryChunk>
-MemoryManager::m_hostFreeMemoryPool;
-std::unordered_map<intptr_t, MemoryChunk> MemoryManager::m_hostBusyMemoryPool;
-std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, pair_hash_free>
-MemoryManager::m_cudaFreeMemoryPool;
-std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, pair_hash_busy>
-MemoryManager::m_cudaBusyMemoryPool;
+ResourceManager::m_hostFreeMemoryPool;
+std::unordered_map<intptr_t, MemoryChunk> ResourceManager::m_hostBusyMemoryPool;
+std::unordered_multimap<std::pair<int, size_t>, MemoryChunk, FreePoolHash>
+ResourceManager::m_cudaFreeMemoryPool;
+std::unordered_map<std::pair<int, intptr_t>, MemoryChunk, BusyPoolHash>
+ResourceManager::m_cudaBusyMemoryPool;
 std::unordered_map<Compute::Dense::Cuda::ConvConfig,
-                   Compute::Dense::Cuda::CudnnMetaData*, hash_convConfig>
-MemoryManager::m_cudnnMetaData;
-std::mutex MemoryManager::m_hostPoolMtx;
-std::mutex MemoryManager::m_cudaPoolMtx;
-unsigned int MemoryManager::m_allocationUnitByteSize = 256;
+                   Compute::Dense::Cuda::CudnnConv2DMetaData*, ConvMetaDataHash>
+ResourceManager::m_cudnnConv2DMetaDataPool;
+std::unordered_map<Compute::Dense::Cuda::PoolConfig,
+                   Compute::Dense::Cuda::CudnnPool2DMetaData*, PoolMetaDataHash>
+ResourceManager::m_cudnnPool2DMetaDataPool;
+std::unordered_map<std::pair<int, std::thread::id>, cublasHandle_t*,
+                   DeviceIdTidHash>
+ResourceManager::m_cublasHandlePool;
+std::unordered_map<std::pair<int, std::thread::id>, cudnnHandle_t*,
+                   DeviceIdTidHash>
+ResourceManager::m_cudnnHandlePool;
 
-void* MemoryManager::GetMemoryCuda(size_t byteSize, int deviceId)
+std::mutex ResourceManager::m_hostPoolMtx;
+std::mutex ResourceManager::m_cudaPoolMtx;
+std::mutex ResourceManager::m_cudnnConv2DMetaDataPoolMtx;
+std::mutex ResourceManager::m_cudnnPool2DMetaDataPoolMtx;
+std::mutex ResourceManager::m_cublasHandlePoolMtx;
+std::mutex ResourceManager::m_cudnnHandlePoolMtx;
+
+unsigned int ResourceManager::m_allocationUnitByteSize = 256;
+
+void* ResourceManager::GetMemoryCuda(size_t byteSize, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
     void* cudaPtr = nullptr;
@@ -59,12 +74,12 @@ void* MemoryManager::GetMemoryCuda(size_t byteSize, int deviceId)
     return cudaPtr;
 }
 
-void* MemoryManager::GetMemoryHost(size_t byteSize)
+void* ResourceManager::GetMemoryHost(size_t byteSize)
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
     void* dataPtr;
 
-    auto allocationSize =
+    const auto allocationSize =
         (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
         ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
 
@@ -89,13 +104,37 @@ void* MemoryManager::GetMemoryHost(size_t byteSize)
     return dataPtr;
 }
 
-Compute::Dense::Cuda::CudnnMetaData* MemoryManager::GetCudnnMetaData(
+Compute::Dense::Cuda::CudnnConv2DMetaData*
+ResourceManager::GetCudnnConvMetaData(
     Compute::Dense::Cuda::ConvConfig convConfig)
 {
-    return m_cudnnMetaData.at(convConfig);
+    std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
+    return m_cudnnConv2DMetaDataPool.at(convConfig);
 }
 
-void MemoryManager::AddReferenceCuda(void* ptr, int deviceId)
+Compute::Dense::Cuda::CudnnPool2DMetaData*
+ResourceManager::GetCudnnPoolMetaData(
+    Compute::Dense::Cuda::PoolConfig poolConfig)
+{
+    std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
+    return m_cudnnPool2DMetaDataPool.at(poolConfig);
+}
+
+cublasHandle_t* ResourceManager::GetCublasHandle(
+    int deviceId, std::thread::id threadId)
+{
+    std::lock_guard lock(m_cublasHandlePoolMtx);
+    return m_cublasHandlePool.at(std::make_pair(deviceId, threadId));
+}
+
+cudnnHandle_t* ResourceManager::GetCudnnHandle(
+    int deviceId, std::thread::id threadId)
+{
+    std::lock_guard lock(m_cudnnHandlePoolMtx);
+    return m_cudnnHandlePool.at(std::make_pair(deviceId, threadId));
+}
+
+void ResourceManager::AddReferenceCuda(void* ptr, int deviceId)
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -110,7 +149,7 @@ void MemoryManager::AddReferenceCuda(void* ptr, int deviceId)
     chunk.RefCount += 1;
 }
 
-void MemoryManager::AddReferenceHost(void* ptr)
+void ResourceManager::AddReferenceHost(void* ptr)
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -124,14 +163,37 @@ void MemoryManager::AddReferenceHost(void* ptr)
     chunk.RefCount += 1;
 }
 
-void MemoryManager::AddCudnnMetaData(
+void ResourceManager::AddCudnnConv2DMetaData(
     Compute::Dense::Cuda::ConvConfig convConfig,
-    Compute::Dense::Cuda::CudnnMetaData* metaData)
+    Compute::Dense::Cuda::CudnnConv2DMetaData* metaData)
 {
-    m_cudnnMetaData[convConfig] = metaData;
+    std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
+    m_cudnnConv2DMetaDataPool[convConfig] = metaData;
 }
 
-void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
+void ResourceManager::AddCudnnPool2DMetaData(
+    Compute::Dense::Cuda::PoolConfig poolConfig,
+    Compute::Dense::Cuda::CudnnPool2DMetaData* metaData)
+{
+    std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
+    m_cudnnPool2DMetaDataPool[poolConfig] = metaData;
+}
+
+void ResourceManager::AddCublasHandle(int deviceId, std::thread::id threadId,
+                                      cublasHandle_t* handle)
+{
+    std::lock_guard lock(m_cublasHandlePoolMtx);
+    m_cublasHandlePool[std::make_pair(deviceId, threadId)] = handle;
+}
+
+void ResourceManager::AddCudnnHandle(int deviceId, std::thread::id threadId,
+                                     cudnnHandle_t* handle)
+{
+    std::lock_guard lock(m_cudnnHandlePoolMtx);
+    m_cudnnHandlePool[std::make_pair(deviceId, threadId)] = handle;
+}
+
+void ResourceManager::DeReferenceCuda(void* ptr, int deviceId)
 {
     if (!ptr)
         throw std::runtime_error("DereferenceCuda - Attempted to free nullptr");
@@ -157,7 +219,7 @@ void MemoryManager::DeReferenceCuda(void* ptr, int deviceId)
     }
 }
 
-void MemoryManager::DeReferenceHost(void* ptr)
+void ResourceManager::DeReferenceHost(void* ptr)
 {
     if (!ptr)
         throw std::runtime_error("DeReferenceHost - Attempted to free nullptr");
@@ -180,7 +242,7 @@ void MemoryManager::DeReferenceHost(void* ptr)
     }
 }
 
-void MemoryManager::ClearUnusedCudaMemoryPool()
+void ResourceManager::ClearUnusedCudaMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -192,7 +254,7 @@ void MemoryManager::ClearUnusedCudaMemoryPool()
     m_cudaFreeMemoryPool.clear();
 }
 
-void MemoryManager::ClearUnusedHostMemoryPool()
+void ResourceManager::ClearUnusedHostMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -208,7 +270,7 @@ void MemoryManager::ClearUnusedHostMemoryPool()
     m_hostFreeMemoryPool.clear();
 }
 
-void MemoryManager::ClearCudaMemoryPool()
+void ResourceManager::ClearCudaMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -233,7 +295,7 @@ void MemoryManager::ClearCudaMemoryPool()
     cudaDeviceSynchronize();
 }
 
-void MemoryManager::ClearHostMemoryPool()
+void ResourceManager::ClearHostMemoryPool()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -259,7 +321,7 @@ void MemoryManager::ClearHostMemoryPool()
     m_hostBusyMemoryPool.clear();
 }
 
-size_t MemoryManager::GetTotalByteSizeCuda()
+size_t ResourceManager::GetTotalByteSizeCuda()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
 
@@ -278,7 +340,7 @@ size_t MemoryManager::GetTotalByteSizeCuda()
     return size;
 }
 
-size_t MemoryManager::GetTotalByteSizeHost()
+size_t ResourceManager::GetTotalByteSizeHost()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
 
@@ -297,7 +359,7 @@ size_t MemoryManager::GetTotalByteSizeHost()
     return size;
 }
 
-size_t MemoryManager::GetAllocatedByteSizeCuda()
+size_t ResourceManager::GetAllocatedByteSizeCuda()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
     size_t size = 0;
@@ -309,7 +371,7 @@ size_t MemoryManager::GetAllocatedByteSizeCuda()
     return size;
 }
 
-size_t MemoryManager::GetAllocatedByteSizeHost()
+size_t ResourceManager::GetAllocatedByteSizeHost()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
     size_t size = 0;
@@ -321,7 +383,7 @@ size_t MemoryManager::GetAllocatedByteSizeHost()
     return size;
 }
 
-size_t MemoryManager::GetFreeByteSizeCuda()
+size_t ResourceManager::GetFreeByteSizeCuda()
 {
     std::lock_guard<std::mutex> lock(m_cudaPoolMtx);
     size_t size = 0;
@@ -333,7 +395,7 @@ size_t MemoryManager::GetFreeByteSizeCuda()
     return size;
 }
 
-size_t MemoryManager::GetFreeByteSizeHost()
+size_t ResourceManager::GetFreeByteSizeHost()
 {
     std::lock_guard<std::mutex> lock(m_hostPoolMtx);
     size_t size = 0;
@@ -345,8 +407,32 @@ size_t MemoryManager::GetFreeByteSizeHost()
     return size;
 }
 
-bool MemoryManager::HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig)
+bool ResourceManager::HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig)
 {
-    return m_cudnnMetaData.find(convConfig) != m_cudnnMetaData.end();
+    std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
+    return m_cudnnConv2DMetaDataPool.find(convConfig) !=
+           m_cudnnConv2DMetaDataPool.
+           end();
+}
+
+bool ResourceManager::HasPoolConfig(Compute::Dense::Cuda::PoolConfig poolConfig)
+{
+    std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
+    return m_cudnnPool2DMetaDataPool.find(poolConfig) !=
+           m_cudnnPool2DMetaDataPool.end();
+}
+
+bool ResourceManager::HasCublasHandle(int deviceId, std::thread::id tid)
+{
+    std::lock_guard lock(m_cublasHandlePoolMtx);
+    return m_cublasHandlePool.find(std::make_pair(deviceId, tid)) !=
+           m_cublasHandlePool.end();
+}
+
+bool ResourceManager::HasCudnnHandle(int deviceId, std::thread::id id)
+{
+    std::lock_guard lock(m_cudnnHandlePoolMtx);
+    return m_cudnnHandlePool.find(std::make_pair(deviceId, id)) !=
+           m_cudnnHandlePool.end();
 }
 } // namespace Sapphire::Util

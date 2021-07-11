@@ -6,7 +6,7 @@
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/sparse/cuda/cuSparseGemm.cuh>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 
 namespace Sapphire::Compute::Sparse::Cuda
@@ -23,20 +23,20 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
     float beta = 0.0f;
     cudaDataType computeType = CUDA_R_32F;
 
-    *cudaOutput = static_cast<SparseMatrix*>(MemoryManager::GetMemoryCuda(
+    *cudaOutput = static_cast<SparseMatrix*>(ResourceManager::GetMemoryCuda(
         sizeof(SparseMatrix) * numMatrices, deviceId));
 
     auto* hostBufferA = static_cast<SparseMatrix*>(
-        MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
     auto* hostBufferB = static_cast<SparseMatrix*>(
-        MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
     auto* outputBuffer = static_cast<SparseMatrix*>(
-        MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
 
     for (uint32_t i = 0; i < numMatrices; ++i)
     {
         outputBuffer[i].ROW = static_cast<uint32_t*>(
-            MemoryManager::GetMemoryCuda((m + 1) * sizeof(uint32_t), deviceId));
+            ResourceManager::GetMemoryCuda((m + 1) * sizeof(uint32_t), deviceId));
     }
 
     Compute::Cuda::CopyDeviceToHost(hostBufferA, cudaA,
@@ -75,7 +75,7 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         CHECK_CUSPARSE(cusparseSpGEMM_workEstimation(
             handle, opA, opB, &alpha, matA, matB, &beta, matOut, computeType,
             CUSPARSE_SPGEMM_DEFAULT, spgemmDesc, &bufferSize1, nullptr))
-        buffer1 = MemoryManager::GetMemoryCuda(bufferSize1, deviceId);
+        buffer1 = ResourceManager::GetMemoryCuda(bufferSize1, deviceId);
         CHECK_CUSPARSE(cusparseSpGEMM_workEstimation(
             handle, opA, opB, &alpha, matA, matB, &beta, matOut, computeType,
             CUSPARSE_SPGEMM_DEFAULT, spgemmDesc, &bufferSize1, buffer1))
@@ -83,7 +83,7 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         CHECK_CUSPARSE(cusparseSpGEMM_compute(
             handle, opA, opB, &alpha, matA, matB, &beta, matOut, computeType,
             CUSPARSE_SPGEMM_DEFAULT, spgemmDesc, &bufferSize2, nullptr))
-        buffer2 = MemoryManager::GetMemoryCuda(bufferSize2, 0);
+        buffer2 = ResourceManager::GetMemoryCuda(bufferSize2, 0);
 
         CHECK_CUSPARSE(cusparseSpGEMM_compute(
             handle, opA, opB, &alpha, matA, matB, &beta, matOut, computeType,
@@ -93,9 +93,9 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         CHECK_CUSPARSE(
             cusparseSpMatGetSize(matOut, &outNumRows, &outNumCols, &OutNNZ))
         outputBuffer[matrixIdx].COL = static_cast<uint32_t*>(
-            MemoryManager::GetMemoryCuda(OutNNZ * sizeof(uint32_t), deviceId));
+            ResourceManager::GetMemoryCuda(OutNNZ * sizeof(uint32_t), deviceId));
         outputBuffer[matrixIdx].V = static_cast<float*>(
-            MemoryManager::GetMemoryCuda(OutNNZ * sizeof(float), deviceId));
+            ResourceManager::GetMemoryCuda(OutNNZ * sizeof(float), deviceId));
 
         CHECK_CUSPARSE(cusparseCsrSetPointers(
             matOut, outputBuffer[matrixIdx].ROW, outputBuffer[matrixIdx].COL,
@@ -117,20 +117,20 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
     if (copyResultToHost)
     {
         *hostOutput = static_cast<SparseMatrix*>(
-            MemoryManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+            ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
         for (uint32_t i = 0; i < numMatrices; ++i)
         {
             (*hostOutput + i)->ROW = static_cast<uint32_t*>(
-                MemoryManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
+                ResourceManager::GetMemoryHost(sizeof(uint32_t) * (m + 1)));
             Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->ROW,
                                             (outputBuffer + i)->ROW,
                                             sizeof(uint32_t) * (m + 1));
 
             const auto nnz = (*hostOutput + i)->ROW[m];
             (*hostOutput + i)->V = static_cast<float*>(
-                MemoryManager::GetMemoryHost(sizeof(float) * nnz));
+                ResourceManager::GetMemoryHost(sizeof(float) * nnz));
             (*hostOutput + i)->COL = static_cast<uint32_t*>(
-                MemoryManager::GetMemoryHost(sizeof(float) * nnz));
+                ResourceManager::GetMemoryHost(sizeof(float) * nnz));
 
             Compute::Cuda::CopyDeviceToHost((*hostOutput + i)->V,
                                             (outputBuffer + i)->V,
@@ -145,9 +145,9 @@ void cuSparseGemm(SparseMatrix** hostOutput, SparseMatrix** cudaOutput,
         }
     }
 
-    MemoryManager::DeReferenceHost(outputBuffer);
-    MemoryManager::DeReferenceHost(hostBufferA);
-    MemoryManager::DeReferenceHost(hostBufferB);
+    ResourceManager::DeReferenceHost(outputBuffer);
+    ResourceManager::DeReferenceHost(hostBufferA);
+    ResourceManager::DeReferenceHost(hostBufferB);
 }
 
 }  // namespace Sapphire::Compute::Sparse::Cuda

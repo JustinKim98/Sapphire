@@ -10,7 +10,7 @@
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/Device.hpp>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <atomic>
 #include <cmath>
 #include <iostream>
@@ -96,8 +96,8 @@ void Gemm1()
         delete[] cpuGemmResult;
     }
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void Gemm2()
@@ -176,8 +176,8 @@ void Gemm2()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void GemmBroadcast()
@@ -258,8 +258,8 @@ void GemmBroadcast()
 
         delete[] cudaGemmResult;
     }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void GemmBroadcastOnOutput()
@@ -335,7 +335,7 @@ void GemmBroadcastOnOutput()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 } // namespace Sapphire::Test

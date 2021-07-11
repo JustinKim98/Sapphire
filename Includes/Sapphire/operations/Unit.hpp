@@ -30,7 +30,7 @@ class UnitDataWrapper
     std::unordered_map<std::string, float> ScalarLiterals;
     std::unordered_map<std::string, int> IntegerLiterals;
 
-    Compute::Dense::Cuda::CudnnMetaData CudnnConvMetaData;
+    Compute::Dense::Cuda::CudnnConv2DMetaData CudnnConvMetaData;
 
     std::string Name;
     Device HostDevice;

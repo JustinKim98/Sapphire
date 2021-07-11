@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <chrono>
 #include <iostream>
 #include <random>
@@ -29,29 +29,29 @@ void hostAllocationTest()
         size[i] = static_cast<unsigned int>(distrib(gen));
         totalSize += size[i];
         auto* data = static_cast<float*>(
-            Util::MemoryManager::GetMemoryHost(size[i] * sizeof(float)));
+            Util::ResourceManager::GetMemoryHost(size[i] * sizeof(float)));
         for (unsigned int j = 0; j < size[i]; j++)
         {
             data[j] = static_cast<float>(i);
         }
-        Util::MemoryManager::DeReferenceHost(static_cast<void*>(data));
+        Util::ResourceManager::DeReferenceHost(static_cast<void*>(data));
     }
 
-    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeHost(), totalSize);
+    CHECK_EQ(Util::ResourceManager::GetTotalByteSizeHost(), totalSize);
 
     for (int i = 0; i < 100; i++)
     {
         auto* data = static_cast<float*>(
-            Util::MemoryManager::GetMemoryHost(size[i] * sizeof(float)));
+            Util::ResourceManager::GetMemoryHost(size[i] * sizeof(float)));
         for (unsigned int j = 0; j < size[i]; j++)
         {
             data[j] = static_cast<float>(i);
         }
-        Util::MemoryManager::DeReferenceHost(static_cast<void*>(data));
+        Util::ResourceManager::DeReferenceHost(static_cast<void*>(data));
     }
 
-    Util::MemoryManager::ClearUnusedHostMemoryPool();
-    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeHost(), 0);
+    Util::ResourceManager::ClearUnusedHostMemoryPool();
+    CHECK_EQ(Util::ResourceManager::GetTotalByteSizeHost(), 0);
 }
 
 void cudaAllocationTest()
@@ -71,21 +71,21 @@ void cudaAllocationTest()
         size[i] = static_cast<unsigned int>(distrib(gen));
         totalSize += size[i];
         auto* data = static_cast<float*>(
-            Util::MemoryManager::GetMemoryCuda(size[i] * sizeof(float), 0));
+            Util::ResourceManager::GetMemoryCuda(size[i] * sizeof(float), 0));
 
-        Util::MemoryManager::DeReferenceCuda(static_cast<void*>(data), 0);
+        Util::ResourceManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 
-    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeCuda(), totalSize);
+    CHECK_EQ(Util::ResourceManager::GetTotalByteSizeCuda(), totalSize);
 
     for (int i = 0; i < 100; i++)
     {
         auto* data = static_cast<float*>(
-            Util::MemoryManager::GetMemoryCuda(size[i] * sizeof(float), 0));
-        Util::MemoryManager::DeReferenceCuda(static_cast<void*>(data), 0);
+            Util::ResourceManager::GetMemoryCuda(size[i] * sizeof(float), 0));
+        Util::ResourceManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 
-    Util::MemoryManager::ClearUnusedCudaMemoryPool();
-    CHECK_EQ(Util::MemoryManager::GetTotalByteSizeCuda(), 0);
+    Util::ResourceManager::ClearUnusedCudaMemoryPool();
+    CHECK_EQ(Util::ResourceManager::GetTotalByteSizeCuda(), 0);
 }
 }  // namespace Sapphire::Test

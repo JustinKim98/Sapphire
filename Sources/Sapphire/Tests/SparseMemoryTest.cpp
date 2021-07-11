@@ -165,8 +165,8 @@ void SparseMemoryAllocationHost()
 
     DeepFreeSparseHost(sparse, numMatrices);
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
     delete[] nnz;
 }
 
@@ -214,8 +214,8 @@ void LoadDistMemoryAllocationHost()
 
     DeepFreeSparseHost(sparse, numMatrices);
     DeepFreeLoadDistHost(loadDist, numMatrices);
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void SparseMemoryAllocationDevice()
@@ -283,11 +283,11 @@ void SparseMemoryAllocationDevice()
     DeepFreeSparseHost(hostSparseDst, numMatrices);
     DeepFreeSparseCuda(deviceSparse, numMatrices, 0);
 
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeCuda(), 0);
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeHost(), 0);
+    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeCuda(), 0);
+    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeHost(), 0);
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void SparseMemoryCopyDeviceToDevice()
@@ -360,11 +360,11 @@ void SparseMemoryCopyDeviceToDevice()
     DeepFreeSparseCuda(deviceSparseSrc, numMatrices, 0);
     DeepFreeSparseCuda(deviceSparseDst, numMatrices, 0);
 
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeCuda(), 0);
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeHost(), 0);
+    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeCuda(), 0);
+    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeHost(), 0);
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 }  // namespace Sapphire::Test

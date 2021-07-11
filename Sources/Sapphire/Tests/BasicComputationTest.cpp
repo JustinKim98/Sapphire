@@ -10,7 +10,7 @@
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/Device.hpp>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <atomic>
 #include <cmath>
 #include <iostream>
@@ -149,8 +149,8 @@ void TestTranspose(bool printResult)
         delete[] cpuResult;
     }
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void TestBasics1()
@@ -229,8 +229,8 @@ void TestBasics1()
         delete[] cpuGemmResult;
     }
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void TestBasics2()
@@ -313,8 +313,8 @@ void TestBasics2()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void TestAddBroadcast1()
@@ -439,8 +439,8 @@ void TestAddBroadcast1()
         delete[] cudaGemmResult1;
         delete[] cudaGemmResult2;
     }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 
 void TestAddBroadcast2()
@@ -513,7 +513,7 @@ void TestAddBroadcast2()
         std::cout << "Largest error : " << largestError << std::endl;
         delete[] cudaGemmResult;
     }
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearCudaMemoryPool();
+    Util::ResourceManager::ClearHostMemoryPool();
 }
 } // namespace Sapphire::Test

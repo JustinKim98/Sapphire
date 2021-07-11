@@ -7,7 +7,7 @@
 #include <immintrin.h>
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/MemoryManager.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
@@ -59,12 +59,12 @@ TensorData::TensorData(const TensorData& tensorData)
 {
     if (DenseMatHost)
     {
-        Util::MemoryManager::AddReferenceHost(
+        Util::ResourceManager::AddReferenceHost(
             static_cast<void*>(DenseMatHost));
     }
     if (DenseMatCuda)
     {
-        Util::MemoryManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda),
+        Util::ResourceManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda),
                                               m_device.GetID());
     }
 }
@@ -111,12 +111,12 @@ TensorData& TensorData::operator=(const TensorData& tensorData)
 
     if (DenseMatHost)
     {
-        Util::MemoryManager::AddReferenceHost(
+        Util::ResourceManager::AddReferenceHost(
             static_cast<void*>(DenseMatHost));
     }
     if (DenseMatCuda)
     {
-        Util::MemoryManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda),
+        Util::ResourceManager::AddReferenceCuda(static_cast<void*>(DenseMatCuda),
                                               m_device.GetID());
     }
 
@@ -358,7 +358,7 @@ void TensorData::m_freeHost()
     }
     else if (DenseMatHost)
     {
-        Util::MemoryManager::DeReferenceHost(static_cast<void*>(DenseMatHost));
+        Util::ResourceManager::DeReferenceHost(static_cast<void*>(DenseMatHost));
         DenseTotalLengthHost = 0;
     }
 }
@@ -374,7 +374,7 @@ void TensorData::m_freeCuda()
     else if (DenseMatCuda)
     {
         //         Compute::Cuda::CudaFree((void *)DenseMatCuda);
-        Util::MemoryManager::DeReferenceCuda(static_cast<void*>(DenseMatCuda),
+        Util::ResourceManager::DeReferenceCuda(static_cast<void*>(DenseMatCuda),
                                              m_device.GetID());
         DenseTotalLengthCuda = 0;
     }
@@ -409,7 +409,7 @@ void TensorData::m_allocateHost(unsigned int batchSize)
         PaddedHostColSize = paddedColumnSize;
         DenseTotalLengthHost = totalSize;
         DenseMatHost = static_cast<float*>(
-            Util::MemoryManager::GetMemoryHost(totalSize * sizeof(float)));
+            Util::ResourceManager::GetMemoryHost(totalSize * sizeof(float)));
 
 #pragma omp parallel for default(none) schedule(static) \
     shared(totalSize, padUnitSize)
@@ -434,7 +434,7 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
     else
     {
         const unsigned long totalSize = TensorShape.Size() * batchSize;
-        DenseMatCuda = static_cast<float*>(Util::MemoryManager::GetMemoryCuda(
+        DenseMatCuda = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
             totalSize * sizeof(float), m_device.GetID()));
     }
 }
