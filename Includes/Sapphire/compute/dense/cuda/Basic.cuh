@@ -62,7 +62,7 @@ __host__ void ReLUDerivative(float* output, const float* input,
 __host__ void LeakyReLU(float* output, const float* input, float a,
                         unsigned int totalSize);
 
-__host__ void LeakyReLUDerivative(float* output, const float* input, float a,
+__host__ void LeakyReLUBackward(float* output, const float* input, float a,
                                   unsigned int totalSize);
 
 __host__ void Inverse(float* output, const float* input,

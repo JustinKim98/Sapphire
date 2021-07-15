@@ -15,13 +15,13 @@
 
 namespace Sapphire::TensorUtil
 {
-//! TensorDescriptor stores real tensor data of the tensor
+//! TensorDescriptor stores metaData of the tensor
 //! There can be more than one tensor that references to one tensorData
 //! All public functions in the TensorDescriptor is guaranteed to be thread safe
 //! TensorDescriptor should not be accessible from the user interface directly
 class TensorDescriptor
 {
- public:
+public:
     TensorDescriptor() = default;
 
     TensorDescriptor(const Shape& shape, Type type, const Device& device,
@@ -34,26 +34,31 @@ class TensorDescriptor
     TensorDescriptor& operator=(const TensorDescriptor& tensorData) = delete;
     TensorDescriptor& operator=(TensorDescriptor&& tensorDesc) noexcept;
 
+    //! TODO : Consider making these private
     TensorData ForwardData;
     TensorData BackwardData;
 
     //! Add unit m_key if unit was used as output or flow-through type
-    //! \param wrapper : Wrapper for starting back propagation on this tensor
+    //! \param wrapper : BackPropWrapper for starting back propagation on this tensor
     //! \param saveOutput : Forward output of this tensorDescriptor is preserved
     //! if true
     void AppendOutputHistory(std::unique_ptr<BackProp::BackPropWrapper> wrapper,
                              bool saveOutput);
 
     //! Add unit key if unit was used as operand only
-    //! \param tensorKey : m_key of the tensor that this tensor should receive
+    //! \param tensorDescKey : m_key of the tensor that this tensor should receive
     //! gradient from
-    void AppendOperandHistory(int tensorKey);
+    void AppendOperandHistory(int tensorDescKey);
 
-    void RemoveGradientInputKey(int tensorKey);
+    //! Removes the gradient input key
+    //! The last history must not be output
+    //! \param tensorDescKey : key of the operand target tensor to remove
+    void RemoveGradientInput(int tensorDescKey);
 
-    //! Removes last history from the history list if it is operand history
+    //! Removes last history from the history list if it is operand history and history list is not empty
     void PopIfOperandHistory();
 
+    //! Removes the last history if not empty
     void PopHistory();
 
     //! Returns whether this tensorDescriptor is trainable
@@ -69,7 +74,7 @@ class TensorDescriptor
 
     const std::unique_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
     {
-        return m_history.back().Wrapper;
+        return m_history.back().BackPropWrapper;
     }
 
     [[nodiscard]] int GetKey() const
@@ -84,18 +89,20 @@ class TensorDescriptor
 
     // todo : Create sendTo, GetDevice, GetType
 
- private:
+private:
     //! This describes history of the tensorData
     //! As tensorData is used in unit function as an operand or input/output.
     //! It is stored using this struct
     struct History
     {
         explicit History(std::unique_ptr<BackProp::BackPropWrapper> wrapper)
-            : IsOutput(true), Wrapper(std::move(wrapper))
+            : IsOutput(true),
+              BackPropWrapper(std::move(wrapper))
         {
         }
 
-        History() : IsOutput(false)
+        History()
+            : IsOutput(false)
         {
         }
 
@@ -104,16 +111,17 @@ class TensorDescriptor
         History& operator=(History&& history) noexcept = default;
         History& operator=(const History& history) = delete;
 
-        void AddGradientInputTensorKey(int key)
+        //! Add tensor descriptor key to receive the gradient input
+        void AddGradientInputTensorDescKey(int tensorDescKey)
         {
-            GradientInputTensorKeys.emplace_back(key);
+            GradientInputTensorKeyList.emplace_back(tensorDescKey);
         }
 
         bool IsOutput;
 
-        std::unique_ptr<BackProp::BackPropWrapper> Wrapper;
+        std::unique_ptr<BackProp::BackPropWrapper> BackPropWrapper;
         //! List of the units that was as operand
-        std::list<int> GradientInputTensorKeys;
+        std::list<int> GradientInputTensorKeyList;
     };
 
     //! m_key to identify tensor data
@@ -123,6 +131,6 @@ class TensorDescriptor
 
     std::list<History> m_history;
 };
-}  // namespace Sapphire::TensorUtil
+} // namespace Sapphire::TensorUtil
 
 #endif

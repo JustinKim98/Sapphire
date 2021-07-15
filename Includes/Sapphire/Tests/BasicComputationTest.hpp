@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_BASICCOMPUTATIONTEST_HPP
-#define Sapphire_BASICCOMPUTATIONTEST_HPP
+#ifndef SAPPHIRE_BASICCOMPUTATIONTEST_HPP
+#define SAPPHIRE_BASICCOMPUTATIONTEST_HPP
 
 namespace Sapphire::Test
 {

@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/ComputationTest.hpp>
+#include <Sapphire/Tests/GemmTest.hpp>
 #include <Sapphire/compute/Compute.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/tensor/Shape.hpp>

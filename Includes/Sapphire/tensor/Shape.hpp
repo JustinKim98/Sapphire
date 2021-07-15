@@ -42,8 +42,10 @@ class Shape
 
     [[nodiscard]] unsigned int At(unsigned int index) const;
 
+    //! Get the total dimension
     [[nodiscard]] unsigned int Dim() const;
 
+    //! Get number of total elements
     [[nodiscard]] unsigned int Size() const noexcept;
 
     [[nodiscard]] std::vector<unsigned int> GetShapeVector() const

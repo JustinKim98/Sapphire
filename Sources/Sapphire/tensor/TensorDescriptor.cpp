@@ -10,8 +10,8 @@
 
 namespace Sapphire::TensorUtil
 {
-TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
-                                   const Device &device, unsigned int batchSize,
+TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
+                                   const Device& device, unsigned int batchSize,
                                    int key)
     : ForwardData(shape, type, device, batchSize, key),
       m_key(key),
@@ -20,7 +20,7 @@ TensorDescriptor::TensorDescriptor(const Shape &shape, Type type,
 {
 }
 
-TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
+TensorDescriptor::TensorDescriptor(TensorDescriptor&& tensorData) noexcept
     : ForwardData(std::move(tensorData.ForwardData)),
       BackwardData(std::move(tensorData.BackwardData)),
       m_key(tensorData.m_key),
@@ -30,8 +30,8 @@ TensorDescriptor::TensorDescriptor(TensorDescriptor &&tensorData) noexcept
 {
 }
 
-TensorDescriptor &TensorDescriptor::operator=(
-    TensorDescriptor &&tensorDesc) noexcept
+TensorDescriptor& TensorDescriptor::operator=(
+    TensorDescriptor&& tensorDesc) noexcept
 {
     ForwardData = tensorDesc.ForwardData;
     BackwardData = tensorDesc.BackwardData;
@@ -48,40 +48,41 @@ void TensorDescriptor::AppendOutputHistory(
     m_history.emplace_back(History(std::move(wrapper)));
 }
 
-void TensorDescriptor::AppendOperandHistory(int tensorKey)
+void TensorDescriptor::AppendOperandHistory(int tensorDescKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {
         History history;
-        history.AddGradientInputTensorKey(tensorKey);
+        history.AddGradientInputTensorDescKey(tensorDescKey);
         m_history.emplace_back(std::move(history));
         return;
     }
 
-    m_history.back().AddGradientInputTensorKey(tensorKey);
+    m_history.back().AddGradientInputTensorDescKey(tensorDescKey);
 }
 
-void TensorDescriptor::RemoveGradientInputKey(int tensorKey)
+void TensorDescriptor::RemoveGradientInput(int tensorDescKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {
         throw std::runtime_error(
-            "RemoveGradientInputKey - Last history was empty or output");
+            "RemoveGradientInput - Last history was empty or output");
     }
 
-    auto &history = m_history.back();
-    const auto it = std::find(history.GradientInputTensorKeys.begin(),
-                              history.GradientInputTensorKeys.end(), tensorKey);
+    auto& history = m_history.back();
+    const auto it = std::find(history.GradientInputTensorKeyList.begin(),
+                              history.GradientInputTensorKeyList.end(),
+                              tensorDescKey);
 
-    if (it == history.GradientInputTensorKeys.end())
+    if (it == history.GradientInputTensorKeyList.end())
     {
         throw std::runtime_error(
-            "RemoveGradientInputKey - tensorKey not found in gradient input "
+            "RemoveGradientInput - tensorDescKey not found in gradient input "
             "tensor key "
             "list");
     }
 
-    history.GradientInputTensorKeys.erase(it);
+    history.GradientInputTensorKeyList.erase(it);
 }
 
 void TensorDescriptor::PopIfOperandHistory()
@@ -101,15 +102,13 @@ bool TensorDescriptor::IsBackPropReady() const
 {
     if (m_history.empty())
         return false;
-    else if (m_history.back().IsOutput)
+    if (m_history.back().IsOutput)
         return true;
-    else
-    {
-        const auto &lastHistory = m_history.back();
-        if (lastHistory.GradientInputTensorKeys.empty())
-            return true;
-    }
+
+    if (const auto& lastHistory = m_history.back();
+        lastHistory.GradientInputTensorKeyList.empty())
+        return true;
 
     return false;
 }
-}  // namespace Sapphire::TensorUtil
+} // namespace Sapphire::TensorUtil

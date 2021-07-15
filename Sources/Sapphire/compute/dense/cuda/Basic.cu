@@ -16,31 +16,6 @@ __host__ void Add(unsigned int totalSize, float* output, const float* inputA,
                   const float* inputB, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB)
 {
-//    if (broadcastInputA || broadcastInputB)
-//    {
-//        const auto firstLaunchSizeBroadcast = (inputStride / 256 + 1);
-//
-//        AddKernelBroadcast<<<(inputStride / 256 + 1), 256,
-//                             2 * 256 * sizeof(float)>>>(
-//            output, inputA, inputB, 0, totalSize, inputStride, broadcastInputA,
-//            broadcastInputB);
-//    }
-//    else
-//    {
-//        const auto numLoops = 4;
-//        const auto blockDim = 256 / numLoops;
-//
-//        auto gridDim = totalSize / 256;
-//        const auto firstLaunchSize = (gridDim + 1) * 256;
-//
-//        if (firstLaunchSize > 0)
-//            AddKernelShared<<<gridDim + 1, blockDim, 2 * 256 * sizeof(float)>>>(
-//                output, inputA, inputB, 0, firstLaunchSize, totalSize,
-//                inputStride, numLoops, broadcastInputA, broadcastInputB);
-//
-//        cudaDeviceSynchronize();
-//    }
-
     const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
@@ -366,7 +341,7 @@ __host__ void ReLUDerivative(float* output, const float* input,
 
     if (firstLaunchSize > 0)
         ReLUDerivativeKernel<<<blockDim, threadDim>>>(output, input,
-                                                      firstLaunchSize);
+            firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
         const float* inputOffset = input + firstLaunchSize;
@@ -399,8 +374,8 @@ __host__ void LeakyReLU(float* output, const float* input, const float a,
     }
 }
 
-__host__ void LeakyReLUDerivative(float* output, const float* input,
-                                  const float a, unsigned int totalSize)
+__host__ void LeakyReLUBackward(float* output, const float* input,
+                                const float a, unsigned int totalSize)
 {
     const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
@@ -410,7 +385,7 @@ __host__ void LeakyReLUDerivative(float* output, const float* input,
 
     if (firstLaunchSize > 0)
         LeakyReLUDerivativeKernel<<<blockDim, threadDim>>>(output, input, a,
-                                                           firstLaunchSize);
+            firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
         const float* inputOffset = input + firstLaunchSize;
@@ -453,7 +428,8 @@ __host__ void Mean(float* output, const float* input, unsigned int totalSize,
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize, unitSize);
+        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize,
+                                            unitSize);
     if (requiredThreadNum > firstLaunchSize)
     {
         const float* inputOffset = input + firstLaunchSize;
@@ -468,8 +444,9 @@ __host__ void Softmax(float* output, const float* input, unsigned int totalSize,
                       unsigned int unitSize)
 {
     const auto blockDim = (unitSize > 512) ? 512 : unitSize;
-    const auto gridDim = (totalSize % blockDim == 0) ? totalSize / blockDim
-                                                     : totalSize / blockDim + 1;
+    const auto gridDim = (totalSize % blockDim == 0)
+                             ? totalSize / blockDim
+                             : totalSize / blockDim + 1;
     SoftmaxKernel<<<gridDim, blockDim>>>(output, input, totalSize, unitSize);
 }
 
@@ -478,8 +455,9 @@ __host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
                           unsigned int padSize)
 {
     auto blockDim = (unitSize > 512) ? 512 : unitSize;
-    const auto gridDim = (totalSize % blockDim == 0) ? totalSize / blockDim
-                                                     : totalSize / blockDim + 1;
+    const auto gridDim = (totalSize % blockDim == 0)
+                             ? totalSize / blockDim
+                             : totalSize / blockDim + 1;
     SoftmaxBackKernel<<<gridDim, blockDim>>>(dx, dy, x, totalSize, unitSize);
 }
 
@@ -518,4 +496,4 @@ __host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
 //            *(inputStartOffset + inputPaddedColumns * i + j)
 //        }
 //}
-}  // namespace Sapphire::Compute::Cuda::Dense
+} // namespace Sapphire::Compute::Cuda::Dense

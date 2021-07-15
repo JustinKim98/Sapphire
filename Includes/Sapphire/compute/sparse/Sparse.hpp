@@ -8,7 +8,6 @@
 #define Sapphire_COMPUTE_MATRIXFORMAT_HPP
 
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
-#include <cstdlib>
 
 namespace Sapphire::Compute
 {
@@ -146,15 +145,18 @@ void DeepCopyHostToHost(SparseMatrix* hostDstArray, SparseMatrix* hostSrcArray,
 
 //! Deep copies host matrix to Host from Host
 //! \param hostDstArray : destination host array
-//! \param deviceArray : source host array
+//! \param hostSrcArray : source host array
 //! \param numMatrices : Number of sparse matrices
 void DeepCopyHostToHost(LoadDistMatrix* hostDstArray,
                         LoadDistMatrix* hostSrcArray, uint32_t numMatrices);
 
+//! Create and allocate new Sparse matrix using dense matrix
 void CreateSparseMatrixWithDenseMatrix(SparseMatrix** dst, const float* src,
                                        uint32_t m, uint32_t n, uint32_t paddedN,
                                        uint32_t numMatrices);
 
+//! Convert existing sparse matrix to dense matrix
+//! Dense matrix should be pre-allocated
 void ConvertSparseMatrixToDenseMatrix(float* dst, const SparseMatrix* src,
                                       uint32_t m, uint32_t n, uint32_t paddedN,
                                       uint32_t numMatrices);

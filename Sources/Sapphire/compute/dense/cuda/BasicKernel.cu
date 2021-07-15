@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/compute/dense/cuda/BasicKernel.cuh>
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
@@ -58,8 +59,8 @@ __global__ void AddKernel(float* output, const float* inputA,
     const auto numLoops = sizePerBlock / blockDim.x;
     const auto blockOffset = sizePerBlock * blockIdx.x;
 
-    unsigned int leftOverA = broadcastInputA ? inputStride : totalSize;
-    unsigned int leftOverB = broadcastInputB ? inputStride : totalSize;
+    const unsigned int leftOverA = broadcastInputA ? inputStride : totalSize;
+    const unsigned int leftOverB = broadcastInputB ? inputStride : totalSize;
 
     for (unsigned int i = 0; i < numLoops; i++)
     {
@@ -73,7 +74,7 @@ __global__ void AddKernel(float* output, const float* inputA,
 
 __global__ void AddKernelShared(float* output, const float* inputA,
                                 const float* inputB, unsigned int offset,
-                                unsigned int launchSize, unsigned int totalSize,
+                                unsigned int totalSize,
                                 unsigned int inputStride, unsigned int numLoops,
                                 bool broadcastInputA, bool broadcastInputB)
 {
@@ -82,8 +83,8 @@ __global__ void AddKernelShared(float* output, const float* inputA,
     const auto sizePerBlock = blockDim.x * numLoops;
     const auto blockOffset = sizePerBlock * blockIdx.x;
 
-    unsigned int leftOverA = broadcastInputA ? inputStride : totalSize;
-    unsigned int leftOverB = broadcastInputB ? inputStride : totalSize;
+    const unsigned int leftOverA = broadcastInputA ? inputStride : totalSize;
+    const unsigned int leftOverB = broadcastInputB ? inputStride : totalSize;
 
     for (unsigned int i = 0; i < numLoops; i++)
     {
@@ -133,10 +134,12 @@ __global__ void AddKernelBroadcast(float* output, const float* inputA,
 
         for (int i = 0; i < totalSize; i += inputStride)
         {
-            auto aValue = broadcastInputA ? temp[id % blockDim.x]
-                                          : inputA[offset + id + i];
-            auto bValue = broadcastInputB ? temp[blockDim.x + id % blockDim.x]
-                                          : inputB[offset + id + i];
+            const auto aValue = broadcastInputA
+                                    ? temp[id % blockDim.x]
+                                    : inputA[offset + id + i];
+            const auto bValue = broadcastInputB
+                                    ? temp[blockDim.x + id % blockDim.x]
+                                    : inputB[offset + id + i];
             output[offset + id + i] = aValue + bValue;
         }
     }
@@ -354,8 +357,9 @@ __global__ void ReLUDerivativeKernel(float* output, const float* input,
     for (unsigned int i = 0; i < numLoops; i++)
     {
         output[blockOffset + blockDim.x * i + threadIdx.x] =
-            input[blockOffset + blockDim.x * i + threadIdx.x] > 0.0f ? 1.0f
-                                                                     : 0.0f;
+            input[blockOffset + blockDim.x * i + threadIdx.x] > 0.0f
+                ? 1.0f
+                : 0.0f;
     }
 }
 
@@ -406,9 +410,8 @@ __global__ void InverseKernel(float* output, const float* input,
 __global__ void MeanKernel(float* output, const float* input,
                            unsigned int totalSize, unsigned int unitSize)
 {
-    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (unitId < totalSize)
+    if (const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
+        unitId < totalSize)
     {
         for (unsigned int i = 0; i < unitSize; i++)
         {
@@ -433,7 +436,7 @@ __global__ void SoftmaxKernel(float* output, const float* input,
             sum += exp(input[unitSize * curBatch + i]);
         }
         output[unitSize * curBatch + curIdx] =
-            sum / exp(input[unitSize * curBatch + curIdx]);
+            exp(input[unitSize * curBatch + curIdx]) / sum;
     }
 }
 
@@ -463,4 +466,4 @@ __global__ void SoftmaxBackKernel(float* dx, const float* dy, const float* x,
         }
     }
 }
-}  // namespace Sapphire::Compute::Cuda::Dense
+} // namespace Sapphire::Compute::Cuda::Dense

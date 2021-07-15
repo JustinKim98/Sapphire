@@ -3,22 +3,20 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TENSOR_DECL_HPP
-#define Sapphire_TENSOR_DECL_HPP
+#ifndef SAPPHIRE_TENSOR_DECL_HPP
+#define SAPPHIRE_TENSOR_DECL_HPP
 
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/util/Device.hpp>
 
 namespace Sapphire
 {
-
-
 //! TensorDescriptor class contains data vector for processing
 //! with attributes describing it
 class Tensor
 {
  public:
-    Tensor(Shape shape, unsigned int descKey);
+    Tensor(unsigned int descKey);
     ~Tensor() = default;
 
     Tensor(const Tensor& tensor) = default;
@@ -35,8 +33,7 @@ class Tensor
     void SendTo(const Device& device) const;
 
  private:
-    Shape m_shape;
-    int m_tensorDescriptorKey;
+    int m_tensorDescKey;
 };
 }  // namespace Sapphire
 

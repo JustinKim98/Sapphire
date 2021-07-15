@@ -8,7 +8,6 @@
 #define Sapphire_LINEAR_HPP
 
 #include <Sapphire/tensor/Tensor.hpp>
-#include <ostream>
 
 namespace Sapphire::NN
 {

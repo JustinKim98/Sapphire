@@ -47,7 +47,7 @@ class BackPropWrapper
     }
 
     [[nodiscard]] const std::vector<TensorUtil::TensorData>&
-    GetOutputTensorKeys() const
+    GetOutputTensorDataVector() const
     {
         return m_gradientOutputs;
     }

@@ -7,17 +7,15 @@
 #ifndef Sapphire_UTIL_TENSORDATA_DECL_HPP
 #define Sapphire_UTIL_TENSORDATA_DECL_HPP
 
-#include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/util/Device.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 
 namespace Sapphire::TensorUtil
 {
 class TensorData
 {
- public:
+public:
     TensorData() = default;
     TensorData(Shape shape, Type type, Device device, unsigned int batchSize);
 
@@ -39,7 +37,7 @@ class TensorData
     float* DenseMatHost = nullptr;
     float* DenseMatCuda = nullptr;
 
-    [[nodiscard]] int GetParentDescKey() const
+    [[nodiscard]] int GetDescriptorKey() const
     {
         return m_parentDescKey;
     }
@@ -77,14 +75,19 @@ class TensorData
         return TensorShape;
     }
 
+    [[nodiscard]] std::size_t GetHostElementSize() const
+    {
+        return (TensorShape.Size() / TensorShape.Cols()) * PaddedHostColSize;
+    }
+
+    [[nodiscard]] std::size_t GetCudaElementSize() const
+    {
+        return TensorShape.Size();
+    }
+
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the
     //! operation units
-
-    //! Converts tensor data from dense to sparse
-    static void DenseToSparse(TensorData tensorData);
-    //! Converts tensor data  from sparse to dense
-    static void SparseToDense(TensorData tensorData);
 
     //! Deep copies tensor data from src to dest
     //! Type of dest and src must be the same
@@ -96,14 +99,13 @@ class TensorData
     //! Changes device of the tensor
     //! Transfers data to target device from current device
     //! immediately returns false if change device is requested to same device
-    //! \param tensorData : tensorData object to change device
     //! \param device : new device to set
     bool SendTo(const Device& device);
 
     //! Deep copies tensor data from src to dst
     static void DeepCopy(TensorData& dst, const TensorData& src);
 
- private:
+private:
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
     static void m_toGpu(const TensorData& tensorData);
@@ -112,15 +114,6 @@ class TensorData
     //! Only available for CUDA tensors
     static void m_toHost(const TensorData& tensorData);
 
-    static unsigned long m_convertDenseToSparse(SparseMatrix* sparse,
-                                                const float* dense, Shape shape,
-                                                unsigned long paddedRowSize,
-                                                Device device);
-
-    static unsigned long m_convertSparseToDense(SparseMatrix* sparse,
-                                                const float* dense, Shape shape,
-                                                unsigned long paddedRowSize,
-                                                Device device);
     //! Allocates data on the HOST with given batchSize
     void m_allocateHost(unsigned int batchSize);
 
@@ -139,6 +132,6 @@ class TensorData
 
     Device m_device;
 };
-}  // namespace Sapphire::TensorUtil
+} // namespace Sapphire::TensorUtil
 
 #endif

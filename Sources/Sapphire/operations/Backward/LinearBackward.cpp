@@ -7,6 +7,8 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Backward/LinearBackward.hpp>
 
+#include <Sapphire/compute/Initialize.hpp>
+
 namespace Sapphire::BackProp
 {
 LinearBackProp::LinearBackProp(const TensorUtil::TensorData& x,
@@ -33,12 +35,13 @@ LinearBackProp::LinearBackProp(const TensorUtil::TensorData& x,
     dyRef.BatchSize = 1;
 }
 
-bool LinearBackProp::InvokeBackProp(const TensorUtil::TensorData& input)
+bool LinearBackProp::InvokeBackProp(const TensorUtil::TensorData& dy)
 {
-    const auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::GetCurrentModel();
     auto unitDataWrapper = model.GetUnitDataWrapper(m_unitKey);
     auto weight = unitDataWrapper.TensorDataMap["weight"];
     auto bias = unitDataWrapper.TensorDataMap["bias"];
+    TensorUtil::TensorData::CopyTensorData(m_gradientInputs[0], dy);
 
     m_backProp(weight);
     m_updateWeight(weight);
@@ -70,7 +73,7 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight)
     Compute::Transpose(transposedA, x);
     Compute::Scale(
         transposedA, transposedA,
-        -1 / static_cast<float>(m_batchSize));  // todo : divide by batch size
+        -1 / static_cast<float>(m_batchSize)); // todo : divide by batch size
     // and scale by learning rate
     Compute::Gemm(weight, transposedA, dy, weight);
 }
@@ -86,5 +89,4 @@ void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias)
     Compute::Scale(oneVector, oneVector, -1.0f);
     Compute::Gemm(bias, oneVector, gradientIn, bias);
 }
-
-}  // namespace Sapphire::BackProp
+} // namespace Sapphire::BackProp

@@ -8,7 +8,7 @@
 
 #include <Sapphire/Tests/BasicComputationTest.hpp>
 #include <Sapphire/Tests/BroadcastTest.hpp>
-#include <Sapphire/Tests/ComputationTest.hpp>
+#include <Sapphire/Tests/GemmTest.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>

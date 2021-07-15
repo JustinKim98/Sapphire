@@ -42,6 +42,6 @@ static Tensor MSE(const Tensor& x, const Tensor& label)
     labelDesc.AppendOperandHistory(yDesc.GetKey());
     yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
 
-    return Tensor(Shape({ 1 }), yDescKey);
+    return Tensor(yDescKey);
 }
-}  // namespace Sapphire::NN::Loss
+} // namespace Sapphire::NN::Loss

@@ -12,7 +12,7 @@
 
 namespace Sapphire::NN::Functional
 {
-static Tensor Mul(const Tensor& a, const Tensor& b)
+static Tensor MulOp(const Tensor& a, const Tensor& b)
 {
     Model& model = ModelManager::GetCurrentModel();
 
@@ -48,7 +48,7 @@ static Tensor Mul(const Tensor& a, const Tensor& b)
     //! Append output history to the descriptor A and associated backPropWrapper
     yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
 
-    return Tensor(outputShape, outputKey);
+    return Tensor( outputKey);
 }
 
 static Tensor AddOp(const Tensor& a, const Tensor& b)
@@ -83,7 +83,7 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
     descB.AppendOperandHistory(descOut.GetKey());
     descOut.AppendOutputHistory(std::move(backPropWrapper), false);
 
-    return Tensor(outputShape, descOut.GetKey());
+    return Tensor( descOut.GetKey());
 }
 
 // static void AddOpInplace(const Tensor& out, Tensor& a)

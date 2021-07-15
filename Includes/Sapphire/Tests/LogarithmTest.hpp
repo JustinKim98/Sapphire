@@ -4,9 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#ifndef SAPPHIRE_TEST_LOGARITHM_TEST_HPP
+#define SAPPHIRE_TEST_LOGARITHM_TEST_HPP
+
 namespace Sapphire::Test
 {
+void TestLogForward();
 
-
-
+void TestLogBackward();
 }
+
+#endif

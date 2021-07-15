@@ -15,10 +15,11 @@ namespace Sapphire::NN
 {
 Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
                const Device& device, bool bias, bool isSparse)
-    : m_outputs(outputFeatureSize), m_bias(bias)
+    : m_outputs(outputFeatureSize),
+      m_bias(bias)
 {
     auto& currentModel = ModelManager::GetCurrentModel();
-    Type type = isSparse ? Type::Sparse : Type::Dense;
+    const Type type = isSparse ? Type::Sparse : Type::Dense;
     UnitDataWrapper wrapper;
     wrapper.TensorDataMap["weight"] = TensorUtil::TensorData(
         Shape({ inputFeatureSize, outputFeatureSize }), type, device, 1);
@@ -45,7 +46,7 @@ Tensor Linear::operator()(const Tensor& tensor) const
     const Shape outputShape({ m_outputs });
 
     const auto yKey = model.RegisterTensorDescriptor(outputShape, type, device,
-                                                     batchSize, true);
+        batchSize, true);
     auto& yDesc = model.GetDescriptor(yKey);
 
     Compute::Gemm(yDesc.ForwardData, xDesc.ForwardData,
@@ -61,7 +62,6 @@ Tensor Linear::operator()(const Tensor& tensor) const
     //! Append output history to the output descriptor
     yDesc.AppendOutputHistory(std::move(backPropWrapper), true);
 
-    return Tensor(outputShape, yKey);
+    return Tensor(yKey);
 }
-
-}  // namespace Sapphire::NN
+} // namespace Sapphire::NN

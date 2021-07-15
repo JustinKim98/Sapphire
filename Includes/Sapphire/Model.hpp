@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_MODEL_HPP
-#define Sapphire_MODEL_HPP
+#ifndef SAPPHIRE_MODEL_HPP
+#define SAPPHIRE_MODEL_HPP
 
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
@@ -17,7 +17,7 @@ namespace Sapphire
 {
 class Model
 {
- public:
+public:
     explicit Model(std::string name);
     ~Model() = default;
 
@@ -36,27 +36,17 @@ class Model
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
                                  const Device& device, unsigned int batchSize,
-                                 bool createBackwardData);
-
-    //! Initializes gradients before training every epoch
-    void ZeroGrad();
+                                 bool isTrainable);
 
     //! Returns unitDataWrapper with given key
-    UnitDataWrapper GetUnitDataWrapper(int key) const;
+    [[nodiscard]] UnitDataWrapper& GetUnitDataWrapper(int key);
 
-    //! Converts tensor into vector in 1 dimensional format
-    //! \param tensor : tensor to extract data from
-    [[nodiscard]] const std::vector<float>& GetData(Tensor tensor);
-
-    //! Sets data directly to the tensor
-    void SetData(const std::vector<float>& data);
-
-    //! Returns descriptor from the key
-    //! \param key : key of the descriptor
+    //! Returns descriptor using the descKey
+    //! \param descKey : key of the descriptor
     //! \return : tensor descriptor of given key
-    TensorUtil::TensorDescriptor& GetDescriptor(int key);
+    [[nodiscard]] TensorUtil::TensorDescriptor& GetDescriptor(int descKey);
 
- private:
+private:
     //! Automatically calculates gradient
     //! \param tensorKey : tensor key to the descriptor to start back
     //! propagation
@@ -64,14 +54,14 @@ class Model
 
     class TensorDescriptorPool
     {
-     public:
+    public:
         std::unordered_map<int, TensorUtil::TensorDescriptor> TensorDescMap;
         int Counter = 0;
     };
 
     class UnitPool
     {
-     public:
+    public:
         std::unordered_map<int, UnitDataWrapper> UnitWrapperMap;
         int Counter = 0;
     };
@@ -84,19 +74,28 @@ class Model
 //! Singleton class for model management
 class ModelManager
 {
- public:
-    static Model& GetModel(const std::string& name);
+public:
 
+    //! Gets the model with given modelName
+    //! \param modelName : name of the model to get
+    static Model& GetModel(const std::string& modelName);
+
+    //! Returns currently active model
+    //! \return : current model
     static Model& GetCurrentModel();
 
-    static void SetCurrentModel(const std::string& name);
+    //! Sets current model to the given modelName
+    //! \param modelName : name of the model to be set
+    static void SetCurrentModel(const std::string& modelName);
 
-    static void AddModel(const std::string& name);
+    //! Adds a new model to the ModelManager
+    //! \param modelName : name of the model
+    static void AddModel(const std::string& modelName);
 
- private:
+private:
     static std::string m_currentModel;
     static std::unordered_map<std::string, Model> m_modelMap;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

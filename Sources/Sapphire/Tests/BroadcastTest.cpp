@@ -87,10 +87,6 @@ void BroadcastWithOneDimension()
             if (largestError < error)
                 largestError = error;
 
-            //            std::cout << "cpu : " << cpuGemmResult[i]
-            //                      << " cuda : " << Out.DenseMatHost[i] <<
-            //                      std::endl;
-
             CHECK(error < 1.5f);
         }
 

@@ -5,10 +5,10 @@
 // property of any third parties.
 
 #ifdef WITH_CUDA
-
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <cuda_runtime.h>
-#include <Sapphire/Tests/CudaFunctionalityTest.cuh>
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
+#include <Sapphire/Tests/CudaFunctionalityTest.cuh>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -112,7 +112,6 @@ int CublasTest()
     free(a);
     return EXIT_SUCCESS;
 }
-
-}  // namespace Sapphire::Test
+} // namespace Sapphire::Test
 
 #endif

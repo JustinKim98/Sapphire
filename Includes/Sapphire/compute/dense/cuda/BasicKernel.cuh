@@ -19,7 +19,7 @@ __global__ void AddKernel(float* output, const float* inputA,
 
 __global__ void AddKernelShared(float* output, const float* inputA,
                                 const float* inputB, unsigned int offset,
-                                unsigned int launchSize, unsigned int totalSize,
+                                unsigned int totalSize,
                                 unsigned int inputStride, unsigned int numLoops,
                                 bool broadcastInputA, bool broadcastInputB);
 

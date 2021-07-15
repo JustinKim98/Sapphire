@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_COMPUTE_COMPUTE_DECL_HPP
-#define Sapphire_COMPUTE_COMPUTE_DECL_HPP
+#ifndef SAPPHIRE_COMPUTE_COMPUTE_DECL_HPP
+#define SAPPHIRE_COMPUTE_COMPUTE_DECL_HPP
 
 #include <Sapphire/tensor/TensorData.hpp>
 #include <algorithm>
@@ -15,63 +15,99 @@ namespace Sapphire::Compute
 {
 using namespace TensorUtil;
 
-//! Performs out = a + b
-void Add(TensorData& out, const TensorData& a, const TensorData& b);
+//! Warning
+//! These operations does not check validity of the inputs
+//! If input data condition does not meet, it will cause unhandled errors
 
-//! Performs out = a - b
-void Sub(TensorData& out, const TensorData& a, const TensorData& b);
+//! Performs y = a + b
+void Add(TensorData& y, const TensorData& a, const TensorData& b);
 
-//! Performs GEMM (out = a*b + c)
-void Gemm(TensorData& out, const TensorData& a, const TensorData& b,
+//! Performs y = a - b
+void Sub(TensorData& y, const TensorData& a, const TensorData& b);
+
+//! Performs GEMM (y = a*b + c)
+void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
           const TensorData& c);
 
-//! Performs GEMM (out = a*b + c) using the sparse matrix
-void SparseGemm(TensorData& out, const TensorData& a, const TensorData& b,
+//! Performs GEMM (y = a*b + c) using the sparse matrix
+void SparseGemm(TensorData& y, const TensorData& a, const TensorData& b,
                 TensorData& c);
 
-//! Performs output = input*factor
-void Scale(TensorData& output, const TensorData& input, float factor);
+void Conv2DForward(TensorData& y, const TensorData& x,
+                   const TensorData& Filter, int strideRow, int strideCol,
+                   int dilationRow, int dilationCol, int rowPadding,
+                   int columnPadding);
 
-//! Performs output = TransposeKernel(input)
-void Transpose(TensorData& output, const TensorData& input);
+void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
+                    const TensorData& x, const TensorData& filter,
+                    int strideRow, int strideCol, int dilationRow,
+                    int dilationCol, int rowPadding, int columnPadding);
+
+void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding);
+
+void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
+                       const TensorData& y, int windowHeight, int windowWidth,
+                       int strideRow, int strideCol, int rowPadding,
+                       int columnPadding);
+
+void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding);
+
+void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
+                       const TensorData& y, int windowHeight, int windowWidth,
+                       int strideRow, int strideCol, int rowPadding,
+                       int columnPadding);
+
+//! Performs y = x*factor
+void Scale(TensorData& y, const TensorData& x, float factor);
+
+//! Performs y = TransposeKernel(x)
+void Transpose(TensorData& y, const TensorData& x);
 
 //! Performs Element-wise multiply
-void Dot(TensorData& out, const TensorData& a, const TensorData& b);
+void Dot(TensorData& y, const TensorData& a, const TensorData& b);
 
-//! Performs out = input^factor for each element
-void Pow(TensorData& out, const TensorData& input, float factor);
+//! Performs y = x^factor for each element
+void Pow(TensorData& y, const TensorData& x, float factor);
 
-void cos(TensorData& out, const TensorData& input);
+void cos(TensorData& y, const TensorData& x);
 
-void sin(TensorData& out, const TensorData& input);
+void sin(TensorData& y, const TensorData& x);
 
-void tan(TensorData& out, const TensorData& input);
+void tan(TensorData& y, const TensorData& x);
 
-void cosh(TensorData& out, const TensorData& input);
+void cosh(TensorData& y, const TensorData& x);
 
-void sinh(TensorData& out, const TensorData& input);
+void sinh(TensorData& y, const TensorData& x);
 
-void tanh(TensorData& out, const TensorData& input);
+void tanh(TensorData& y, const TensorData& x);
 
-void log(TensorData& out, const TensorData& input);
+void log(TensorData& y, const TensorData& x);
 
-void log10(TensorData& out, const TensorData& input);
+void log10(TensorData& y, const TensorData& x);
 
-void ReLU(TensorData& out, const TensorData& input);
+void ReLU(TensorData& y, const TensorData& x);
 
-void ReLUDerivative(TensorData& out, const TensorData& input);
+void ReLUBackward(TensorData& dx, const TensorData& dy);
 
-void LeakyReLU(TensorData& out, const TensorData& input, float a);
+void LeakyReLU(TensorData& y, const TensorData& x, float a);
 
-void LeakyReluDerivative(TensorData& out, const TensorData& input, float a);
+void LeakyReluBackward(TensorData& dx, const TensorData& dy, float a);
 
-void Inverse(TensorData& out, const TensorData& input);
+void Inverse(TensorData& y, const TensorData& x);
 
-void Mean(TensorData& out, const TensorData& x);
+void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
-void Mean(TensorData& out, const TensorData& input, int dim);
+void Mean(TensorData& y, const TensorData& x);
 
-void Softmax(TensorData& out, const TensorData& x);
+void Mean(TensorData& y, const TensorData& x, int dim);
+
+void Softmax(TensorData& y, const TensorData& x);
+
+void SoftmaxBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 //! Broadcasts given shape and invokes the function
 //! Each shape variable are required to be same size in reversed order
@@ -88,7 +124,7 @@ void BroadcastWith3Inputs(const Shape& shapeOut, const Shape& shapeA,
                           float* out, float* A, float* B, float* C,
                           unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
-                          Params... params)
+                          Params ... params)
 {
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
@@ -102,8 +138,9 @@ void BroadcastWith3Inputs(const Shape& shapeOut, const Shape& shapeA,
            shapeOut.At(shapeIdx) == shapeB.At(shapeIdx) &&
            shapeOut.At(shapeIdx) == shapeC.At(shapeIdx))
     {
-        auto dim = std::max({ shapeA.At(shapeIdx), shapeB.At(shapeIdx),
-                              shapeC.At(shapeIdx), shapeOut.At(shapeIdx) });
+        const auto dim = std::max({ shapeA.At(shapeIdx), shapeB.At(shapeIdx),
+                                    shapeC.At(shapeIdx),
+                                    shapeOut.At(shapeIdx) });
         chunkSize *= dim;
         shapeIdx += 1;
     }
@@ -147,7 +184,7 @@ void BroadcastWith2Inputs(const Shape& shapeOut, const Shape& shapeA,
                           unsigned int totalSizeA, unsigned int totalSizeB,
                           float* out, float* A, float* B, unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
-                          Params... params)
+                          Params ... params)
 {
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
@@ -160,8 +197,8 @@ void BroadcastWith2Inputs(const Shape& shapeOut, const Shape& shapeA,
            (shapeOut.At(shapeIdx) == shapeA.At(shapeIdx) &&
             shapeOut.At(shapeIdx) == shapeB.At(shapeIdx)))
     {
-        auto dim = std::max({ shapeA.At(shapeIdx), shapeB.At(shapeIdx),
-                              shapeOut.At(shapeIdx) });
+        const auto dim = std::max({ shapeA.At(shapeIdx), shapeB.At(shapeIdx),
+                                    shapeOut.At(shapeIdx) });
         chunkSize *= dim;
         shapeIdx += 1;
     }
@@ -195,7 +232,6 @@ void BroadcastWith2Inputs(const Shape& shapeOut, const Shape& shapeA,
                              shapeIdx + 1, minimumRequiredDim, func, params...);
     }
 }
-
-}  // namespace Sapphire::Compute
+} // namespace Sapphire::Compute
 
 #endif

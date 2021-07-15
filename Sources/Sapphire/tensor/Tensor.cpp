@@ -9,8 +9,8 @@
 
 namespace Sapphire
 {
-Tensor::Tensor(Shape shape, unsigned int descKey)
-    : m_shape(std::move(shape)), m_tensorDescriptorKey(descKey)
+Tensor::Tensor(unsigned int descKey)
+    : m_tensorDescKey(descKey)
 {
 }
 
@@ -19,37 +19,40 @@ Tensor& Tensor::operator=(const Tensor& tensor)
     if (&tensor == this)
         return *this;
 
-    m_shape = tensor.m_shape;
-    m_tensorDescriptorKey = tensor.m_tensorDescriptorKey;
+    m_tensorDescKey = tensor.m_tensorDescKey;
     return *this;
 }
 
 Shape Tensor::GetShape() const
 {
-    return m_shape;
+    Model& model = ModelManager::GetCurrentModel();
+    TensorUtil::TensorDescriptor& desc =
+        model.GetDescriptor(m_tensorDescKey);
+    return desc.ForwardData.GetShape();
 }
 
 Device Tensor::GetDevice() const
 {
     Model& model = ModelManager::GetCurrentModel();
-    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
+        m_tensorDescKey);
     return desc.ForwardData.GetDevice();
 }
 
 int Tensor::TensorDescriptorKey() const
 {
-    return m_tensorDescriptorKey;
+    return m_tensorDescKey;
 }
 
 void Tensor::SendTo(const Device& device) const
 {
     Model& model = ModelManager::GetCurrentModel();
-    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescriptorKey);
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
+        m_tensorDescKey);
     desc.ForwardData.SendTo(device);
     if (desc.IsTrainable())
     {
         desc.BackwardData.SendTo(device);
     }
 }
-
-}  // namespace Sapphire
+} // namespace Sapphire
