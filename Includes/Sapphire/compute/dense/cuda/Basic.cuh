@@ -4,74 +4,74 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_COMPUTE_CUDA_BASIC_CUH
-#define Sapphire_COMPUTE_CUDA_BASIC_CUH
+#ifndef SAPPHIRE_COMPUTE_DENSE_CUDA_BASIC_CUH
+#define SAPPHIRE_COMPUTE_DENSE_CUDA_BASIC_CUH
 
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
 //! out = A + B
-__host__ void Add(unsigned int totalSize, float* output, const float* inputA,
-                  const float* inputB, unsigned int inputStride,
+__host__ void Add(unsigned int totalSize, float* y, const float* a,
+                  const float* b, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB);
 
 //! out = A - B
-__host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
-                  const float* inputB, unsigned int inputStride,
+__host__ void Sub(unsigned int totalSize, float* y, const float* a,
+                  const float* b, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB);
 
-//! out = inner_product(inputA, inputB)
-__host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
-                  const float* inputB, unsigned int inputStride,
+//! out = inner_product(a, b)
+__host__ void Dot(unsigned int totalSize, float* y, const float* a,
+                  const float* b, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB);
 
-//! out = input*scaleFactor
-__host__ void Scale(float* output, const float* input, const float scaleFactor,
+//! out = x*scaleFactor
+__host__ void Scale(float* y, const float* x, const float scaleFactor,
                     unsigned int totalSize);
 
-//! out = input^T
-__host__ void Transpose(float* output, const float* input,
+//! out = x^T
+__host__ void Transpose(float* y, const float* x,
                         unsigned int inputNumRows, unsigned int inputNumCols,
                         unsigned int batchSize, bool broadcastInput);
-//! out = pow(input, factor)
-__host__ void Pow(float* output, const float* input, const float factor,
+//! out = pow(x, factor)
+__host__ void Pow(float* y, const float* x, const float factor,
                   unsigned int totalSize);
 
-__host__ void cos(float* output, const float* input, unsigned int totalSize);
+__host__ void cos(float* y, const float* x, unsigned int totalSize);
 
-__host__ void sin(float* output, const float* input, unsigned int totalSize);
+__host__ void sin(float* y, const float* x, unsigned int totalSize);
 
-__host__ void tan(float* output, const float* input, unsigned int totalSize);
+__host__ void tan(float* y, const float* x, unsigned int totalSize);
 
-__host__ void cosh(float* output, const float* input, unsigned int totalSize);
+__host__ void cosh(float* y, const float* x, unsigned int totalSize);
 
-__host__ void sinh(float* output, const float* input, unsigned int totalSize);
+__host__ void sinh(float* y, const float* x, unsigned int totalSize);
 
-__host__ void tanh(float* output, const float* input, unsigned int totalSize);
+__host__ void tanh(float* y, const float* x, unsigned int totalSize);
 
-__host__ void log(float* output, const float* input, unsigned int totalSize);
+__host__ void log(float* y, const float* x, unsigned int totalSize);
 
-__host__ void log10(float* output, const float* input, unsigned int totalSize);
+__host__ void log10(float* y, const float* x, unsigned int totalSize);
 
-__host__ void ReLU(float* output, const float* input, unsigned int totalSize);
+__host__ void ReLU(float* y, const float* x, unsigned int totalSize);
 
-__host__ void ReLUDerivative(float* output, const float* input,
+__host__ void ReLUDerivative(float* y, const float* x,
                              unsigned int totalSize);
 
-__host__ void LeakyReLU(float* output, const float* input, float a,
+__host__ void LeakyReLU(float* y, const float* x, float a,
                         unsigned int totalSize);
 
-__host__ void LeakyReLUBackward(float* output, const float* input, float a,
+__host__ void LeakyReLUBackward(float* y, const float* x, float a,
                                   unsigned int totalSize);
 
-__host__ void Inverse(float* output, const float* input,
+__host__ void Inverse(float* y, const float* x,
                       unsigned int totalSize);
 
-__host__ void Mean(float* output, const float* input, unsigned int totalSize,
+__host__ void Mean(float* y, const float* x, unsigned int totalSize,
                    unsigned int unitSize);
 
-__host__ void Softmax(float* output, const float* input, unsigned int totalSize,
+__host__ void Softmax(float* y, const float* x, unsigned int totalSize,
                       unsigned int unitSize);
 
 __host__ void SoftmaxBack(float* dx, const float* dy, const float* x,

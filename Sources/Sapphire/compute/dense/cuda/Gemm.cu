@@ -9,7 +9,7 @@
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/compute/dense/cuda/Gemm.cuh>
-#include <Sapphire/compute/dense/cuda/GemmKernel.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/GemmKernel.cuh>
 #include <cassert>
 
 namespace Sapphire::Compute::Dense::Cuda

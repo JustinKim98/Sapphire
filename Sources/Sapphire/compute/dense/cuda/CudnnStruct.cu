@@ -37,9 +37,11 @@ bool ConvConfig::operator!=(const ConvConfig& convConfig) const
 
 bool PoolConfig::operator==(const PoolConfig& poolConfig) const
 {
-    return std::tie(InputShape, WindowHeight, WindowWidth, StrideRow, StrideCol,
+    return std::tie(Mode, InputShape, WindowHeight, WindowWidth, StrideRow,
+                    StrideCol,
                     RowPadding, ColumnPadding) ==
-           std::tie(poolConfig.InputShape, poolConfig.WindowHeight,
+           std::tie(poolConfig.Mode, poolConfig.InputShape,
+                    poolConfig.WindowHeight,
                     poolConfig.WindowWidth, poolConfig.StrideRow,
                     poolConfig.StrideCol, poolConfig.RowPadding,
                     poolConfig.ColumnPadding);

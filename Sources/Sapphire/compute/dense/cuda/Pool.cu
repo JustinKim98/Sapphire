@@ -66,24 +66,28 @@ __host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, float* y,
 __host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
                             int windowHeight, int windowWidth, int strideRow,
                             int strideCol, int rowPadding, int columnPadding,
-                            cudnnPoolingMode_t mode,
+                            PoolingMode mode,
                             cudnnNanPropagation_t nanPropagation, int deviceId)
 {
-    const PoolConfig poolConfig = { xShape, windowHeight, windowWidth,
+    const PoolConfig poolConfig = { mode, xShape, windowHeight, windowWidth,
                                     strideRow, strideCol, rowPadding,
                                     columnPadding };
-    const auto tid = std::this_thread::get_id();
-    if (!Util::ResourceManager::HasCublasHandle(deviceId, tid))
-    {
+
+    cudnnPoolingMode_t cudnnMode;
+    if (mode == PoolingMode::Max)
+        cudnnMode = CUDNN_POOLING_MAX;
+    else
+        cudnnMode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+
+    if (const auto tid = std::this_thread::get_id();
+        !Util::ResourceManager::HasCublasHandle(deviceId, tid))
         Util::ResourceManager::AddCublasHandle(deviceId, tid);
-    }
+
     if (!Util::ResourceManager::HasPoolConfig(poolConfig))
-    {
         Util::ResourceManager::AddCudnnPool2DMetaData(
             poolConfig, xShape, windowHeight, windowWidth, strideRow,
-            strideCol, rowPadding, columnPadding, mode, nanPropagation,
+            strideCol, rowPadding, columnPadding, cudnnMode, nanPropagation,
             deviceId);
-    }
 
     float alpha = 1.0f, beta = 0.0f;
     auto* metaData = Util::ResourceManager::GetCudnnPoolMetaData(poolConfig);
@@ -95,25 +99,23 @@ __host__ void Pool2DBackward(float* y, float* dy, float* x, float* dx,
                              int windowHeight,
                              int windowWidth, int strideRow, int strideCol,
                              int rowPadding,
-                             int columnPadding, int deviceId)
+                             int columnPadding, PoolingMode mode, int deviceId)
 {
-    const PoolConfig poolConfig = { xShape, windowHeight, windowWidth,
+    const PoolConfig poolConfig = { mode, xShape, windowHeight, windowWidth,
                                     strideRow, strideCol, rowPadding,
                                     columnPadding };
 
-    const auto tid = std::this_thread::get_id();
-    if (!Util::ResourceManager::HasCudnnHandle(deviceId, tid))
-    {
+    if (const auto tid = std::this_thread::get_id();
+        !Util::ResourceManager::HasCudnnHandle(deviceId, tid))
         throw std::runtime_error(
             "Compute::Dense::Cuda::Pool2DBackward - CudnnHandle was not "
             "found");
-    }
+
     if (!Util::ResourceManager::HasPoolConfig(poolConfig))
-    {
         throw std::runtime_error(
             "Compute::Dense::Cuda::Pool2DBackward - CudnnPool2DMetaData was not "
             "found");
-    }
+
     float alpha = 1.0f, beta = 0.0f;
     auto* metaData = Util::ResourceManager::GetCudnnPoolMetaData(poolConfig);
     CudnnPoolBackward2d(metaData, y, dy, x, dx, &alpha, &beta, deviceId);

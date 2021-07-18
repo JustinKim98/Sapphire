@@ -6,17 +6,18 @@
 
 #include <cublas_v2.h>
 #include <cudnn.h>
-#include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/dense/cuda/Basic.cuh>
-#include <Sapphire/compute/dense/cuda/BasicKernel.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/BasicKernel.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/TrigonometricKernel.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-__host__ void Add(unsigned int totalSize, float* output, const float* inputA,
-                  const float* inputB, unsigned int inputStride,
+const unsigned int numLoops = 8;
+
+__host__ void Add(unsigned int totalSize, float* y, const float* a,
+                  const float* b, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / MAX_THREAD_DIM_X;
@@ -24,7 +25,7 @@ __host__ void Add(unsigned int totalSize, float* output, const float* inputA,
 
     if (firstLaunchSize > 0)
         AddKernel<<<blockDim, threadDim>>>(
-            output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
+            y, a, b, 0, firstLaunchSize, totalSize, inputStride,
             broadcastInputA, broadcastInputB);
 
     if (totalSize > firstLaunchSize)
@@ -32,16 +33,15 @@ __host__ void Add(unsigned int totalSize, float* output, const float* inputA,
         const unsigned int offset = firstLaunchSize;
 
         AddKernel<<<1, totalSize - firstLaunchSize>>>(
-            output, inputA, inputB, offset, totalSize - firstLaunchSize,
+            y, a, b, offset, totalSize - firstLaunchSize,
             totalSize, inputStride, broadcastInputA, broadcastInputB);
     }
 }
 
-__host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
-                  const float* inputB, unsigned int inputStride,
+__host__ void Sub(unsigned int totalSize, float* y, const float* a,
+                  const float* b, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / MAX_THREAD_DIM_X;
@@ -49,7 +49,7 @@ __host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
 
     if (firstLaunchSize > 0)
         SubKernel<<<blockDim, threadDim>>>(
-            output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
+            y, a, b, 0, firstLaunchSize, totalSize, inputStride,
             broadcastInputA, broadcastInputB);
 
     if (totalSize > firstLaunchSize)
@@ -57,27 +57,26 @@ __host__ void Sub(unsigned int totalSize, float* output, const float* inputA,
         const unsigned int offset = firstLaunchSize;
 
         SubKernel<<<1, totalSize - firstLaunchSize>>>(
-            output, inputA, inputB, offset, totalSize - firstLaunchSize,
+            y, a, b, offset, totalSize - firstLaunchSize,
             totalSize, inputStride, broadcastInputA, broadcastInputB);
     }
 }
 
-__host__ void Scale(float* output, const float* input, const float scaleFactor,
+__host__ void Scale(float* y, const float* x, const float scaleFactor,
                     unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        ScaleKernel<<<blockDim, threadDim>>>(output, input, scaleFactor,
+        ScaleKernel<<<blockDim, threadDim>>>(y, x, scaleFactor,
                                              firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         ScaleKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, scaleFactor,
@@ -85,29 +84,29 @@ __host__ void Scale(float* output, const float* input, const float scaleFactor,
     }
 }
 
-__host__ void Transpose(float* output, const float* input,
+__host__ void Transpose(float* y, const float* x,
                         unsigned int inputNumRows, unsigned int inputNumCols,
                         unsigned int batchSize, bool broadcastInput)
 {
-    unsigned int blockDimX = (inputNumCols % TILE_DIM == 0)
-                                 ? inputNumCols / TILE_DIM
-                                 : inputNumCols / TILE_DIM + 1;
-    unsigned int blockDimY = (inputNumRows % TILE_DIM == 0)
-                                 ? inputNumRows / TILE_DIM
-                                 : inputNumRows / TILE_DIM + 1;
+    const auto tileDim = 8;
+    const unsigned int blockDimX = (inputNumCols % tileDim == 0)
+                                       ? inputNumCols / tileDim
+                                       : inputNumCols / tileDim + 1;
+    const unsigned int blockDimY = (inputNumRows % tileDim == 0)
+                                       ? inputNumRows / tileDim
+                                       : inputNumRows / tileDim + 1;
 
-    unsigned int blockDimZ = batchSize;
-    dim3 blockDim(blockDimX, blockDimY, blockDimZ);
-    dim3 threadDim(TILE_DIM, 8);
-    TransposeKernel<<<blockDim, threadDim>>>(output, input, inputNumRows,
+    const unsigned int blockDimZ = batchSize;
+    const dim3 blockDim(blockDimX, blockDimY, blockDimZ);
+    const dim3 threadDim(tileDim, 8);
+    TransposeKernel<<<blockDim, threadDim>>>(y, x, inputNumRows,
                                              inputNumCols, broadcastInput);
 }
 
-__host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
-                  const float* inputB, unsigned int inputStride,
+__host__ void Dot(unsigned int totalSize, float* y, const float* a,
+                  const float* b, unsigned int inputStride,
                   bool broadcastInputA, bool broadcastInputB)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / MAX_THREAD_DIM_X;
@@ -115,312 +114,296 @@ __host__ void Dot(unsigned int totalSize, float* output, const float* inputA,
 
     if (firstLaunchSize > 0)
         DotKernel<<<blockDim, threadDim>>>(
-            output, inputA, inputB, 0, firstLaunchSize, totalSize, inputStride,
+            y, a, b, 0, firstLaunchSize, totalSize, inputStride,
             broadcastInputA, broadcastInputB);
 
     if (totalSize > firstLaunchSize)
     {
         const unsigned int offset = firstLaunchSize;
-
         DotKernel<<<1, totalSize - firstLaunchSize>>>(
-            output, inputA, inputB, offset, totalSize - firstLaunchSize,
+            y, a, b, offset, totalSize - firstLaunchSize,
             totalSize, inputStride, broadcastInputA, broadcastInputB);
     }
 }
 
-__host__ void Pow(float* output, const float* input, const float factor,
+__host__ void Pow(float* y, const float* x, const float factor,
                   unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        PowKernel<<<blockDim, threadDim>>>(output, input, factor,
+        PowKernel<<<blockDim, threadDim>>>(y, x, factor,
                                            firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         PowKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, factor, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void cos(float* output, const float* input, unsigned int totalSize)
+__host__ void cos(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        cosKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        CosKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
-        cosKernel<<<1, totalSize - firstLaunchSize>>>(
+        CosKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void sin(float* output, const float* input, unsigned int totalSize)
+__host__ void sin(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        sinKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        SinKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
-        sinKernel<<<1, totalSize - firstLaunchSize>>>(
+        SinKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void tan(float* output, const float* input, unsigned int totalSize)
+__host__ void tan(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        tanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        TanKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
-        tanKernel<<<1, totalSize - firstLaunchSize>>>(
+        TanKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void cosh(float* output, const float* input, unsigned int totalSize)
+__host__ void cosh(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        coshKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        CoshKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
-        cosKernel<<<1, totalSize - firstLaunchSize>>>(
+        CosKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void sinh(float* output, const float* input, unsigned int totalSize)
+__host__ void sinh(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        sinhKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        SinhKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
-        sinhKernel<<<1, totalSize - firstLaunchSize>>>(
+        SinhKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void tanh(float* output, const float* input, unsigned int totalSize)
+__host__ void tanh(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        tanhKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        TanhKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
-        tanhKernel<<<1, totalSize - firstLaunchSize>>>(
+        TanhKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void log(float* output, const float* input, unsigned int totalSize)
+__host__ void log(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        logKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        logKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         logKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void log10(float* output, const float* input, unsigned int totalSize)
+__host__ void log10(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        log10Kernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        log10Kernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         log10Kernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void ReLU(float* output, const float* input, unsigned int totalSize)
+__host__ void ReLU(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        ReLUKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        ReLUKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         ReLUKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void ReLUDerivative(float* output, const float* input,
+__host__ void ReLUDerivative(float* y, const float* x,
                              unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        ReLUDerivativeKernel<<<blockDim, threadDim>>>(output, input,
+        ReLUDerivativeKernel<<<blockDim, threadDim>>>(y, x,
             firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         ReLUDerivativeKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void LeakyReLU(float* output, const float* input, const float a,
+__host__ void LeakyReLU(float* y, const float* x, const float a,
                         unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        LeakyReLUKernel<<<blockDim, threadDim>>>(output, input, a,
+        LeakyReLUKernel<<<blockDim, threadDim>>>(y, x, a,
                                                  firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         LeakyReLUKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, a, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void LeakyReLUBackward(float* output, const float* input,
+__host__ void LeakyReLUBackward(float* y, const float* x,
                                 const float a, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        LeakyReLUDerivativeKernel<<<blockDim, threadDim>>>(output, input, a,
+        LeakyReLUDerivativeKernel<<<blockDim, threadDim>>>(y, x, a,
             firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         LeakyReLUDerivativeKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, a, totalSize - firstLaunchSize);
     }
 }
 
-__host__ void Inverse(float* output, const float* input, unsigned int totalSize)
+__host__ void Inverse(float* y, const float* x, unsigned int totalSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto blockDim = totalSize / (threadDim * numLoops);
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        InverseKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize);
+        InverseKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
     if (totalSize > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         InverseKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
     }
 }
 
-//! output size should be totalSize/unitSize
-__host__ void Mean(float* output, const float* input, unsigned int totalSize,
+//! y size should be totalSize/unitSize
+__host__ void Mean(float* y, const float* x, unsigned int totalSize,
                    unsigned int unitSize)
 {
-    const auto numLoops = 8;
     const auto threadDim = MAX_THREAD_DIM_X / numLoops;
 
     const auto requiredThreadNum = totalSize / unitSize;
@@ -428,26 +411,26 @@ __host__ void Mean(float* output, const float* input, unsigned int totalSize,
     const auto firstLaunchSize = blockDim * threadDim * numLoops;
 
     if (firstLaunchSize > 0)
-        MeanKernel<<<blockDim, threadDim>>>(output, input, firstLaunchSize,
+        MeanKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize,
                                             unitSize);
     if (requiredThreadNum > firstLaunchSize)
     {
-        const float* inputOffset = input + firstLaunchSize;
-        float* outputOffset = output + firstLaunchSize;
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
 
         MeanKernel<<<1, requiredThreadNum - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize, unitSize);
     }
 }
 
-__host__ void Softmax(float* output, const float* input, unsigned int totalSize,
+__host__ void Softmax(float* y, const float* x, unsigned int totalSize,
                       unsigned int unitSize)
 {
     const auto blockDim = (unitSize > 512) ? 512 : unitSize;
     const auto gridDim = (totalSize % blockDim == 0)
                              ? totalSize / blockDim
                              : totalSize / blockDim + 1;
-    SoftmaxKernel<<<gridDim, blockDim>>>(output, input, totalSize, unitSize);
+    SoftmaxKernel<<<gridDim, blockDim>>>(y, x, totalSize, unitSize);
 }
 
 __host__ void SoftmaxBack(float* dx, const float* dy, const float* x,

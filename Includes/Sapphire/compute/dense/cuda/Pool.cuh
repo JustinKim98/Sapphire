@@ -22,13 +22,13 @@ __host__ void CreateCudnnPool2DMetaData(CudnnPool2DMetaData* metaData,
 __host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
                             int windowHeight, int windowWidth, int strideRow,
                             int strideCol, int rowPadding, int columnPadding,
-                            cudnnPoolingMode_t mode,
+                            PoolingMode mode,
                             cudnnNanPropagation_t nanPropagation, int deviceId);
 
 __host__ void Pool2DBackward(float* y, float* dy, float* x, float* dx,
                              Shape4D xShape, int windowHeight, int windowWidth,
                              int strideRow, int strideCol, int rowPadding,
-                             int columnPadding, int deviceId);
+                             int columnPadding, PoolingMode mode, int deviceId);
 }
 
 #endif

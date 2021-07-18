@@ -6,7 +6,7 @@
 
 #include <cuda_fp16.h>
 #include <mma.h>
-#include <Sapphire/compute/dense/cuda/GemmKernel.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/GemmKernel.cuh>
 
 #define WARP_SIZE 32
 

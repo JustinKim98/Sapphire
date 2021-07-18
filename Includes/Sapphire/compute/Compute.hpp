@@ -18,6 +18,7 @@ using namespace TensorUtil;
 //! Warning
 //! These operations does not check validity of the inputs
 //! If input data condition does not meet, it will cause unhandled errors
+//! All operations requires TensorData on the same device! (This should be checked previously before calling the function)
 
 //! Performs y = a + b
 void Add(TensorData& y, const TensorData& a, const TensorData& b);
@@ -33,33 +34,19 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
 void SparseGemm(TensorData& y, const TensorData& a, const TensorData& b,
                 TensorData& c);
 
+//! x, y, filter must have shape of C,H,W with Same batch size N
 void Conv2DForward(TensorData& y, const TensorData& x,
-                   const TensorData& Filter, int strideRow, int strideCol,
+                   const TensorData& filter, int strideRow, int strideCol,
                    int dilationRow, int dilationCol, int rowPadding,
                    int columnPadding);
-
-void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
-                    const TensorData& x, const TensorData& filter,
-                    int strideRow, int strideCol, int dilationRow,
-                    int dilationCol, int rowPadding, int columnPadding);
 
 void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
                       int windowWidth, int strideRow, int strideCol,
                       int rowPadding, int columnPadding);
 
-void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
-                       const TensorData& y, int windowHeight, int windowWidth,
-                       int strideRow, int strideCol, int rowPadding,
-                       int columnPadding);
-
 void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
                       int windowWidth, int strideRow, int strideCol,
                       int rowPadding, int columnPadding);
-
-void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
-                       const TensorData& y, int windowHeight, int windowWidth,
-                       int strideRow, int strideCol, int rowPadding,
-                       int columnPadding);
 
 //! Performs y = x*factor
 void Scale(TensorData& y, const TensorData& x, float factor);

@@ -209,16 +209,12 @@ void TestBasics1()
 
         std::atomic<float> largestError = 0.0f;
 
-        //#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-
-            //            std::cout << "cpu : " << cpuGemmResult[i]
-            //                      << " cuda : " << Out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= 1.0f);
         }
@@ -239,15 +235,11 @@ void TestBasics2()
             rd; // Will be used to obtain a seed for the random number engine
         std::mt19937 gen(
             rd()); // Standard mersenne_twister_engine seeded with rd()
-        std::uniform_int_distribution<> distrib(8, 16);
+        std::uniform_int_distribution<> distribution(8, 16);
 
-        const unsigned int M = 16; // distrib(gen);
-        const unsigned int N = 7;  // distrib(gen);
-        const auto batchSize = 3;  // distrib(gen) % 3 + 1;
-
-        //        const unsigned int M = distrib(gen);
-        //        const unsigned int N = distrib(gen);
-        //        const auto batchSize = distrib(gen) % 5 + 1;
+        const unsigned int M = distribution(gen);
+        const unsigned int N = distribution(gen);
+        const auto batchSize = distribution(gen) % 5 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
             << std::endl;
@@ -294,16 +286,12 @@ void TestBasics2()
 
         std::atomic<float> largestError = 0.0f;
 
-        //#pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-            //
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
@@ -321,11 +309,11 @@ void TestAddBroadcast1()
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distrib(1, 32);
+        std::uniform_int_distribution<> distribution(1, 32);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const auto batchSize = distrib(gen) % 5 + 1;
+        const unsigned int M = distribution(gen);
+        const unsigned int N = distribution(gen);
+        const auto batchSize = distribution(gen) % 5 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
             << std::endl;
@@ -345,9 +333,9 @@ void TestAddBroadcast1()
         Compute::Initialize::Normal(B, 100, 4);
         Compute::Initialize::Zeros(out);
 
-        const unsigned int M2 = distrib(gen);
-        const unsigned int N2 = distrib(gen);
-        const auto batchSize2 = distrib(gen) % 5 + 1;
+        const unsigned int M2 = distribution(gen);
+        const unsigned int N2 = distribution(gen);
+        const auto batchSize2 = distribution(gen) % 5 + 1;
 
         std::cout << "M2 : " << M2 << " N2: " << N2
             << " batchSize : " << batchSize2 << std::endl;
@@ -409,9 +397,6 @@ void TestAddBroadcast1()
             auto error = std::abs(cudaGemmResult1[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
         }
@@ -424,10 +409,6 @@ void TestAddBroadcast1()
             auto error = std::abs(cudaGemmResult2[i] - out2.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= std::abs(out2.DenseMatHost[i] / 100.0f));
         }
@@ -446,11 +427,11 @@ void TestAddBroadcast2()
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distrib(1, 32);
+        std::uniform_int_distribution<> distribution(1, 32);
 
-        const unsigned int M = 8;  // distrib(gen);
-        const unsigned int N = 24; // distrib(gen);
-        const auto batchSize = 3;  // distrib(gen) % 10 + 1;
+        const unsigned int M = distribution(gen);
+        const unsigned int N = distribution(gen);
+        const auto batchSize = distribution(gen) % 5 + 1;
 
         std::cout << "M : " << M << " N: " << N << " batchSize : " << batchSize
             << std::endl;
@@ -497,10 +478,6 @@ void TestAddBroadcast2()
             auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
             if (largestError < error)
                 largestError = error;
-
-            //            std::cout << "cuda : " << cudaGemmResult[i]
-            //                      << " cpu : " << out.DenseMatHost[i] <<
-            //                      std::endl;
 
             CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
             if (error > std::abs(out.DenseMatHost[i] / 100.0f))

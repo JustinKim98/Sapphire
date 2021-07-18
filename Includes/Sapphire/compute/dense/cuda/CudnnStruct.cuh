@@ -13,6 +13,12 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
+enum class PoolingMode
+{
+    Max,
+    Avg,
+};
+
 struct Shape4D
 {
     bool operator==(const Shape4D& shape4D) const;
@@ -44,6 +50,7 @@ struct PoolConfig
     bool operator==(const PoolConfig& poolConfig) const;
     bool operator!=(const PoolConfig& poolConfig) const;
 
+    PoolingMode Mode;
     Shape4D InputShape;
     int WindowHeight;
     int WindowWidth;

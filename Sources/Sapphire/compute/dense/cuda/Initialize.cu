@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/compute/dense/cuda/Initialize.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/InitializeKernel.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {

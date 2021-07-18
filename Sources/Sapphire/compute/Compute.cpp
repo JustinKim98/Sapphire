@@ -9,6 +9,8 @@
 #include <Sapphire/compute/dense/cuda/Gemm.cuh>
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
+#include <Sapphire/compute/dense/cuda/Convolution.cuh>
+#include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <algorithm>
 
 namespace Sapphire::Compute
@@ -69,7 +71,7 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                             0, 0, Dense::Cuda::Add, 0, false, false);
+                             0, 1, Dense::Cuda::Add, 0, false, false);
     }
     else
     {
@@ -78,7 +80,7 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
         const auto paddedSizeB = (sizeB / N) * paddedN;
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
                              paddedSizeA, paddedSizeB, y.DenseMatHost,
-                             a.DenseMatHost, b.DenseMatHost, 0, 0,
+                             a.DenseMatHost, b.DenseMatHost, 0, 1,
                              Dense::Naive::Add, 0, false, false);
     }
 }
@@ -130,7 +132,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                             0, 0, Dense::Cuda::Sub, 0, false, false);
+                             0, 1, Dense::Cuda::Sub, 0, false, false);
     }
     else
     {
@@ -224,6 +226,90 @@ void Gemm(TensorUtil::TensorData& y, const TensorUtil::TensorData& a,
     }
 }
 
+void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
+                   int strideRow, int strideCol, int dilationRow,
+                   int dilationCol, int rowPadding, int columnPadding)
+{
+    if (const auto device = y.GetDevice();
+        device.Type() == DeviceType::CUDA)
+
+    {
+        const Dense::Cuda::Shape4D filterShape = {
+            static_cast<int>(filter.BatchSize),
+            static_cast<int>(filter.GetShape().At(2)),
+            static_cast<int>(filter.GetShape().Rows()),
+            static_cast<int>(filter.GetShape().Cols()) };
+
+        const Dense::Cuda::Shape4D xShape = {
+            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().Rows()),
+            static_cast<int>(x.GetShape().Cols())
+        };
+
+        Dense::Cuda::Conv2DForward(
+            y.DenseMatCuda, x.DenseMatCuda, filter.DenseMatCuda, xShape,
+            filterShape, strideRow, strideCol, dilationRow, dilationCol,
+            rowPadding, columnPadding, device.GetID());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Compute::Conv2DForward - Host mode Not implemented");
+    }
+}
+
+void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding)
+{
+    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    {
+        const Dense::Cuda::Shape4D xShape = {
+            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().Rows()),
+            static_cast<int>(x.GetShape().Cols())
+        };
+
+        Dense::Cuda::Pool2DForward(y.DenseMatCuda, x.DenseMatCuda, xShape,
+                                   windowHeight, windowWidth, strideRow,
+                                   strideCol,
+                                   rowPadding, columnPadding,
+                                   Dense::Cuda::PoolingMode::Max,
+                                   CUDNN_PROPAGATE_NAN, device.GetID());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Compute::Conv2DForward - Host mode Not implemented");
+    }
+}
+
+
+void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding)
+{
+    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    {
+        const Dense::Cuda::Shape4D xShape = {
+            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().Rows()),
+            static_cast<int>(x.GetShape().Cols())
+        };
+
+        Dense::Cuda::Pool2DForward(
+            y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
+            strideRow, strideCol, rowPadding, columnPadding,
+            Dense::Cuda::PoolingMode::Avg,
+            CUDNN_PROPAGATE_NAN, device.GetID());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Compute::Conv2DForward - Host mode Not implemented");
+    }
+}
+
 void Scale(TensorData& y, const TensorData& x, const float factor)
 {
     const auto device = y.GetDevice();
@@ -275,14 +361,13 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     const auto broadcastA = a.BatchSize == 1;
     const auto broadcastB = b.BatchSize == 1;
 
-    if ((y.TensorShape == a.TensorShape &&
-         y.TensorShape == b.TensorShape) &&
+    if ((y.TensorShape == a.TensorShape && y.TensorShape == b.TensorShape) &&
         y.BatchSize > 1)
     {
         if (device.Type() == DeviceType::CUDA)
         {
-            Dense::Cuda::Dot(y.TensorShape.Size() * y.BatchSize,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
+            Dense::Cuda::Dot(y.TensorShape.Size() * y.BatchSize, y.DenseMatCuda,
+                             a.DenseMatCuda, b.DenseMatCuda,
                              y.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
@@ -318,8 +403,8 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                             0, 0, Dense::Cuda::Dot, 0, false, false);
+                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+                             1, Dense::Cuda::Dot, 0, false, false);
     }
     else
     {

@@ -88,7 +88,6 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
             /MP           # -> build with multiple processes
-            /W4           # -> warning level 3
             /FS
             ${WARN_AS_ERROR_FLAGS}
 
@@ -113,12 +112,19 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
             # No manual c++11 enable for MSVC as all supported MSVC versions for cmake-init have C++11 implicitly enabled (MSVC >=2013)
             )
+
+
+    if(IGNORE_WARNINGS MATCHES ON)
+        set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS} /w)
+    else()
+        set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}  /W4)
+     endif()
+
 endif ()
 
 # GCC and Clang compiler options
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
-            -Wall
             -Wno-missing-braces
             -Wno-register   # -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
             -Wno-error=register  # -> disable warning: ISO c++1z does not allow 'register' storage class specifier [-wregister] (caused by pybind11)
@@ -127,6 +133,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang"
             ${WARN_AS_ERROR_FLAGS}
             -std=c++1z
             )
+
+     if(IGNORE_WARNINGS MATCHES ON)
+        set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS} -w)
+    else()
+        set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}  -Wall)
+     endif()
 
     if (USE_AVX2)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx -mavx2")
