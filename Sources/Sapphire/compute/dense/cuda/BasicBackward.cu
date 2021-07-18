@@ -9,14 +9,12 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-const unsigned int numLoops = 8;
-
 __host__ void DotBackward(unsigned int totalSize, float* da, float* db,
                           const float* dy, const float* a, const float* b,
                           unsigned inputStride, bool
                           broadcastInputA, bool broadcastInputB)
 {
-    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
     const auto blockDim = totalSize / MAX_THREAD_DIM_X;
     const auto firstLaunchSize = blockDim * MAX_THREAD_DIM_X;
 
@@ -40,10 +38,10 @@ __host__ void DotBackward(unsigned int totalSize, float* da, float* db,
 __host__ void PowBackward(float* dx, const float* dy, const float* x,
                           const float factor, unsigned totalSize)
 {
-    const auto threadDim = MAX_THREAD_DIM_X / numLoops;
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
 
-    const auto blockDim = totalSize / (threadDim * numLoops);
-    const auto firstLaunchSize = blockDim * threadDim * numLoops;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
 
     if (firstLaunchSize > 0)
         PowBackwardKernel<<<blockDim, threadDim>>>(dx, dy, x, factor,

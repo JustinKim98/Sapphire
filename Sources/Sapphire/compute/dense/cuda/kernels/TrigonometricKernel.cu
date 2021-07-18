@@ -126,4 +126,43 @@ __global__ void ArcTanKernel(float* y, const float* x, unsigned int totalSize)
         y[idx] = atanf(x[idx]);
     }
 }
+
+__global__ void ArcCoshKernel(float* y, const float* x, unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
+        y[idx] = acoshf(x[idx]);
+    }
+}
+
+__global__ void ArcSinhKernel(float* y, const float* x, unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
+        y[idx] = asinhf(x[idx]);
+    }
+}
+
+__global__ void ArcTanhKernel(float* y, const float* x, unsigned int totalSize)
+{
+    const auto sizePerBlock = totalSize / gridDim.x;
+    const auto numLoops = sizePerBlock / blockDim.x;
+    const auto blockOffset = sizePerBlock * blockIdx.x;
+
+    for (unsigned int i = 0; i < numLoops; i++)
+    {
+        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
+        y[idx] = atanhf(x[idx]);
+    }
+}
 }

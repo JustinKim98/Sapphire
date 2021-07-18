@@ -13,7 +13,7 @@
 #define MAX_THREAD_DIM_Y 1024
 #define MAX_THREAD_DIM_Z 64
 #define MAX_GRID_DIM 65535
-
+#define NUM_LOOPS  8
 #define DEFAULT_DIM_X 64
 #include <cublas_v2.h>
 #include <cuda.h>

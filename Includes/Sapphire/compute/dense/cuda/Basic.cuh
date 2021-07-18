@@ -38,18 +38,6 @@ __host__ void Transpose(float* y, const float* x,
 __host__ void Pow(float* y, const float* x, const float factor,
                   unsigned int totalSize);
 
-__host__ void cos(float* y, const float* x, unsigned int totalSize);
-
-__host__ void sin(float* y, const float* x, unsigned int totalSize);
-
-__host__ void tan(float* y, const float* x, unsigned int totalSize);
-
-__host__ void cosh(float* y, const float* x, unsigned int totalSize);
-
-__host__ void sinh(float* y, const float* x, unsigned int totalSize);
-
-__host__ void tanh(float* y, const float* x, unsigned int totalSize);
-
 __host__ void log(float* y, const float* x, unsigned int totalSize);
 
 __host__ void log10(float* y, const float* x, unsigned int totalSize);

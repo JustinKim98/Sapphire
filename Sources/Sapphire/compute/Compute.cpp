@@ -11,6 +11,7 @@
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
+#include <Sapphire/compute/dense/cuda/Trigonometric.cuh>
 #include <algorithm>
 
 namespace Sapphire::Compute
@@ -449,7 +450,7 @@ void cos(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::cos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Cos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
     }
     else
     {
@@ -468,7 +469,7 @@ void sin(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::sin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Sin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
     }
     else
     {
@@ -487,7 +488,7 @@ void tan(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::tan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Tan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
     }
     else
     {
@@ -506,7 +507,7 @@ void cosh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::cosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Cosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
     }
     else
     {
@@ -525,7 +526,7 @@ void sinh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::sinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Sinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
     }
     else
     {
@@ -544,7 +545,7 @@ void tanh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::tanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Tanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
     }
     else
     {

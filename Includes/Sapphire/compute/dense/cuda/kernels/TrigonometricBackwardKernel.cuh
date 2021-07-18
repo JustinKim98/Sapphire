@@ -36,6 +36,7 @@ __global__ void ArcSinBackwardKernel(float* dx, const float* dy, const float* x,
 
 __global__ void ArcTanBackwardKernel(float* dx, const float* dy, const float* x,
                                      unsigned int totalSize);
+
 __global__ void ArcCoshBackwardKernel(float* dx, const float* dy,
                                       const float* x, unsigned int totalSize);
 

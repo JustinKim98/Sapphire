@@ -6,6 +6,7 @@
 
 #ifndef SAPPHIRE_COMPUTE_DENSE_CUDA_TRIGONOMETRIC_KERNEL_CUH
 #define SAPPHIRE_COMPUTE_DENSE_CUDA_TRIGONOMETRIC_KERNEL_CUH
+
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
