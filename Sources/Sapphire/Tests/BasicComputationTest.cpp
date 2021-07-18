@@ -11,6 +11,7 @@
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/Device.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#include <Sapphire/compute/TrigonometricOps.hpp>
 #include <atomic>
 #include <cmath>
 #include <iostream>
@@ -56,7 +57,6 @@ void TestTranspose(bool printResult)
 
         auto* cpuResult = new float[transposedOut.DenseTotalLengthHost];
 
-#pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(transposedOut.
                              DenseTotalLengthHost); ++i)
         {
@@ -184,7 +184,7 @@ void TestBasics1()
         Compute::Add(Out, A, B);
         Compute::Scale(Out, Out, 3);
         Compute::Sub(Out, Out, A);
-        Compute::tanh(Out, Out);
+        Compute::Tanh(Out, Out);
 
         auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
@@ -203,7 +203,7 @@ void TestBasics1()
         Compute::Add(Out, A, B);
         Compute::Scale(Out, Out, 3);
         Compute::Sub(Out, Out, A);
-        Compute::tanh(Out, Out);
+        Compute::Tanh(Out, Out);
 
         Out.SendTo(host);
 
@@ -263,7 +263,7 @@ void TestBasics2()
         Compute::Add(out, out, A);
         Compute::Sub(out, out, B);
         Compute::ReLU(out, out);
-        Compute::sin(out, out);
+        Compute::Sin(out, out);
 
         A.SendTo(host);
         B.SendTo(host);
@@ -282,7 +282,7 @@ void TestBasics2()
         Compute::Add(out, out, A);
         Compute::Sub(out, out, B);
         Compute::ReLU(out, out);
-        Compute::sin(out, out);
+        Compute::Sin(out, out);
 
         std::atomic<float> largestError = 0.0f;
 

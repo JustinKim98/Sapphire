@@ -7,8 +7,8 @@
 #include <Sapphire/compute/ComputeBackward.hpp>
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
-
-#include "Sapphire/compute/dense/cuda/BasicBackward.cuh"
+#include <Sapphire/compute/Broadcast.hpp>
+#include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
 
 namespace Sapphire::Compute
 {

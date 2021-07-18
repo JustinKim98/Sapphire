@@ -12,6 +12,7 @@
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/dense/cuda/Trigonometric.cuh>
+#include <Sapphire/compute/Broadcast.hpp>
 #include <algorithm>
 
 namespace Sapphire::Compute
@@ -440,119 +441,6 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
     }
 }
 
-void cos(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Cos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::cos(y.DenseMatHost, x.DenseMatHost,
-                          totalSizeWithPadding);
-    }
-}
-
-void sin(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Sin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::sin(y.DenseMatHost, x.DenseMatHost,
-                          totalSizeWithPadding);
-    }
-}
-
-void tan(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Tan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::tan(y.DenseMatHost, x.DenseMatHost,
-                          totalSizeWithPadding);
-    }
-}
-
-void cosh(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Cosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::cosh(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
-    }
-}
-
-void sinh(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Sinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::sinh(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
-    }
-}
-
-void tanh(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Tanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::tanh(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
-    }
-}
 
 void log(TensorData& y, const TensorData& x)
 {

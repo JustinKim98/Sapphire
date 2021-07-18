@@ -6,6 +6,7 @@
 
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/dense/cuda/kernels/BasicBackwardKernel.cuh>
+#include <Sapphire/compute/Broadcast.hpp>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
