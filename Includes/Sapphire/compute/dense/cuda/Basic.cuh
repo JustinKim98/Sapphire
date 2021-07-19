@@ -42,16 +42,11 @@ __host__ void log(float* y, const float* x, unsigned int totalSize);
 
 __host__ void log10(float* y, const float* x, unsigned int totalSize);
 
-__host__ void ReLU(float* y, const float* x, unsigned int totalSize);
+__host__ void ReLUBackward(float* dx, const float* dy,
+                           const float* x, unsigned int totalSize);
 
-__host__ void ReLUDerivative(float* y, const float* x,
-                             unsigned int totalSize);
-
-__host__ void LeakyReLU(float* y, const float* x, float a,
-                        unsigned int totalSize);
-
-__host__ void LeakyReLUBackward(float* y, const float* x, float a,
-                                  unsigned int totalSize);
+__host__ void LeakyReLUBackward(float* dx, const float* dy, const float* x,
+                                float a, unsigned int totalSize);
 
 __host__ void Inverse(float* y, const float* x,
                       unsigned int totalSize);
@@ -59,11 +54,6 @@ __host__ void Inverse(float* y, const float* x,
 __host__ void Mean(float* y, const float* x, unsigned int totalSize,
                    unsigned int unitSize);
 
-__host__ void Softmax(float* y, const float* x, unsigned int totalSize,
-                      unsigned int unitSize);
-
-__host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
-                          unsigned int totalSize, unsigned int unitSize);
-}  // namespace Sapphire::Compute::Cuda::Dense
+} // namespace Sapphire::Compute::Cuda::Dense
 
 #endif  // Sapphire_BASIC_CUH

@@ -50,10 +50,6 @@ void logBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 void log10Backward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
-void ReLUBackward(TensorData& dx, const TensorData& dy);
-
-void LeakyReluBackward(TensorData& dx, const TensorData& dy, float a);
-
 void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
@@ -61,7 +57,6 @@ void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
                    int dim);
 
-void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 } // namespace Sapphire::Compute
 

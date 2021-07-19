@@ -50,12 +50,12 @@ void log10(float* output, const float* input, unsigned int totalSize);
 
 void ReLU(float* output, const float* input, unsigned int totalSize);
 
-void ReLUDerivative(float* output, const float* input, unsigned int totalSize);
+void ReLUBackward(float* output, const float* input, unsigned int totalSize);
 
 void LeakyReLU(float* output, const float* input, float a,
                unsigned int totalSize);
 
-void LeakyReLUDerivative(float* output, const float* input, float a,
+void LeakyReLUBackward(float* output, const float* input, float a,
                          unsigned int totalSize);
 
 void Inverse(float* output, const float* input, unsigned int totalSize);

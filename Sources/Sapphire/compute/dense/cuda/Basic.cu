@@ -183,87 +183,6 @@ __host__ void log10(float* y, const float* x, unsigned int totalSize)
     }
 }
 
-__host__ void ReLU(float* y, const float* x, unsigned int totalSize)
-{
-    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
-
-    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
-    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
-
-    if (firstLaunchSize > 0)
-        ReLUKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
-    if (totalSize > firstLaunchSize)
-    {
-        const float* inputOffset = x + firstLaunchSize;
-        float* outputOffset = y + firstLaunchSize;
-
-        ReLUKernel<<<1, totalSize - firstLaunchSize>>>(
-            outputOffset, inputOffset, totalSize - firstLaunchSize);
-    }
-}
-
-__host__ void ReLUDerivative(float* y, const float* x,
-                             unsigned int totalSize)
-{
-    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
-
-    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
-    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
-
-    if (firstLaunchSize > 0)
-        ReLUDerivativeKernel<<<blockDim, threadDim>>>(y, x,
-            firstLaunchSize);
-    if (totalSize > firstLaunchSize)
-    {
-        const float* inputOffset = x + firstLaunchSize;
-        float* outputOffset = y + firstLaunchSize;
-
-        ReLUDerivativeKernel<<<1, totalSize - firstLaunchSize>>>(
-            outputOffset, inputOffset, totalSize - firstLaunchSize);
-    }
-}
-
-__host__ void LeakyReLU(float* y, const float* x, const float a,
-                        unsigned int totalSize)
-{
-    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
-
-    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
-    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
-
-    if (firstLaunchSize > 0)
-        LeakyReLUKernel<<<blockDim, threadDim>>>(y, x, a,
-                                                 firstLaunchSize);
-    if (totalSize > firstLaunchSize)
-    {
-        const float* inputOffset = x + firstLaunchSize;
-        float* outputOffset = y + firstLaunchSize;
-
-        LeakyReLUKernel<<<1, totalSize - firstLaunchSize>>>(
-            outputOffset, inputOffset, a, totalSize - firstLaunchSize);
-    }
-}
-
-__host__ void LeakyReLUBackward(float* y, const float* x,
-                                const float a, unsigned int totalSize)
-{
-    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
-
-    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
-    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
-
-    if (firstLaunchSize > 0)
-        LeakyReLUDerivativeKernel<<<blockDim, threadDim>>>(y, x, a,
-            firstLaunchSize);
-    if (totalSize > firstLaunchSize)
-    {
-        const float* inputOffset = x + firstLaunchSize;
-        float* outputOffset = y + firstLaunchSize;
-
-        LeakyReLUDerivativeKernel<<<1, totalSize - firstLaunchSize>>>(
-            outputOffset, inputOffset, a, totalSize - firstLaunchSize);
-    }
-}
 
 __host__ void Inverse(float* y, const float* x, unsigned int totalSize)
 {
@@ -305,27 +224,6 @@ __host__ void Mean(float* y, const float* x, unsigned int totalSize,
         MeanKernel<<<1, requiredThreadNum - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize, unitSize);
     }
-}
-
-__host__ void Softmax(float* y, const float* x, unsigned int totalSize,
-                      unsigned int unitSize)
-{
-    const auto blockDim = (unitSize > 512) ? 512 : unitSize;
-    const auto gridDim = (totalSize % blockDim == 0)
-                             ? totalSize / blockDim
-                             : totalSize / blockDim + 1;
-    SoftmaxKernel<<<gridDim, blockDim>>>(y, x, totalSize, unitSize);
-}
-
-__host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
-                          unsigned int totalSize, unsigned int unitSize,
-                          unsigned int padSize)
-{
-    auto blockDim = (unitSize > 512) ? 512 : unitSize;
-    const auto gridDim = (totalSize % blockDim == 0)
-                             ? totalSize / blockDim
-                             : totalSize / blockDim + 1;
-    SoftmaxBackKernel<<<gridDim, blockDim>>>(dx, dy, x, totalSize, unitSize);
 }
 
 } // namespace Sapphire::Compute::Cuda::Dense

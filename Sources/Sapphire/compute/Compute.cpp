@@ -11,7 +11,6 @@
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
-#include <Sapphire/compute/dense/cuda/Trigonometric.cuh>
 #include <Sapphire/compute/Broadcast.hpp>
 #include <algorithm>
 
@@ -480,85 +479,6 @@ void log10(TensorData& y, const TensorData& x)
     }
 }
 
-void ReLU(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::ReLU(y.DenseMatCuda, x.DenseMatCuda, totalSize);
-    }
-    else
-    {
-        Dense::Naive::ReLU(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
-    }
-}
-
-void ReLUBackward(TensorData& dx, const TensorData& dy)
-{
-    const auto device = dx.GetDevice();
-    const auto N = dx.Cols();
-    const auto paddedN = dx.PaddedHostColSize;
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::ReLUDerivative(dx.DenseMatCuda, dy.DenseMatCuda,
-                                    totalSize);
-    }
-    else
-    {
-        Dense::Naive::ReLUDerivative(dx.DenseMatHost, dy.DenseMatHost,
-                                     totalSizeWithPadding);
-    }
-}
-
-void LeakyReLU(TensorData& y, const TensorData& x, float a)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::LeakyReLU(y.DenseMatCuda, x.DenseMatCuda, a,
-                               totalSize);
-    }
-    else
-    {
-        Dense::Naive::LeakyReLU(y.DenseMatHost, x.DenseMatHost, a,
-                                totalSizeWithPadding);
-    }
-}
-
-void LeakyReluBackward(TensorData& dx, const TensorData& dy, float a)
-{
-    const auto device = dx.GetDevice();
-    const auto N = dx.Cols();
-    const auto paddedN = dx.PaddedHostColSize;
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::LeakyReLUBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                       a, totalSize);
-    }
-    else
-    {
-        Dense::Naive::LeakyReLUDerivative(dx.DenseMatHost, dy.DenseMatHost,
-                                          a, totalSizeWithPadding);
-    }
-}
-
 void Inverse(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
@@ -599,28 +519,6 @@ void Mean(TensorData& y, const TensorData& x)
     }
 }
 
-void Softmax(TensorData& y, const TensorData& x)
-{
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
-    const auto unitSize = y.TensorShape.Size();
-    const auto totalSize = unitSize * y.BatchSize;
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Dense::Cuda::Softmax(y.DenseMatCuda, x.DenseMatCuda, totalSize,
-                             unitSize);
-    }
-    else
-    {
-        Dense::Naive::Softmax(y.DenseMatHost, x.DenseMatHost,
-                              totalSizeWithPadding, unitSize, paddedN);
-    }
-}
 
-void Softmax(TensorData& dx, const TensorData& dy, const TensorData& x)
-{
-}
 } // namespace Sapphire::Compute

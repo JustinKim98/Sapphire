@@ -8,8 +8,6 @@
 #define SAPPHIRE_COMPUTE_COMPUTE_DECL_HPP
 
 #include <Sapphire/tensor/TensorData.hpp>
-#include <algorithm>
-#include <vector>
 
 namespace Sapphire::Compute
 {
@@ -64,25 +62,13 @@ void log(TensorData& y, const TensorData& x);
 
 void log10(TensorData& y, const TensorData& x);
 
-void ReLU(TensorData& y, const TensorData& x);
-
-void ReLUBackward(TensorData& dx, const TensorData& dy);
-
-void LeakyReLU(TensorData& y, const TensorData& x, float a);
-
-void LeakyReluBackward(TensorData& dx, const TensorData& dy, float a);
-
 void Inverse(TensorData& y, const TensorData& x);
-
-void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 void Mean(TensorData& y, const TensorData& x);
 
 void Mean(TensorData& y, const TensorData& x, int dim);
 
-void Softmax(TensorData& y, const TensorData& x);
-
-void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 } // namespace Sapphire::Compute
 

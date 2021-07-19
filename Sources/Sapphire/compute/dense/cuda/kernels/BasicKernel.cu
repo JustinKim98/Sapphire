@@ -9,46 +9,6 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-//! (x,y) : (TILE_DIM*8) threads per block
-//! Assuming x is M x N, (nx, ny, nz) : (N/TILE_DIM, M/TILE_DIM, batchSize)
-//! blocks required
-__global__ void TransposeKernel(float* y, const float* x,
-                                unsigned int inputNumRows,
-                                unsigned int inputNumCols, bool broadcastInput)
-{
-    const auto tileDim = 8;
-    __shared__ float tile[tileDim][tileDim + 1];
-
-    const unsigned int outputNumRows = inputNumCols;
-    const unsigned int outputNumCols = inputNumRows;
-
-    const unsigned int inputColIdx = blockIdx.x * tileDim + threadIdx.x;
-    const int unsigned inputRowIdx = blockIdx.y * tileDim + threadIdx.y;
-
-    const unsigned int outputColIdx = blockIdx.y * tileDim + threadIdx.x;
-    const unsigned int outputRowIdx = blockIdx.x * tileDim + threadIdx.y;
-
-    float* outputOffset = y + inputNumRows * inputNumCols * blockIdx.z;
-    const float* inputOffset =
-        x + (broadcastInput ? 0 : inputNumRows * inputNumCols * blockIdx.z);
-
-    for (int i = 0; (i < tileDim) && (inputRowIdx * i < inputNumRows); i += 8)
-    {
-        if (inputRowIdx + i < inputNumRows && inputColIdx < inputNumCols)
-            tile[threadIdx.y + i][threadIdx.x] =
-                inputOffset[(inputRowIdx + i) * inputNumCols + inputColIdx];
-    }
-
-    __syncthreads();
-
-    for (int i = 0; (i < tileDim) && (outputRowIdx * i < outputNumRows);
-         i += 8)
-    {
-        if (outputRowIdx + i < outputNumRows && outputColIdx < outputNumCols)
-            outputOffset[(outputRowIdx + i) * outputNumCols + outputColIdx] =
-                tile[threadIdx.x][threadIdx.y + i];
-    }
-}
 
 __global__ void AddKernel(float* y, const float* a,
                           const float* b, unsigned int offset,
@@ -115,6 +75,46 @@ __global__ void DotKernel(float* y, const float* a,
     }
 }
 
+//! (x,y) : (TILE_DIM*8) threads per block
+//! Assuming x is M x N, (nx, ny, nz) : (N/TILE_DIM, M/TILE_DIM, batchSize)
+//! blocks required
+__global__ void TransposeKernel(float* y, const float* x,
+                                unsigned int inputNumRows,
+                                unsigned int inputNumCols, bool broadcastInput)
+{
+    const auto tileDim = 8;
+    __shared__ float tile[tileDim][tileDim + 1];
+
+    const unsigned int outputNumRows = inputNumCols;
+    const unsigned int outputNumCols = inputNumRows;
+
+    const unsigned int inputColIdx = blockIdx.x * tileDim + threadIdx.x;
+    const int unsigned inputRowIdx = blockIdx.y * tileDim + threadIdx.y;
+
+    const unsigned int outputColIdx = blockIdx.y * tileDim + threadIdx.x;
+    const unsigned int outputRowIdx = blockIdx.x * tileDim + threadIdx.y;
+
+    float* outputOffset = y + inputNumRows * inputNumCols * blockIdx.z;
+    const float* inputOffset =
+        x + (broadcastInput ? 0 : inputNumRows * inputNumCols * blockIdx.z);
+
+    for (int i = 0; (i < tileDim) && (inputRowIdx * i < inputNumRows); i += 8)
+    {
+        if (inputRowIdx + i < inputNumRows && inputColIdx < inputNumCols)
+            tile[threadIdx.y + i][threadIdx.x] =
+                inputOffset[(inputRowIdx + i) * inputNumCols + inputColIdx];
+    }
+
+    __syncthreads();
+
+    for (int i = 0; (i < tileDim) && (outputRowIdx * i < outputNumRows); i += 8)
+    {
+        if (outputRowIdx + i < outputNumRows && outputColIdx < outputNumCols)
+            outputOffset[(outputRowIdx + i) * outputNumCols + outputColIdx] =
+                tile[threadIdx.x][threadIdx.y + i];
+    }
+}
+
 __global__ void ScaleKernel(float* y, const float* x,
                             const float scaleFactor, unsigned int totalSize)
 {
@@ -143,8 +143,7 @@ __global__ void PowKernel(float* y, const float* x, const float factor,
     }
 }
 
-__global__ void logKernel(float* y, const float* x,
-                          unsigned int totalSize)
+__global__ void logKernel(float* y, const float* x, unsigned int totalSize)
 {
     const auto sizePerBlock = totalSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
@@ -157,8 +156,7 @@ __global__ void logKernel(float* y, const float* x,
     }
 }
 
-__global__ void log10Kernel(float* y, const float* x,
-                            unsigned int totalSize)
+__global__ void log10Kernel(float* y, const float* x, unsigned int totalSize)
 {
     const auto sizePerBlock = totalSize / gridDim.x;
     const auto numLoops = sizePerBlock / blockDim.x;
@@ -171,60 +169,18 @@ __global__ void log10Kernel(float* y, const float* x,
     }
 }
 
-__global__ void ReLUKernel(float* y, const float* x,
-                           unsigned int totalSize)
+
+__global__ void MeanKernel(float* y, const float* x, unsigned int totalSize,
+                           unsigned int unitSize)
 {
-    const auto sizePerBlock = totalSize / gridDim.x;
-    const auto numLoops = sizePerBlock / blockDim.x;
-    const auto blockOffset = sizePerBlock * blockIdx.x;
-
-    for (unsigned int i = 0; i < numLoops; i++)
+    if (const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
+        unitId < totalSize)
     {
-        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
-        y[idx] = x[idx] > 0.0f ? x[idx] : 0.0f;
-    }
-}
-
-__global__ void ReLUDerivativeKernel(float* y, const float* x,
-                                     unsigned int totalSize)
-{
-    const auto sizePerBlock = totalSize / gridDim.x;
-    const auto numLoops = sizePerBlock / blockDim.x;
-    const auto blockOffset = sizePerBlock * blockIdx.x;
-
-    for (unsigned int i = 0; i < numLoops; i++)
-    {
-        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
-
-        y[idx] = x[idx] > 0.0f ? 1.0f : 0.0f;
-    }
-}
-
-__global__ void LeakyReLUKernel(float* y, const float* x, float a,
-                                unsigned int totalSize)
-{
-    const auto sizePerBlock = totalSize / gridDim.x;
-    const auto numLoops = sizePerBlock / blockDim.x;
-    const auto blockOffset = sizePerBlock * blockIdx.x;
-
-    for (unsigned int i = 0; i < numLoops; i++)
-    {
-        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
-        y[idx] = x[idx] > 0 ? x[idx] : a * x[idx];
-    }
-}
-
-__global__ void LeakyReLUDerivativeKernel(float* y, const float* x,
-                                          const float a, unsigned int totalSize)
-{
-    const auto sizePerBlock = totalSize / gridDim.x;
-    const auto numLoops = sizePerBlock / blockDim.x;
-    const auto blockOffset = sizePerBlock * blockIdx.x;
-
-    for (unsigned int i = 0; i < numLoops; i++)
-    {
-        const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
-        y[idx] = x[idx] > 0.0f ? 1.0f : a;
+        for (unsigned int i = 0; i < unitSize; i++)
+        {
+            y[unitId] += x[unitSize * unitId + i];
+        }
+        y[unitId] /= static_cast<float>(unitSize);
     }
 }
 
@@ -242,63 +198,4 @@ __global__ void InverseKernel(float* y, const float* x,
     }
 }
 
-__global__ void MeanKernel(float* y, const float* x,
-                           unsigned int totalSize, unsigned int unitSize)
-{
-    if (const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-        unitId < totalSize)
-    {
-        for (unsigned int i = 0; i < unitSize; i++)
-        {
-            y[unitId] += x[unitSize * unitId + i];
-        }
-        y[unitId] /= static_cast<float>(unitSize);
-    }
-}
-
-__global__ void SoftmaxKernel(float* y, const float* x,
-                              unsigned int totalSize, unsigned int unitSize)
-{
-    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto curBatch = unitId / blockDim.x;
-    const auto curIdx = unitId % unitSize;
-
-    if (unitId < totalSize)
-    {
-        float sum = 0;
-        for (unsigned int i = 0; i < unitSize; i++)
-        {
-            sum += expf(x[unitSize * curBatch + i]);
-        }
-        y[unitSize * curBatch + curIdx] =
-            expf(x[unitSize * curBatch + curIdx]) / sum;
-    }
-}
-
-__global__ void SoftmaxBackKernel(float* dx, const float* dy, const float* x,
-                                  unsigned int totalSize, unsigned int unitSize)
-{
-    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto curIdx = unitId % unitSize;
-
-    if (unitId < totalSize)
-    {
-        float gradX = 0;
-        for (unsigned int i = 0; i < unitSize; i++)
-        {
-            if (i == curIdx)
-            {
-                gradX +=
-                    dy[unitId * unitSize + i] *
-                    (x[unitId * unitSize + i] * (1 - x[unitId * unitSize + i]));
-            }
-            else
-            {
-                gradX +=
-                    dy[unitId * unitSize + i] *
-                    (-x[unitId * unitSize + i] * x[unitId * unitSize + curIdx]);
-            }
-        }
-    }
-}
 } // namespace Sapphire::Compute::Cuda::Dense

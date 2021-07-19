@@ -12,6 +12,7 @@
 #include <Sapphire/util/Device.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
+#include <Sapphire/compute/ActivationOps.hpp>
 #include <atomic>
 #include <cmath>
 #include <iostream>
