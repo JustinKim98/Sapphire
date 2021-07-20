@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/BasicComputationTest.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>

@@ -28,20 +28,6 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b);
 void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
           const TensorData& c);
 
-//! x, y, filter must have shape of C,H,W with Same batch size N
-void Conv2DForward(TensorData& y, const TensorData& x,
-                   const TensorData& filter, int strideRow, int strideCol,
-                   int dilationRow, int dilationCol, int rowPadding,
-                   int columnPadding);
-
-void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
-                      int windowWidth, int strideRow, int strideCol,
-                      int rowPadding, int columnPadding);
-
-void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
-                      int windowWidth, int strideRow, int strideCol,
-                      int rowPadding, int columnPadding);
-
 //! Performs y = x*factor
 void Scale(TensorData& y, const TensorData& x, float factor);
 
@@ -66,7 +52,22 @@ void Mean(TensorData& y, const TensorData& x);
 
 void Mean(TensorData& y, const TensorData& x, int dim);
 
+void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
+                 const TensorData& a, const TensorData& b);
+
+void PowBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
+                 float factor);
+
+void logBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void log10Backward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
 void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
+                  int dim);
 
 } // namespace Sapphire::Compute
 

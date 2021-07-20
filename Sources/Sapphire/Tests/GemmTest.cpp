@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/GemmTest.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
@@ -23,16 +23,14 @@ void Gemm1()
 {
     for (int j = 0; j < 10; j++)
     {
-        std::random_device
-            rd; // Will be used to obtain a seed for the random number engine
-        std::mt19937 gen(
-            rd()); // Standard mersenne_twister_engine seeded with rd()
-        std::uniform_int_distribution<> distrib(1, 100);
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> distribution(1, 100);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 30 + 1;
+        const unsigned int M = distribution(gen);
+        const unsigned int N = distribution(gen);
+        const unsigned int K = distribution(gen);
+        const auto batchSize = distribution(gen) % 30 + 1;
 
         const Shape shapeA({ M, K });
         const Shape shapeB({ K, N });
@@ -62,8 +60,6 @@ void Gemm1()
 
         auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
 
-#pragma omp parallel for default(none) schedule(static) \
-    shared(Out, cpuGemmResult)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
             cpuGemmResult[i] = Out.DenseMatHost[i];

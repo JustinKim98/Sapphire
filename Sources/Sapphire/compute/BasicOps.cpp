@@ -4,14 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/Broadcast.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/dense/cuda/Basic.cuh>
+#include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Gemm.cuh>
+#include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
-#include <Sapphire/compute/dense/cuda/Convolution.cuh>
-#include <Sapphire/compute/dense/cuda/Pool.cuh>
-#include <Sapphire/compute/Broadcast.hpp>
+#include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
 #include <algorithm>
 
 namespace Sapphire::Compute
@@ -30,21 +31,18 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
         {
             const auto yElemSize =
                 static_cast<unsigned int>(y.GetCudaElementSize());
-            Dense::Cuda::Add(
-                yElemSize * y.BatchSize,
-                y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                y.TensorShape.Size(), broadcastA, broadcastB);
+            Dense::Cuda::Add(yElemSize * y.BatchSize, y.DenseMatCuda,
+                             a.DenseMatCuda, b.DenseMatCuda,
+                             y.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
         if (device.Type() == DeviceType::HOST)
         {
             const auto yElemSize =
                 static_cast<unsigned int>(y.GetHostElementSize());
-            Dense::Naive::Add(
-                yElemSize * y.BatchSize,
-                y.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
-                yElemSize, broadcastA,
-                broadcastB);
+            Dense::Naive::Add(yElemSize * y.BatchSize, y.DenseMatHost,
+                              a.DenseMatHost, b.DenseMatHost, yElemSize,
+                              broadcastA, broadcastB);
             return;
         }
     }
@@ -71,8 +69,8 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                             0, 1, Dense::Cuda::Add, 0, false, false);
+                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+                             1, Dense::Cuda::Add, 0, false, false);
     }
     else
     {
@@ -98,8 +96,8 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     {
         if (device.Type() == DeviceType::CUDA)
         {
-            Dense::Cuda::Sub(y.TensorShape.Size() * y.BatchSize,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
+            Dense::Cuda::Sub(y.TensorShape.Size() * y.BatchSize, y.DenseMatCuda,
+                             a.DenseMatCuda, b.DenseMatCuda,
                              y.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
@@ -132,8 +130,8 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                             0, 1, Dense::Cuda::Sub, 0, false, false);
+                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+                             1, Dense::Cuda::Sub, 0, false, false);
     }
     else
     {
@@ -171,17 +169,16 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     //! Faster broadcast multiply for Cuda if all tensor dimensions are fixed to
     //! 2
     if (y.TensorShape.Dim() == 2 && a.TensorShape.Dim() == 2 &&
-        b.TensorShape.Dim() == 2 && c.TensorShape.Dim() == 2 &&
-        y.BatchSize > 1)
+        b.TensorShape.Dim() == 2 && c.TensorShape.Dim() == 2 && y.BatchSize > 1)
     {
         const auto batchSize = y.BatchSize;
 
         if (device.Type() == DeviceType::CUDA)
         {
             Dense::Cuda::GemmMatrixWiseBroadcast(
-                y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda,
-                c.DenseMatCuda, M, N, K, batchSize, a.BatchSize == 1,
-                b.BatchSize == 1, c.BatchSize == 1, 0);
+                y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, c.DenseMatCuda,
+                M, N, K, batchSize, a.BatchSize == 1, b.BatchSize == 1,
+                c.BatchSize == 1, 0);
             return;
         }
     }
@@ -231,15 +228,15 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
                    int strideRow, int strideCol, int dilationRow,
                    int dilationCol, int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice();
-        device.Type() == DeviceType::CUDA)
+    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
 
     {
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.BatchSize),
             static_cast<int>(filter.GetShape().At(2)),
             static_cast<int>(filter.GetShape().Rows()),
-            static_cast<int>(filter.GetShape().Cols()) };
+            static_cast<int>(filter.GetShape().Cols())
+        };
 
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
@@ -271,12 +268,10 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
             static_cast<int>(x.GetShape().Cols())
         };
 
-        Dense::Cuda::Pool2DForward(y.DenseMatCuda, x.DenseMatCuda, xShape,
-                                   windowHeight, windowWidth, strideRow,
-                                   strideCol,
-                                   rowPadding, columnPadding,
-                                   Dense::Cuda::PoolingMode::Max,
-                                   CUDNN_PROPAGATE_NAN, device.GetID());
+        Dense::Cuda::Pool2DForward(
+            y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
+            strideRow, strideCol, rowPadding, columnPadding,
+            Dense::Cuda::PoolingMode::Max, CUDNN_PROPAGATE_NAN, device.GetID());
     }
     else
     {
@@ -284,7 +279,6 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
             "Compute::Conv2DForward - Host mode Not implemented");
     }
 }
-
 
 void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
                       int windowWidth, int strideRow, int strideCol,
@@ -301,8 +295,7 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
         Dense::Cuda::Pool2DForward(
             y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
             strideRow, strideCol, rowPadding, columnPadding,
-            Dense::Cuda::PoolingMode::Avg,
-            CUDNN_PROPAGATE_NAN, device.GetID());
+            Dense::Cuda::PoolingMode::Avg, CUDNN_PROPAGATE_NAN, device.GetID());
     }
     else
     {
@@ -321,8 +314,7 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Scale(y.DenseMatCuda, x.DenseMatCuda, factor,
-                           totalSize);
+        Dense::Cuda::Scale(y.DenseMatCuda, x.DenseMatCuda, factor, totalSize);
     }
     else
     {
@@ -344,13 +336,13 @@ void Transpose(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Transpose(y.DenseMatCuda, x.DenseMatCuda, inputM,
-                               inputN, chunkSize, broadcast);
+        Dense::Cuda::Transpose(y.DenseMatCuda, x.DenseMatCuda, inputM, inputN,
+                               chunkSize, broadcast);
     }
     else
     {
-        Dense::Naive::Transpose(y.DenseMatHost, x.DenseMatHost, inputM,
-                                paddedM, inputN, paddedN, chunkSize, broadcast);
+        Dense::Naive::Transpose(y.DenseMatHost, x.DenseMatHost, inputM, paddedM,
+                                inputN, paddedN, chunkSize, broadcast);
     }
 }
 
@@ -430,8 +422,7 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Pow(y.DenseMatCuda, x.DenseMatCuda, factor,
-                         totalSize);
+        Dense::Cuda::Pow(y.DenseMatCuda, x.DenseMatCuda, factor, totalSize);
     }
     else
     {
@@ -439,7 +430,6 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
                           totalSizeWithPadding);
     }
 }
-
 
 void log(TensorData& y, const TensorData& x)
 {
@@ -455,8 +445,7 @@ void log(TensorData& y, const TensorData& x)
     }
     else
     {
-        Dense::Naive::log(y.DenseMatHost, x.DenseMatHost,
-                          totalSizeWithPadding);
+        Dense::Naive::log(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
     }
 }
 
@@ -509,13 +498,62 @@ void Mean(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Mean(y.DenseMatCuda, x.DenseMatCuda, totalSize,
-                          unitSize);
+        Dense::Cuda::Mean(y.DenseMatCuda, x.DenseMatCuda, totalSize, unitSize);
     }
     else
     {
-        Dense::Naive::Mean(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding, unitSize);
+        Dense::Naive::Mean(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding,
+                           unitSize);
     }
 }
-} // namespace Sapphire::Compute
+
+void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
+                 const TensorData& a, const TensorData& b)
+{
+    const auto device = dy.GetDevice();
+
+    if (dy.TensorShape == a.TensorShape && dy.TensorShape == b.TensorShape &&
+        dy.BatchSize > 1)
+    {
+        if (device.Type() == DeviceType::CUDA)
+        {
+            return;
+        }
+        if (device.Type() == DeviceType::HOST)
+        {
+            return;
+        }
+    }
+
+    const auto maxDim = std::max(
+        { dy.TensorShape.Dim(), da.TensorShape.Dim(), db.TensorShape.Dim() });
+
+    auto shapeOut = dy.TensorShape;
+    auto shapeA = a.TensorShape;
+    auto shapeB = b.TensorShape;
+
+    shapeOut.Expand(maxDim + 1);
+    shapeA.Expand(maxDim + 1);
+    shapeB.Expand(maxDim + 1);
+
+    shapeOut.Set(0, dy.BatchSize);
+    shapeA.Set(0, a.BatchSize);
+    shapeB.Set(0, b.BatchSize);
+
+    const auto sizeOut = shapeOut.Size();
+    const auto sizeA = shapeA.Size();
+    const auto sizeB = shapeB.Size();
+
+    if (device.Type() == DeviceType::CUDA)
+    {
+        BroadcastBackwardWith2Inputs(
+            shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB, dy.DenseMatCuda,
+            da.DenseMatCuda, db.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+            0, Dense::Cuda::DotBackward, 0, false, false);
+    }
+    else
+    {
+        throw std::runtime_error("Compute::DotBackward - Host not implemented");
+    }
+}
+}  // namespace Sapphire::Compute

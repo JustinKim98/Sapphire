@@ -7,7 +7,7 @@
 #ifndef SAPPHIRE_LINEARBACKWARD_HPP
 #define SAPPHIRE_LINEARBACKWARD_HPP
 
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 
 namespace Sapphire::BackProp

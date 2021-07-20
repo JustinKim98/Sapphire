@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/LinearBackward.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Unit.hpp>

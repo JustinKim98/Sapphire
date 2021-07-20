@@ -5,11 +5,10 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MSEBackward.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
 #include <memory>
-#include <vector>
 
 namespace Sapphire::NN::Loss
 {

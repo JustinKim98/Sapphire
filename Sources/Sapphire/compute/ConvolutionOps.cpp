@@ -4,15 +4,92 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/compute/ComputeBackward.hpp>
-#include <Sapphire/compute/dense/cuda/Convolution.cuh>
+#include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
-#include <Sapphire/compute/Broadcast.hpp>
-#include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
-#include <algorithm>
+#include <Sapphire/compute/dense/cuda/Convolution.cuh>
 
 namespace Sapphire::Compute
 {
+void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
+                   int strideRow, int strideCol, int dilationRow,
+                   int dilationCol, int rowPadding, int columnPadding)
+{
+    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+
+    {
+        const Dense::Cuda::Shape4D filterShape = {
+            static_cast<int>(filter.BatchSize),
+            static_cast<int>(filter.GetShape().At(2)),
+            static_cast<int>(filter.GetShape().Rows()),
+            static_cast<int>(filter.GetShape().Cols())
+        };
+
+        const Dense::Cuda::Shape4D xShape = {
+            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().Rows()),
+            static_cast<int>(x.GetShape().Cols())
+        };
+
+        Dense::Cuda::Conv2DForward(
+            y.DenseMatCuda, x.DenseMatCuda, filter.DenseMatCuda, xShape,
+            filterShape, strideRow, strideCol, dilationRow, dilationCol,
+            rowPadding, columnPadding, device.GetID());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Compute::Conv2DForward - Host mode Not implemented");
+    }
+}
+
+void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding)
+{
+    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    {
+        const Dense::Cuda::Shape4D xShape = {
+            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().Rows()),
+            static_cast<int>(x.GetShape().Cols())
+        };
+
+        Dense::Cuda::Pool2DForward(
+            y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
+            strideRow, strideCol, rowPadding, columnPadding,
+            Dense::Cuda::PoolingMode::Max, CUDNN_PROPAGATE_NAN, device.GetID());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Compute::Conv2DForward - Host mode Not implemented");
+    }
+}
+
+void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding)
+{
+    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    {
+        const Dense::Cuda::Shape4D xShape = {
+            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().Rows()),
+            static_cast<int>(x.GetShape().Cols())
+        };
+
+        Dense::Cuda::Pool2DForward(
+            y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
+            strideRow, strideCol, rowPadding, columnPadding,
+            Dense::Cuda::PoolingMode::Avg, CUDNN_PROPAGATE_NAN, device.GetID());
+    }
+    else
+    {
+        throw std::invalid_argument(
+            "Compute::Conv2DForward - Host mode Not implemented");
+    }
+}
+
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     const TensorData& x, const TensorData& filter,
                     int strideRow, int strideCol, int dilationRow,
@@ -24,7 +101,8 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
             static_cast<int>(filter.BatchSize),
             static_cast<int>(filter.GetShape().At(2)),
             static_cast<int>(filter.GetShape().Rows()),
-            static_cast<int>(filter.GetShape().Cols()) };
+            static_cast<int>(filter.GetShape().Cols())
+        };
 
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
@@ -60,9 +138,8 @@ void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
 
         Dense::Cuda::Pool2DBackward(
             y.DenseMatCuda, dy.DenseMatCuda, x.DenseMatCuda, dx.DenseMatCuda,
-            xShape, windowHeight, windowWidth,
-            strideRow, strideCol, rowPadding, columnPadding,
-            Dense::Cuda::PoolingMode::Max, device.GetID());
+            xShape, windowHeight, windowWidth, strideRow, strideCol, rowPadding,
+            columnPadding, Dense::Cuda::PoolingMode::Max, device.GetID());
     }
     else
     {
@@ -93,59 +170,6 @@ void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
     {
         throw std::invalid_argument(
             "Compute::MaxPool2DBackward - Host mode Not implemented");
-    }
-}
-
-void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
-                 const TensorData& a, const TensorData& b)
-{
-    const auto device = dy.GetDevice();
-
-    if (dy.TensorShape == a.TensorShape && dy.TensorShape == b.TensorShape &&
-        dy.BatchSize > 1)
-    {
-        if (device.Type() == DeviceType::CUDA)
-        {
-            return;
-        }
-        if (device.Type() == DeviceType::HOST)
-        {
-            return;
-        }
-    }
-
-    const auto maxDim = std::max(
-        { dy.TensorShape.Dim(), da.TensorShape.Dim(), db.TensorShape.Dim() });
-
-    auto shapeOut = dy.TensorShape;
-    auto shapeA = a.TensorShape;
-    auto shapeB = b.TensorShape;
-
-    shapeOut.Expand(maxDim + 1);
-    shapeA.Expand(maxDim + 1);
-    shapeB.Expand(maxDim + 1);
-
-    shapeOut.Set(0, dy.BatchSize);
-    shapeA.Set(0, a.BatchSize);
-    shapeB.Set(0, b.BatchSize);
-
-    const auto sizeOut = shapeOut.Size();
-    const auto sizeA = shapeA.Size();
-    const auto sizeB = shapeB.Size();
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        BroadcastBackwardWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA,
-                                     sizeB,
-                                     dy.DenseMatCuda, da.DenseMatCuda,
-                                     db.DenseMatCuda, a.DenseMatCuda,
-                                     b.DenseMatCuda, 0,
-                                     0, Dense::Cuda::DotBackward, 0, false,
-                                     false);
-    }
-    else
-    {
-        throw std::runtime_error("Compute::DotBackward - Host not implemented");
     }
 }
 }

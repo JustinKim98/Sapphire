@@ -4,13 +4,26 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_COMPUTE_COMPUTE_BACKWARD_HPP
-#define SAPPHIRE_COMPUTE_COMPUTE_BACKWARD_HPP
+#ifndef SAPPHIRE_COMPUTE_CONVOLUTION_OPS_HPP
+#define SAPPHIRE_COMPUTE_CONVOLUTION_OPS_HPP
 #include <Sapphire/tensor/TensorData.hpp>
 
 namespace Sapphire::Compute
 {
 using namespace TensorUtil;
+
+//! x, y, filter must have shape of C,H,W with Same batch size N (Data aligned in NCHW format)
+void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
+                   int strideRow, int strideCol, int dilationRow,
+                   int dilationCol, int rowPadding, int columnPadding);
+
+void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding);
+
+void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
+                      int windowWidth, int strideRow, int strideCol,
+                      int rowPadding, int columnPadding);
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     const TensorData& x, const TensorData& filter,
@@ -26,25 +39,6 @@ void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding);
-
-void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
-                 const TensorData& a, const TensorData& b);
-
-void PowBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
-                 float factor);
-
-void logBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void log10Backward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
-                   int dim);
-
-
-} // namespace Sapphire::Compute
+}
 
 #endif

@@ -5,10 +5,9 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MathBackward.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
-#include <vector>
 
 namespace Sapphire::NN::Functional
 {
@@ -21,12 +20,12 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     TensorUtil::TensorDescriptor& bDesc =
         model.GetDescriptor(b.TensorDescriptorKey());
 
-    Shape shapeA = aDesc.ForwardData.TensorShape;
-    Shape shapeB = bDesc.ForwardData.TensorShape;
+    const Shape shapeA = aDesc.ForwardData.TensorShape;
+    const Shape shapeB = bDesc.ForwardData.TensorShape;
 
     const auto batchSize = aDesc.ForwardData.BatchSize;
-    Type type = aDesc.ForwardData.GetType();
-    Device device = aDesc.ForwardData.GetDevice();
+    const Type type = aDesc.ForwardData.GetType();
+    const Device device = aDesc.ForwardData.GetDevice();
 
     const Shape outputShape({ shapeA.At(0), shapeB.At(1) });
 
@@ -48,7 +47,7 @@ static Tensor MulOp(const Tensor& a, const Tensor& b)
     //! Append output history to the descriptor A and associated backPropWrapper
     yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
 
-    return Tensor( outputKey);
+    return Tensor(outputKey);
 }
 
 static Tensor AddOp(const Tensor& a, const Tensor& b)
@@ -61,17 +60,17 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
     TensorUtil::TensorDescriptor& descB =
         model.GetDescriptor(b.TensorDescriptorKey());
 
-    auto shapeA = descA.ForwardData.TensorShape;
-    auto shapeB = descB.ForwardData.TensorShape;
+    const auto shapeA = descA.ForwardData.TensorShape;
+    const auto shapeB = descB.ForwardData.TensorShape;
 
     const auto batchSize = descA.ForwardData.BatchSize;
-    Type type = descA.ForwardData.GetType();
-    Device device = descA.ForwardData.GetDevice();
+    const Type type = descA.ForwardData.GetType();
+    const Device device = descA.ForwardData.GetDevice();
 
     const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
 
     const auto outKey = model.RegisterTensorDescriptor(outputShape, type,
-                                                       device, batchSize, true);
+        device, batchSize, true);
     auto& descOut = model.GetDescriptor(outKey);
 
     Compute::Add(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
@@ -83,30 +82,6 @@ static Tensor AddOp(const Tensor& a, const Tensor& b)
     descB.AppendOperandHistory(descOut.GetKey());
     descOut.AppendOutputHistory(std::move(backPropWrapper), false);
 
-    return Tensor( descOut.GetKey());
+    return Tensor(descOut.GetKey());
 }
-
-// static void AddOpInplace(const Tensor& out, Tensor& a)
-//{
-//    Model& model = ModelManager::GetCurrentModel();
-//
-//    //! Get descriptors
-//    TensorUtil::TensorDescriptor& descA =
-//        model.GetDescriptor(a.TensorDescriptorKey());
-//    TensorUtil::TensorDescriptor& descOut =
-//        model.GetDescriptor(out.TensorDescriptorKey());
-//
-//    //! Derive output shape
-//    auto shapeA = descA.ForwardData.TensorShape;
-//    const auto outputShape = descOut.ForwardData.TensorShape;
-//
-//    Compute::Add(descOut.ForwardData, descA.ForwardData);
-//
-//    auto backPropWrapper =
-//        std::make_unique<BackProp::AddBackPropInplace>(descA.m_key);
-//
-//    descA.AppendOperandHistory(descOut.m_key);
-//    descOut.AppendOperandHistory(descOut.m_key);
-//    descOut.AppendOutputHistory(std::move(backPropWrapper), false);
-//}
-}  // namespace Sapphire::NN::Functional
+} // namespace Sapphire::NN::Functional
