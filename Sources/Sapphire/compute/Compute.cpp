@@ -147,8 +147,8 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     }
 }
 
-void Gemm(TensorUtil::TensorData& y, const TensorUtil::TensorData& a,
-          const TensorUtil::TensorData& b, const TensorUtil::TensorData& c)
+void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
+          const TensorData& c)
 {
     auto shapeOut = y.TensorShape;
     auto shapeA = a.TensorShape;
@@ -518,7 +518,4 @@ void Mean(TensorData& y, const TensorData& x)
                            totalSizeWithPadding, unitSize);
     }
 }
-
-
-
 } // namespace Sapphire::Compute

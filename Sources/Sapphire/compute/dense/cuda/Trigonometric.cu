@@ -6,6 +6,7 @@
 
 #include <Sapphire/compute/dense/cuda/Trigonometric.cuh>
 #include <Sapphire/compute/dense/cuda/kernels/TrigonometricKernel.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/TrigonometricBackwardKernel.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
@@ -234,6 +235,278 @@ __host__ void ArcTanh(float* y, const float* x, unsigned int totalSize)
 
         ArcTanhKernel<<<1, totalSize - firstLaunchSize>>>(
             outputOffset, inputOffset, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void CosBackward(float* y, const float* x, unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcTanhKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        const float* inputOffset = x + firstLaunchSize;
+        float* outputOffset = y + firstLaunchSize;
+
+        ArcTanhKernel<<<1, totalSize - firstLaunchSize>>>(
+            outputOffset, inputOffset, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void CosBackward(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        CosBackwardKernel<<<1, totalSize - firstLaunchSize>>>(dx, dy, x,
+            firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        CosBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void SinBackward(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        SinBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        SinBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void TanBackward(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        TanBackwardKernel<<<1, totalSize - firstLaunchSize>>>(dx, dy, x,
+            firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        TanBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void CoshBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        CoshBackwardKernel<<<1, totalSize - firstLaunchSize>>>(dx, dy, x,
+            firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        CoshBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void SinhBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        SinhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(dx, dy, x,
+            firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        SinhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void TanhBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        TanhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(dx, dy, x,
+            firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        TanhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void ArcCosBackward(float* dx, const float* dy, const float* x,
+                             unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcCosBackwardKernel<<<1, totalSize - firstLaunchSize>>>(dx, dy, x,
+            firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        ArcCosBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void ArcSinBackward(float* dx, const float* dy, const float* x,
+                             unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcSinBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        ArcSinBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void ArcTanBackward(float* dx, const float* dy, const float* x,
+                             unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcTanBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        ArcTanBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void ArcCoshBackward(float* dx, const float* dy, const float* x,
+                              unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcCoshBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        ArcCoshBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void ArcSinhBackward(float* dx, const float* dy, const float* x,
+                              unsigned int totalSize)
+
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcSinhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        ArcSinhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
+    }
+}
+
+__host__ void ArcTanhBackward(float* dx, const float* dy, const float* x,
+                              unsigned int totalSize)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto blockDim = totalSize / (threadDim * NUM_LOOPS);
+    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
+
+    if (firstLaunchSize > 0)
+        ArcSinhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, firstLaunchSize);
+    if (totalSize > firstLaunchSize)
+    {
+        dy += firstLaunchSize;
+        dx += firstLaunchSize;
+        x += firstLaunchSize;
+
+        ArcSinhBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
+            dx, dy, x, totalSize - firstLaunchSize);
     }
 }
 }

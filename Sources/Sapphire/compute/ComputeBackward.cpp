@@ -9,6 +9,7 @@
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/Broadcast.hpp>
 #include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
+#include <algorithm>
 
 namespace Sapphire::Compute
 {

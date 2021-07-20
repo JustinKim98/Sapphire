@@ -7,7 +7,6 @@
 #ifndef SAPPHIRE_COMPUTE_COMPUTE_BACKWARD_HPP
 #define SAPPHIRE_COMPUTE_COMPUTE_BACKWARD_HPP
 #include <Sapphire/tensor/TensorData.hpp>
-#include <algorithm>
 
 namespace Sapphire::Compute
 {
@@ -33,18 +32,6 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
 
 void PowBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
                  float factor);
-
-void cosBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void sinBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void tanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void coshBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void sinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
-void tanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 void logBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 

@@ -28,10 +28,6 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b);
 void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
           const TensorData& c);
 
-//! Performs GEMM (y = a*b + c) using the sparse matrix
-void SparseGemm(TensorData& y, const TensorData& a, const TensorData& b,
-                TensorData& c);
-
 //! x, y, filter must have shape of C,H,W with Same batch size N
 void Conv2DForward(TensorData& y, const TensorData& x,
                    const TensorData& filter, int strideRow, int strideCol,
@@ -61,6 +57,8 @@ void Pow(TensorData& y, const TensorData& x, float factor);
 void log(TensorData& y, const TensorData& x);
 
 void log10(TensorData& y, const TensorData& x);
+
+void exp(TensorData& y, const TensorData& x);
 
 void Inverse(TensorData& y, const TensorData& x);
 
