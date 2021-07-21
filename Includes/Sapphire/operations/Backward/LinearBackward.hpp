@@ -12,12 +12,21 @@
 
 namespace Sapphire::BackProp
 {
+constexpr static int dxIdx = 0;
+constexpr static int dyIdx = 0;
+constexpr static int weightIdx = 0;
+constexpr static int biasIdx = 0;
+
 class LinearBackProp : public BackPropWrapper
 {
 public:
-    explicit LinearBackProp(const TensorUtil::TensorData& x,
-                            TensorUtil::TensorData dx,
-                            TensorUtil::TensorData dy, int unitKey);
+    explicit LinearBackProp(TensorUtil::TensorData& dx,
+                            TensorUtil::TensorData& weight,
+                            TensorUtil::TensorData& bias,
+                            const TensorUtil::TensorData& dy,
+                            const TensorUtil::TensorData& x,
+                            std::weak_ptr<Optimizer::Optimizer> optimizer,
+                            unsigned int batchSize, int unitKey);
 
     bool InvokeBackProp(const TensorUtil::TensorData& dy) override;
 
