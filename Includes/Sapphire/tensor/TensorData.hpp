@@ -22,6 +22,7 @@ public:
     TensorData(Shape shape, Type type, Device device, unsigned int batchSize,
                int parentDescKey);
 
+    //! Shallow copies the internal data
     TensorData(const TensorData& tensorData);
     TensorData(TensorData&& tensorData) noexcept;
     TensorData& operator=(const TensorData& tensorData);
@@ -88,10 +89,6 @@ public:
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the
     //! operation units
-
-    //! Deep copies tensor data from src to dest
-    //! Type of dest and src must be the same
-    static void CopyTensorData(TensorData dest, const TensorData& src);
 
     //! Creates and returns same copy as this tensorData
     [[nodiscard]] TensorData CreateCopy() const;

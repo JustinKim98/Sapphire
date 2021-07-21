@@ -158,60 +158,6 @@ TensorData::~TensorData()
     }
 }
 
-void TensorData::CopyTensorData(TensorData dest, const TensorData& src)
-{
-    if (src.GetDevice() != dest.GetDevice())
-    {
-        throw std::invalid_argument("Device mismatch while copying tensorData");
-    }
-
-    if (dest.TensorShape != src.TensorShape)
-    {
-        throw std::invalid_argument("Shape mismatch while copying tensorData");
-    }
-
-    if (dest.GetType() != src.GetType())
-    {
-        throw std::invalid_argument("Type mismatch while copying tensorData");
-    }
-
-    const bool sparse = src.GetType() == Type::Sparse;
-    const auto device = src.GetDevice();
-
-    const Shape shape = dest.TensorShape;
-
-    if (device.Type() == DeviceType::HOST)
-    {
-        if (sparse)
-        {
-            throw std::runtime_error("CopyTensorData - sparse not implemented");
-        }
-        else
-        {
-            std::memcpy(dest.DenseMatHost, src.DenseMatHost,
-                        src.DenseTotalLengthHost * sizeof(float));
-            dest.DenseTotalLengthHost = src.DenseTotalLengthHost;
-        }
-    }
-
-    if (device.Type() == DeviceType::CUDA)
-    {
-        Compute::Cuda::CudaSetDevice(device.GetID());
-
-        if (sparse)
-        {
-            throw std::runtime_error("CopyTensorData - sparse not implemented");
-        }
-        else
-        {
-            Compute::Cuda::CopyDeviceToDevice(
-                dest.DenseMatCuda, src.DenseMatCuda,
-                src.DenseTotalLengthCuda * sizeof(float));
-            dest.DenseTotalLengthCuda = src.DenseTotalLengthCuda;
-        }
-    }
-}
-
 TensorData TensorData::CreateCopy() const
 {
     TensorData tensorData(TensorShape, GetType(), GetDevice(), BatchSize,
@@ -233,21 +179,21 @@ bool TensorData::SendTo(const Device& device)
     {
         m_device = device;
         m_allocateCuda(BatchSize);
-        TensorData::m_toGpu(*this);
+        m_toGpu(*this);
     }
     else if (m_device.Type() == DeviceType::CUDA &&
              device.Type() == DeviceType::HOST)
     {
-        TensorData::m_toHost(*this);
+        m_toHost(*this);
         m_freeCuda();
         m_device = device;
     }
     else if (m_device.Type() == DeviceType::CUDA &&
              device.Type() == DeviceType::CUDA)
     {
-        TensorData::m_toHost(*this);
+        m_toHost(*this);
         m_device = device;
-        TensorData::m_toGpu(*this);
+        m_toGpu(*this);
     }
 
     return true;

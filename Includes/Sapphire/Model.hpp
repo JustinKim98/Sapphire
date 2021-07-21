@@ -30,7 +30,9 @@ public:
     //! Assigns new key to the given unitDataWrapper
     //! \param unitDataWrapper : unitDataWrapper to register
     //! \return : Assigned key
-    int RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
+    int AddUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
+
+    void RemoveUnitDataWrapper(int key);
 
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc

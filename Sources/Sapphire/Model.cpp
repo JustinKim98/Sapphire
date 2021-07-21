@@ -13,13 +13,19 @@ Model::Model(std::string name)
 {
 }
 
-int Model::RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
+int Model::AddUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
 {
     const int unitKey = m_unitPool.Counter++;
     m_unitPool.UnitWrapperMap[unitKey] = unitDataWrapper;
 
     return unitKey;
 }
+
+void Model::RemoveUnitDataWrapper(int key)
+{
+    m_unitPool.UnitWrapperMap.erase(key);
+}
+
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const Device& device,
@@ -50,6 +56,8 @@ void Model::m_autoGrad(int tensorKey)
         const auto outputTensorDataVector = wrapper->
             GetOutputTensorDataVector();
 
+        //! Checks if wrapper is ready to backprop. If it does, performs backprop
+        //! Update the operands if successes
         const bool isInvoked = wrapper->InvokeBackProp(descriptor.BackwardData);
         descriptor.PopHistory(); //! Pop output history
 

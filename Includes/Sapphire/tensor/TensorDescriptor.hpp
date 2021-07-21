@@ -40,10 +40,10 @@ public:
 
     //! Add unit m_key if unit was used as output or flow-through type
     //! \param wrapper : BackPropWrapper for starting back propagation on this tensor
-    //! \param saveOutput : Forward output of this tensorDescriptor is preserved
+    //! \param location : Forward output of this tensorDescriptor is preserved
     //! if true
-    void AppendOutputHistory(std::unique_ptr<BackProp::BackPropWrapper> wrapper,
-                             bool saveOutput);
+    void AppendOutputHistory(std::shared_ptr<BackProp::BackPropWrapper> wrapper,
+                             int location);
 
     //! Add unit key if unit was used as operand only
     //! \param tensorDescKey : m_key of the tensor that this tensor should receive
@@ -72,7 +72,7 @@ public:
     //! \return : true if ready false otherwise
     [[nodiscard]] bool IsBackPropReady() const;
 
-    const std::unique_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
+    const std::weak_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
     {
         return m_history.back().BackPropWrapper;
     }
@@ -95,16 +95,25 @@ private:
     //! It is stored using this struct
     struct History
     {
-        explicit History(std::unique_ptr<BackProp::BackPropWrapper> wrapper)
+        //! This constructor creates output history, where tensor was newly created
+        //! This kind of history will invoke backPropWrapper
+        explicit History(std::shared_ptr<BackProp::BackPropWrapper> wrapper,
+                         int location)
             : IsOutput(true),
+              Location(location),
               BackPropWrapper(std::move(wrapper))
         {
         }
 
+        //! This constructor creates operand history, where tensor gave its values to other units
+        //! to be used in other operations in forward pass
+        //! Tensor will have to receive gradients from all operations it gave out values in the backward pass
         History()
             : IsOutput(false)
         {
         }
+
+        ~History() = default;
 
         History(History&& history) noexcept = default;
         History(const History& history) = delete;
@@ -117,9 +126,25 @@ private:
             GradientInputTensorKeyList.emplace_back(tensorDescKey);
         }
 
-        bool IsOutput;
+        void RemoveGradientInputTensorDescKey(int tensorDescKey)
+        {
+            const auto it = std::find(
+                GradientInputTensorKeyList.begin(),
+                GradientInputTensorKeyList.end(), tensorDescKey);
 
-        std::unique_ptr<BackProp::BackPropWrapper> BackPropWrapper;
+            if (it == GradientInputTensorKeyList.end())
+                throw std::runtime_error(
+                    "History::RemoveGradientInputTensorDescKey - given "
+                    "tensorDescKey was not found in the operand history");
+
+            GradientInputTensorKeyList.erase(it);
+        }
+
+        bool IsOutput;
+        //! Location specifies which index that tensor was created
+        int Location = 0;
+
+        std::shared_ptr<BackProp::BackPropWrapper> BackPropWrapper;
         //! List of the units that was as operand
         std::list<int> GradientInputTensorKeyList;
     };

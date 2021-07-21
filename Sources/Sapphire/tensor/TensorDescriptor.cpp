@@ -43,9 +43,9 @@ TensorDescriptor& TensorDescriptor::operator=(
 }
 
 void TensorDescriptor::AppendOutputHistory(
-    std::unique_ptr<BackProp::BackPropWrapper> wrapper, bool saveOutput)
+    std::shared_ptr<BackProp::BackPropWrapper> wrapper, int location)
 {
-    m_history.emplace_back(History(std::move(wrapper)));
+    m_history.emplace_back(History(std::move(wrapper), location));
 }
 
 void TensorDescriptor::AppendOperandHistory(int tensorDescKey)
@@ -66,23 +66,11 @@ void TensorDescriptor::RemoveGradientInput(int tensorDescKey)
     if (m_history.empty() || m_history.back().IsOutput)
     {
         throw std::runtime_error(
-            "RemoveGradientInput - Last history was empty or output");
+            "RemoveGradientInput - Last history was empty or last history was output");
     }
 
     auto& history = m_history.back();
-    const auto it = std::find(history.GradientInputTensorKeyList.begin(),
-                              history.GradientInputTensorKeyList.end(),
-                              tensorDescKey);
-
-    if (it == history.GradientInputTensorKeyList.end())
-    {
-        throw std::runtime_error(
-            "RemoveGradientInput - tensorDescKey not found in gradient input "
-            "tensor key "
-            "list");
-    }
-
-    history.GradientInputTensorKeyList.erase(it);
+    history.RemoveGradientInputTensorDescKey(tensorDescKey);
 }
 
 void TensorDescriptor::PopIfOperandHistory()
