@@ -8,11 +8,13 @@
 
 namespace Sapphire
 {
-Shape::Shape(std::initializer_list<unsigned int> shape) : m_shapeVector(shape)
+Shape::Shape(std::initializer_list<unsigned int> shape)
+    : m_shapeVector(shape)
 {
 }
 
-Shape::Shape(std::vector<unsigned int> shape) : m_shapeVector(std::move(shape))
+Shape::Shape(std::vector<unsigned int> shape)
+    : m_shapeVector(std::move(shape))
 {
 }
 
@@ -113,6 +115,59 @@ void Shape::Expand(unsigned int dim)
     m_shapeVector = newShapeVector;
 }
 
+void Shape::Squeeze(unsigned int dim)
+{
+    if (dim >= Dim())
+        return;
+
+    const auto dimIdx = m_shapeVector.size() - 1 - dim;
+
+    if (m_shapeVector.at(dimIdx) > 1)
+        return;
+
+    std::vector<unsigned int> newShapeVector(m_shapeVector.size() - 1);
+    int newIdx = static_cast<int>(m_shapeVector.size()) - 2;
+
+    for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
+        if (i != static_cast<int>(dimIdx))
+        {
+            newShapeVector.at(newIdx) = m_shapeVector.at(i);
+            newIdx -= 1;
+        }
+}
+
+void Shape::Squeeze()
+{
+    std::vector<unsigned int> newShapeVector;
+    newShapeVector.reserve(m_shapeVector.size());
+
+    for (unsigned int i : m_shapeVector)
+    {
+        if (i > 1)
+            newShapeVector.emplace_back(i);
+    }
+
+    m_shapeVector = newShapeVector;
+}
+
+void Shape::Shrink(unsigned int dim)
+{
+    if (dim >= Dim())
+        return;
+
+    const auto dimIdx = m_shapeVector.size() - dim;
+    std::vector<unsigned int> newShapeVector(dim);
+
+    for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
+    {
+        if (i >= static_cast<int>(dimIdx))
+            newShapeVector.at(i - (m_shapeVector.size() - dim)) =
+                m_shapeVector.at(i);
+        else
+            newShapeVector.at(0) *= m_shapeVector.at(i);
+    }
+}
+
 Shape Shape::GetTranspose() const
 {
     if (m_shapeVector.size() < 2)
@@ -129,5 +184,4 @@ Shape Shape::GetTranspose() const
 
     return Shape(vector);
 }
-
-}  // namespace Sapphire
+} // namespace Sapphire

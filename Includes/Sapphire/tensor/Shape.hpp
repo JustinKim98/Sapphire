@@ -74,6 +74,15 @@ class Shape
     //! returns immediately
     void Expand(unsigned int dim);
 
+    //! Removes the dimension if given dimension has size 1
+    void Squeeze(unsigned int dim);
+
+    //! Removes all 1's in the given shape
+    void Squeeze();
+
+    //! Shrinks dimension to given dim
+    void Shrink(unsigned int dim);
+
     Shape GetReverse() const;
 
     [[nodiscard]] Shape GetTranspose() const;
