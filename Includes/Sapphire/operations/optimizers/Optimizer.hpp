@@ -21,7 +21,12 @@ public:
     Optimizer& operator=(const Optimizer& other) = default;
     Optimizer& operator=(Optimizer&& other) noexcept = default;
     virtual ~Optimizer() = default;
-    virtual void operator()(TensorData& z, TensorData& dz) = 0;
+    virtual void operator()(TensorData& z, TensorData& dz)
+    {
+        throw std::runtime_error(
+            "Optimizer::Optimizer::operator() - Default operator should not be "
+            "called");
+    }
 };
 }
 
