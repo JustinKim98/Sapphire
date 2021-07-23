@@ -29,17 +29,11 @@ void Model::RemoveUnitDataWrapper(int key)
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const Device& device,
-                                    unsigned int batchSize,
-                                    bool isTrainable)
+                                    unsigned int batchSize)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
     TensorUtil::TensorDescriptor tensorDesc(shape, type, device, batchSize,
                                             tensorDescKey);
-    if (isTrainable)
-    {
-        tensorDesc.BackwardData = TensorUtil::TensorData(
-            shape, type, device, batchSize, tensorDescKey);
-    }
 
     m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
 
@@ -52,22 +46,25 @@ void Model::m_autoGrad(int tensorKey)
         descriptor.IsBackPropReady())
     {
         descriptor.PopIfOperandHistory();
-        const auto& wrapper = descriptor.GetBackPropWrapper();
-        const auto outputTensorDataVector = wrapper->
-            GetOutputTensorDataVector();
+        const auto& [wrapper, location] =
+            descriptor.GetBackPropWrapper();
+        const auto outputGradientKeyVector = wrapper->
+            GetGradientOutputDescriptorKeys();
 
         //! Checks if wrapper is ready to backprop. If it does, performs backprop
         //! Update the operands if successes
-        const bool isInvoked = wrapper->InvokeBackProp(descriptor.BackwardData);
+        const bool invoked = wrapper->InvokeBackPropIfReady(location);
         descriptor.PopHistory(); //! Pop output history
 
-        if (isInvoked)
-            for (auto& tensorData : outputTensorDataVector)
-            {
-                GetDescriptor(tensorData.GetDescriptorKey())
-                    .RemoveGradientInput(tensorKey);
-                m_autoGrad(tensorData.GetDescriptorKey());
-            }
+        for (auto& descKey : outputGradientKeyVector)
+        {
+            GetDescriptor(descKey)
+                .RemoveOperand(tensorKey);
+        }
+
+        if (invoked)
+            for (auto& tensorData : outputGradientKeyVector)
+                m_autoGrad(tensorData);
     }
 }
 

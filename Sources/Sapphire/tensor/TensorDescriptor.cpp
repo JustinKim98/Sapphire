@@ -13,7 +13,8 @@ namespace Sapphire::TensorUtil
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
                                    const Device& device, unsigned int batchSize,
                                    int key)
-    : ForwardData(shape, type, device, batchSize, key),
+    : m_forwardData(shape, type, device, batchSize, key),
+      m_backwardData(shape, type, device, batchSize, key),
       m_key(key),
       m_batchSize(batchSize),
       m_trainable(false)
@@ -21,8 +22,8 @@ TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
 }
 
 TensorDescriptor::TensorDescriptor(TensorDescriptor&& tensorData) noexcept
-    : ForwardData(std::move(tensorData.ForwardData)),
-      BackwardData(std::move(tensorData.BackwardData)),
+    : m_forwardData(std::move(tensorData.m_forwardData)),
+      m_backwardData(std::move(tensorData.m_backwardData)),
       m_key(tensorData.m_key),
       m_batchSize(tensorData.m_batchSize),
       m_trainable(tensorData.m_trainable),
@@ -33,8 +34,8 @@ TensorDescriptor::TensorDescriptor(TensorDescriptor&& tensorData) noexcept
 TensorDescriptor& TensorDescriptor::operator=(
     TensorDescriptor&& tensorDesc) noexcept
 {
-    ForwardData = tensorDesc.ForwardData;
-    BackwardData = tensorDesc.BackwardData;
+    m_forwardData = tensorDesc.m_forwardData;
+    m_backwardData = tensorDesc.m_backwardData;
     m_key = tensorDesc.m_key;
     m_batchSize = tensorDesc.m_batchSize;
     m_trainable = tensorDesc.m_trainable;
@@ -42,8 +43,38 @@ TensorDescriptor& TensorDescriptor::operator=(
     return *this;
 }
 
+TensorData TensorDescriptor::GetForwardData() const
+{
+    return m_forwardData;
+}
+
+TensorData TensorDescriptor::GetBackwardData() const
+{
+    return m_backwardData;
+}
+
+unsigned int TensorDescriptor::GetBatchSize() const
+{
+    return m_batchSize;
+}
+
+Shape TensorDescriptor::GetShape() const
+{
+    return m_forwardData.TensorShape;
+}
+
+Device TensorDescriptor::GetDevice() const
+{
+    return m_forwardData.GetDevice();
+}
+
+Type TensorDescriptor::GetType() const
+{
+    return m_forwardData.GetType();
+}
+
 void TensorDescriptor::AppendOutputHistory(
-    std::shared_ptr<BackProp::BackPropWrapper> wrapper, int location)
+    Util::SharedPtr<BackProp::BackPropWrapper> wrapper, int location)
 {
     m_history.emplace_back(History(std::move(wrapper), location));
 }
@@ -53,24 +84,24 @@ void TensorDescriptor::AppendOperandHistory(int tensorDescKey)
     if (m_history.empty() || m_history.back().IsOutput)
     {
         History history;
-        history.AddGradientInputTensorDescKey(tensorDescKey);
+        history.AddOperand(tensorDescKey);
         m_history.emplace_back(std::move(history));
         return;
     }
 
-    m_history.back().AddGradientInputTensorDescKey(tensorDescKey);
+    m_history.back().AddOperand(tensorDescKey);
 }
 
-void TensorDescriptor::RemoveGradientInput(int tensorDescKey)
+void TensorDescriptor::RemoveOperand(int tensorDescKey)
 {
     if (m_history.empty() || m_history.back().IsOutput)
     {
         throw std::runtime_error(
-            "RemoveGradientInput - Last history was empty or last history was output");
+            "RemoveOperand - Last history was empty or last history was output");
     }
 
     auto& history = m_history.back();
-    history.RemoveGradientInputTensorDescKey(tensorDescKey);
+    history.RemoveOperand(tensorDescKey);
 }
 
 void TensorDescriptor::PopIfOperandHistory()

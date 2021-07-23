@@ -94,6 +94,12 @@ void Shape::Set(unsigned int dim, unsigned int value)
             "Shape::Set - Given dimension exceeds shape dimension");
     }
 
+    if (value == 0)
+    {
+        throw std::invalid_argument(
+            "Shape::Set - Shape cannot have dimension with '0'");
+    }
+
     m_shapeVector.at(dim) = value;
 }
 

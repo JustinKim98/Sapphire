@@ -23,12 +23,12 @@ Tensor& Tensor::operator=(const Tensor& tensor)
     return *this;
 }
 
-Shape Tensor::GetShape() const
+Shape Tensor::GetForwardDataShape() const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc =
         model.GetDescriptor(m_tensorDescKey);
-    return desc.ForwardData.GetShape();
+    return desc.GetShape();
 }
 
 Device Tensor::GetDevice() const
@@ -36,7 +36,7 @@ Device Tensor::GetDevice() const
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
-    return desc.ForwardData.GetDevice();
+    return desc.GetDevice();
 }
 
 int Tensor::TensorDescriptorKey() const
@@ -49,10 +49,6 @@ void Tensor::SendTo(const Device& device) const
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
-    desc.ForwardData.SendTo(device);
-    if (desc.IsTrainable())
-    {
-        desc.BackwardData.SendTo(device);
-    }
+    desc.SetDevice(device);
 }
 } // namespace Sapphire

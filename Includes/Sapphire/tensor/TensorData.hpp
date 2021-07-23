@@ -35,6 +35,26 @@ public:
     unsigned long PaddedHostColSize = 0;
     unsigned long BatchSize = 0;
 
+    [[nodiscard]] const float* GetDenseHost() const
+    {
+        return DenseMatHost;
+    }
+
+    [[nodiscard]] const float* GetDenseCuda() const
+    {
+        return DenseMatCuda;
+    }
+
+    [[nodiscard]] float* GetMutableDenseHost()
+    {
+        return DenseMatHost;
+    }
+
+    [[nodiscard]] float* GetMutableDenseCuda()
+    {
+        return DenseMatCuda;
+    }
+
     float* DenseMatHost = nullptr;
     float* DenseMatCuda = nullptr;
 

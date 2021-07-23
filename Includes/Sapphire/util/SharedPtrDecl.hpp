@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_SHAREDPTR_DECL_HPP
-#define Sapphire_SHAREDPTR_DECL_HPP
+#ifndef SAPPHIRE_SHAREDPTR_DECL_HPP
+#define SAPPHIRE_SHAREDPTR_DECL_HPP
 
 #include <atomic>
 

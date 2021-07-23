@@ -25,7 +25,7 @@ class Tensor
     Tensor& operator=(const Tensor& tensor);
     Tensor& operator=(Tensor&& tensor) noexcept = delete;
 
-    [[nodiscard]] Shape GetShape() const;
+    [[nodiscard]] Shape GetForwardDataShape() const;
     [[nodiscard]] Device GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
