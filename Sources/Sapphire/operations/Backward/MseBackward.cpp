@@ -9,28 +9,27 @@
 
 namespace Sapphire::BackProp
 {
-MSEBackward::MSEBackward(const TensorUtil::TensorData& x,
-                         TensorUtil::TensorData dx,
-                         const TensorUtil::TensorData& label,
-                         TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(dy) }, { std::move(dx) })
+constexpr int xIdx = 0;
+constexpr int labelIdx = 1;
+constexpr int dxIdx = 0;
+
+MSEBackward::MSEBackward(TensorUtil::TensorData dx,
+                         TensorUtil::TensorData x,
+                         TensorUtil::TensorData label)
+    : BackPropWrapper({ std::move(dx) }, {}, { std::move(x), std::move(label) },
+                      {})
 
 {
-    m_savedTensorMap["x"] = x.CreateCopy();
-    m_savedTensorMap["label"] = label.CreateCopy();
 }
 
-bool MSEBackward::InvokeBackProp(const TensorUtil::TensorData& input)
+void MSEBackward::m_runBackProp()
 {
-    auto& x = m_savedTensorMap["x"];
-    auto& label = m_savedTensorMap["label"];
-    auto& dx = m_gradientOutputs[0];
-    auto& dy = m_gradientInputs[0];
+    auto& x = m_constants[xIdx];
+    auto& label = m_constants[labelIdx];
+    auto& dx = m_dxVector[dxIdx];
+    auto temp = label.CreateCopy();
 
-    Compute::Sub(dx, x, label);
-    Compute::Scale(dx, dx, 2.0f / static_cast<float>(dy.TensorShape.Size()));
-    Compute::Dot(dx, dx, dy);
-
-    return true;
+    Compute::Sub(temp, temp, x);
+    Compute::Scale(dx, temp, -2.0f);
 }
-}  // namespace Sapphire::BackProp
+} // namespace Sapphire::BackProp

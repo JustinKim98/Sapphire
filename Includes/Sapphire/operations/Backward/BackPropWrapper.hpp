@@ -7,6 +7,7 @@
 #ifndef SAPPHIRE_BACKPROP_WRAPPER_HPP
 #define SAPPHIRE_BACKPROP_WRAPPER_HPP
 
+#include <algorithm>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
 #include <functional>
@@ -14,8 +15,7 @@
 
 namespace Sapphire::BackProp
 {
-//! todo : BackPropWrapper can be shared between objects and should backProp
-//! when it is available only
+//! BackPropWrapper can be shared between objects
 
 //! This class is responsible for
 //! 1. Storing the required data for back propagation
@@ -29,50 +29,100 @@ public:
     virtual ~BackPropWrapper() = default;
 
     explicit BackPropWrapper(
-        std::vector<TensorUtil::TensorData> gradientOutputs,
-        std::vector<TensorUtil::TensorData> gradientInputs,
+        std::vector<TensorUtil::TensorData> dxVector,
+        std::vector<TensorUtil::TensorData> dyVector,
         std::vector<TensorUtil::TensorData> trainableData,
-        std::weak_ptr<Optimizer::Optimizer> optimizer, int unitKey)
-        : m_unitKey(unitKey),
-          m_gradientOutputs(std::move(gradientOutputs)),
-          m_gradientInputs(std::move(gradientInputs)),
+        std::vector<TensorUtil::TensorData> constants,
+        std::vector<TensorUtil::TensorData> mutables,
+        std::weak_ptr<Optimizer::Optimizer> optimizer)
+        : m_dxVector(std::move(dxVector)),
+          m_dyVector(std::move(dyVector)),
           m_trainableData(std::move(trainableData)),
-          m_optimizer(std::move(optimizer))
+          m_constants(std::move(constants)),
+          m_mutables(std::move(mutables)),
+          m_optimizer(std::move(optimizer)),
+          m_receivedGradients(dyVector.size(), false)
     {
     }
 
     explicit BackPropWrapper(
-        std::vector<TensorUtil::TensorData> gradientOutputs,
-        std::vector<TensorUtil::TensorData> gradientInputs)
-        : m_gradientOutputs(std::move(gradientOutputs)),
-          m_gradientInputs(std::move(gradientInputs))
+        std::vector<TensorUtil::TensorData> dxVector,
+        std::vector<TensorUtil::TensorData> dyVector,
+        std::vector<TensorUtil::TensorData> constants,
+        std::vector<TensorUtil::TensorData> mutables)
+        : m_dxVector(std::move(dxVector)),
+          m_dyVector(std::move(dyVector)),
+          m_constants(std::move(constants)),
+          m_mutables(std::move(mutables)),
+          m_receivedGradients(dyVector.size(), false)
+
     {
     }
+
+    explicit BackPropWrapper(
+        std::vector<TensorUtil::TensorData> dxVector,
+        std::vector<TensorUtil::TensorData> dyVector)
+        : m_dxVector(std::move(dxVector)),
+          m_dyVector(std::move(dyVector)),
+          m_receivedGradients(dyVector.size(), false)
+    {
+    }
+
 
     BackPropWrapper(const BackPropWrapper& backPropWrapper) = default;
     BackPropWrapper(BackPropWrapper&& backPropWrapper) noexcept = default;
-    BackPropWrapper& operator=(const BackPropWrapper& backPropWrapper) = default
-    ;
+    BackPropWrapper& operator=(const BackPropWrapper& backPropWrapper) = delete;
     BackPropWrapper& operator=(BackPropWrapper&& backPropWrapper) noexcept
-    = default;
+    = delete;
 
-    [[nodiscard]] const std::vector<TensorUtil::TensorData>&
-    GetOutputTensorDataVector() const
+    [[nodiscard]] std::vector<int>
+    GetGradientOutputDescriptorKeys() const
     {
-        return m_gradientOutputs;
+        std::vector<int> tensorKeys(m_dxVector.size());
+
+        for (std::size_t i = 0; i < m_dyVector.size(); ++i)
+            tensorKeys[i] = m_dxVector[i].GetDescriptorKey();
+
+        return tensorKeys;
     }
 
-    //! InvokeBackProp should check if BackPropWrapper is ready before invoking back propagation
-    virtual bool InvokeBackProp(const TensorUtil::TensorData& input) = 0;
+    //! InvokeBackPropIfReady checks if BackPropWrapper is ready before invoking back propagation
+    //! \param location : The id of the parameter. Id always starts from 0 with the first parameter (from the left)
+    bool InvokeBackPropIfReady(int location)
+    {
+        if (m_isReady(location))
+        {
+            m_runBackProp();
+            return true;
+        }
+        return false;
+    }
 
 protected:
-    int m_unitKey = -1;
+    bool m_isReady(int location)
+    {
+        if (m_receivedGradients.at(location))
+            throw std::runtime_error(
+                "BackProp::BackPropWrapper::m_isReady - Received gradient two "
+                "times from same location");
+
+        m_receivedGradients.at(location) = true;
+        return std::all_of(m_receivedGradients.begin(),
+                           m_receivedGradients.end(),
+                           [](auto x) { return x; });
+    }
+
+    virtual void m_runBackProp() = 0;
+
     //! Vector of tensorData that should give its output
-    std::vector<TensorUtil::TensorData> m_gradientOutputs;
-    std::vector<TensorUtil::TensorData> m_gradientInputs;
+    std::vector<TensorUtil::TensorData> m_dxVector;
+    const std::vector<TensorUtil::TensorData> m_dyVector;
     std::vector<TensorUtil::TensorData> m_trainableData;
+    const std::vector<TensorUtil::TensorData> m_constants;
+    std::vector<TensorUtil::TensorData> m_mutables;
     std::weak_ptr<Optimizer::Optimizer> m_optimizer;
-    std::unordered_map<std::string, TensorUtil::TensorData> m_savedTensorMap;
+    std::vector<bool> m_receivedGradients;
+    //! Data saved in m_constants should not be modified
 };
 } // namespace Sapphire::BackProp
 

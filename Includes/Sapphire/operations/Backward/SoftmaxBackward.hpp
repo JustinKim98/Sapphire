@@ -4,22 +4,21 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_BACKPROP_MSEBACKPROP_HPP
-#define SAPPHIRE_BACKPROP_MSEBACKPROP_HPP
+#ifndef SAPPHIRE_BACKPROP_SOFTMAX_BACKWARD_HPP
+#define SAPPHIRE_BACKPROP_SOFTMAX_BACKWARD_HPP
 
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 
 namespace Sapphire::BackProp
 {
-class MSEBackward : public BackPropWrapper
+class SoftMaxBackward : public BackPropWrapper
 {
-public:
-    MSEBackward(TensorUtil::TensorData dx, TensorUtil::TensorData x,
-                TensorUtil::TensorData label);
+ public:
+    SoftMaxBackward(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
+                    TensorUtil::TensorData x);
 
 private:
     void m_runBackProp() override;
 };
-} // namespace Sapphire::BackProp
-
-#endif  // Sapphire_MSEBACKPROP_HPP
+}
+#endif

@@ -10,47 +10,44 @@
 
 namespace Sapphire::BackProp
 {
-LinearBackProp::LinearBackProp(TensorUtil::TensorData& dx,
-                               TensorUtil::TensorData& weight,
-                               TensorUtil::TensorData& bias,
-                               const TensorUtil::TensorData& dy,
-                               const TensorUtil::TensorData& x,
+LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
+                               TensorUtil::TensorData weight,
+                               TensorUtil::TensorData bias,
+                               TensorUtil::TensorData dy,
+                               TensorUtil::TensorData x,
                                std::weak_ptr<Optimizer::Optimizer> optimizer,
-                               unsigned int batchSize,
-                               int unitKey)
-    : BackPropWrapper({ dx }, { dy }, { weight, bias }, std::move(optimizer),
-                      unitKey),
+                               unsigned int batchSize)
+    : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
+                      { std::move(weight), std::move(bias) },
+                      { std::move(x) },
+                      {}, std::move(optimizer)),
       m_batchSize(batchSize)
 {
-    m_savedTensorMap["x"] = x;
 }
 
-bool LinearBackProp::InvokeBackProp(const TensorUtil::TensorData& dy)
+void LinearBackProp::m_runBackProp()
 {
     auto weight = m_trainableData[weightIdx];
     auto bias = m_trainableData[biasIdx];
-    TensorUtil::TensorData::DeepCopy(m_gradientInputs[0], dy);
 
     m_backProp(weight);
     m_updateWeight(weight);
     m_updateBias(bias);
 
-    return true;
 }
 
 void LinearBackProp::m_backProp(const TensorUtil::TensorData& weight)
 {
-    TensorUtil::TensorData& dx = m_gradientOutputs[dxIdx];
-    TensorUtil::TensorData& dy = m_gradientInputs[dyIdx];
+    TensorUtil::TensorData& dx = m_dxVector[dxIdx];
+    const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
 
-    Compute::Initialize::Zeros(dx);
     Compute::Gemm(dx, dy, weight, dx);
 }
 
-void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight)
+void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
 {
-    TensorUtil::TensorData& dy = m_gradientInputs[dyIdx];
-    const TensorUtil::TensorData& x = m_savedTensorMap["x"];
+    const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
+    const TensorUtil::TensorData& x = m_constants[xIdx];
     TensorUtil::TensorData transposedX(x.GetShape().GetTranspose(), x.GetType(),
                                        x.GetDevice(), 1);
     TensorUtil::TensorData transposedDy(dy.GetShape().GetTranspose(),
@@ -66,9 +63,9 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight)
     m_optimizer.lock()->operator()(weight, dw);
 }
 
-void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias)
+void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
 {
-    TensorUtil::TensorData& dy = m_gradientInputs[dyIdx];
+    const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
     const TensorUtil::TensorData ones(Shape({ m_batchSize }),
                                       dy.GetType(),
                                       dy.GetDevice(), 1);
