@@ -22,12 +22,13 @@ void SoftMax(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::SoftMax(y.DenseMatCuda, x.DenseMatCuda, totalSize,
+        Dense::Cuda::SoftMax(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize,
                              unitSize);
     }
     else
     {
-        Dense::Naive::Softmax(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::Softmax(y.GetMutableDenseHost(), x.GetDenseHost(),
                               totalSizeWithPadding, unitSize, paddedN);
     }
 }
@@ -42,11 +43,12 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::LeakyReLU(y.DenseMatCuda, x.DenseMatCuda, a, totalSize);
+        Dense::Cuda::LeakyReLU(y.GetMutableDenseCuda(), x.GetDenseCuda(), a,
+                               totalSize);
     }
     else
     {
-        Dense::Naive::LeakyReLU(y.DenseMatHost, x.DenseMatHost, a,
+        Dense::Naive::LeakyReLU(y.GetMutableDenseHost(), x.GetDenseHost(), a,
                                 totalSizeWithPadding);
     }
 }
@@ -61,11 +63,11 @@ void ReLU(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ReLU(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ReLU(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::ReLU(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::ReLU(y.GetMutableDenseHost(), x.GetDenseHost(),
                            totalSizeWithPadding);
     }
 }
@@ -77,8 +79,8 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ReLUBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                  x.DenseMatCuda, totalSize);
+        Dense::Cuda::ReLUBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -95,8 +97,9 @@ void LeakyReluBackward(TensorData& dx, const TensorData& dy,
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::LeakyReLUBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                       x.DenseMatCuda,
+        Dense::Cuda::LeakyReLUBackward(dx.GetMutableDenseCuda(),
+                                       dy.GetDenseCuda(),
+                                       x.GetDenseCuda(),
                                        a, totalSize);
     }
     else

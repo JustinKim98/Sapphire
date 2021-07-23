@@ -9,22 +9,27 @@
 
 #include <Sapphire/tensor/TensorData.hpp>
 #include <unordered_map>
-#include <Sapphire/tensor/Tensor.hpp>
+#include <Sapphire/tensor/TensorDescriptor.hpp>
+
 
 namespace Sapphire
 {
 class Unit
 {
- public:
+public:
     Unit() = default;
+    virtual ~Unit() = default;
 
- private:
-    virtual bool m_isReady() = 0;
-    virtual bool m_checkArgments(std::vector<Tensor> arguments) = 0;
-    
+    Unit(const Unit& unit) = default;
+    Unit(Unit&& unit) noexcept = default;
+    Unit& operator=(const Unit& unit) = default;
+    Unit& operator=(Unit&& unit) noexcept = default;
+
+protected:
+    virtual bool m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor> arguments) = 0;
+    std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
 };
-
-
 
 //! UnitDataWrapper
 //! Wraps required temporary data of the unit

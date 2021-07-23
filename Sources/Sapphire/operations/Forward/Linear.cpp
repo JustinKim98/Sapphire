@@ -10,28 +10,31 @@
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/operations/Unit.hpp>
+#include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 
 namespace Sapphire::NN
 {
 Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
                std::shared_ptr<Optimizer::Optimizer> optimizer,
                Device device, bool isSparse)
-    : m_outputs(outputFeatureSize),
+    : m_inputs(inputFeatureSize),
+      m_outputs(outputFeatureSize),
       m_optimizer(std::move(optimizer)),
       m_device(std::move(device)),
       m_isSparse(isSparse)
 {
-    auto& currentModel = ModelManager::GetCurrentModel();
     const Type type = m_isSparse ? Type::Sparse : Type::Dense;
-    UnitDataWrapper wrapper;
-    wrapper.TensorDataMap["weight"] = TensorUtil::TensorData(
-        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device, 1);
-    wrapper.TensorDataMap["bias"] =
-        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device, 1);
 
-    //! Initialize bias and weight
-    m_unitWrapperKey = currentModel.AddUnitDataWrapper(wrapper);
+    if (m_isSparse)
+        throw std::invalid_argument(
+            "NN::Linear - Sparse version not implemented");
+
+    m_trainableDataMap["weight"] = TensorUtil::TensorData(
+        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device, 1);
+    m_trainableDataMap["bias"] =
+        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device, 1);
 }
 
 Linear::~Linear()
@@ -41,50 +44,39 @@ Linear::~Linear()
 }
 
 //! TODO : free the UnitDataWrapper in the destructor
-
 Tensor Linear::operator()(const Tensor& input) const
 {
     auto& model = ModelManager::GetCurrentModel();
-    auto unitDataWrapper = model.GetUnitDataWrapper(m_unitWrapperKey);
 
-    TensorUtil::TensorDescriptor& xDesc =
+    auto& xDesc =
         model.GetDescriptor(input.TensorDescriptorKey());
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
 
-    auto x = xDesc.ForwardData;
-    auto dx = xDesc.BackwardData;
-    auto y = yDesc.ForwardData;
-    auto dy = yDesc.BackwardData;
+    auto x = xDesc.GetForwardData();
+    auto dx = xDesc.GetBackwardData();
+    auto y = yDesc.GetForwardData();
+    auto dy = yDesc.GetBackwardData();
 
-    //! Reshape the data to match the requirements
-    x.TensorShape.Expand(2);
-    dx.TensorShape.Expand(2);
-    y.TensorShape.Expand(2);
-    dy.TensorShape.Expand(2);
-    x.TensorShape.Shrink(2);
-    dx.TensorShape.Shrink(2);
-    y.TensorShape.Shrink(2);
-    dy.TensorShape.Shrink(2);
-
-    auto& weight = unitDataWrapper.TensorDataMap["weight"];
-    auto& bias = unitDataWrapper.TensorDataMap["bias"];
+    auto& weight = m_trainableDataMap.at("weight");
+    auto& bias = m_trainableDataMap.at("bias");
 
     TensorUtil::TensorData transposedWeight(weight.GetShape().GetTranspose(),
                                             weight.GetType(),
                                             weight.GetDevice(), 1);
+    auto backPropWrapper =
+        Util::SharedPtr<BackProp::LinearBackProp>::Make(
+            dx, dy, weight, bias, x, m_optimizer, xDesc.GetShape().At(0));
+
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                      std::make_tuple(&yDesc));
+
+    //! Reshape the data to match the requirements
+    Util::ChangeTensorDataDimension(2, x, dx, y, dy);
 
     Compute::Initialize::Zeros(y);
     Compute::Transpose(transposedWeight, weight);
     Compute::Gemm(y, x, transposedWeight, bias);
-
-    auto backPropWrapper = std::make_unique<BackProp::LinearBackProp>(
-        dx, dy, weight, bias, x, m_optimizer, x.TensorShape.At(0),
-        m_unitWrapperKey);
-
-    xDesc.AppendOperandHistory(yKey);
-    yDesc.AppendOutputHistory(std::move(backPropWrapper), 0);
-
     return Tensor(yKey);
 }
 
@@ -92,12 +84,24 @@ int Linear::m_registerOutputTensor(
     const TensorUtil::TensorDescriptor& xDesc) const
 {
     auto& model = ModelManager::GetCurrentModel();
-    const auto x = xDesc.ForwardData;
-    const Shape shapeInput = x.TensorShape;
+    const auto x = xDesc.GetForwardData();
+    const Shape shapeInput = xDesc.GetShape();
     Shape outputShape = shapeInput;
     outputShape[outputShape.Dim() - 1] = m_outputs;
     const auto yKey = model.RegisterTensorDescriptor(
-        outputShape, x.GetType(), x.GetDevice(), x.BatchSize, true);
+        outputShape, x.GetType(), x.GetDevice(), x.BatchSize);
     return yKey;
+}
+
+bool Linear::m_checkArguments(
+    std::vector<TensorUtil::TensorDescriptor> arguments)
+{
+    const auto& input = arguments.at(0);
+    if (input.GetForwardData().GetShape().Cols() != m_inputs)
+        throw std::invalid_argument("NN::Linear - Shape mismatch");
+    if (input.GetForwardData().GetDevice() != m_device)
+        throw std::invalid_argument("NN::Linear - Device mismatch");
+
+    return true;
 }
 } // namespace Sapphire::NN

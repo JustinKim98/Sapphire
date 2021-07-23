@@ -37,8 +37,7 @@ public:
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const Device& device, unsigned int batchSize,
-                                 bool isTrainable);
+                                 const Device& device, unsigned int batchSize);
 
     //! Returns unitDataWrapper with given key
     [[nodiscard]] UnitDataWrapper& GetUnitDataWrapper(int key);
