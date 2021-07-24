@@ -19,20 +19,21 @@ public:
     Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
            std::shared_ptr<Optimizer::Optimizer> optimizer,
            Device device, bool isSparse = false);
-    ~Linear() override;
+    ~Linear() override = default;
 
     Linear(const Linear& linear) = default;
     Linear(Linear&& linear) noexcept = default;
     Linear& operator=(const Linear& linear) = default;
     Linear& operator=(Linear&& linear) noexcept = default;
 
-    Tensor operator()(const Tensor& input) const;
+    Tensor operator()(const Tensor& input);
 
 private:
     [[nodiscard]] int m_registerOutputTensor(
         const TensorUtil::TensorDescriptor& xDesc) const;
 
-    bool m_checkArguments(std::vector<TensorUtil::TensorDescriptor> arguments) override;
+    bool m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor> arguments) override;
 
     int m_unitWrapperKey = -1;
     unsigned int m_inputs;

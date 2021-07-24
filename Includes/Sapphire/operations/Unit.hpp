@@ -29,6 +29,7 @@ protected:
     virtual bool m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor> arguments) = 0;
     std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
+    std::unordered_map<std::string, TensorUtil::TensorData> m_mutableDataMap;
 };
 
 //! UnitDataWrapper

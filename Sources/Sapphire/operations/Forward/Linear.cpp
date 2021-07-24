@@ -35,16 +35,12 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
         Shape({ inputFeatureSize, outputFeatureSize }), type, m_device, 1);
     m_trainableDataMap["bias"] =
         TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device, 1);
+    m_mutableDataMap["transposedWeight"] = TensorUtil::TensorData(
+        Shape({ outputFeatureSize, inputFeatureSize }), type, m_device, 1);
 }
 
-Linear::~Linear()
-{
-    auto& currentModel = ModelManager::GetCurrentModel();
-    currentModel.RemoveUnitDataWrapper(m_unitWrapperKey);
-}
 
-//! TODO : free the UnitDataWrapper in the destructor
-Tensor Linear::operator()(const Tensor& input) const
+Tensor Linear::operator()(const Tensor& input)
 {
     auto& model = ModelManager::GetCurrentModel();
 
@@ -58,21 +54,17 @@ Tensor Linear::operator()(const Tensor& input) const
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    auto& weight = m_trainableDataMap.at("weight");
-    auto& bias = m_trainableDataMap.at("bias");
-
-    TensorUtil::TensorData transposedWeight(weight.GetShape().GetTranspose(),
-                                            weight.GetType(),
-                                            weight.GetDevice(), 1);
-    auto backPropWrapper =
-        Util::SharedPtr<BackProp::LinearBackProp>::Make(
-            dx, dy, weight, bias, x, m_optimizer, xDesc.GetShape().At(0));
-
-    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
-                      std::make_tuple(&yDesc));
+    const auto& weight = m_trainableDataMap.at("weight");
+    const auto& bias = m_trainableDataMap.at("bias");
+    auto& transposedWeight =
+        m_mutableDataMap["transposedWeight"];
 
     //! Reshape the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
+    auto backPropWrapper = Util::SharedPtr<BackProp::LinearBackProp>::Make(
+        dx, dy, weight, bias, x, m_optimizer, xDesc.GetShape().At(0));
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                      std::make_tuple(&yDesc));
 
     Compute::Initialize::Zeros(y);
     Compute::Transpose(transposedWeight, weight);
