@@ -23,10 +23,11 @@ void BroadcastWith3Inputs(const Shape& shapeOut, const Shape& shapeA,
                           const Shape& shapeB, const Shape& shapeC,
                           unsigned int totalSizeOut, unsigned int totalSizeA,
                           unsigned int totalSizeB, unsigned int totalSizeC,
-                          float* out, float* A, float* B, float* C,
+                          float* out, const float* A, const float* B,
+                          const float* C,
                           unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
-                          Params... params)
+                          Params ... params)
 {
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
@@ -84,9 +85,10 @@ template <typename Func, typename... Params>
 void BroadcastWith2Inputs(const Shape& shapeOut, const Shape& shapeA,
                           const Shape& shapeB, unsigned int totalSizeOut,
                           unsigned int totalSizeA, unsigned int totalSizeB,
-                          float* out, float* A, float* B, unsigned int shapeIdx,
+                          float* out, const float* A, const float* B,
+                          unsigned int shapeIdx,
                           unsigned int minimumRequiredDim, Func func,
-                          Params... params)
+                          Params ... params)
 {
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {
@@ -139,8 +141,8 @@ template <typename Func, typename... Params>
 void BroadcastBackwardWith2Inputs(
     const Shape& shapeOut, const Shape& shapeA, const Shape& shapeB,
     unsigned int totalSizeOut, unsigned int totalSizeA, unsigned int totalSizeB,
-    float* dy, float* da, float* db, float* a, float* b, unsigned int shapeIdx,
-    unsigned int minimumRequiredDim, Func func, Params... params)
+    const float* dy, float* da,float* db, const float* a, const float* b, unsigned int shapeIdx,
+    unsigned int minimumRequiredDim, Func func, Params ... params)
 {
     if (shapeIdx >= shapeOut.Dim() - minimumRequiredDim)
     {

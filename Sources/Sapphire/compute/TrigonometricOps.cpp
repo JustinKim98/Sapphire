@@ -20,11 +20,12 @@ void Cos(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Cos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Cos(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::cos(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::cos(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding);
     }
 }
 
@@ -38,11 +39,12 @@ void Sin(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Sin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Sin(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::sin(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::sin(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding);
     }
 }
 
@@ -56,11 +58,12 @@ void Tan(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Tan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Tan(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::tan(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::tan(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding);
     }
 }
 
@@ -74,11 +77,11 @@ void Cosh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Cosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Cosh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::cosh(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::cosh(y.GetMutableDenseHost(), x.GetDenseHost(),
                            totalSizeWithPadding);
     }
 }
@@ -93,11 +96,11 @@ void Sinh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Sinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Sinh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::sinh(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::sinh(y.GetMutableDenseHost(), x.GetDenseHost(),
                            totalSizeWithPadding);
     }
 }
@@ -112,11 +115,11 @@ void Tanh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Tanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Tanh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::tanh(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::tanh(y.GetMutableDenseHost(), x.GetDenseHost(),
                            totalSizeWithPadding);
     }
 }
@@ -128,7 +131,8 @@ void ArcCos(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcCos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcCos(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                            totalSize);
     }
     else
     {
@@ -143,7 +147,8 @@ void Arcsin(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcSin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcSin(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                            totalSize);
     }
     else
     {
@@ -159,7 +164,8 @@ void ArcTan(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcTan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcTan(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                            totalSize);
     }
     else
     {
@@ -173,7 +179,8 @@ void ArcCosh(TensorData& y, const TensorData& x)
     const auto totalSize = y.TensorShape.Size() * y.BatchSize;
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcCosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcCosh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
@@ -188,7 +195,8 @@ void ArcSinh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcSinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcSinh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
@@ -203,7 +211,8 @@ void ArcTanh(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcTanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcTanh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
@@ -218,8 +227,8 @@ void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::CosBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                 x.DenseMatCuda, totalSize);
+        Dense::Cuda::CosBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                 x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -234,8 +243,8 @@ void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::SinBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                 x.DenseMatCuda, totalSize);
+        Dense::Cuda::SinBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                 x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -250,8 +259,8 @@ void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::TanBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                 x.DenseMatCuda, totalSize);
+        Dense::Cuda::TanBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                 x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -266,8 +275,8 @@ void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::CoshBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                  x.DenseMatCuda, totalSize);
+        Dense::Cuda::CoshBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -283,8 +292,8 @@ void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::SinhBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                  x.DenseMatCuda, totalSize);
+        Dense::Cuda::SinhBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -300,8 +309,8 @@ void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::TanhBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                  x.DenseMatCuda, totalSize);
+        Dense::Cuda::TanhBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -317,8 +326,8 @@ void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcCosBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                    x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcCosBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                    x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -334,8 +343,8 @@ void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcSinBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                    x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcSinBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                    x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -351,8 +360,8 @@ void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcTanBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                    x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcTanBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                    x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -368,8 +377,9 @@ void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcCoshBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                     x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcCoshBackward(dx.GetMutableDenseCuda(),
+                                     dy.GetDenseCuda(),
+                                     x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -385,8 +395,9 @@ void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcSinhBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                     x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcSinhBackward(dx.GetMutableDenseCuda(),
+                                     dy.GetDenseCuda(),
+                                     x.GetDenseCuda(), totalSize);
     }
     else
     {
@@ -402,8 +413,9 @@ void ArcTanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::ArcTanhBackward(dx.DenseMatCuda, dy.DenseMatCuda,
-                                     x.DenseMatCuda, totalSize);
+        Dense::Cuda::ArcTanhBackward(dx.GetMutableDenseCuda(),
+                                     dy.GetDenseCuda(),
+                                     x.GetDenseCuda(), totalSize);
     }
     else
     {

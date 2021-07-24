@@ -39,8 +39,9 @@ __host__ void CreateCudnnPool2DMetaData(CudnnPool2DMetaData* metaData,
 }
 
 __host__ void CudnnPoolForward2d(CudnnPool2DMetaData* metaData, float* y,
-                                 float* x,
-                                 float* alpha, float* beta, int deviceId)
+                                 const float* x,
+                                 const float* alpha, const float* beta,
+                                 int deviceId)
 {
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
@@ -50,10 +51,10 @@ __host__ void CudnnPoolForward2d(CudnnPool2DMetaData* metaData, float* y,
                                    y));
 }
 
-__host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, float* y,
-                                  float* dy,
-                                  float* x, float* dx, float* alpha,
-                                  float* beta, int deviceId)
+__host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, const float* y,
+                                  const float* dy,
+                                  const float* x, float* dx, const float* alpha,
+                                  const float* beta, int deviceId)
 {
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
@@ -63,7 +64,7 @@ __host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, float* y,
         metaData->dyDesc, dy, metaData->xDesc, x, beta, metaData->dxDesc, dx));
 }
 
-__host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
+__host__ void Pool2DForward(float* y, const float* x, Shape4D xShape,
                             int windowHeight, int windowWidth, int strideRow,
                             int strideCol, int rowPadding, int columnPadding,
                             PoolingMode mode,
@@ -94,7 +95,8 @@ __host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
     CudnnPoolForward2d(metaData, y, x, &alpha, &beta, deviceId);
 }
 
-__host__ void Pool2DBackward(float* y, float* dy, float* x, float* dx,
+__host__ void Pool2DBackward(const float* y, const float* dy, const float* x,
+                             float* dx,
                              Shape4D xShape,
                              int windowHeight,
                              int windowWidth, int strideRow, int strideCol,

@@ -16,8 +16,8 @@ namespace Sapphire::Compute::Dense::Cuda
 {
 //! All size parameters should be at least 1
 //! batch sizes must be multiple of each other
-__host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
-                   float* C, unsigned int M, unsigned int N, unsigned int K,
+__host__ void Gemm(unsigned int totalSize, float* out, const float* A, const float* B,
+                   const float* C, unsigned int M, unsigned int N, unsigned int K,
                    int deviceId)
 {
     const auto tid = std::this_thread::get_id();
@@ -36,9 +36,9 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
     const auto strideB = K * N;
     const auto strideOut = M * N;
 
-    float* ptrA = A;
-    float* ptrB = B;
-    float* ptrC = C;
+    const float* ptrA = A;
+    const float* ptrB = B;
+    const float* ptrC = C;
     float* ptrOut = out;
 
     Compute::Cuda::CopyDeviceToDevice(ptrOut, ptrC, totalSize * sizeof(float));
@@ -56,7 +56,8 @@ __host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
 
 //! Broadcasts operations matrix-wise
 //! while broadcastC is false, broadcastOut must be false
-__host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
+__host__ void GemmMatrixWiseBroadcast(float* out, const float* A,
+                                      const float* B, const float* C,
                                       unsigned int M, unsigned int N,
                                       unsigned int K, unsigned int batchSize,
                                       bool broadcastA, bool broadcastB,

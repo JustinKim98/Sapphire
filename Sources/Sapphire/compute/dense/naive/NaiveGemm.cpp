@@ -9,8 +9,8 @@
 
 namespace Sapphire::Compute::Dense::Naive
 {
-void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
-               float* C, unsigned int M, unsigned int N, unsigned int paddedN,
+void NaiveGemm(unsigned int paddedSizeOut, float* out, const float* A, const float* B,
+               const float* C, unsigned int M, unsigned int N, unsigned int paddedN,
                unsigned int K, unsigned int paddedK)
 {
     const auto strideA = M * paddedK;

@@ -31,8 +31,8 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
         {
             const auto yElemSize =
                 static_cast<unsigned int>(y.GetCudaElementSize());
-            Dense::Cuda::Add(yElemSize * y.BatchSize, y.DenseMatCuda,
-                             a.DenseMatCuda, b.DenseMatCuda,
+            Dense::Cuda::Add(yElemSize * y.BatchSize, y.GetMutableDenseCuda(),
+                             a.GetDenseCuda(), b.GetDenseCuda(),
                              y.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
@@ -40,8 +40,8 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
         {
             const auto yElemSize =
                 static_cast<unsigned int>(y.GetHostElementSize());
-            Dense::Naive::Add(yElemSize * y.BatchSize, y.DenseMatHost,
-                              a.DenseMatHost, b.DenseMatHost, yElemSize,
+            Dense::Naive::Add(yElemSize * y.BatchSize, y.GetMutableDenseHost(),
+                              a.GetDenseHost(), b.GetDenseHost(), yElemSize,
                               broadcastA, broadcastB);
             return;
         }
@@ -69,7 +69,8 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+                             y.GetMutableDenseCuda(), a.GetDenseCuda(),
+                             b.GetDenseCuda(), 0,
                              1, Dense::Cuda::Add, 0, false, false);
     }
     else
@@ -78,8 +79,8 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
         const auto paddedSizeA = (sizeA / N) * paddedN;
         const auto paddedSizeB = (sizeB / N) * paddedN;
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.DenseMatHost,
-                             a.DenseMatHost, b.DenseMatHost, 0, 1,
+                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+                             a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Add, 0, false, false);
     }
 }
@@ -96,8 +97,9 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     {
         if (device.Type() == DeviceType::CUDA)
         {
-            Dense::Cuda::Sub(y.TensorShape.Size() * y.BatchSize, y.DenseMatCuda,
-                             a.DenseMatCuda, b.DenseMatCuda,
+            Dense::Cuda::Sub(y.TensorShape.Size() * y.BatchSize,
+                             y.GetMutableDenseCuda(),
+                             a.GetDenseCuda(), b.GetDenseCuda(),
                              y.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
@@ -105,7 +107,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
         {
             Dense::Naive::Sub(
                 (y.TensorShape.Size() / N) * paddedN * y.BatchSize,
-                y.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
+                y.GetMutableDenseHost(), a.GetDenseHost(), b.GetDenseHost(),
                 (y.TensorShape.Size() / N) * paddedN, broadcastA, broadcastB);
             return;
         }
@@ -130,7 +132,8 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+                             y.GetMutableDenseCuda(), a.GetDenseCuda(),
+                             b.GetDenseCuda(), 0,
                              1, Dense::Cuda::Sub, 0, false, false);
     }
     else
@@ -139,8 +142,8 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
         const auto paddedSizeA = (sizeA / N) * paddedN;
         const auto paddedSizeB = (sizeB / N) * paddedN;
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.DenseMatHost,
-                             a.DenseMatHost, b.DenseMatHost, 0, 1,
+                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+                             a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Sub, 0, false, false);
     }
 }
@@ -176,7 +179,8 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
         if (device.Type() == DeviceType::CUDA)
         {
             Dense::Cuda::GemmMatrixWiseBroadcast(
-                y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, c.DenseMatCuda,
+                y.GetMutableDenseCuda(), a.GetDenseCuda(), b.GetDenseCuda(),
+                c.GetDenseCuda(),
                 M, N, K, batchSize, a.BatchSize == 1, b.BatchSize == 1,
                 c.BatchSize == 1, 0);
             return;
@@ -205,8 +209,9 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
-                             sizeB, sizeC, y.DenseMatCuda, a.DenseMatCuda,
-                             b.DenseMatCuda, c.DenseMatCuda, 0, 2,
+                             sizeB, sizeC, y.GetMutableDenseCuda(),
+                             a.GetDenseCuda(),
+                             b.GetDenseCuda(), c.GetDenseCuda(), 0, 2,
                              Dense::Cuda::Gemm, M, N, K, 0);
     }
     else
@@ -218,89 +223,10 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
 
         BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, paddedSizeOut,
                              paddedSizeA, paddedSizeB, paddedSizeC,
-                             y.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
-                             c.DenseMatHost, 0, 2, Dense::Naive::NaiveGemm, M,
+                             y.GetMutableDenseHost(), a.GetDenseHost(),
+                             b.GetDenseHost(),
+                             c.GetDenseHost(), 0, 2, Dense::Naive::NaiveGemm, M,
                              N, paddedN, K, paddedK);
-    }
-}
-
-void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
-                   int strideRow, int strideCol, int dilationRow,
-                   int dilationCol, int rowPadding, int columnPadding)
-{
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
-
-    {
-        const Dense::Cuda::Shape4D filterShape = {
-            static_cast<int>(filter.BatchSize),
-            static_cast<int>(filter.GetShape().At(2)),
-            static_cast<int>(filter.GetShape().Rows()),
-            static_cast<int>(filter.GetShape().Cols())
-        };
-
-        const Dense::Cuda::Shape4D xShape = {
-            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
-            static_cast<int>(x.GetShape().Rows()),
-            static_cast<int>(x.GetShape().Cols())
-        };
-
-        Dense::Cuda::Conv2DForward(
-            y.DenseMatCuda, x.DenseMatCuda, filter.DenseMatCuda, xShape,
-            filterShape, strideRow, strideCol, dilationRow, dilationCol,
-            rowPadding, columnPadding, device.GetID());
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "Compute::Conv2DForward - Host mode Not implemented");
-    }
-}
-
-void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
-                      int windowWidth, int strideRow, int strideCol,
-                      int rowPadding, int columnPadding)
-{
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
-    {
-        const Dense::Cuda::Shape4D xShape = {
-            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
-            static_cast<int>(x.GetShape().Rows()),
-            static_cast<int>(x.GetShape().Cols())
-        };
-
-        Dense::Cuda::Pool2DForward(
-            y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
-            strideRow, strideCol, rowPadding, columnPadding,
-            Dense::Cuda::PoolingMode::Max, CUDNN_PROPAGATE_NAN, device.GetID());
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "Compute::Conv2DForward - Host mode Not implemented");
-    }
-}
-
-void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
-                      int windowWidth, int strideRow, int strideCol,
-                      int rowPadding, int columnPadding)
-{
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
-    {
-        const Dense::Cuda::Shape4D xShape = {
-            static_cast<int>(x.BatchSize), static_cast<int>(x.GetShape().At(2)),
-            static_cast<int>(x.GetShape().Rows()),
-            static_cast<int>(x.GetShape().Cols())
-        };
-
-        Dense::Cuda::Pool2DForward(
-            y.DenseMatCuda, x.DenseMatCuda, xShape, windowHeight, windowWidth,
-            strideRow, strideCol, rowPadding, columnPadding,
-            Dense::Cuda::PoolingMode::Avg, CUDNN_PROPAGATE_NAN, device.GetID());
-    }
-    else
-    {
-        throw std::invalid_argument(
-            "Compute::Conv2DForward - Host mode Not implemented");
     }
 }
 
@@ -314,11 +240,12 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Scale(y.DenseMatCuda, x.DenseMatCuda, factor, totalSize);
+        Dense::Cuda::Scale(y.GetMutableDenseCuda(), x.GetDenseCuda(), factor,
+                           totalSize);
     }
     else
     {
-        Dense::Naive::Scale(y.DenseMatHost, x.DenseMatHost, factor,
+        Dense::Naive::Scale(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
                             totalSizeWithPadding);
     }
 }
@@ -336,12 +263,14 @@ void Transpose(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Transpose(y.DenseMatCuda, x.DenseMatCuda, inputM, inputN,
+        Dense::Cuda::Transpose(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                               inputM, inputN,
                                chunkSize, broadcast);
     }
     else
     {
-        Dense::Naive::Transpose(y.DenseMatHost, x.DenseMatHost, inputM, paddedM,
+        Dense::Naive::Transpose(y.GetMutableDenseHost(), x.GetDenseHost(),
+                                inputM, paddedM,
                                 inputN, paddedN, chunkSize, broadcast);
     }
 }
@@ -359,8 +288,9 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     {
         if (device.Type() == DeviceType::CUDA)
         {
-            Dense::Cuda::Dot(y.TensorShape.Size() * y.BatchSize, y.DenseMatCuda,
-                             a.DenseMatCuda, b.DenseMatCuda,
+            Dense::Cuda::Dot(y.TensorShape.Size() * y.BatchSize,
+                             y.GetMutableDenseCuda(),
+                             a.GetDenseCuda(), b.GetDenseCuda(),
                              y.TensorShape.Size(), broadcastA, broadcastB);
             return;
         }
@@ -368,7 +298,7 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
         {
             Dense::Naive::Dot(
                 (y.TensorShape.Size() / N) * paddedN * y.BatchSize,
-                y.DenseMatHost, a.DenseMatHost, b.DenseMatHost,
+                y.GetMutableDenseHost(), a.GetDenseHost(), b.GetDenseHost(),
                 (y.TensorShape.Size() / N) * paddedN, broadcastA, broadcastB);
             return;
         }
@@ -396,7 +326,8 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
-                             y.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+                             y.GetMutableDenseCuda(), a.GetDenseCuda(),
+                             b.GetDenseCuda(), 0,
                              1, Dense::Cuda::Dot, 0, false, false);
     }
     else
@@ -405,8 +336,8 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
         const auto paddedSizeA = (sizeA / N) * paddedN;
         const auto paddedSizeB = (sizeB / N) * paddedN;
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.DenseMatHost,
-                             a.DenseMatHost, b.DenseMatHost, 0, 1,
+                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+                             a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Dot, 0, false, false);
     }
 }
@@ -422,11 +353,12 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Pow(y.DenseMatCuda, x.DenseMatCuda, factor, totalSize);
+        Dense::Cuda::Pow(y.GetMutableDenseCuda(), x.GetDenseCuda(), factor,
+                         totalSize);
     }
     else
     {
-        Dense::Naive::Pow(y.DenseMatHost, x.DenseMatHost, factor,
+        Dense::Naive::Pow(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
                           totalSizeWithPadding);
     }
 }
@@ -441,11 +373,12 @@ void log(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::log(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::log(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::log(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::log(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding);
     }
 }
 
@@ -459,11 +392,12 @@ void log10(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::log10(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::log10(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                           totalSize);
     }
     else
     {
-        Dense::Naive::log10(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::log10(y.GetMutableDenseHost(), x.GetDenseHost(),
                             totalSizeWithPadding);
     }
 }
@@ -478,11 +412,12 @@ void Inverse(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Inverse(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        Dense::Cuda::Inverse(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
-        Dense::Naive::Inverse(y.DenseMatHost, x.DenseMatHost,
+        Dense::Naive::Inverse(y.GetMutableDenseHost(), x.GetDenseHost(),
                               totalSizeWithPadding);
     }
 }
@@ -498,11 +433,13 @@ void Mean(TensorData& y, const TensorData& x)
 
     if (device.Type() == DeviceType::CUDA)
     {
-        Dense::Cuda::Mean(y.DenseMatCuda, x.DenseMatCuda, totalSize, unitSize);
+        Dense::Cuda::Mean(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize,
+                          unitSize);
     }
     else
     {
-        Dense::Naive::Mean(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding,
+        Dense::Naive::Mean(y.GetMutableDenseHost(), x.GetDenseHost(),
+                           totalSizeWithPadding,
                            unitSize);
     }
 }
@@ -547,8 +484,10 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
     if (device.Type() == DeviceType::CUDA)
     {
         BroadcastBackwardWith2Inputs(
-            shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB, dy.DenseMatCuda,
-            da.DenseMatCuda, db.DenseMatCuda, a.DenseMatCuda, b.DenseMatCuda, 0,
+            shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB, dy.GetDenseCuda(),
+            da.GetMutableDenseCuda(), db.GetMutableDenseCuda(),
+            a.GetDenseCuda(),
+            b.GetDenseCuda(), 0,
             0, Dense::Cuda::DotBackward, 0, false, false);
     }
     else
@@ -556,4 +495,4 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
         throw std::runtime_error("Compute::DotBackward - Host not implemented");
     }
 }
-}  // namespace Sapphire::Compute
+} // namespace Sapphire::Compute

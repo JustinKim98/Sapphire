@@ -13,22 +13,22 @@
 namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,
-                                      Shape4D xShape, Shape4D filterShape,
-                                      int strideRow, int strideCol,
-                                      int dilationRow, int dilationCol,
-                                      int rowPadding, int columnPadding,
-                                      int deviceId);
+                                        Shape4D xShape, Shape4D filterShape,
+                                        int strideRow, int strideCol,
+                                        int dilationRow, int dilationCol,
+                                        int rowPadding, int columnPadding,
+                                        int deviceId);
 
-__host__ void Conv2DForward(float* y, float* x,
-                            float* filter, Shape4D inputShape,
+__host__ void Conv2DForward(float* y, const float* x,
+                            const float* filter, Shape4D inputShape,
                             Shape4D filterShape,
                             int strideRow, int strideCol, int dilationRow,
                             int dilationCol, int rowPadding, int columnPadding,
                             int deviceId);
 
-__host__ void Conv2DBackward(float* dx, float* filter,
-                             float* dFilter, float* x,
-                             float* dy, Shape4D inputShape,
+__host__ void Conv2DBackward(float* dx, const float* filter,
+                             float* dFilter, const float* x,
+                             const float* dy, Shape4D inputShape,
                              Shape4D filterShape, int strideRow, int strideCol,
                              int dilationRow, int dilationCol, int rowPadding,
                              int columnPadding, int deviceId);
