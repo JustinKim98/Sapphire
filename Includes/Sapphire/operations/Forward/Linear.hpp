@@ -35,7 +35,6 @@ private:
     bool m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor> arguments) override;
 
-    int m_unitWrapperKey = -1;
     unsigned int m_inputs;
     unsigned int m_outputs;
     std::shared_ptr<Optimizer::Optimizer> m_optimizer;

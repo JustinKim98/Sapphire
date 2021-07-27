@@ -74,7 +74,7 @@ public:
     void PopIfOperandHistory();
 
     //! Removes the last history if not empty
-    void PopHistory();
+    void PopOutputHistory();
 
     //! Returns whether this tensorDescriptor is trainable
     //! \return : True if gradient is required false otherwise

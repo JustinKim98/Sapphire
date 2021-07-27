@@ -64,7 +64,7 @@ void BroadcastWithOneDimension()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
+            cpuGemmResult[i] = Out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(Out);
@@ -83,7 +83,7 @@ void BroadcastWithOneDimension()
         //#pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(cpuGemmResult[i] - Out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
@@ -142,7 +142,7 @@ void BroadcastWithMissingDimension()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
+            cpuGemmResult[i] = Out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(Out);
@@ -160,12 +160,12 @@ void BroadcastWithMissingDimension()
 
         for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
         {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(cpuGemmResult[i] - Out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
             //            std::cout << "cpu : " << cpuGemmResult[i]
-            //                      << " cuda : " << Out.DenseMatHost[i] <<
+            //                      << " cuda : " << Out.GetMutableDenseHost()[i] <<
             //                      std::endl;
 
             CHECK(error < 1.5f);
@@ -222,7 +222,7 @@ void BroadcastMixed()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
+            cpuGemmResult[i] = Out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(Out);
@@ -241,7 +241,7 @@ void BroadcastMixed()
         //#pragma omp parallel for default(shared) schedule(static)
         for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
         {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(cpuGemmResult[i] - Out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 

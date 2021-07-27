@@ -11,15 +11,15 @@
 
 namespace Sapphire::Compute::Initialize
 {
-void Normal(const TensorUtil::TensorData& data, float mean, float sd);
+void Normal(TensorUtil::TensorData& data, float mean, float sd);
 
-void Ones(const TensorUtil::TensorData& data);
+void Ones(TensorUtil::TensorData& data);
 
-void Zeros(const TensorUtil::TensorData& data);
+void Zeros(TensorUtil::TensorData& data);
 
-void HeNormal(const TensorUtil::TensorData& data, int fanIn);
+void HeNormal(TensorUtil::TensorData& data, int fanIn);
 
-void Xavier(const TensorUtil::TensorData& data, int fanIn, int fanOut);
+void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut);
 
 }  // namespace Sapphire::Compute::Initialize
 

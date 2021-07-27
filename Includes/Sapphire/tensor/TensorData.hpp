@@ -8,6 +8,7 @@
 #define Sapphire_UTIL_TENSORDATA_DECL_HPP
 
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/util/Device.hpp>
 
@@ -55,9 +56,6 @@ public:
         return DenseMatCuda;
     }
 
-    float* DenseMatHost = nullptr;
-    float* DenseMatCuda = nullptr;
-
     [[nodiscard]] int GetDescriptorKey() const
     {
         return m_parentDescKey;
@@ -98,7 +96,8 @@ public:
 
     [[nodiscard]] std::size_t GetHostElementSize() const
     {
-        return (TensorShape.Size() / TensorShape.Cols()) * PaddedHostColSize;
+        return static_cast<std::size_t>(TensorShape.Size() / TensorShape.Cols())
+               * PaddedHostColSize;
     }
 
     [[nodiscard]] std::size_t GetCudaElementSize() const
@@ -142,6 +141,9 @@ private:
 
     //! Free space allocated on GPU memory
     void m_freeCuda();
+
+    float* DenseMatHost = nullptr;
+    float* DenseMatCuda = nullptr;
 
     int m_parentDescKey = -1;
 

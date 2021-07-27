@@ -9,6 +9,8 @@
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/compute/sparse/Sparse.hpp>
+#include <Sapphire/compute/Initialize.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
@@ -50,11 +52,12 @@ TensorData::TensorData(const TensorData& tensorData)
       SparseTotalLength(tensorData.SparseTotalLength),
       PaddedHostColSize(tensorData.PaddedHostColSize),
       BatchSize(tensorData.BatchSize),
-      DenseMatHost(tensorData.DenseMatHost),
-      DenseMatCuda(tensorData.DenseMatCuda),
       SparseMatHost(tensorData.SparseMatHost),
       SparseMatCuda(tensorData.SparseMatCuda),
+
       TensorShape(tensorData.TensorShape),
+      DenseMatHost(tensorData.DenseMatHost),
+      DenseMatCuda(tensorData.DenseMatCuda),
       m_type(tensorData.m_type),
       m_device(tensorData.m_device)
 {
@@ -76,11 +79,12 @@ TensorData::TensorData(TensorData&& tensorData) noexcept
       SparseTotalLength(tensorData.SparseTotalLength),
       PaddedHostColSize(tensorData.PaddedHostColSize),
       BatchSize(tensorData.BatchSize),
-      DenseMatHost(tensorData.DenseMatHost),
-      DenseMatCuda(tensorData.DenseMatCuda),
       SparseMatHost(tensorData.SparseMatHost),
       SparseMatCuda(tensorData.SparseMatCuda),
+
       TensorShape(std::move(tensorData.TensorShape)),
+      DenseMatHost(tensorData.DenseMatHost),
+      DenseMatCuda(tensorData.DenseMatCuda),
       m_type(tensorData.m_type),
       m_device(std::move(tensorData.m_device))
 {
@@ -308,11 +312,10 @@ void TensorData::m_freeCuda()
 
     if (m_type == Type::Sparse && SparseMatCuda)
     {
-        Compute::Cuda::CudaFree((void*)(SparseMatCuda));
+        Compute::Cuda::CudaFree(static_cast<void*>(SparseMatCuda));
     }
     else if (DenseMatCuda)
     {
-        //         Compute::Cuda::CudaFree((void *)DenseMatCuda);
         Util::ResourceManager::DeReferenceCuda(static_cast<void*>(DenseMatCuda),
                                                m_device.GetID());
         DenseTotalLengthCuda = 0;
@@ -375,5 +378,8 @@ void TensorData::m_allocateCuda(unsigned int batchSize)
     const unsigned long totalSize = TensorShape.Size() * batchSize;
     DenseMatCuda = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
         totalSize * sizeof(float), m_device.GetID()));
+    DenseTotalLengthCuda = totalSize;
+
+    Compute::Initialize::Zeros(*this);
 }
 } // namespace Sapphire::TensorUtil

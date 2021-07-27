@@ -61,7 +61,7 @@ void TestTranspose(bool printResult)
         for (long i = 0; i < static_cast<long>(transposedOut.
                              DenseTotalLengthHost); ++i)
         {
-            cpuResult[i] = transposedOut.DenseMatHost[i];
+            cpuResult[i] = transposedOut.GetMutableDenseHost()[i];
         }
 
         A.SendTo(cuda);
@@ -93,7 +93,7 @@ void TestTranspose(bool printResult)
                 for (size_t colIdx = 0; colIdx < out.Cols(); ++colIdx)
                 {
                     std::cout
-                        << out.DenseMatHost[offset +
+                        << out.GetMutableDenseHost()[offset +
                                             rowIdx * out.PaddedHostColSize +
                                             colIdx]
                         << " ";
@@ -120,7 +120,7 @@ void TestTranspose(bool printResult)
             {
                 for (size_t colIdx = 0; colIdx < transposedOut.Cols(); ++colIdx)
                 {
-                    std::cout << transposedOut.DenseMatHost
+                    std::cout << transposedOut.GetMutableDenseHost()
                         [offsetTransposed +
                          rowIdx * transposedOut.PaddedHostColSize +
                          colIdx]
@@ -134,7 +134,7 @@ void TestTranspose(bool printResult)
         for (long i = 0; i < static_cast<long>(transposedOut.
                              DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cpuResult[i] - transposedOut.DenseMatHost[i]);
+            auto error = std::abs(cpuResult[i] - transposedOut.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
@@ -192,7 +192,7 @@ void TestBasics1()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
+            cpuGemmResult[i] = Out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(Out);
@@ -213,7 +213,7 @@ void TestBasics1()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(cpuGemmResult[i] - Out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
@@ -275,7 +275,7 @@ void TestBasics2()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult[i] = out.DenseMatHost[i];
+            cudaGemmResult[i] = out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -290,11 +290,11 @@ void TestBasics2()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult[i] - out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
+            CHECK(error <= std::abs(out.GetMutableDenseHost()[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -371,7 +371,7 @@ void TestAddBroadcast1()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out2.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult2[i] = out2.DenseMatHost[i];
+            cudaGemmResult2[i] = out2.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out2);
@@ -382,7 +382,7 @@ void TestAddBroadcast1()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult1[i] = out.DenseMatHost[i];
+            cudaGemmResult1[i] = out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -395,11 +395,11 @@ void TestAddBroadcast1()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult1[i] - out.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult1[i] - out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
+            CHECK(error <= std::abs(out.GetMutableDenseHost()[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -407,11 +407,11 @@ void TestAddBroadcast1()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out2.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult2[i] - out2.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult2[i] - out2.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out2.DenseMatHost[i] / 100.0f));
+            CHECK(error <= std::abs(out2.GetMutableDenseHost()[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -464,7 +464,7 @@ void TestAddBroadcast2()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult[i] = out.DenseMatHost[i];
+            cudaGemmResult[i] = out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -476,12 +476,12 @@ void TestAddBroadcast2()
 
         for (size_t i = 0; i < out.DenseTotalLengthHost; ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
+            auto error = std::abs(cudaGemmResult[i] - out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
-            if (error > std::abs(out.DenseMatHost[i] / 100.0f))
+            CHECK(error <= std::abs(out.GetMutableDenseHost()[i] / 100.0f));
+            if (error > std::abs(out.GetMutableDenseHost()[i] / 100.0f))
                 break;
         }
 

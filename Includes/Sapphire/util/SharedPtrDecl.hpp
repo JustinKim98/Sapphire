@@ -8,6 +8,9 @@
 #define SAPPHIRE_SHAREDPTR_DECL_HPP
 
 #include <atomic>
+#include <cstdlib>
+#include <functional>
+#include <Sapphire/util/MemoryUtil.hpp>
 
 namespace Sapphire::Util
 {
@@ -22,6 +25,7 @@ struct SharedObjectInfo
 
     /// T m_objectPtr might not be initializable
     std::atomic<int> RefCount;
+    std::atomic<bool> Busy;
 };
 
 template <typename T>
@@ -40,6 +44,7 @@ class SharedPtr
     /// Ptr to the reference counter
     SharedObjectInfo* m_sharedObjectInfoPtr = nullptr;
 
+
     /// Make all other classes with different template types friends
     template <typename U>
     friend class SharedPtr;
@@ -52,14 +57,15 @@ class SharedPtr
     //! or decrements reference count
     void m_delete() const;
 
+
     //! private constructor for constructing the m_objectPtr for the first time
     //! \param objectPtr : ptr for the object
     //! \param informationPtr : informationPtr that has been created
     template <typename U>
     explicit SharedPtr(U* objectPtr, SharedObjectInfo* informationPtr);
 
- public:
-    //! Default constructor that will construct empty SharedPtr object will NULL
+public:
+    //! Default constructor that will construct empty SharedPtr object with NULL
     //! object pointer
     SharedPtr() = default;
 
@@ -92,13 +98,15 @@ class SharedPtr
     //! \param sharedPtr : SharedPtr<T> to copy from
     //! \return reference to current object
     template <typename U>
-    SharedPtr<T>& operator=(const SharedPtr<U>& sharedPtr);
+    SharedPtr<T>& operator=(
+        const SharedPtr<U>& sharedPtr);
 
     //! Copy assign operator
     //! Deletes object if reference counter of original object was 1
     //! decrements reference counter otherwise
     //! \param sharedPtr : SharedPtr<T> to copy from
-    SharedPtr<T>& operator=(const SharedPtr<T>& sharedPtr);
+    SharedPtr<T>& operator=(
+        const SharedPtr<T>& sharedPtr);
 
     //! Move assign operator
     //! This will make given parameter (sharedPtr) invalid
@@ -109,7 +117,8 @@ class SharedPtr
     //! \param sharedPtr : SharedPtr<T> to move from
     //! \return : SharedPtr<T>
     template <typename U>
-    SharedPtr<T>& operator=(SharedPtr<U>&& sharedPtr) noexcept;
+    SharedPtr<T>& operator=(
+        SharedPtr<U>&& sharedPtr) noexcept;
 
     //! Move assign operator
     //! This will make given parameter (sharedPtr) invalid
@@ -117,7 +126,8 @@ class SharedPtr
     //! decrements reference counter otherwise
     //! \param sharedPtr : SharedPtr<T> to move from
     //! \return : SharedPtr<T>
-    SharedPtr<T>& operator=(SharedPtr<T>&& sharedPtr) noexcept;
+    SharedPtr<T>& operator=(
+        SharedPtr<T>&& sharedPtr) noexcept;
 
     template <typename U>
     bool operator==(const SharedPtr<U>& sharedPtr);
@@ -140,10 +150,6 @@ class SharedPtr
         return m_objectPtr;
     }
 
-    //! Builds SharedPtr m_objectPtr using raw pointer
-    //! \param objectPtr : pointer to the object
-    static SharedPtr<T> Make(T* objectPtr);
-
     //! Builds new SharedPtr m_objectPtr with no parameters
     //! \return : default empty SharedPtr<T>
     static SharedPtr<T> Make();
@@ -160,7 +166,7 @@ class SharedPtr
     T* operator->() const;
 
     //! Gets internal object pointer
-    T* Get() const
+   [[nodiscard]]  T* Get() const
     {
         return m_objectPtr;
     }

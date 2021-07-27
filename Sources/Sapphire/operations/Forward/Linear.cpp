@@ -62,7 +62,7 @@ Tensor Linear::operator()(const Tensor& input)
     //! Reshape the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
     auto backPropWrapper = Util::SharedPtr<BackProp::LinearBackProp>::Make(
-        dx, dy, weight, bias, x, m_optimizer, xDesc.GetShape().At(0));
+        dx, dy, weight, bias, x.CreateCopy(), m_optimizer, xDesc.GetShape().At(0));
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 

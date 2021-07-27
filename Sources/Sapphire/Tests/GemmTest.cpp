@@ -62,7 +62,7 @@ void Gemm1()
 
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
+            cpuGemmResult[i] = Out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(Out);
@@ -82,7 +82,8 @@ void Gemm1()
     shared(Out, cpuGemmResult, largestError)
         for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
+            auto error = std::abs(
+                cpuGemmResult[i] - Out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
             CHECK(error <= 2.0f);
@@ -150,7 +151,7 @@ void Gemm2()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult[i] = out.DenseMatHost[i];
+            cudaGemmResult[i] = out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -161,11 +162,12 @@ void Gemm2()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
+            auto error = std::abs(
+                cudaGemmResult[i] - out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
+            CHECK(error <= std::abs(out.GetMutableDenseHost()[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -230,7 +232,7 @@ void GemmBroadcast()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult[i] = out.DenseMatHost[i];
+            cudaGemmResult[i] = out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -241,11 +243,12 @@ void GemmBroadcast()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
+            auto error = std::abs(
+                cudaGemmResult[i] - out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
+            CHECK(error <= std::abs(out.GetMutableDenseHost()[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;
@@ -257,7 +260,7 @@ void GemmBroadcast()
 
 void GemmBroadcastOnOutput()
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 0; j < 15; j++)
     {
         std::random_device
             rd; // Will be used to obtain a seed for the random number engine
@@ -307,7 +310,7 @@ void GemmBroadcastOnOutput()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            cudaGemmResult[i] = out.DenseMatHost[i];
+            cudaGemmResult[i] = out.GetMutableDenseHost()[i];
         }
 
         Compute::Initialize::Zeros(out);
@@ -318,11 +321,12 @@ void GemmBroadcastOnOutput()
 #pragma omp parallel for default(shared) schedule(static)
         for (long i = 0; i < static_cast<long>(out.DenseTotalLengthHost); ++i)
         {
-            auto error = std::abs(cudaGemmResult[i] - out.DenseMatHost[i]);
+            auto error = std::abs(
+                cudaGemmResult[i] - out.GetMutableDenseHost()[i]);
             if (largestError < error)
                 largestError = error;
 
-            CHECK(error <= std::abs(out.DenseMatHost[i] / 100.0f));
+            CHECK(error <= std::abs(out.GetMutableDenseHost()[i] / 100.0f));
         }
 
         std::cout << "Largest error : " << largestError << std::endl;

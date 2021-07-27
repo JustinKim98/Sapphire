@@ -8,11 +8,12 @@
 #define SAPPHIRE_UTIL_SPINLOCK_HPP
 #include <atomic>
 #include <emmintrin.h>
+
 namespace Sapphire::Util
 {
 class SpinLock
 {
- public:
+public:
     static void Lock(std::atomic<bool>* ptr)
     {
         while (true)
@@ -38,6 +39,8 @@ class SpinLock
         (*ptr).store(false, std::memory_order_release);
     }
 };
-}  // namespace Sapphire::Util
+} // namespace Sapphire::Util
+
+//! TODO : implement shared spin-lock
 
 #endif  // SAPPHIRE_SPINLOCK_HPP

@@ -110,10 +110,13 @@ void TensorDescriptor::PopIfOperandHistory()
         m_history.pop_back();
 }
 
-void TensorDescriptor::PopHistory()
+void TensorDescriptor::PopOutputHistory()
 {
-    if (!m_history.empty())
+    if (!m_history.empty() && m_history.back().IsOutput)
         m_history.pop_back();
+    else
+        throw std::runtime_error(
+            "TensorDescriptor::PopOutputHistory - the last history was not output or history was empty");
 }
 
 bool TensorDescriptor::IsBackPropReady() const

@@ -54,17 +54,16 @@ void Model::m_autoGrad(int tensorKey)
         //! Checks if wrapper is ready to backprop. If it does, performs backprop
         //! Update the operands if successes
         const bool invoked = wrapper->InvokeBackPropIfReady(location);
-        descriptor.PopHistory(); //! Pop output history
-
-        for (auto& descKey : outputGradientKeyVector)
-        {
-            GetDescriptor(descKey)
-                .RemoveOperand(tensorKey);
-        }
+        descriptor.PopOutputHistory(); //! Pop output history
 
         if (invoked)
+        {
+            for (auto& descKey : outputGradientKeyVector)
+                GetDescriptor(descKey).RemoveOperand(tensorKey);
+
             for (auto& tensorData : outputGradientKeyVector)
                 m_autoGrad(tensorData);
+        }
     }
 }
 
