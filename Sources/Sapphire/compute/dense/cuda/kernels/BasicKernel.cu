@@ -9,7 +9,6 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-
 __global__ void AddKernel(float* y, const float* a,
                           const float* b, unsigned int offset,
                           unsigned int launchSize, unsigned int totalSize,
@@ -27,10 +26,7 @@ __global__ void AddKernel(float* y, const float* a,
     {
         const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
         y[offset + idx] =
-            a[(offset + idx) %
-              leftOverA] +
-            b[(offset + idx) %
-              leftOverB];
+            a[(offset + idx) % leftOverA] + b[(offset + idx) % leftOverB];
     }
 }
 
@@ -71,7 +67,8 @@ __global__ void DotKernel(float* y, const float* a,
     for (unsigned int i = 0; i < numLoops; i++)
     {
         const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
-        y[idx] = a[(offset + idx) % leftOverA] * b[(offset + idx) % leftOverB];
+        y[offset + idx] =
+            a[(offset + idx) % leftOverA] * b[(offset + idx) % leftOverB];
     }
 }
 
@@ -197,5 +194,4 @@ __global__ void InverseKernel(float* y, const float* x,
         y[idx] = 1 / x[idx];
     }
 }
-
 } // namespace Sapphire::Compute::Cuda::Dense

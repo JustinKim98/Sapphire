@@ -350,14 +350,22 @@ void TensorData::m_allocateHost(unsigned int batchSize)
 
         PaddedHostColSize = paddedColumnSize;
         DenseTotalLengthHost = totalSize;
-        DenseMatHost = static_cast<float*>(
-            Util::ResourceManager::GetMemoryHost(totalSize * sizeof(float)));
+
+        DenseMatHost =
+            static_cast<float*>(
+                Util::ResourceManager::GetMemoryHost(
+                    totalSize * sizeof(float)));
 
 #pragma omp parallel for default(none) schedule(static) \
     shared(totalSize, padUnitSize)
-        for (long i = 0; i < static_cast<long>(totalSize / padUnitSize); ++i)
-            _mm256_store_ps(DenseMatHost + i * padUnitSize,
-                            _mm256_set1_ps(0.0f));
+        for (long i = 0; i < static_cast<long>(totalSize); ++i)
+            DenseMatHost[i] = 0.0f;
+
+        // #pragma omp parallel for default(none) schedule(static) 
+        //     shared(totalSize, padUnitSize)
+        //         for (long i = 0; i < static_cast<long>(totalSize / padUnitSize); ++i)
+        //             _mm256_store_ps(DenseMatHost + i * padUnitSize,
+        //                             _mm256_set1_ps(0.0f));
     }
 }
 

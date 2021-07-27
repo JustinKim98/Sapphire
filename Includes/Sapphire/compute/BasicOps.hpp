@@ -24,6 +24,9 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b);
 //! Performs y = a - b
 void Sub(TensorData& y, const TensorData& a, const TensorData& b);
 
+//! Performs Element-wise multiply
+void Dot(TensorData& y, const TensorData& a, const TensorData& b);
+
 //! Performs GEMM (y = a*b + c)
 void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
           const TensorData& c);
@@ -33,9 +36,6 @@ void Scale(TensorData& y, const TensorData& x, float factor);
 
 //! Performs y = TransposeKernel(x)
 void Transpose(TensorData& y, const TensorData& x);
-
-//! Performs Element-wise multiply
-void Dot(TensorData& y, const TensorData& a, const TensorData& b);
 
 //! Performs y = x^factor for each element
 void Pow(TensorData& y, const TensorData& x, float factor);

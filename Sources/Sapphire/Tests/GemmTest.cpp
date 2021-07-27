@@ -260,7 +260,7 @@ void GemmBroadcast()
 
 void GemmBroadcastOnOutput()
 {
-    for (int j = 0; j < 15; j++)
+    for (int j = 0; j < 30; j++)
     {
         std::random_device
             rd; // Will be used to obtain a seed for the random number engine
