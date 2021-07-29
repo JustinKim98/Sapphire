@@ -6,7 +6,6 @@
 
 #include <Sapphire/compute/sparse/naive/SparseGemm.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
-#include <Sapphire/util/Spinlock.hpp>
 #include <algorithm>
 #include <atomic>
 #include <vector>
@@ -26,8 +25,8 @@ void Insert(uint32_t* tempIdxBuffer, float* tempValueBuffer, uint32_t m,
 
     while (true)
     {
-        auto offset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
-                      rowIdx * MAX_NNZ_PER_ROW_HOST + key;
+        const auto offset = matrixIdx * m * MAX_NNZ_PER_ROW_HOST +
+                            rowIdx * MAX_NNZ_PER_ROW_HOST + key;
         if (tempIdxBuffer[offset] == static_cast<uint32_t>(INF) ||
             tempIdxBuffer[offset] == colIdx)
         {
@@ -104,7 +103,8 @@ void Gemm(SparseMatrix** output, SparseMatrix* a, SparseMatrix* b, uint32_t m,
               0.0f);
 
     *output = static_cast<SparseMatrix*>(
-        Util::ResourceManager::GetMemoryHost(sizeof(SparseMatrix) * numMatrices));
+        Util::ResourceManager::GetMemoryHost(
+            sizeof(SparseMatrix) * numMatrices));
 
     for (uint32_t i = 0; i < numMatrices; ++i)
         (*output)[i].ROW = static_cast<uint32_t*>(

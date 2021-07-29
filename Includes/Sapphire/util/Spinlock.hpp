@@ -11,33 +11,28 @@
 
 namespace Sapphire::Util
 {
-class SpinLock
+class SpinMutex
 {
 public:
-    static void Lock(std::atomic<bool>* ptr)
+    SpinMutex() = default;
+
+    void Lock()
     {
-        while (true)
-        {
-            if (!(*ptr).exchange(true, std::memory_order_acquire))
-                break;
-            //! Loop on load in order to reduce cache coherency traffic
-            while ((*ptr).load(std::memory_order_relaxed))
-            {
-                //! Pause instructions are used in order to prevent starving of
-                //! other cores
+        while (!m_flag.test_and_set(std::memory_order_acquire))
 #if defined(__GNUC__)
-                __builtin_ia32_pause();
+            __builtin_ia32_pause();
 #elif defined(_MSC_VER)
-                _mm_pause();
+            _mm_pause();
 #endif
-            }
-        }
     }
 
-    static void Release(std::atomic<bool>* ptr)
+    void Release()
     {
-        (*ptr).store(false, std::memory_order_release);
+        m_flag.clear(std::memory_order_release);
     }
+
+private:
+    std::atomic_flag m_flag = ATOMIC_FLAG_INIT;
 };
 } // namespace Sapphire::Util
 

@@ -8,9 +8,8 @@
 #define SAPPHIRE_SHAREDPTR_DECL_HPP
 
 #include <atomic>
-#include <cstdlib>
-#include <functional>
 #include <Sapphire/util/MemoryUtil.hpp>
+#include <Sapphire/util/SpinLock.hpp>
 
 namespace Sapphire::Util
 {
@@ -23,9 +22,8 @@ struct SharedObjectInfo
     {
     }
 
-    /// T m_objectPtr might not be initializable
     std::atomic<int> RefCount;
-    std::atomic<bool> Busy;
+    SpinMutex lock;
 };
 
 template <typename T>
@@ -166,7 +164,7 @@ public:
     T* operator->() const;
 
     //! Gets internal object pointer
-   [[nodiscard]]  T* Get() const
+    [[nodiscard]] T* Get() const
     {
         return m_objectPtr;
     }
