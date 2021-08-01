@@ -22,7 +22,7 @@ Tensor SoftMax(const Tensor& input)
         xDesc.GetDevice(), xDesc.GetBatchSize());
     auto& yDesc = model.GetDescriptor(yDescKey);
 
-    auto x = xDesc.GetForwardData();
+    auto x = xDesc.GetForwardData().CreateCopy();
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();

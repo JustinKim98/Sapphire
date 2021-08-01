@@ -9,7 +9,16 @@
 
 namespace Sapphire
 {
-Tensor::Tensor(unsigned int descKey)
+Tensor::Tensor(const Shape& shape, unsigned int batchSize, const Device& device,
+               Type type)
+    : m_tensorDescKey(-1)
+{
+    auto& model = ModelManager::GetCurrentModel();
+    m_tensorDescKey = model.RegisterTensorDescriptor(
+        shape, type, device, batchSize);
+}
+
+Tensor::Tensor(int descKey)
     : m_tensorDescKey(descKey)
 {
 }

@@ -49,9 +49,9 @@ Tensor Linear::operator()(const Tensor& input)
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
 
-    auto x = xDesc.GetForwardData();
+    auto x = xDesc.GetForwardData().CreateCopy();
     auto dx = xDesc.GetBackwardData();
-    auto y = yDesc.GetForwardData();
+    auto y = yDesc.GetForwardData().CreateCopy();
     auto dy = yDesc.GetBackwardData();
 
     const auto& weight = m_trainableDataMap.at("weight");
@@ -62,7 +62,8 @@ Tensor Linear::operator()(const Tensor& input)
     //! Reshape the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
     auto backPropWrapper = Util::SharedPtr<BackProp::LinearBackProp>::Make(
-        dx, dy, weight, bias, x.CreateCopy(), m_optimizer, xDesc.GetShape().At(0));
+        dx, dy, weight, bias, x.CreateCopy(), m_optimizer,
+        xDesc.GetShape().At(0));
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 

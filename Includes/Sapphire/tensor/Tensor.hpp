@@ -15,8 +15,10 @@ namespace Sapphire
 //! with attributes describing it
 class Tensor
 {
- public:
-    Tensor(unsigned int descKey);
+public:
+    Tensor(const Shape& shape, unsigned int batchSize, const Device& device,
+           Type type = Type::Dense);
+    Tensor(int descKey);
     ~Tensor() = default;
 
     Tensor(const Tensor& tensor) = default;
@@ -32,9 +34,9 @@ class Tensor
     //! Set Tensor device
     void SendTo(const Device& device) const;
 
- private:
+private:
     int m_tensorDescKey;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

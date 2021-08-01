@@ -45,9 +45,9 @@ static Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 
     auto& yDesc = model.GetDescriptor(outputKey);
 
-    auto a = aDesc.GetForwardData();
+    auto a = aDesc.GetForwardData().CreateCopy();
     auto da = aDesc.GetBackwardData();
-    auto b = bDesc.GetForwardData();
+    auto b = bDesc.GetForwardData().CreateCopy();
     auto db = bDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
@@ -85,9 +85,9 @@ static Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
         device, batchSize);
     auto& yDesc = model.GetDescriptor(outKey);
 
-    auto a = aDesc.GetForwardData();
+    auto a = aDesc.GetForwardData().CreateCopy();
     auto da = aDesc.GetBackwardData();
-    auto b = bDesc.GetForwardData();
+    auto b = bDesc.GetForwardData().CreateCopy();
     auto db = bDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();

@@ -4,9 +4,15 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-namespace Sapphire::Test
-{
-void Conv2DTestForward();
+#ifndef SAPPHIRE_TEST_LINEAR_TEST_HPP
+#define SAPPHIRE_TEST_LINEAR_TEST_HPP
 
-void Conv2DTestBackward();
+namespace Sapphire::Test::Operation
+{
+
+ void LinearForwardTest();
+
+
 }
+
+#endif

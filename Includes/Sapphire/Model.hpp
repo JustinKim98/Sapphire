@@ -47,6 +47,13 @@ public:
     //! \return : tensor descriptor of given key
     [[nodiscard]] TensorUtil::TensorDescriptor& GetDescriptor(int descKey);
 
+    //! Starts back propagation from the given tensor
+    //! \param tensor : tensor to start back propagation
+    void BackProp(Tensor tensor);
+
+    //! Clears the model
+    void Clear();
+
 private:
     //! Automatically calculates gradient
     //! \param tensorKey : tensor key to the descriptor to start back
@@ -76,7 +83,6 @@ private:
 class ModelManager
 {
 public:
-
     //! Gets the model with given modelName
     //! \param modelName : name of the model to get
     static Model& GetModel(const std::string& modelName);

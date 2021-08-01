@@ -17,7 +17,6 @@ int Model::AddUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
 {
     const int unitKey = m_unitPool.Counter++;
     m_unitPool.UnitWrapperMap[unitKey] = unitDataWrapper;
-
     return unitKey;
 }
 

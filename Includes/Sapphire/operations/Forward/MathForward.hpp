@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_FUNCTIONAL_MATHFORWARD_HPP
-#define Sapphire_FUNCTIONAL_MATHFORWARD_HPP
+#ifndef SAPPHIRE_FUNCTIONAL_MATHFORWARD_HPP
+#define SAPPHIRE_FUNCTIONAL_MATHFORWARD_HPP
 
 #include <Sapphire/tensor/Tensor.hpp>
 
