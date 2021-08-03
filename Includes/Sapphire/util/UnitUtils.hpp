@@ -19,7 +19,6 @@ void ChangeTensorDataDimension(int dimension, T& tensorData)
     static_assert(std::is_same_v<TensorUtil::TensorData, T>);
     tensorData.TensorShape.Expand(dimension);
     tensorData.TensorShape.Shrink(dimension);
-    tensorData.TensorShape[0] *= tensorData.BatchSize;
 }
 
 template <typename T, typename... Ts>
@@ -28,7 +27,6 @@ void ChangeTensorDataDimension(int dimension, T& tensorData, Ts&... params)
     static_assert(std::is_same_v<TensorUtil::TensorData, T>);
     tensorData.TensorShape.Expand(dimension);
     tensorData.TensorShape.Shrink(dimension);
-    tensorData.TensorShape[0] *= tensorData.BatchSize;
 
     ChangeTensorDataDimension(dimension, params...);
 }

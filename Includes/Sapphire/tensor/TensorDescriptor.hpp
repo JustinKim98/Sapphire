@@ -24,8 +24,7 @@ class TensorDescriptor
 {
 public:
     TensorDescriptor() = default;
-    TensorDescriptor(const Shape& shape, Type type, const Device& device,
-                     unsigned int batchSize, int key);
+    TensorDescriptor(const Shape& shape, Type type, const Device& device, int key);
 
     ~TensorDescriptor() = default;
 

@@ -37,11 +37,10 @@ static Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
             "NN::Functional::MulOp - Given shapes failed to broadcast");
     }
 
-    const auto batchSize = aDesc.GetBatchSize();
     const Type type = aDesc.GetType();
     const Device device = aDesc.GetDevice();
     const int outputKey = model.RegisterTensorDescriptor(
-        outputShape.value(), type, device, batchSize);
+        outputShape.value(), type, device);
 
     auto& yDesc = model.GetDescriptor(outputKey);
 
@@ -75,14 +74,13 @@ static Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
     const auto shapeA = aDesc.GetShape();
     const auto shapeB = bDesc.GetShape();
 
-    const auto batchSize = aDesc.GetBatchSize();
     const Type type = aDesc.GetForwardData().GetType();
     const Device device = aDesc.GetForwardData().GetDevice();
 
     const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
 
     const auto outKey = model.RegisterTensorDescriptor(outputShape, type,
-        device, batchSize);
+        device);
     auto& yDesc = model.GetDescriptor(outKey);
 
     auto a = aDesc.GetForwardData().CreateCopy();

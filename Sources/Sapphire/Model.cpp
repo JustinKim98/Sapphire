@@ -27,12 +27,10 @@ void Model::RemoveUnitDataWrapper(int key)
 
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
-                                    const Device& device,
-                                    unsigned int batchSize)
+                                    const Device& device)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
-    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, batchSize,
-                                            tensorDescKey);
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey);
 
     m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
 

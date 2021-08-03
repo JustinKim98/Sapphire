@@ -82,7 +82,7 @@ int Linear::m_registerOutputTensor(
     Shape outputShape = shapeInput;
     outputShape[outputShape.Dim() - 1] = m_outputs;
     const auto yKey = model.RegisterTensorDescriptor(
-        outputShape, x.GetType(), x.GetDevice(), x.BatchSize);
+        outputShape, x.GetType(), x.GetDevice());
     return yKey;
 }
 

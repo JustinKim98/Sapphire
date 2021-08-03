@@ -24,7 +24,7 @@ void Normal(TensorUtil::TensorData& data, float mean, float sd)
     {
         Dense::Naive::Normal(data.GetMutableDenseHost(), mean, sd,
                              data.TensorShape,
-                             data.PaddedHostColSize, data.BatchSize);
+                             data.PaddedHostColSize);
     }
 }
 
@@ -40,7 +40,7 @@ void Uniform(TensorUtil::TensorData& data, float min, float max)
     {
         Dense::Naive::Uniform(data.GetMutableDenseHost(), min, max,
                               data.TensorShape,
-                              data.PaddedHostColSize, data.BatchSize);
+                              data.PaddedHostColSize);
     }
 }
 
@@ -54,7 +54,7 @@ void Ones(TensorUtil::TensorData& data)
     else
     {
         Dense::Naive::Scalar(data.GetMutableDenseHost(), 1.0f, data.TensorShape,
-                             data.PaddedHostColSize, data.BatchSize);
+                             data.PaddedHostColSize);
     }
 }
 
@@ -68,7 +68,7 @@ void Zeros(TensorUtil::TensorData& data)
     else
     {
         Dense::Naive::Scalar(data.GetMutableDenseHost(), 0.0f, data.TensorShape,
-                             data.PaddedHostColSize, data.BatchSize);
+                             data.PaddedHostColSize);
     }
 }
 
@@ -85,8 +85,7 @@ void HeNormal(TensorUtil::TensorData& data, int fanIn)
     {
         Dense::Naive::Normal(data.GetMutableDenseHost(), 0.0,
                              2.0f / std::sqrt(static_cast<float>(fanIn)),
-                             data.TensorShape, data.PaddedHostColSize,
-                             data.BatchSize);
+                             data.TensorShape, data.PaddedHostColSize);
     }
 }
 
@@ -104,8 +103,7 @@ void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
         Dense::Naive::Normal(data.GetMutableDenseHost(), 0.0,
                              1.0f / std::sqrt(
                                  static_cast<float>(fanIn + fanOut)),
-                             data.TensorShape, data.PaddedHostColSize,
-                             data.BatchSize);
+                             data.TensorShape, data.PaddedHostColSize);
     }
 }
 } // namespace Sapphire::Compute::Initialize

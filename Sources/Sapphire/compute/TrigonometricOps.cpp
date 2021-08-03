@@ -15,7 +15,7 @@ void Cos(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -34,7 +34,7 @@ void Sin(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -53,7 +53,7 @@ void Tan(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -72,7 +72,7 @@ void Cosh(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -91,7 +91,7 @@ void Sinh(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -110,7 +110,7 @@ void Tanh(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -127,7 +127,7 @@ void Tanh(TensorData& y, const TensorData& x)
 void ArcCos(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -143,7 +143,7 @@ void ArcCos(TensorData& y, const TensorData& x)
 void Arcsin(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -160,7 +160,7 @@ void Arcsin(TensorData& y, const TensorData& x)
 void ArcTan(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -176,7 +176,7 @@ void ArcTan(TensorData& y, const TensorData& x)
 void ArcCosh(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     if (device.Type() == DeviceType::CUDA)
     {
         Dense::Cuda::ArcCosh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
@@ -191,7 +191,7 @@ void ArcCosh(TensorData& y, const TensorData& x)
 void ArcSinh(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -207,7 +207,7 @@ void ArcSinh(TensorData& y, const TensorData& x)
 void ArcTanh(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -223,7 +223,7 @@ void ArcTanh(TensorData& y, const TensorData& x)
 void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -239,7 +239,7 @@ void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -255,7 +255,7 @@ void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -271,7 +271,7 @@ void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -288,7 +288,7 @@ void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -305,7 +305,7 @@ void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -322,7 +322,7 @@ void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -339,7 +339,7 @@ void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -356,7 +356,7 @@ void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -373,7 +373,7 @@ void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -391,7 +391,7 @@ void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -409,7 +409,7 @@ void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcTanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {

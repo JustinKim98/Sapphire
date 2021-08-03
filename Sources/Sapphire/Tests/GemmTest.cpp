@@ -30,12 +30,12 @@ void Gemm1()
         const unsigned int M = distribution(gen);
         const unsigned int N = distribution(gen);
         const unsigned int K = distribution(gen);
-        const auto batchSize = distribution(gen) % 30 + 1;
+        const unsigned int batchSize = distribution(gen) % 30 + 1;
 
-        const Shape shapeA({ M, K });
-        const Shape shapeB({ K, N });
-        const Shape shapeC({ M, N });
-        const Shape shapeOut({ M, N });
+        const Shape shapeA({ batchSize, M, K });
+        const Shape shapeB({ batchSize, K, N });
+        const Shape shapeC({ batchSize, M, N });
+        const Shape shapeOut({ batchSize, M, N });
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
             << " batchSize : " << batchSize << std::endl;
@@ -43,13 +43,10 @@ void Gemm1()
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
-
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
-
-        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
-
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host);
+        TensorUtil::TensorData C(shapeC, Type::Dense, host);
+        TensorUtil::TensorData Out(shapeOut, Type::Dense, host);
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
@@ -109,23 +106,23 @@ void Gemm2()
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
         const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 3 + 1;
+        const unsigned int batchSize = distrib(gen) % 3 + 1;
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
             << " batchSize : " << batchSize << std::endl;
 
-        const Shape shapeA({ M, K });
-        const Shape shapeB({ K, N });
-        const Shape shapeC({ M, N });
-        const Shape shapeOut({ M, N });
+        const Shape shapeA({ batchSize, M, K });
+        const Shape shapeB({ batchSize, K, N });
+        const Shape shapeC({ batchSize, M, N });
+        const Shape shapeOut({ batchSize, M, N });
 
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
-        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
-        TensorUtil::TensorData out(shapeOut, Type::Dense, host, batchSize);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host);
+        TensorUtil::TensorData C(shapeC, Type::Dense, host);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, host);
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);
@@ -138,7 +135,6 @@ void Gemm2()
         out.SendTo(cuda);
 
         Compute::Initialize::Zeros(out);
-
         Compute::Gemm(out, A, B, C);
 
         A.SendTo(host);
@@ -189,26 +185,26 @@ void GemmBroadcast()
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
         const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 3 + 1;
+        const unsigned int batchSize = distrib(gen) % 3 + 1;
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
             << " batchSize : " << batchSize << std::endl;
 
-        const Shape shapeA({ M, K });
-        const Shape shapeB({ K, N });
-        const Shape shapeC({ M, N });
-        const Shape shapeOut({ M, N });
+        const Shape shapeA({ 1, M, K });
+        const Shape shapeB({ batchSize, K, N });
+        const Shape shapeC({ 1, M, N });
+        const Shape shapeOut({ batchSize, M, N });
 
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, 1);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host);
 
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host);
 
-        TensorUtil::TensorData C(shapeC, Type::Dense, host, 1);
+        TensorUtil::TensorData C(shapeC, Type::Dense, host);
 
-        TensorUtil::TensorData out(shapeOut, Type::Dense, host, batchSize);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, host);
 
         Compute::Initialize::Normal(A, 10, 1);
         Compute::Initialize::Normal(B, 10, 1);
@@ -271,24 +267,22 @@ void GemmBroadcastOnOutput()
         const unsigned int M = distrib(gen);
         const unsigned int N = distrib(gen);
         const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 3 + 1;
+        const unsigned int batchSize = distrib(gen) % 3 + 1;
 
         std::cout << "M : " << M << " N: " << N << " K: " << K
             << " batchSize : " << batchSize << std::endl;
 
         const Shape shapeA({ M, K });
-        const Shape shapeB({ K, N });
+        const Shape shapeB({ batchSize, K, N });
         const Shape shapeC({ M, N });
         const Shape shapeOut({ M, N });
 
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, 1);
-
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
-
-        TensorUtil::TensorData out(shapeOut, Type::Dense, host, 1);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host);
+        TensorUtil::TensorData out(shapeOut, Type::Dense, host);
 
         Compute::Initialize::Normal(A, 10, 1);
         Compute::Initialize::Normal(B, 10, 1);

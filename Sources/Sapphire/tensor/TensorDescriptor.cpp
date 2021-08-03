@@ -11,12 +11,11 @@
 namespace Sapphire::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
-                                   const Device& device, unsigned int batchSize,
+                                   const Device& device,
                                    int key)
-    : m_forwardData(shape, type, device, batchSize, key),
-      m_backwardData(shape, type, device, batchSize, key),
+    : m_forwardData(shape, type, device, key),
+      m_backwardData(shape, type, device, key),
       m_key(key),
-      m_batchSize(batchSize),
       m_trainable(false)
 {
 }

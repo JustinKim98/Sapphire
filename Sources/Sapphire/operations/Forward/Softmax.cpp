@@ -19,7 +19,7 @@ Tensor SoftMax(const Tensor& input)
     const auto numFeatures = xDesc.GetShape().Cols();
     const auto yDescKey = model.RegisterTensorDescriptor(
         Shape({ numFeatures }), xDesc.GetType(),
-        xDesc.GetDevice(), xDesc.GetBatchSize());
+        xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
 
     auto x = xDesc.GetForwardData().CreateCopy();

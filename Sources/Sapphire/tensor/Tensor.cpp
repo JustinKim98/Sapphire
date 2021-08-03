@@ -15,7 +15,7 @@ Tensor::Tensor(const Shape& shape, unsigned int batchSize, const Device& device,
 {
     auto& model = ModelManager::GetCurrentModel();
     m_tensorDescKey = model.RegisterTensorDescriptor(
-        shape, type, device, batchSize);
+        shape, type, device);
 }
 
 Tensor::Tensor(int descKey)

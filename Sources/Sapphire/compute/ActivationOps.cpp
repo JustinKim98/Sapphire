@@ -17,7 +17,7 @@ void SoftMax(TensorData& y, const TensorData& x)
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto unitSize = y.TensorShape.Size();
-    const auto totalSize = unitSize * y.BatchSize;
+    const auto totalSize = unitSize;
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -38,7 +38,7 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -58,7 +58,7 @@ void ReLU(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (device.Type() == DeviceType::CUDA)
@@ -75,7 +75,7 @@ void ReLU(TensorData& y, const TensorData& x)
 void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {
@@ -93,7 +93,7 @@ void LeakyReluBackward(TensorData& dx, const TensorData& dy,
                        const TensorData& x, float a)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size() * dx.BatchSize;
+    const auto totalSize = dx.TensorShape.Size();
 
     if (device.Type() == DeviceType::CUDA)
     {

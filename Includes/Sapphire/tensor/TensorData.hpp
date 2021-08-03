@@ -18,9 +18,9 @@ class TensorData
 {
 public:
     TensorData() = default;
-    TensorData(Shape shape, Type type, Device device, unsigned int batchSize);
+    TensorData(Shape shape, Type type, Device device);
 
-    TensorData(Shape shape, Type type, Device device, unsigned int batchSize,
+    TensorData(Shape shape, Type type, Device device,
                int parentDescKey);
 
     //! Shallow copies the internal data
@@ -34,7 +34,6 @@ public:
     unsigned long DenseTotalLengthCuda = 0;
     unsigned long SparseTotalLength = 0;
     unsigned long PaddedHostColSize = 0;
-    unsigned long BatchSize = 0;
 
     [[nodiscard]] const float* GetDenseHost() const
     {
@@ -60,6 +59,8 @@ public:
     {
         return m_parentDescKey;
     }
+
+    [[nodiscard]] std::size_t GetBatchSize(unsigned int requiredDim) const;
 
     SparseMatrix* SparseMatHost = nullptr;
     SparseMatrix* SparseMatCuda = nullptr;
@@ -131,10 +132,10 @@ private:
     static void m_toHost(const TensorData& tensorData);
 
     //! Allocates data on the HOST with given batchSize
-    void m_allocateHost(unsigned int batchSize);
+    void m_allocateHost();
 
     //! Allocates data on the GPU with given batchSize
-    void m_allocateCuda(unsigned int batchSize);
+    void m_allocateCuda();
 
     //! Free space allocated on HOST memory
     void m_freeHost();
