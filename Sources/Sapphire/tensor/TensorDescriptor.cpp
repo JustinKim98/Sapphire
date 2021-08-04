@@ -72,6 +72,18 @@ Type TensorDescriptor::GetType() const
     return m_forwardData.GetType();
 }
 
+void TensorDescriptor::SetShape(Shape shape)
+{
+    m_forwardData.TensorShape = shape;
+    m_backwardData.TensorShape = shape;
+}
+
+void TensorDescriptor::SendTo(Device device)
+{
+    m_forwardData.SendTo(device);
+    m_backwardData.SendTo(device);
+}
+
 void TensorDescriptor::AppendOutputHistory(
     Util::SharedPtr<BackProp::BackPropWrapper> wrapper, int location)
 {

@@ -24,7 +24,8 @@ class TensorDescriptor
 {
 public:
     TensorDescriptor() = default;
-    TensorDescriptor(const Shape& shape, Type type, const Device& device, int key);
+    TensorDescriptor(const Shape& shape, Type type, const Device& device,
+                     int key);
 
     ~TensorDescriptor() = default;
 
@@ -46,11 +47,7 @@ public:
 
     void SetShape(Shape shape);
     //! Moves internal TensorData to new device
-    void SetDevice(Device device);
-    //! Converts the type of the internal TensorData
-    void SetType(Type type);
-    //! Modifies batch size of internal TensorData
-    void SetBatchSize(unsigned int batchSize);
+    void SendTo(Device device);
 
     //! Add unit m_key if unit was used as output or flow-through type
     //! \param wrapper : BackPropWrapper for starting back propagation on this tensor

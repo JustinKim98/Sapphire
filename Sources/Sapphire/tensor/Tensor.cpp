@@ -58,6 +58,6 @@ void Tensor::SendTo(const Device& device) const
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
-    desc.SetDevice(device);
+    desc.SendTo(device);
 }
 } // namespace Sapphire

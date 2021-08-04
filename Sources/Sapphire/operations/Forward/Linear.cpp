@@ -17,7 +17,7 @@
 namespace Sapphire::NN
 {
 Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
-               std::shared_ptr<Optimizer::Optimizer> optimizer,
+               Util::SharedPtr<Optimizer::Optimizer> optimizer,
                Device device, bool isSparse)
     : m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),

@@ -106,9 +106,6 @@ public:
         return TensorShape.Size();
     }
 
-    //! Helper static functions
-    //! These helper functions are used to control the tensorData from the
-    //! operation units
 
     //! Creates and returns same copy as this tensorData
     [[nodiscard]] TensorData CreateCopy() const;
@@ -118,6 +115,10 @@ public:
     //! immediately returns false if change device is requested to same device
     //! \param device : new device to set
     bool SendTo(const Device& device);
+
+    //! Helper static functions
+    //! These helper functions are used to control the tensorData from the
+    //! operation units
 
     //! Deep copies tensor data from src to dst
     static void DeepCopy(TensorData& dst, const TensorData& src);

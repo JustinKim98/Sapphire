@@ -15,7 +15,7 @@ LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
                                TensorUtil::TensorData bias,
                                TensorUtil::TensorData dy,
                                TensorUtil::TensorData x,
-                               std::weak_ptr<Optimizer::Optimizer> optimizer,
+                               Util::SharedPtr<Optimizer::Optimizer> optimizer,
                                unsigned int batchSize)
     : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
                       { std::move(weight), std::move(bias) },
@@ -59,7 +59,7 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     Compute::Initialize::Zeros(dw);
     Compute::Gemm(dw, transposedX, dy, dw);
     Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
-    m_optimizer.lock()->operator()(weight, dw);
+    m_optimizer->operator()(weight, dw);
 }
 
 void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
@@ -75,6 +75,6 @@ void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
     Compute::Initialize::Zeros(dB);
     Compute::Gemm(dB, ones, dy, dB);
     Compute::Scale(dB, dB, 1.0f / static_cast<float>(m_batchSize));
-    m_optimizer.lock()->operator()(bias, dB);
+    m_optimizer->operator()(bias, dB);
 }
 } // namespace Sapphire::BackProp

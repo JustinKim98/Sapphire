@@ -9,6 +9,7 @@
 
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/operations/Unit.hpp>
 
 namespace Sapphire::NN
@@ -17,7 +18,7 @@ class Linear : public Unit
 {
 public:
     Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
-           std::shared_ptr<Optimizer::Optimizer> optimizer,
+           Util::SharedPtr<Optimizer::Optimizer> optimizer,
            Device device, bool isSparse = false);
     ~Linear() override = default;
 
@@ -37,7 +38,7 @@ private:
 
     unsigned int m_inputs;
     unsigned int m_outputs;
-    std::shared_ptr<Optimizer::Optimizer> m_optimizer;
+    Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
     Device m_device;
     bool m_isSparse;
 };

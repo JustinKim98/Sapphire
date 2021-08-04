@@ -26,7 +26,7 @@ public:
                             TensorUtil::TensorData bias,
                             TensorUtil::TensorData dy,
                             TensorUtil::TensorData x,
-                            std::weak_ptr<Optimizer::Optimizer> optimizer,
+                            Util::SharedPtr<Optimizer::Optimizer> optimizer,
                             unsigned int batchSize);
 
 private:

@@ -6,9 +6,7 @@
 
 #include <Sapphire/Tests/OperationTest/LinearTest.hpp>
 #include <Sapphire/Model.hpp>
-
 #include <Sapphire/operations/Forward/Linear.hpp>
-
 #include <Sapphire/operations/optimizers/SGD.hpp>
 
 namespace Sapphire::Test::Operation
@@ -17,12 +15,13 @@ void LinearForwardTest()
 {
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
+
     const Device device(0, "cuda0");
-    NN::Linear linear(3, 3, std::make_shared<Optimizer::SGD>(0.1f), device);
+    NN::Linear linear(3, 3, Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
+                      device);
 
     const Tensor input(Shape({ 3 }), 1, device, Type::Dense);
-    auto output = linear(input);
-
-    
+    const auto output = linear(input);
+    ModelManager::GetCurrentModel().BackProp(output);
 }
 }

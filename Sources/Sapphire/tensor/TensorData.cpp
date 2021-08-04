@@ -4,13 +4,11 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <immintrin.h>
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/compute/sparse/Sparse.hpp>
 #include <Sapphire/compute/Initialize.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>

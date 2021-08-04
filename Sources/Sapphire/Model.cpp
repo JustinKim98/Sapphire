@@ -13,19 +13,6 @@ Model::Model(std::string name)
 {
 }
 
-int Model::AddUnitDataWrapper(UnitDataWrapper& unitDataWrapper)
-{
-    const int unitKey = m_unitPool.Counter++;
-    m_unitPool.UnitWrapperMap[unitKey] = unitDataWrapper;
-    return unitKey;
-}
-
-void Model::RemoveUnitDataWrapper(int key)
-{
-    m_unitPool.UnitWrapperMap.erase(key);
-}
-
-
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const Device& device)
 {
@@ -64,14 +51,19 @@ void Model::m_autoGrad(int tensorKey)
     }
 }
 
-UnitDataWrapper& Model::GetUnitDataWrapper(int key)
-{
-    return m_unitPool.UnitWrapperMap.at(key);
-}
-
 TensorUtil::TensorDescriptor& Model::GetDescriptor(int descKey)
 {
     return m_tensorDescriptorPool.TensorDescMap.at(descKey);
+}
+
+void Model::BackProp(Tensor tensor)
+{
+    m_autoGrad(tensor.TensorDescriptorKey());
+}
+
+void Model::Clear()
+{
+    m_tensorDescriptorPool.TensorDescMap.clear();
 }
 
 std::string ModelManager::m_currentModel;

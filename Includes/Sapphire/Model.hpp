@@ -26,14 +26,6 @@ public:
     Model& operator=(const Model& model) = delete;
     Model& operator=(Model&& model) noexcept = default;
 
-    //! Registers unitDataWrapper to the unit
-    //! Assigns new key to the given unitDataWrapper
-    //! \param unitDataWrapper : unitDataWrapper to register
-    //! \return : Assigned key
-    int AddUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
-
-    void RemoveUnitDataWrapper(int key);
-
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
@@ -52,6 +44,7 @@ public:
     void BackProp(Tensor tensor);
 
     //! Clears the model
+    //! including forward and back prop data
     void Clear();
 
 private:
@@ -67,15 +60,7 @@ private:
         int Counter = 0;
     };
 
-    class UnitPool
-    {
-    public:
-        std::unordered_map<int, UnitDataWrapper> UnitWrapperMap;
-        int Counter = 0;
-    };
-
     TensorDescriptorPool m_tensorDescriptorPool;
-    UnitPool m_unitPool;
     std::string m_name;
 };
 

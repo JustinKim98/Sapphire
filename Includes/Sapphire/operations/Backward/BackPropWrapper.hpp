@@ -34,7 +34,7 @@ public:
         std::vector<TensorUtil::TensorData> trainableData,
         std::vector<TensorUtil::TensorData> constants,
         std::vector<TensorUtil::TensorData> mutables,
-        std::weak_ptr<Optimizer::Optimizer> optimizer)
+        Util::SharedPtr<Optimizer::Optimizer> optimizer)
         : m_dxVector(std::move(dxVector)),
           m_dyVector(std::move(dyVector)),
           m_trainableData(std::move(trainableData)),
@@ -120,7 +120,7 @@ protected:
     std::vector<TensorUtil::TensorData> m_trainableData;
     const std::vector<TensorUtil::TensorData> m_constants;
     std::vector<TensorUtil::TensorData> m_mutables;
-    std::weak_ptr<Optimizer::Optimizer> m_optimizer;
+    Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
     std::vector<bool> m_receivedGradients;
     //! Data saved in m_constants should not be modified
 };
