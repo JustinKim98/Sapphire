@@ -66,6 +66,16 @@ void Model::Clear()
     m_tensorDescriptorPool.TensorDescMap.clear();
 }
 
+void Model::BackProp(Tensor tensor)
+{
+    m_autoGrad(tensor.TensorDescriptorKey());
+}
+
+void Model::Clear()
+{
+    
+}
+
 std::string ModelManager::m_currentModel;
 
 std::unordered_map<std::string, Model> ModelManager::m_modelMap;

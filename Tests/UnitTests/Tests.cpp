@@ -13,6 +13,7 @@
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
+#include <Sapphire/Tests/OperationTest/LinearTest.hpp>
 #include <iostream>
 #include "doctest.h"
 #define EnableAllTest
@@ -24,6 +25,14 @@ namespace Sapphire::Test
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
+}
+
+TEST_CASE("GraphTest")
+{
+    SUBCASE("LinearForward Test")
+    {
+        Operation::LinearForwardTest();
+    }
 }
 
 TEST_CASE("Check cuda")

@@ -23,5 +23,6 @@ void LinearForwardTest()
     const Tensor input(Shape({ 3 }), 1, device, Type::Dense);
     const auto output = linear(input);
     ModelManager::GetCurrentModel().BackProp(output);
+    ModelManager::GetCurrentModel().Clear();
 }
 }
