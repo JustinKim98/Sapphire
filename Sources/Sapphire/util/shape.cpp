@@ -176,15 +176,23 @@ void Shape::Shrink(unsigned int dim)
 
 Shape Shape::GetTranspose() const
 {
-    if (m_shapeVector.size() < 2)
+    if (m_shapeVector.empty())
     {
         throw std::runtime_error(
-            "GetTranspose - Shape must have dimension of at least 2 to perform "
+            "GetTranspose - Shape cannot be empty  to perform "
             "transpose");
     }
 
+    if (m_shapeVector.size() == 1)
+    {
+        std::vector<unsigned int> newShape(2);
+        newShape.at(0) = m_shapeVector.at(0);
+        newShape.at(1) = 1;
+        return Shape(newShape);
+    }
+
     auto vector = m_shapeVector;
-    auto temp = vector.at(vector.size() - 1);
+    const auto temp = vector.at(vector.size() - 1);
     vector.at(vector.size() - 1) = vector.at(vector.size() - 2);
     vector.at(vector.size() - 2) = temp;
 

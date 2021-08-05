@@ -43,6 +43,7 @@ public:
           m_optimizer(std::move(optimizer)),
           m_receivedGradients(dyVector.size(), false)
     {
+        m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
     }
 
     explicit BackPropWrapper(
@@ -57,6 +58,7 @@ public:
           m_receivedGradients(dyVector.size(), false)
 
     {
+        m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
     }
 
     explicit BackPropWrapper(
@@ -66,6 +68,7 @@ public:
           m_dyVector(std::move(dyVector)),
           m_receivedGradients(dyVector.size(), false)
     {
+        m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
     }
 
 

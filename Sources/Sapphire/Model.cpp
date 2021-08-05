@@ -30,8 +30,10 @@ void Model::m_autoGrad(int tensorKey)
         descriptor.IsBackPropReady())
     {
         descriptor.PopIfOperandHistory();
+        if (!descriptor.HasHistory())
+            return;
         const auto& [wrapper, location] =
-            descriptor.GetBackPropWrapper();
+            descriptor.GetBackPropWrapperFromLastHistory();
         const auto outputGradientKeyVector = wrapper->
             GetGradientOutputDescriptorKeys();
 
@@ -64,16 +66,6 @@ void Model::BackProp(Tensor tensor)
 void Model::Clear()
 {
     m_tensorDescriptorPool.TensorDescMap.clear();
-}
-
-void Model::BackProp(Tensor tensor)
-{
-    m_autoGrad(tensor.TensorDescriptorKey());
-}
-
-void Model::Clear()
-{
-    
 }
 
 std::string ModelManager::m_currentModel;

@@ -47,17 +47,18 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
 {
     const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
     const TensorUtil::TensorData& x = m_constants[xIdx];
-    TensorUtil::TensorData transposedX(x.GetShape().GetTranspose(), x.GetType(),
-                                       x.GetDevice(), 1);
-    TensorUtil::TensorData transposedDy(dy.GetShape().GetTranspose(),
-                                        dy.GetType(), dy.GetDevice(), 1);
+    TensorUtil::TensorData xTranspose(x.GetShape().GetTranspose(),
+                                      x.GetType(),
+                                      x.GetDevice(), 1);
+    TensorUtil::TensorData dyTranspose(dy.GetShape().GetTranspose(),
+                                       dy.GetType(), dy.GetDevice(), 1);
     TensorUtil::TensorData dw(weight.GetShape().GetTranspose(),
                               weight.GetType(), weight.GetDevice(), 1);
 
-    Compute::Transpose(transposedX, x);
-    Compute::Transpose(transposedDy, dy);
+    Compute::Transpose(xTranspose, x);
+    Compute::Transpose(dyTranspose, dy);
     Compute::Initialize::Zeros(dw);
-    Compute::Gemm(dw, transposedX, dy, dw);
+    Compute::Gemm(dw, xTranspose, dy, dw);
     Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
     m_optimizer->operator()(weight, dw);
 }

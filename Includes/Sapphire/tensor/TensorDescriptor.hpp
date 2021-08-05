@@ -84,11 +84,16 @@ public:
     [[nodiscard]] bool IsBackPropReady() const;
 
     std::pair<Util::SharedPtr<BackProp::BackPropWrapper>, int>
-    GetBackPropWrapper()
+    GetBackPropWrapperFromLastHistory()
     {
         const auto& history = m_history.back();
         return std::make_pair(Util::SharedPtr(
                                   history.BackPropWrapper), history.Location);
+    }
+
+    bool HasHistory()
+    {
+        return !m_history.empty();
     }
 
     [[nodiscard]] int GetKey() const
@@ -125,9 +130,29 @@ private:
 
         ~History() = default;
 
-        History(History&& history) noexcept = default;
+        History(History&& history) noexcept
+            : IsOutput(history.IsOutput),
+              Location(history.Location),
+              GradientInputTensorKeyList(
+                  std::move(history.GradientInputTensorKeyList))
+        {
+            if (IsOutput)
+                BackPropWrapper = std::move(history.BackPropWrapper);
+        }
+
         History(const History& history) = delete;
-        History& operator=(History&& history) noexcept = default;
+
+        History& operator=(History&& history) noexcept
+        {
+            IsOutput = history.IsOutput;
+            Location = history.Location;
+            if (IsOutput)
+                BackPropWrapper = history.BackPropWrapper;
+            GradientInputTensorKeyList =
+                std::move(history.GradientInputTensorKeyList);
+            return *this;
+        }
+
         History& operator=(const History& history) = delete;
 
         //! Add tensor descriptor key to receive the gradient input
