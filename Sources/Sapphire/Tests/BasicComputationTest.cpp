@@ -176,9 +176,9 @@ void TestBasics1()
         const Device cuda(0, "device0");
         const Device host("host");
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, 1);
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+        TensorUtil::TensorData A(shapeA, Type::Dense, host);
+        TensorUtil::TensorData B(shapeB, Type::Dense, host);
+        TensorUtil::TensorData Out(shapeOut, Type::Dense, host);
 
         Compute::Initialize::Normal(A, 10, 5);
         Compute::Initialize::Normal(B, 10, 5);

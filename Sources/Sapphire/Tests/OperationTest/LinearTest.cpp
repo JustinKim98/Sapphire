@@ -24,12 +24,13 @@ void LinearForwardTest()
                       std::make_unique<Initialize::Ones>(),
                       gpu);
 
-    Tensor input(Shape({ 200 }), 1, gpu, Type::Dense);
+    Tensor input(Shape({ 200 }), 1, host, Type::Dense);
     Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
+    input.SendTo(gpu);
     const auto output = linear(input);
     output.SendTo(host);
+    output.SendTo(gpu);
     ModelManager::GetCurrentModel().BackProp(output);
-
     output.SendTo(host);
 
     ModelManager::GetCurrentModel().Clear();

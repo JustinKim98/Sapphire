@@ -199,11 +199,8 @@ void GemmBroadcast()
         const Device host("host");
 
         TensorUtil::TensorData A(shapeA, Type::Dense, host);
-
         TensorUtil::TensorData B(shapeB, Type::Dense, host);
-
         TensorUtil::TensorData C(shapeC, Type::Dense, host);
-
         TensorUtil::TensorData out(shapeOut, Type::Dense, host);
 
         Compute::Initialize::Normal(A, 10, 1);

@@ -40,8 +40,14 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
     m_mutableDataMap["transposedWeight"] = TensorUtil::TensorData(
         Shape({ outputFeatureSize, inputFeatureSize }), type, m_device, 1);
 
+    m_trainableDataMap["weight"].SendTo(Device("host"));
+    m_trainableDataMap["bias"].SendTo(Device("host"));
+
     weightInitializer->operator()(m_trainableDataMap["weight"]);
     biasInitializer->operator()(m_trainableDataMap["bias"]);
+
+    m_trainableDataMap["weight"].SendTo(device);
+    m_trainableDataMap["bias"].SendTo(device);
 }
 
 
