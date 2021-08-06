@@ -126,7 +126,7 @@ public:
 private:
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors
-    static void m_toGpu(const TensorData& tensorData);
+    static void m_toCuda(const TensorData& tensorData);
 
     //! Copies data on the Host to Gpu
     //! Only available for CUDA tensors

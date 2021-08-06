@@ -4,13 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_LINEAR_HPP
-#define SAPPHIRE_LINEAR_HPP
+#ifndef SAPPHIRE_NN_LINEAR_HPP
+#define SAPPHIRE_NN_LINEAR_HPP
 
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
 #include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/operations/Unit.hpp>
+#include <Sapphire/operations/Initializers/Initialize.hpp>
 
 namespace Sapphire::NN
 {
@@ -19,7 +20,10 @@ class Linear : public Unit
 public:
     Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
-           Device device, bool isSparse = false);
+           std::unique_ptr<Initialize::Initializer> weightInitializer,
+           std::unique_ptr<Initialize::Initializer> biasInitializer,
+           Device device,
+           bool isSparse = false);
     ~Linear() override = default;
 
     Linear(const Linear& linear) = default;
@@ -27,7 +31,7 @@ public:
     Linear& operator=(const Linear& linear) = default;
     Linear& operator=(Linear&& linear) noexcept = default;
 
-    Tensor operator()(const Tensor& input);
+    Tensor operator()(Tensor& input);
 
 private:
     [[nodiscard]] int m_registerOutputTensor(

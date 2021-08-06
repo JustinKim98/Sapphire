@@ -189,7 +189,7 @@ bool TensorData::SendTo(const Device& device)
     {
         m_device = device;
         m_allocateCuda();
-        m_toGpu(*this);
+        m_toCuda(*this);
     }
     else if (m_device.Type() == DeviceType::CUDA &&
              device.Type() == DeviceType::HOST)
@@ -203,7 +203,7 @@ bool TensorData::SendTo(const Device& device)
     {
         m_toHost(*this);
         m_device = device;
-        m_toGpu(*this);
+        m_toCuda(*this);
     }
 
     return true;
@@ -238,12 +238,12 @@ void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
         throw std::runtime_error("DeepCopy - Not implemented");
 }
 
-void TensorData::m_toGpu(const TensorData& tensorData)
+void TensorData::m_toCuda(const TensorData& tensorData)
 {
     if (tensorData.GetDevice().Type() != DeviceType::CUDA)
     {
         throw std::invalid_argument(
-            "m_toGpu - Given tensor data is not GPU tensor");
+            "m_toCuda - Given tensor data is not GPU tensor");
     }
 
     if (tensorData.GetType() == Type::Sparse)
@@ -273,7 +273,7 @@ void TensorData::m_toHost(const TensorData& tensorData)
     if (tensorData.GetDevice().Type() != DeviceType::CUDA)
     {
         throw std::invalid_argument(
-            "m_toGpu - Given tensor data is not GPU tensor");
+            "m_toCuda - Given tensor data is not GPU tensor");
     }
 
     if (tensorData.GetType() == Type::Sparse)

@@ -18,6 +18,8 @@ namespace Sapphire::NN
 {
 Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
+               std::unique_ptr<Initialize::Initializer> weightInitializer,
+               std::unique_ptr<Initialize::Initializer> biasInitializer,
                Device device, bool isSparse)
     : m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
@@ -37,10 +39,13 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
         TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device, 1);
     m_mutableDataMap["transposedWeight"] = TensorUtil::TensorData(
         Shape({ outputFeatureSize, inputFeatureSize }), type, m_device, 1);
+
+    weightInitializer->operator()(m_trainableDataMap["weight"]);
+    biasInitializer->operator()(m_trainableDataMap["bias"]);
 }
 
 
-Tensor Linear::operator()(const Tensor& input)
+Tensor Linear::operator()(Tensor& input)
 {
     auto& model = ModelManager::GetCurrentModel();
 
@@ -49,9 +54,9 @@ Tensor Linear::operator()(const Tensor& input)
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
 
-    auto x = xDesc.GetForwardData().CreateCopy();
+    auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
-    auto y = yDesc.GetForwardData().CreateCopy();
+    auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
     const auto& weight = m_trainableDataMap.at("weight");
@@ -61,15 +66,17 @@ Tensor Linear::operator()(const Tensor& input)
 
     //! Reshape the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
-    auto backPropWrapper = Util::SharedPtr<BackProp::LinearBackProp>::Make(
-        dx, dy, weight, bias, x.CreateCopy(), m_optimizer,
-        xDesc.GetShape().At(0));
-    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
-                      std::make_tuple(&yDesc));
 
     Compute::Initialize::Zeros(y);
     Compute::Transpose(transposedWeight, weight);
     Compute::Gemm(y, x, transposedWeight, bias);
+
+    auto backPropWrapper =
+        Util::SharedPtr<BackProp::LinearBackProp>::Make(
+            dx, dy, weight, bias, x.CreateCopy(), m_optimizer,
+            xDesc.GetShape().At(0));
+    SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                std::make_tuple(&yDesc));
     return Tensor(yKey);
 }
 

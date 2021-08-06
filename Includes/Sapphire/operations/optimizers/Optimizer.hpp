@@ -6,6 +6,7 @@
 
 #ifndef SAPPHIRE_OPTIMIZER_OPTIMIZER_HPP
 #define SAPPHIRE_OPTIMIZER_OPTIMIZER_HPP
+
 #include <Sapphire/tensor/TensorData.hpp>
 
 namespace Sapphire::Optimizer
@@ -16,11 +17,12 @@ class Optimizer
 {
 public:
     Optimizer() = default;
-    Optimizer(const Optimizer& other) = default;
-    Optimizer(Optimizer&& other) noexcept = default;
-    Optimizer& operator=(const Optimizer& other) = default;
-    Optimizer& operator=(Optimizer&& other) noexcept = default;
     virtual ~Optimizer() = default;
+    Optimizer(const Optimizer& optimizer) = default;
+    Optimizer(Optimizer&& optimizer) noexcept = default;
+    Optimizer& operator=(const Optimizer& optimizer) = default;
+    Optimizer& operator=(Optimizer&& optimizer) noexcept = default;
+
     virtual void operator()(TensorData& z, TensorData& dz)
     {
         throw std::runtime_error(

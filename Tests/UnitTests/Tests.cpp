@@ -20,8 +20,6 @@
 
 namespace Sapphire::Test
 {
-#ifdef EnableAllTest
-
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
@@ -166,6 +164,8 @@ TEST_CASE("Basic computation test")
     }
 }
 
+#ifdef EnableAllTest
+
 TEST_CASE("SparseMemory function Test")
 {
     SUBCASE("SparseMemoryAllocationHost")
@@ -218,7 +218,8 @@ TEST_CASE("Device Sparse Gemm Test")
             << std::endl;
     }
 }
-#endif
+
+
 TEST_CASE("Sparse Performance Test")
 {
     SUBCASE("Matrix conversion test")
@@ -287,4 +288,5 @@ TEST_CASE("Sparse Performance Test")
         }
     }
 }
+#endif
 } // namespace Sapphire::Test

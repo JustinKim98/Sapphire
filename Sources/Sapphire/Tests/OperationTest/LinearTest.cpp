@@ -16,13 +16,22 @@ void LinearForwardTest()
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
 
-    const Device device(0, "cuda0");
-    NN::Linear linear(3, 3, Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
-                      device);
+    const Device gpu(0, "cuda0");
+    const Device host("cpu");
 
-    const Tensor input(Shape({ 3 }), 1, device, Type::Dense);
+    NN::Linear linear(200, 200, Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
+                      std::make_unique<Initialize::Ones>(),
+                      std::make_unique<Initialize::Ones>(),
+                      gpu);
+
+    Tensor input(Shape({ 200 }), 1, gpu, Type::Dense);
+    Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
     const auto output = linear(input);
+    output.SendTo(host);
     ModelManager::GetCurrentModel().BackProp(output);
+
+    output.SendTo(host);
+
     ModelManager::GetCurrentModel().Clear();
 }
 }
