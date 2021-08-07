@@ -103,6 +103,15 @@ inline void Initialize(Tensor& tensor, std::unique_ptr<Initializer> initializer)
     auto forwardData = desc.GetForwardData();
     initializer->operator()(forwardData);
 }
+
+inline void InitializeBackwardData(Tensor& tensor,
+                                   std::unique_ptr<Initializer> initializer)
+{
+    auto& desc = ModelManager::GetCurrentModel().GetDescriptor(
+        tensor.TensorDescriptorKey());
+    auto backwardData = desc.GetBackwardData();
+    initializer->operator()(backwardData);
+}
 }
 
 #endif

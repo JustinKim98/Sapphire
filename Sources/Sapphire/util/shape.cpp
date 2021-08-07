@@ -78,6 +78,8 @@ unsigned int Shape::Dim() const
 unsigned int Shape::Size() const noexcept
 {
     unsigned int size = 1;
+    if (m_shapeVector.empty())
+        return 0;
     for (auto i : m_shapeVector)
     {
         size *= i;

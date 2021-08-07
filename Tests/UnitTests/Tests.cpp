@@ -14,6 +14,8 @@
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
 #include <Sapphire/Tests/OperationTest/LinearTest.hpp>
+#include <Sapphire/Tests/Basics/TransposeTest.hpp>
+#include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <iostream>
 #include "doctest.h"
 #define EnableAllTest
@@ -23,6 +25,36 @@ namespace Sapphire::Test
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
+}
+
+TEST_CASE("TensorFunctionalityTest")
+{
+    SUBCASE("TensorDataCopy")
+    {
+        for (int i = 0; i < 5; ++i)
+            SendDataBetweenHostDevice(false);
+    }
+
+    SUBCASE("TensorDataCopyOnCuda")
+    {
+        for (int i = 0; i < 5; ++i)
+            TensorDataCopyOnCuda(false);
+    }
+
+    SUBCASE("TensorDataCopyOnHost")
+    {
+        for (int i = 0; i < 5; ++i)
+            TensorDataCopyOnHost(false);
+    }
+}
+
+TEST_CASE("Basics")
+{
+    SUBCASE("Transpose")
+    {
+        for (int i = 0; i < 5; ++i)
+            TransposeTest(true);
+    }
 }
 
 TEST_CASE("GraphTest")

@@ -10,8 +10,7 @@
 namespace Sapphire
 {
 Device::Device(std::string name)
-    : m_id(-1),
-      m_type(DeviceType::HOST),
+    : m_id(0),
       m_name(std::move(name)),
       m_padByteSize(32)
 {
@@ -48,4 +47,4 @@ bool Device::operator!=(const Device& device) const
 {
     return !(*this == device);
 }
-}  // namespace Sapphire
+} // namespace Sapphire

@@ -119,7 +119,7 @@ protected:
 
     //! Vector of tensorData that should give its output
     std::vector<TensorUtil::TensorData> m_dxVector;
-    const std::vector<TensorUtil::TensorData> m_dyVector;
+    std::vector<TensorUtil::TensorData> m_dyVector; // const
     std::vector<TensorUtil::TensorData> m_trainableData;
     const std::vector<TensorUtil::TensorData> m_constants;
     std::vector<TensorUtil::TensorData> m_mutables;

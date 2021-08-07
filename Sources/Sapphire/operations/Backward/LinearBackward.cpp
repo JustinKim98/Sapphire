@@ -11,9 +11,9 @@
 namespace Sapphire::BackProp
 {
 LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
+                               TensorUtil::TensorData dy,
                                TensorUtil::TensorData weight,
                                TensorUtil::TensorData bias,
-                               TensorUtil::TensorData dy,
                                TensorUtil::TensorData x,
                                Util::SharedPtr<Optimizer::Optimizer> optimizer,
                                unsigned int batchSize)
@@ -35,10 +35,18 @@ void LinearBackProp::m_runBackProp()
     m_updateBias(bias);
 }
 
-void LinearBackProp::m_backProp(const TensorUtil::TensorData& weight)
+void LinearBackProp::m_backProp(TensorUtil::TensorData& weight)
 {
     TensorUtil::TensorData& dx = m_dxVector[dxIdx];
-    const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
+    TensorUtil::TensorData& dy = m_dyVector[dyIdx];
+
+    // dx.SendTo(Device("host"));
+    // dy.SendTo(Device("host"));
+    // weight.SendTo(Device("host"));
+    //
+    // dx.SendTo(Device(0, "cuda"));
+    // dy.SendTo(Device(0, "cuda"));
+    // weight.SendTo(Device(0, "cuda"));
 
     Compute::Gemm(dx, dy, weight, dx);
 }

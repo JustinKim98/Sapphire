@@ -22,7 +22,7 @@ enum class DeviceType
 
 class Device
 {
- public:
+public:
     Device() = default;
 
     explicit Device(std::string name);
@@ -69,13 +69,13 @@ class Device
         return count;
     }
 
- private:
-    int m_id = -1;
+private:
+    int m_id = 0;
     DeviceType m_type = DeviceType::HOST;
     std::string m_name = "Undefined";
     std::size_t m_padByteSize = 0;
     int m_cudaCapability = 0;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

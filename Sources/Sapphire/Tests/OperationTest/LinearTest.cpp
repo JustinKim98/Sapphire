@@ -27,11 +27,15 @@ void LinearForwardTest()
     Tensor input(Shape({ 200 }), 1, host, Type::Dense);
     Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
     input.SendTo(gpu);
-    const auto output = linear(input);
+    auto output = linear(input);
     output.SendTo(host);
+    Initialize::InitializeBackwardData(output,
+                                       std::make_unique<Initialize::Ones>());
     output.SendTo(gpu);
+
     ModelManager::GetCurrentModel().BackProp(output);
     output.SendTo(host);
+    input.SendTo(host);
 
     ModelManager::GetCurrentModel().Clear();
 }

@@ -60,4 +60,19 @@ void Tensor::SendTo(const Device& device) const
         m_tensorDescKey);
     desc.SendTo(device);
 }
+
+const float* Tensor::GetRawData() const
+{
+    Model& model = ModelManager::GetCurrentModel();
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
+    TensorUtil::TensorData tensorData = desc.GetForwardData();
+
+    auto device = tensorData.GetDevice();
+    if (tensorData.GetDevice().Type() == DeviceType::CUDA)
+    {
+        tensorData.SyncCudaDataWithHost();
+    }
+
+    return tensorData.GetDenseHost();
+}
 } // namespace Sapphire

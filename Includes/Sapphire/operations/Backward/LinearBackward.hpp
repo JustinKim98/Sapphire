@@ -22,9 +22,9 @@ class LinearBackProp : public BackPropWrapper
 {
 public:
     explicit LinearBackProp(TensorUtil::TensorData dx,
+                            TensorUtil::TensorData dy,
                             TensorUtil::TensorData weight,
                             TensorUtil::TensorData bias,
-                            TensorUtil::TensorData dy,
                             TensorUtil::TensorData x,
                             Util::SharedPtr<Optimizer::Optimizer> optimizer,
                             unsigned int batchSize);
@@ -32,7 +32,7 @@ public:
 private:
     void m_runBackProp() override;
 
-    void m_backProp(const TensorUtil::TensorData& weight);
+    void m_backProp(TensorUtil::TensorData& weight);
 
     void m_updateWeight(TensorUtil::TensorData& weight) const;
 

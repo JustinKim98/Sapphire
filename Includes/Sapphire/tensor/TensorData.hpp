@@ -18,6 +18,8 @@ class TensorData
 {
 public:
     TensorData() = default;
+    // TensorData(Shape shape, Type type);
+
     TensorData(Shape shape, Type type, Device device);
 
     TensorData(Shape shape, Type type, Device device,
@@ -115,6 +117,9 @@ public:
     //! immediately returns false if change device is requested to same device
     //! \param device : new device to set
     bool SendTo(const Device& device);
+
+    //! Syncs data between host and cuda
+    bool SyncCudaDataWithHost();
 
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the
