@@ -22,13 +22,6 @@ static Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     auto& bDesc =
         model.GetDescriptor(inputB.TensorDescriptorKey());
 
-    if (Util::CheckBatchSizeEquality(aDesc, bDesc))
-        throw std::invalid_argument(
-            "NN::Functional::MulOp - Given tensors have different batch size");
-    if (Util::CheckDeviceEquality(aDesc, bDesc))
-        throw std::invalid_argument(
-            "NN::Functional::MulOp - Given tensors are not on the same device");
-
     const auto outputShape =
         Util::GetBroadcastedShape(aDesc.GetShape(), bDesc.GetShape());
     if (!outputShape)
@@ -38,7 +31,7 @@ static Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     }
 
     const Type type = aDesc.GetType();
-    const Device device = aDesc.GetDevice();
+    const CudaDevice device = aDesc.GetDevice();
     const int outputKey = model.RegisterTensorDescriptor(
         outputShape.value(), type, device);
 
@@ -75,7 +68,7 @@ static Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
     const auto shapeB = bDesc.GetShape();
 
     const Type type = aDesc.GetForwardData().GetType();
-    const Device device = aDesc.GetForwardData().GetDevice();
+    const CudaDevice device = aDesc.GetForwardData().GetCudaDevice();
 
     const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
 

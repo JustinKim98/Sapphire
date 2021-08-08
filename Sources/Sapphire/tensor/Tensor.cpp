@@ -9,7 +9,7 @@
 
 namespace Sapphire
 {
-Tensor::Tensor(const Shape& shape, unsigned int batchSize, const Device& device,
+Tensor::Tensor(const Shape& shape, const CudaDevice& device,
                Type type)
     : m_tensorDescKey(-1)
 {
@@ -40,7 +40,7 @@ Shape Tensor::GetForwardDataShape() const
     return desc.GetShape();
 }
 
-Device Tensor::GetDevice() const
+CudaDevice Tensor::GetDevice() const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
@@ -53,12 +53,35 @@ int Tensor::TensorDescriptorKey() const
     return m_tensorDescKey;
 }
 
-void Tensor::SendTo(const Device& device) const
+void Tensor::ToCuda()
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
-    desc.SendTo(device);
+    desc.ToCuda();
+    desc.SetMode(DeviceType::Cuda);
+}
+
+void Tensor::ToHost()
+{
+    Model& model = ModelManager::GetCurrentModel();
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
+    desc.ToHost();
+    desc.SetMode(DeviceType::Host);
+}
+
+DeviceType Tensor::Mode() const
+{
+    Model& model = ModelManager::GetCurrentModel();
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
+    return desc.Mode();
+}
+
+void Tensor::SetMode(DeviceType mode)
+{
+    Model& model = ModelManager::GetCurrentModel();
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
+    desc.SetMode(mode);
 }
 
 const float* Tensor::GetRawData() const
@@ -67,8 +90,8 @@ const float* Tensor::GetRawData() const
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     TensorUtil::TensorData tensorData = desc.GetForwardData();
 
-    auto device = tensorData.GetDevice();
-    if (tensorData.GetDevice().Type() == DeviceType::CUDA)
+    auto device = tensorData.GetCudaDevice();
+    if (tensorData.GetCudaDevice().Type() == DeviceType::Cuda)
     {
         tensorData.SyncCudaDataWithHost();
     }

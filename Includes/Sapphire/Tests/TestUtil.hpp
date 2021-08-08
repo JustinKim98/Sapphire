@@ -8,7 +8,10 @@
 #define SAPPHIRE_TEST_TEST_UTIL_HPP
 
 #include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/tensor/TensorData.hpp>
+#include <Sapphire/compute/Initialize.hpp>
 #include <limits>
+#include <random>
 
 namespace Sapphire::Test
 {
@@ -26,6 +29,122 @@ void CheckNoneZeroEquality(const float* ptrA, const float* ptrB, unsigned size,
                            bool print,
                            float equalThreshold = std::numeric_limits<
                                float>::epsilon());
+
+template <typename Func>
+void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
+                                       Func function)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 100);
+
+    const unsigned int M = distrib(gen);
+    const unsigned int N = distrib(gen);
+    const auto batchSize = distrib(gen) % 5 + 1;
+
+    const Shape shape = CreateRandomShape(5);
+    const CudaDevice cuda(0, "cuda0");
+
+    //! Initialize data
+    TensorUtil::TensorData A(shape, Type::Dense, cuda);
+    TensorUtil::TensorData B(shape, Type::Dense, cuda);
+    TensorUtil::TensorData Out(shape, Type::Dense, cuda);
+    A.SetMode(DeviceType::Host);
+    B.SetMode(DeviceType::Host);
+    Out.SetMode(DeviceType::Host);
+
+    //! Initialize the input data with normal distribution and output data as
+    //! zeros
+    Compute::Initialize::Normal(A, 10, 5);
+    Compute::Initialize::Normal(B, 10, 5);
+    Compute::Initialize::Zeros(Out);
+
+    //! Invoke the function to be tested
+    function(Out, A, B);
+
+    //! Copy the host result to temporary buffer
+    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(), Out.DenseTotalLengthHost);
+
+    //! Initialize output as zeros on host
+    Compute::Initialize::Zeros(Out);
+
+    //! Send data to cuda
+    A.ToCuda();
+    B.ToCuda();
+    Out.ToCuda();
+    A.SetMode(DeviceType::Host);
+    B.SetMode(DeviceType::Host);
+    Out.SetMode(DeviceType::Host);
+
+    function(Out, A, B);
+
+    //! Send the data back to host
+    Out.ToHost();
+    Out.SetMode(DeviceType::Cuda);
+
+    //! Check the equality
+    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
+                          Out.DenseTotalLengthHost, print, equalThreshold);
+
+    delete[] cpuGemmResult;
+}
+
+template <typename Func>
+void TestWithOneArgument(bool print, float equalThreshold,
+                         Func function)
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 100);
+
+    const unsigned int M = distrib(gen);
+    const unsigned int N = distrib(gen);
+    const auto batchSize = distrib(gen) % 5 + 1;
+
+    const Shape shape = CreateRandomShape(5);
+    const CudaDevice cuda(0, "cuda0");
+
+    //! Initialize data
+    TensorUtil::TensorData In(shape, Type::Dense, cuda);
+    TensorUtil::TensorData Out(shape, Type::Dense, cuda);
+    In.SetMode(DeviceType::Host);
+    Out.SetMode(DeviceType::Host);
+
+    //! Initialize the input data with normal distribution and output data as
+    //! zeros
+    Compute::Initialize::Normal(In, 10, 5);
+    Compute::Initialize::Zeros(Out);
+
+    //! Invoke the function to be tested
+    function(Out, In);
+
+    //! Copy the host result to temporary buffer
+    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(), Out.DenseTotalLengthHost);
+
+    //! Initialize output as zeros on host
+    Compute::Initialize::Zeros(Out);
+
+    //! Send data to cuda
+    In.ToCuda();
+    Out.ToCuda();
+    In.SetMode(DeviceType::Host);
+    Out.SetMode(DeviceType::Host);
+
+    //! Invoke function on cuda
+    function(Out, In);
+
+    //! Send the data back to host
+    Out.ToHost();
+    Out.SetMode(DeviceType::Cuda);
+
+    //! Check the equality
+    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
+                          Out.DenseTotalLengthHost, print, equalThreshold);
+
+    delete[] cpuGemmResult;
+}
 } // namespace Sapphire::Test
 
 #endif  // SAPPHIRE_TESTUTIL_HPP

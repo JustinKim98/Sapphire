@@ -8,7 +8,7 @@
 #include <Sapphire/Tests/TestUtil.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/compute/Initialize.hpp>
-#include <Sapphire/util/Device.hpp>
+#include <Sapphire/util/CudaDevice.hpp>
 #include <random>
 #include <doctest.h>
 
@@ -22,13 +22,12 @@ void SendDataBetweenHostDevice(bool print)
     std::uniform_int_distribution<> intDistrib(1, 100);
 
     const int dim = intDistrib(gen) % 5 + 1;
-    const Device host("host");
-    const Device cuda(0, "cuda0");
+    const CudaDevice cuda(0, "cuda0");
 
     //! Randomly initialize the shape with random dimension and size
     const auto shape = CreateRandomShape(dim);
 
-    TensorUtil::TensorData tensorData(shape, Type::Dense, host);
+    TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
 
     //! Randomly initialize data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
@@ -39,14 +38,14 @@ void SendDataBetweenHostDevice(bool print)
                 tensorData.DenseTotalLengthHost * sizeof(float));
 
     //! Random data should be copied to cuda
-    tensorData.SendTo(cuda);
+    tensorData.ToCuda();
 
     //! Re-Initialize data on host with zero
     for (unsigned long i = 0; i < tensorData.DenseTotalLengthHost; ++i)
         tensorData.GetMutableDenseHost()[i] = 0.0f;
 
     //! Zeros on the host memory should be overwritten by copied data on cuda
-    tensorData.SendTo(host);
+    tensorData.ToHost();
 
     //! Checks whether data has been succesfully copied to host 
     CheckNoneZeroEquality(tensorData.GetDenseHost(), originalData,
@@ -64,11 +63,11 @@ void TensorDataCopyOnCuda(bool print)
 
     const int dim = intDistrib(gen) % 5 + 1;
     const auto shape = CreateRandomShape(dim);
-    const Device host("host");
-    const Device cuda(0, "cuda0");
+    const CudaDevice cuda(0, "cuda0");
 
-    TensorUtil::TensorData tensorData(shape, Type::Dense, host);
+    TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
 
+    tensorData.SetMode(DeviceType::Host);
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
 
@@ -78,7 +77,8 @@ void TensorDataCopyOnCuda(bool print)
                 tensorData.DenseTotalLengthHost * sizeof(float));
 
     //! Copy data to cuda
-    tensorData.SendTo(cuda);
+    tensorData.ToCuda();
+    tensorData.SetMode(DeviceType::Cuda);
 
     //! Re-Initialize data on host with zero
     for (unsigned long i = 0; i < tensorData.DenseTotalLengthHost; ++i)
@@ -88,7 +88,8 @@ void TensorDataCopyOnCuda(bool print)
     TensorUtil::TensorData copiedTensorData = tensorData.CreateCopy();
 
     //! Copy data to host from copied tensorData
-    copiedTensorData.SendTo(host);
+    copiedTensorData.ToHost();
+    copiedTensorData.SetMode(DeviceType::Host);
 
     //! Checks whether data has been succesfully copied to host
     CheckNoneZeroEquality(copiedTensorData.GetDenseHost(), originalData,
@@ -113,9 +114,8 @@ void TensorDataCopyOnHost(bool print)
 
     const int dim = intDistrib(gen) % 5 + 1;
     const auto shape = CreateRandomShape(dim);
-    const Device host("host");
 
-    TensorUtil::TensorData tensorData(shape, Type::Dense, host);
+    TensorUtil::TensorData tensorData(shape, Type::Dense);
 
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);

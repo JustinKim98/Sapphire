@@ -8,7 +8,6 @@
 #define Sapphire_DEVICE_HPP
 
 #include <cuda_runtime.h>
-#include <Sapphire/tensor/Shape.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -16,30 +15,31 @@ namespace Sapphire
 {
 enum class DeviceType
 {
-    HOST,
-    CUDA,
+    Host,
+    Cuda,
 };
 
-class Device
+class CudaDevice
 {
 public:
-    Device() = default;
+    CudaDevice() = default;
 
-    explicit Device(std::string name);
-    Device(int id, std::string name);
-    ~Device() = default;
+    CudaDevice(int id, std::string name);
+    ~CudaDevice() = default;
 
-    Device(const Device& device) = default;
-    Device(Device&& device) noexcept = default;
-    Device& operator=(const Device& device) = default;
-    Device& operator=(Device&& device) noexcept = default;
+    CudaDevice(const CudaDevice& device) = default;
+    CudaDevice(CudaDevice&& device) noexcept = default;
+    CudaDevice& operator=(const CudaDevice& device) = default;
+    CudaDevice& operator=(CudaDevice&& device) noexcept = default;
 
-    bool operator==(const Device& device) const;
-    bool operator!=(const Device& device) const;
+    bool operator==(const CudaDevice& device) const;
+    bool operator!=(const CudaDevice& device) const;
 
     [[nodiscard]] DeviceType Type() const
     {
-        return m_type;
+        if (m_id == -1)
+            return DeviceType::Host;
+        return DeviceType::Cuda;
     }
 
     [[nodiscard]] std::string Name() const
@@ -54,11 +54,6 @@ public:
 
     [[nodiscard]] int GetCudaCapability() const
     {
-        if (m_type != DeviceType::CUDA)
-        {
-            throw std::runtime_error(
-                "GetCudaCapability - Device is not set as CUDA");
-        }
         return m_cudaCapability;
     }
 
@@ -70,10 +65,8 @@ public:
     }
 
 private:
-    int m_id = 0;
-    DeviceType m_type = DeviceType::HOST;
+    int m_id = -1;
     std::string m_name = "Undefined";
-    std::size_t m_padByteSize = 0;
     int m_cudaCapability = 0;
 };
 } // namespace Sapphire

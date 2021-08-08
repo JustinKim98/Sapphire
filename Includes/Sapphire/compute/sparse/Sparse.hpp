@@ -40,7 +40,7 @@ void DeepFreeSparseHost(SparseMatrix* sparseMatrixArray, uint32_t numMatrices);
 //! \param numMatrices : number of matrices
 void DeepFreeLoadDistHost(LoadDistMatrix* loadDistArray, uint32_t numMatrices);
 
-//! Allocates sparse matrix array on the Device
+//! Allocates sparse matrix array on the CudaDevice
 //! \param deviceSparseArray : ptr to allocate the sparse matrix array
 //! \param hostSparseMatrixArray : ptr to the previously allocated host
 //! \param numMatrices : number of matrices
@@ -49,7 +49,7 @@ void DeepAllocateSparseCuda(SparseMatrix** deviceSparseArray,
                             const SparseMatrix* hostSparseMatrixArray,
                             uint32_t numMatrices, int deviceId);
 
-//! Allocates load distribution matrix array on the Device
+//! Allocates load distribution matrix array on the CudaDevice
 //! \param deviceLoadDistArray : ptr to the allocation target load distribution
 //! matrix array
 //! \param hostLoadDistArray : ptr to the previously allocated host
@@ -60,7 +60,7 @@ void DeepAllocateLoadDistCuda(LoadDistMatrix** deviceLoadDistArray,
                               LoadDistMatrix* hostLoadDistArray,
                               uint32_t numMatrices, int deviceId);
 
-//! Frees sparse matrix allocated on the Device
+//! Frees sparse matrix allocated on the CudaDevice
 //! \param deviceSparseArray : Array of deviceSparseArray sparse matrix to free
 //! on the device
 //! \param DeviceId : ID of the device that owns the
@@ -68,19 +68,19 @@ void DeepAllocateLoadDistCuda(LoadDistMatrix** deviceLoadDistArray,
 void DeepFreeSparseCuda(SparseMatrix* deviceSparseArray, uint32_t numMatrices,
                         int deviceId);
 
-//! Frees load distribution matrix allocated on the Device
+//! Frees load distribution matrix allocated on the CudaDevice
 //! \param deviceLoadDistArray : Array of deviceLoadDistArray load distribution
 //! matrix to free on the device \param DeviceId : ID of the device that owns
 //! the deviceLoadDistArray
 void DeepFreeLoadDistCuda(LoadDistMatrix* deviceLoadDistArray,
                           uint32_t numMatrices, int deviceId);
 
-//! Deep copies sparse matrix to Device from Host
+//! Deep copies sparse matrix to CudaDevice from Host
 //! All pointers given as parameters must be allocated with size of
 //! numMatrices*sizeof(SparseMatrix) bytes
 //! \param deviceDstArray : Destination array on
-//! the Device
-//! \param deviceSrcArray : Source array on the Device
+//! the CudaDevice
+//! \param deviceSrcArray : Source array on the CudaDevice
 //! \param hostDstArray :
 //! Destination array on the Host
 //! \param hostSrcArray : Source array on the Host
@@ -91,7 +91,7 @@ void DeepCopyDeviceToDevice(SparseMatrix* deviceDstArray,
                             SparseMatrix* deviceSrcArray, uint32_t numMatrices,
                             int deviceId);
 
-//! Deep copies load distribution matrix to Device from Host
+//! Deep copies load distribution matrix to CudaDevice from Host
 //! All pointers given as parameters must be allocated with size of
 //! numMatrices*sizeof(SparseMatrix) bytes
 //! \param deviceDstArray : destination device array
@@ -103,7 +103,7 @@ void DeepCopyDeviceToDevice(LoadDistMatrix* deviceDstArray,
                             LoadDistMatrix* deviceSrcArray,
                             uint32_t numMatrices, int deviceId);
 
-//! Deep copies sparse matrix to Device from Host
+//! Deep copies sparse matrix to CudaDevice from Host
 //! \param deviceDstArray : destination device array
 //! \param hostSrcArray : source host array
 //! \param numMatrices : Number of sparse matrices to copy
@@ -111,7 +111,7 @@ void DeepCopyHostToDevice(SparseMatrix* deviceDstArray,
                           const SparseMatrix* hostSrcArray, uint32_t numMatrices,
                           int deviceId);
 
-//! Deep copies load distribution matrix to Device from Host
+//! Deep copies load distribution matrix to CudaDevice from Host
 //! \param deviceDstArray : destination device array
 //! \param hostSrcArray : source host array
 //! \param numMatrices : number of sparse matrices
@@ -119,7 +119,7 @@ void DeepCopyHostToDevice(LoadDistMatrix* deviceDstArray,
                           LoadDistMatrix* hostSrcArray, uint32_t numMatrices,
                           int deviceId);
 
-//! Deep copies sparse matrix to Host from Device
+//! Deep copies sparse matrix to Host from CudaDevice
 //! \param hostDstArray : destination host array
 //! \param deviceSrcArray : source device array
 //! \param hostSrcArray : source hot array
@@ -128,7 +128,7 @@ void DeepCopyDeviceToHost(SparseMatrix* hostDstArray,
                           SparseMatrix* deviceSrcArray, uint32_t numMatrices,
                           int deviceId);
 
-//! Deep copies load distribution matrix to Host from Device
+//! Deep copies load distribution matrix to Host from CudaDevice
 //! \param hostDstArray : destination host array
 //! \param deviceArray : source device array
 //! \param numMatrices : Number of sparse matrices

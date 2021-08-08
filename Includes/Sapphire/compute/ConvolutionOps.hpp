@@ -30,12 +30,12 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     int strideRow, int strideCol, int dilationRow,
                     int dilationCol, int rowPadding, int columnPadding);
 
-void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
+void MaxPool2DBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding);
 
-void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
+void AvgPool2DBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding);

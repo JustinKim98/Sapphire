@@ -6,7 +6,6 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Sapphire/Tests/BasicComputationTest.hpp>
 #include <Sapphire/Tests/BroadcastTest.hpp>
 #include <Sapphire/Tests/GemmTest.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
@@ -16,8 +15,12 @@
 #include <Sapphire/Tests/OperationTest/LinearTest.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
+#include <Sapphire/Tests/TestUtil.hpp>
 #include <iostream>
 #include "doctest.h"
+#include <Sapphire/compute/BasicOps.hpp>
+
+#include "Sapphire/compute/TrigonometricOps.hpp"
 #define EnableAllTest
 
 namespace Sapphire::Test
@@ -25,6 +28,25 @@ namespace Sapphire::Test
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
+}
+
+TEST_CASE("Check cuda")
+{
+#ifdef WITH_CUDA
+    PrintCudaVersion();
+
+    SUBCASE("Basic functionality test")
+    {
+        CHECK(EXIT_SUCCESS == MallocTest());
+        std::cout << "Malloc test successful" << std::endl;
+    }
+
+    SUBCASE("CublasTest")
+    {
+        CHECK(EXIT_SUCCESS == CublasTest());
+        std::cout << "Cublas test successful" << std::endl;
+    }
+#endif
 }
 
 TEST_CASE("TensorFunctionalityTest")
@@ -55,33 +77,46 @@ TEST_CASE("Basics")
         for (int i = 0; i < 5; ++i)
             TransposeTest(true);
     }
-}
 
-TEST_CASE("GraphTest")
-{
-    SUBCASE("LinearForward Test")
+    SUBCASE("Add")
     {
-        Operation::LinearForwardTest();
-    }
-}
-
-TEST_CASE("Check cuda")
-{
-#ifdef WITH_CUDA
-    PrintCudaVersion();
-
-    SUBCASE("Basic functionality test")
-    {
-        CHECK(EXIT_SUCCESS == MallocTest());
-        std::cout << "Malloc test successful" << std::endl;
+        TestWithTwoArgumentsWithSameShape(true, 1.0f, Compute::Add);
     }
 
-    SUBCASE("CublasTest")
+    SUBCASE("Sub")
     {
-        CHECK(EXIT_SUCCESS == CublasTest());
-        std::cout << "Cublas test successful" << std::endl;
+        TestWithTwoArgumentsWithSameShape(true, 1.0f, Compute::Sub);
     }
-#endif
+
+    SUBCASE("Dot")
+    {
+        TestWithTwoArgumentsWithSameShape(true, 1.0f, Compute::Dot);
+    }
+
+    SUBCASE("log")
+    {
+        TestWithOneArgument(true, 1.0f, Compute::log);
+    }
+
+    SUBCASE("Inverse")
+    {
+        TestWithOneArgument(true, 1.0f, Compute::Inverse);
+    }
+
+    SUBCASE("Sin")
+    {
+        TestWithOneArgument(true, 1.0f, Compute::Sin);
+    }
+
+    SUBCASE("Cos")
+    {
+        TestWithOneArgument(true, 1.0f, Compute::Cos);
+    }
+
+    SUBCASE("Tan")
+    {
+        TestWithOneArgument(true, 1.0f, Compute::Tan);
+    }
 }
 
 TEST_CASE("Gemm Test")
@@ -92,16 +127,7 @@ TEST_CASE("Gemm Test")
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
             std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-            Gemm1();
-        }
-    }
-
-    SUBCASE("Initialize test With Cuda")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
-            Gemm2();
+            Gemm1(true);
         }
     }
 }
@@ -112,89 +138,29 @@ TEST_CASE("Gemm Broadcast Test")
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastWithOneDimension();
+            BroadcastWithOneDimension(true);
     }
 
     SUBCASE("Broadcast test with Missing dimension")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastWithMissingDimension();
+            BroadcastWithMissingDimension(true);
     }
 
     SUBCASE("Broadcast test mixed")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastMixed();
-    }
-
-    SUBCASE("Gemm Broadcast")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
-            GemmBroadcast();
-        }
-    }
-
-    SUBCASE("Gemm Broadcast on output")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast on Output: " << loopIdx
-                << std::endl;
-            GemmBroadcastOnOutput();
-        }
+            BroadcastMixed(true);
     }
 }
 
-TEST_CASE("Basic computation test")
-{
-    const int testLoops = 5;
-    SUBCASE("Transpose")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "Transpose : " << i << std::endl;
-            TestTranspose(false);
-        }
-    }
-
-    SUBCASE("General1")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "General1 : " << i << std::endl;
-            TestBasics1();
-        }
-    }
-
-    SUBCASE("General2")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "General2 : " << i << std::endl;
-            TestBasics2();
-        }
-    }
-
-    SUBCASE("AddWithBroadcast1")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "AddWithBroadcast1 : " << i << std::endl;
-            TestAddBroadcast1();
-        }
-    }
-
-    SUBCASE("AddWithBroadcast2")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "AddWithBroadcast2 : " << i << std::endl;
-            TestAddBroadcast2();
-        }
-    }
-}
+// TEST_CASE("GraphTest")
+// {
+//     SUBCASE("LinearForward Test")
+//     {
+//         Operation::LinearForwardTest();
+//     }
+// }
 
 #ifdef EnableAllTest
 

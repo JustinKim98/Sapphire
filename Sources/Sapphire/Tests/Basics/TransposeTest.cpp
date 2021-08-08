@@ -8,12 +8,11 @@
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/Device.hpp>
+#include <Sapphire/util/CudaDevice.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
 #include <iostream>
 #include <random>
-#include "doctest.h"
 
 namespace Sapphire::Test
 {
@@ -28,12 +27,11 @@ void TransposeTest(bool printResult)
     const auto shapeInput = CreateRandomShape(dim, 30);
     const auto shapeTransposed = shapeInput.GetTranspose();
 
-    const Device cuda(0, "device0");
-    const Device host("host");
+    const CudaDevice cuda(0, "device0");
 
     //! Define TensorData for input and transposed
-    TensorUtil::TensorData inputTensor(shapeInput, Type::Dense, host);
-    TensorUtil::TensorData transposedTensor(shapeTransposed, Type::Dense, host);
+    TensorUtil::TensorData inputTensor(shapeInput, Type::Dense, cuda);
+    TensorUtil::TensorData transposedTensor(shapeTransposed, Type::Dense, cuda);
 
     //! Initialize input Tensor with normal distribution
     Compute::Initialize::Normal(inputTensor, 10, 5);
@@ -51,15 +49,15 @@ void TransposeTest(bool printResult)
     Compute::Initialize::Zeros(transposedTensor);
 
     //! Send the input tensor to cuda
-    inputTensor.SendTo(cuda);
-    transposedTensor.SendTo(cuda);
+    inputTensor.ToCuda();
+    transposedTensor.ToCuda();
 
     //! Transpose the tensor on cuda
     Compute::Transpose(transposedTensor, inputTensor);
 
     //! Send the transposed result to host
     //! Zero initialized data on the host should be overwritten
-    transposedTensor.SendTo(host);
+    transposedTensor.ToHost();
 
     //! Compare the results
     const float* cudaResult = transposedTensor.GetDenseHost();

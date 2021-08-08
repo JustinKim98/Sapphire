@@ -22,7 +22,7 @@ public:
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
            std::unique_ptr<Initialize::Initializer> weightInitializer,
            std::unique_ptr<Initialize::Initializer> biasInitializer,
-           Device device,
+           CudaDevice device,
            bool isSparse = false);
     ~Linear() override = default;
 
@@ -43,7 +43,7 @@ private:
     unsigned int m_inputs;
     unsigned int m_outputs;
     Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
-    Device m_device;
+    CudaDevice m_device;
     bool m_isSparse;
 };
 } // namespace Sapphire::NN

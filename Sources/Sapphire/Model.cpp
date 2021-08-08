@@ -14,7 +14,7 @@ Model::Model(std::string name)
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
-                                    const Device& device)
+                                    const CudaDevice& device)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
     TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey);

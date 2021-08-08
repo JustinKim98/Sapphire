@@ -13,15 +13,16 @@ namespace Sapphire::Compute
 {
 void SoftMax(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto unitSize = y.TensorShape.Size();
     const auto totalSize = unitSize;
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::SoftMax(y.GetMutableDenseCuda(), x.GetDenseCuda(),
                              totalSize,
                              unitSize);
@@ -35,14 +36,15 @@ void SoftMax(TensorData& y, const TensorData& x)
 
 void LeakyReLU(TensorData& y, const TensorData& x, float a)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::LeakyReLU(y.GetMutableDenseCuda(), x.GetDenseCuda(), a,
                                totalSize);
     }
@@ -55,14 +57,15 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
 
 void ReLU(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::ReLU(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
@@ -74,11 +77,12 @@ void ReLU(TensorData& y, const TensorData& x)
 
 void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     const auto totalSize = dx.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::ReLUBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
                                   x.GetDenseCuda(), totalSize);
     }
@@ -92,11 +96,12 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void LeakyReluBackward(TensorData& dx, const TensorData& dy,
                        const TensorData& x, float a)
 {
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     const auto totalSize = dx.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::LeakyReLUBackward(dx.GetMutableDenseCuda(),
                                        dy.GetDenseCuda(),
                                        x.GetDenseCuda(),

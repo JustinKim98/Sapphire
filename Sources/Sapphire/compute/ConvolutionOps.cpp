@@ -14,9 +14,10 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
                    int strideRow, int strideCol, int dilationRow,
                    int dilationCol, int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
-
+    const auto device = y.GetCudaDevice();
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.GetBatchSize(3)),
             static_cast<int>(filter.GetShape().At(2)),
@@ -47,8 +48,10 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
                       int windowWidth, int strideRow, int strideCol,
                       int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = y.GetCudaDevice();
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
             static_cast<int>(x.GetShape().At(2)),
@@ -72,8 +75,10 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
                       int windowWidth, int strideRow, int strideCol,
                       int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = y.GetCudaDevice();
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
             static_cast<int>(x.GetShape().At(2)),
@@ -98,8 +103,10 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     int strideRow, int strideCol, int dilationRow,
                     int dilationCol, int rowPadding, int columnPadding)
 {
-    if (const auto device = dx.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = dx.GetCudaDevice();
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.GetBatchSize(3)),
             static_cast<int>(filter.GetShape().At(2)),
@@ -128,13 +135,16 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     }
 }
 
-void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
+void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
+                       const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = dx.GetCudaDevice();
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
             static_cast<int>(x.GetShape().At(2)),
@@ -155,13 +165,16 @@ void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
     }
 }
 
-void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
+void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
+                       const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = dx.GetCudaDevice();
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
             static_cast<int>(x.GetShape().At(2)),

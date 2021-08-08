@@ -8,11 +8,11 @@
 
 namespace Sapphire::Test
 {
-void BroadcastWithOneDimension();
+void BroadcastWithOneDimension(bool print);
 
-void BroadcastWithMissingDimension();
+void BroadcastWithMissingDimension(bool print);
 
-void BroadcastMixed();
+void BroadcastMixed(bool print);
 } // namespace Sapphire::Test
 
 #endif  // Sapphire_BROADCASTTEST_HPP

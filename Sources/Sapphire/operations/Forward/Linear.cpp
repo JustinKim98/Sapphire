@@ -20,7 +20,7 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
                std::unique_ptr<Initialize::Initializer> weightInitializer,
                std::unique_ptr<Initialize::Initializer> biasInitializer,
-               Device device, bool isSparse)
+               CudaDevice device, bool isSparse)
     : m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
       m_optimizer(std::move(optimizer)),
@@ -40,14 +40,8 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
     m_mutableDataMap["transposedWeight"] = TensorUtil::TensorData(
         Shape({ outputFeatureSize, inputFeatureSize }), type, m_device, 1);
 
-    m_trainableDataMap["weight"].SendTo(Device("host"));
-    m_trainableDataMap["bias"].SendTo(Device("host"));
-
     weightInitializer->operator()(m_trainableDataMap["weight"]);
     biasInitializer->operator()(m_trainableDataMap["bias"]);
-
-    m_trainableDataMap["weight"].SendTo(device);
-    m_trainableDataMap["bias"].SendTo(device);
 }
 
 
@@ -95,7 +89,7 @@ int Linear::m_registerOutputTensor(
     Shape outputShape = shapeInput;
     outputShape[outputShape.Dim() - 1] = m_outputs;
     const auto yKey = model.RegisterTensorDescriptor(
-        outputShape, x.GetType(), x.GetDevice());
+        outputShape, x.GetType(), x.GetCudaDevice());
     return yKey;
 }
 
@@ -105,8 +99,8 @@ bool Linear::m_checkArguments(
     const auto& input = arguments.at(0);
     if (input.GetForwardData().GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-    if (input.GetForwardData().GetDevice() != m_device)
-        throw std::invalid_argument("NN::Linear - Device mismatch");
+    if (input.GetForwardData().GetCudaDevice() != m_device)
+        throw std::invalid_argument("NN::Linear - CudaDevice mismatch");
 
     return true;
 }
