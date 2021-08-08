@@ -190,17 +190,6 @@ void TensorData::ToHost()
     m_toHost(*this);
 }
 
-void TensorData::SyncCudaDataWithHost()
-{
-    if (m_device.Type() == DeviceType::Cuda)
-    {
-        m_toHost(*this);
-        m_toCuda(*this);
-    }
-    else
-        throw std::runtime_error(
-            "TensorData::SyncCudaDataWithHost  - CudaDevice is not set as Cuda");
-}
 
 void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
 {

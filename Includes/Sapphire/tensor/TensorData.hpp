@@ -132,10 +132,6 @@ public:
     //! This operation is available only on Cuda type tensorData
     void ToHost();
 
-    //! Syncs data between host and cuda
-    //! This operation is available only on Cuda type tensorData
-    void SyncCudaDataWithHost();
-
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the
     //! operation units

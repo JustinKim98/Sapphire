@@ -30,7 +30,8 @@ public:
     [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
-    [[nodiscard]] const float* GetRawData() const;
+    [[nodiscard]] const float* GetRawForwardData() const;
+    [[nodiscard]] const float* GetRawBackwardData() const;
 
     void ToCuda();
     void ToHost();

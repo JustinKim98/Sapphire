@@ -84,17 +84,30 @@ void Tensor::SetMode(DeviceType mode)
     desc.SetMode(mode);
 }
 
-const float* Tensor::GetRawData() const
+const float* Tensor::GetRawForwardData() const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     TensorUtil::TensorData tensorData = desc.GetForwardData();
 
-    auto device = tensorData.GetCudaDevice();
-    if (tensorData.GetCudaDevice().Type() == DeviceType::Cuda)
-    {
-        tensorData.SyncCudaDataWithHost();
-    }
+    if (desc.Mode() == DeviceType::Cuda)
+        desc.ToHost();
+    else
+        desc.ToCuda();
+
+    return tensorData.GetDenseHost();
+}
+
+const float* Tensor::GetRawBackwardData() const
+{
+    Model& model = ModelManager::GetCurrentModel();
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
+    TensorUtil::TensorData tensorData = desc.GetBackwardData();
+
+    if (desc.Mode() == DeviceType::Cuda)
+        desc.ToHost();
+    else
+        desc.ToCuda();
 
     return tensorData.GetDenseHost();
 }
