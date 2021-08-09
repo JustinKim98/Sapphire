@@ -75,47 +75,47 @@ TEST_CASE("Basics")
     SUBCASE("Transpose")
     {
         for (int i = 0; i < 5; ++i)
-            TransposeTest(true);
+            TransposeTest(false);
     }
 
     SUBCASE("Add")
     {
-        TestWithTwoArgumentsWithSameShape(true, 1.0f, Compute::Add);
+        TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Add);
     }
 
     SUBCASE("Sub")
     {
-        TestWithTwoArgumentsWithSameShape(true, 1.0f, Compute::Sub);
+        TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Sub);
     }
 
     SUBCASE("Dot")
     {
-        TestWithTwoArgumentsWithSameShape(true, 1.0f, Compute::Dot);
+        TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Dot);
     }
 
     SUBCASE("log")
     {
-        TestWithOneArgument(true, 1.0f, Compute::log);
+        TestWithOneArgument(false, 1.0f, Compute::log);
     }
 
     SUBCASE("Inverse")
     {
-        TestWithOneArgument(true, 1.0f, Compute::Inverse);
+        TestWithOneArgument(false, 1.0f, Compute::Inverse);
     }
 
     SUBCASE("Sin")
     {
-        TestWithOneArgument(true, 1.0f, Compute::Sin);
+        TestWithOneArgument(false, 1.0f, Compute::Sin);
     }
 
     SUBCASE("Cos")
     {
-        TestWithOneArgument(true, 1.0f, Compute::Cos);
+        TestWithOneArgument(false, 1.0f, Compute::Cos);
     }
 
     SUBCASE("Tan")
     {
-        TestWithOneArgument(true, 1.0f, Compute::Tan);
+        TestWithOneArgument(false, 1.0f, Compute::Tan);
     }
 }
 

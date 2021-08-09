@@ -115,7 +115,8 @@ void TensorDataCopyOnHost(bool print)
     const int dim = intDistrib(gen) % 5 + 1;
     const auto shape = CreateRandomShape(dim);
 
-    TensorUtil::TensorData tensorData(shape, Type::Dense);
+    CudaDevice cuda(0, "cuda0");
+    TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
 
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);

@@ -204,18 +204,19 @@ void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
     const auto matrixType = dst.GetType();
 
     if (deviceType == DeviceType::Cuda && matrixType == Type::Dense)
+    {
         Compute::Cuda::CopyDeviceToDevice(
             dst.DenseMatCuda, src.DenseMatCuda,
             dst.DenseTotalLengthCuda * sizeof(float));
-
-        //! TODO : implement Sparse copy and allocation for TensorData
-    else if (deviceType == DeviceType::Cuda && matrixType == Type::Sparse)
-        throw std::runtime_error("DeepCopy - Sparse Not implemented");
-
+        std::memcpy(dst.DenseMatHost, src.DenseMatHost,
+                    dst.DenseTotalLengthHost * sizeof(float));
+    }
     else if (deviceType == DeviceType::Host && matrixType == Type::Dense)
         std::memcpy(dst.DenseMatHost, src.DenseMatHost,
                     dst.DenseTotalLengthHost * sizeof(float));
-
+        //! TODO : implement Sparse copy and allocation for TensorData
+    else if (deviceType == DeviceType::Cuda && matrixType == Type::Sparse)
+        throw std::runtime_error("DeepCopy - Sparse Not implemented");
     else if (deviceType == DeviceType::Host && matrixType == Type::Sparse)
         throw std::runtime_error("DeepCopy - Not implemented");
 }

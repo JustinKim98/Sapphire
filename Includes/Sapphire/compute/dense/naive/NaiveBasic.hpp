@@ -22,46 +22,57 @@ void Dot(unsigned int totalSize, float* output, const float* inputA,
          bool broadcastInputB);
 
 void Scale(float* output, const float* input, float scaleFactor,
-           unsigned int totalSize);
+           unsigned int totalSize, unsigned colSize, unsigned padSize);
 
 void Transpose(float* output, const float* input, unsigned int inputRows,
                unsigned int paddedInputRows, unsigned int inputCols,
                unsigned int paddedInputCols, unsigned int batchSize,
                bool broadcast);
 
-void Pow(float* output, const float* input, float scaleFactor,
-         unsigned int totalSize);
+void Pow(float* output, const float* input, float exponent,
+         unsigned int totalSize, unsigned colSize, unsigned padSize);
 
-void cos(float* output, const float* input, unsigned int totalSize);
+void cos(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+         padSize);
 
-void sin(float* output, const float* input, unsigned int totalSize);
+void sin(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+         padSize);
 
-void tan(float* output, const float* input, unsigned int totalSize);
+void tan(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+         padSize);
 
-void cosh(float* output, const float* input, unsigned int totalSize);
+void cosh(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+          padSize);
 
-void sinh(float* output, const float* input, unsigned int totalSize);
+void sinh(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+          padSize);
 
-void tanh(float* output, const float* input, unsigned int totalSize);
+void tanh(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+          padSize);
 
-void log(float* output, const float* input, unsigned int totalSize);
+void log(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+         padSize);
 
-void log10(float* output, const float* input, unsigned int totalSize);
+void log10(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+           padSize);
 
-void ReLU(float* output, const float* input, unsigned int totalSize);
+void ReLU(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+          padSize);
 
-void ReLUBackward(float* output, const float* input, unsigned int totalSize);
+void ReLUBackward(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+                  padSize);
 
 void LeakyReLU(float* output, const float* input, float a,
-               unsigned int totalSize);
+               unsigned int totalSize, unsigned colSize, unsigned padSize);
 
 void LeakyReLUBackward(float* output, const float* input, float a,
-                         unsigned int totalSize);
+                       unsigned int totalSize, unsigned colSize, unsigned padSize);
 
-void Inverse(float* output, const float* input, unsigned int totalSize);
+void Inverse(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+             padSize);
 
 void Mean(float* output, const float* input, unsigned int totalSize,
-          unsigned int unitSize);
+          unsigned int unitSize, unsigned colSize, unsigned padSize);
 
 void Softmax(float* output, const float* input, unsigned int totalSize,
              unsigned int unitSize, unsigned int padSize);

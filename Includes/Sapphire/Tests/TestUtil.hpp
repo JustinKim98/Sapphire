@@ -9,6 +9,7 @@
 
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <limits>
 #include <random>
@@ -34,14 +35,6 @@ template <typename Func>
 void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
                                        Func function)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 100);
-
-    const unsigned int M = distrib(gen);
-    const unsigned int N = distrib(gen);
-    const auto batchSize = distrib(gen) % 5 + 1;
-
     const Shape shape = CreateRandomShape(5);
     const CudaDevice cuda(0, "cuda0");
 
@@ -64,7 +57,8 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
 
     //! Copy the host result to temporary buffer
     auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(), Out.DenseTotalLengthHost);
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -73,15 +67,15 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
     A.ToCuda();
     B.ToCuda();
     Out.ToCuda();
-    A.SetMode(DeviceType::Host);
-    B.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
 
     function(Out, A, B);
 
     //! Send the data back to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Host);
 
     //! Check the equality
     CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
@@ -94,14 +88,6 @@ template <typename Func>
 void TestWithOneArgument(bool print, float equalThreshold,
                          Func function)
 {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(1, 100);
-
-    const unsigned int M = distrib(gen);
-    const unsigned int N = distrib(gen);
-    const auto batchSize = distrib(gen) % 5 + 1;
-
     const Shape shape = CreateRandomShape(5);
     const CudaDevice cuda(0, "cuda0");
 
@@ -113,7 +99,8 @@ void TestWithOneArgument(bool print, float equalThreshold,
 
     //! Initialize the input data with normal distribution and output data as
     //! zeros
-    Compute::Initialize::Normal(In, 10, 5);
+    Compute::Initialize::Ones(In);
+    Compute::Scale(In, In, 10);
     Compute::Initialize::Zeros(Out);
 
     //! Invoke the function to be tested
@@ -121,7 +108,8 @@ void TestWithOneArgument(bool print, float equalThreshold,
 
     //! Copy the host result to temporary buffer
     auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(), Out.DenseTotalLengthHost);
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -129,15 +117,15 @@ void TestWithOneArgument(bool print, float equalThreshold,
     //! Send data to cuda
     In.ToCuda();
     Out.ToCuda();
-    In.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    In.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
 
     //! Invoke function on cuda
     function(Out, In);
 
     //! Send the data back to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Host);
 
     //! Check the equality
     CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),

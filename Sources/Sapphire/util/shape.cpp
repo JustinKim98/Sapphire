@@ -105,6 +105,14 @@ void Shape::Set(unsigned int dim, unsigned int value)
     m_shapeVector.at(dim) = value;
 }
 
+void Shape::SetCol(unsigned int value)
+{
+    if (m_shapeVector.empty())
+        throw std::runtime_error("Shape::SetCol - Shape is empty");
+
+    m_shapeVector.at(Dim() - 1) = value;
+}
+
 void Shape::Expand(unsigned int dim)
 {
     if (dim <= Dim())

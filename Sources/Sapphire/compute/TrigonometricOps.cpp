@@ -26,7 +26,7 @@ void Cos(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::cos(y.GetMutableDenseHost(), x.GetDenseHost(),
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -46,7 +46,7 @@ void Sin(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::sin(y.GetMutableDenseHost(), x.GetDenseHost(),
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -66,7 +66,7 @@ void Tan(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::tan(y.GetMutableDenseHost(), x.GetDenseHost(),
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -86,7 +86,7 @@ void Cosh(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::cosh(y.GetMutableDenseHost(), x.GetDenseHost(),
-                           totalSizeWithPadding);
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -106,7 +106,7 @@ void Sinh(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::sinh(y.GetMutableDenseHost(), x.GetDenseHost(),
-                           totalSizeWithPadding);
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -126,7 +126,7 @@ void Tanh(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::tanh(y.GetMutableDenseHost(), x.GetDenseHost(),
-                           totalSizeWithPadding);
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 

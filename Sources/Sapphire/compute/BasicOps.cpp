@@ -46,11 +46,12 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / N) * paddedN;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedN);
+        shapeB.SetCol(paddedN);
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.GetMutableDenseHost(),
                              a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Add, 0, false, false);
     }
@@ -87,11 +88,12 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / N) * paddedN;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedN);
+        shapeB.SetCol(paddedN);
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.GetMutableDenseHost(),
                              a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Sub, 0, false, false);
     }
@@ -128,11 +130,12 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / N) * paddedN;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedN);
+        shapeB.SetCol(paddedN);
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.GetMutableDenseHost(),
                              a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Dot, 0, false, false);
     }
@@ -205,13 +208,13 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / K) * paddedK;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        const auto paddedSizeC = (sizeC / N) * paddedN;
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedK);
+        shapeB.SetCol(paddedN);
+        shapeC.SetCol(paddedN);
 
-        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, paddedSizeC,
+        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(), shapeC.Size(),
                              y.GetMutableDenseHost(), a.GetDenseHost(),
                              b.GetDenseHost(),
                              c.GetDenseHost(), 0, 2, Dense::Naive::NaiveGemm, M,
@@ -236,7 +239,7 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
     else
     {
         Dense::Naive::Scale(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
-                            totalSizeWithPadding);
+                            totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -283,7 +286,7 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
     else
     {
         Dense::Naive::Pow(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -303,7 +306,7 @@ void log(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::log(y.GetMutableDenseHost(), x.GetDenseHost(),
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -324,7 +327,7 @@ void log10(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::log10(y.GetMutableDenseHost(), x.GetDenseHost(),
-                            totalSizeWithPadding);
+                            totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -345,7 +348,7 @@ void Inverse(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::Inverse(y.GetMutableDenseHost(), x.GetDenseHost(),
-                              totalSizeWithPadding);
+                              totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -368,7 +371,7 @@ void Mean(TensorData& y, const TensorData& x)
     {
         Dense::Naive::Mean(y.GetMutableDenseHost(), x.GetDenseHost(),
                            totalSizeWithPadding,
-                           unitSize);
+                           unitSize, N, paddedN);
     }
 }
 

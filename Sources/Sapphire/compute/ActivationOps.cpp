@@ -51,7 +51,7 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
     else
     {
         Dense::Naive::LeakyReLU(y.GetMutableDenseHost(), x.GetDenseHost(), a,
-                                totalSizeWithPadding);
+                                totalSizeWithPadding, N, paddedN);
     }
 }
 
@@ -71,7 +71,7 @@ void ReLU(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::ReLU(y.GetMutableDenseHost(), x.GetDenseHost(),
-                           totalSizeWithPadding);
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 

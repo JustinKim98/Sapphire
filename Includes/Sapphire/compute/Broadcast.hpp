@@ -46,6 +46,12 @@ void BroadcastWith3Inputs(const Shape& yShape, const Shape& aShape,
         shapeIdx += 1;
     }
 
+    if (shapeIdx >= yShape.Dim() - minimumRequiredDim)
+    {
+        func(totalSizeOut, out, A, B, C, params...);
+        return;
+    }
+
     //! ChunkSize represents the total size of the leftover parts to be calculated for each tensor
     const auto chunkSizeA = chunkSize * aShape.At(shapeIdx);
     const auto chunkSizeB = chunkSize * bShape.At(shapeIdx);
@@ -98,6 +104,12 @@ void BroadcastWith2Inputs(const Shape& yShape, const Shape& aShape,
         shapeIdx += 1;
     }
 
+    if (shapeIdx >= yShape.Dim() - minimumRequiredDim)
+    {
+        func(totalSizeOut, out, A, B, params...);
+        return;
+    }
+
     const auto chunkSizeA = chunkSize * aShape.At(shapeIdx);
     const auto chunkSizeB = chunkSize * bShape.At(shapeIdx);
     const auto chunkSizeOut = chunkSize * yShape.At(shapeIdx);
@@ -142,6 +154,12 @@ void BroadcastBackwardWith2Inputs(
         const auto dim = yShape.At(shapeIdx);
         chunkSize *= dim;
         shapeIdx += 1;
+    }
+
+    if (shapeIdx >= yShape.Dim() - minimumRequiredDim)
+    {
+        func(totalSizeOut, da, db, dy, a, b, params...);
+        return;
     }
 
     const auto chunkSizeA = chunkSize * aShape.At(shapeIdx);
