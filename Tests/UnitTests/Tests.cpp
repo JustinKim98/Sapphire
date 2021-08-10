@@ -21,7 +21,7 @@
 #include <Sapphire/compute/BasicOps.hpp>
 
 #include "Sapphire/compute/TrigonometricOps.hpp"
-#define EnableAllTest
+//#define EnableAllTest
 
 namespace Sapphire::Test
 {

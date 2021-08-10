@@ -18,7 +18,6 @@ namespace Sapphire::Compute
 void Add(TensorData& y, const TensorData& a, const TensorData& b)
 {
     const auto device = y.GetCudaDevice();
-    const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
 
     auto shapeOut = y.TensorShape;
@@ -60,7 +59,6 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
 void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 {
     const auto device = y.GetCudaDevice();
-    const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
 
     auto shapeOut = y.TensorShape;
@@ -102,7 +100,6 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 {
     const auto device = y.GetCudaDevice();
-    const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
 
     auto shapeOut = y.TensorShape;
@@ -228,7 +225,6 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -238,8 +234,10 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
     }
     else
     {
+        auto shapeY = y.GetShape();
+        shapeY.SetCol(paddedN);
         Dense::Naive::Scale(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
-                            totalSizeWithPadding, N, paddedN);
+                            shapeY.Size(), N, paddedN);
     }
 }
 
