@@ -33,20 +33,30 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
 
-    m_trainableDataMap["weight"] = TensorUtil::TensorData(
-        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device, 1);
-    m_trainableDataMap["bias"] =
-        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device, 1);
-    m_mutableDataMap["transposedWeight"] = TensorUtil::TensorData(
-        Shape({ outputFeatureSize, inputFeatureSize }), type, m_device, 1);
+    auto weight = TensorUtil::TensorData(
+        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device);
+    auto bias =
+        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device);
+    auto transposedWeight = TensorUtil::TensorData(
+        Shape({ outputFeatureSize, inputFeatureSize }), type, m_device);
 
-    weightInitializer->operator()(m_trainableDataMap["weight"]);
-    biasInitializer->operator()(m_trainableDataMap["bias"]);
+    weightInitializer->operator()(weight);
+    biasInitializer->operator()(bias);
+
+    weight.ToCuda();
+    bias.ToCuda();
+    weight.ToHost();
+    bias.ToHost();
+
+    m_trainableDataMap["weight"] = std::move(weight);
+    m_trainableDataMap["bias"] = std::move(bias);
+    m_mutableDataMap["transposedWeight"] = std::move(transposedWeight);
 }
 
-
+//! TODO : Set mode to Host Or Cuda according to input state
 Tensor Linear::operator()(Tensor& input)
 {
+    auto mode = input.Mode();
     auto& model = ModelManager::GetCurrentModel();
 
     auto& xDesc =
@@ -54,15 +64,21 @@ Tensor Linear::operator()(Tensor& input)
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
 
+    yDesc.SetMode(mode);
+
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    const auto& weight = m_trainableDataMap.at("weight");
-    const auto& bias = m_trainableDataMap.at("bias");
-    auto& transposedWeight =
+    auto weight = m_trainableDataMap.at("weight");
+    auto bias = m_trainableDataMap.at("bias");
+    auto transposedWeight =
         m_mutableDataMap["transposedWeight"];
+
+    weight.SetMode(mode);
+    bias.SetMode(mode);
+    transposedWeight.SetMode(mode);
 
     //! Reshape the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);

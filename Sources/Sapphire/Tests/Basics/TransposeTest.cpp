@@ -11,6 +11,7 @@
 #include <Sapphire/util/CudaDevice.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
+#include <Sapphire/Model.hpp>
 #include <iostream>
 #include <random>
 

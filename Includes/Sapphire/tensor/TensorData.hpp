@@ -113,12 +113,11 @@ public:
     [[nodiscard]] TensorData CreateCopy() const;
 
 
-    //! TODO : impl
     //! Sets whether cuda or host will execute operations
     //! This operation is available only on Cuda type tensorData
     void SetMode(DeviceType type);
 
-    DeviceType Mode() const
+    [[nodiscard]] DeviceType Mode() const
     {
         return m_mode;
     }

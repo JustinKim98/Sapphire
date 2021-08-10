@@ -40,14 +40,6 @@ void LinearBackProp::m_backProp(TensorUtil::TensorData& weight)
     TensorUtil::TensorData& dx = m_dxVector[dxIdx];
     TensorUtil::TensorData& dy = m_dyVector[dyIdx];
 
-    // dx.ToCuda(CudaDevice("host"));
-    // dy.ToCuda(CudaDevice("host"));
-    // weight.ToCuda(CudaDevice("host"));
-    //
-    // dx.ToCuda(CudaDevice(0, "cuda"));
-    // dy.ToCuda(CudaDevice(0, "cuda"));
-    // weight.ToCuda(CudaDevice(0, "cuda"));
-
     Compute::Gemm(dx, dy, weight, dx);
 }
 

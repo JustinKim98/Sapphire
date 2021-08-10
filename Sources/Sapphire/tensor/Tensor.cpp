@@ -32,7 +32,7 @@ Tensor& Tensor::operator=(const Tensor& tensor)
     return *this;
 }
 
-Shape Tensor::GetForwardDataShape() const
+Shape Tensor::GetShape() const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc =
@@ -84,31 +84,53 @@ void Tensor::SetMode(DeviceType mode)
     desc.SetMode(mode);
 }
 
-const float* Tensor::GetRawForwardData() const
+std::unique_ptr<float[]> Tensor::GetForwardDataCopy() const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
-    TensorUtil::TensorData tensorData = desc.GetForwardData();
+    const TensorUtil::TensorData tensorData = desc.GetForwardData();
 
-    if (desc.Mode() == DeviceType::Cuda)
-        desc.ToHost();
-    else
-        desc.ToCuda();
+    // if (desc.Mode() == DeviceType::Cuda)
+    //     desc.ToHost();
+    // else
+    //     desc.ToCuda();
 
-    return tensorData.GetDenseHost();
+    auto tempPtr = std::unique_ptr<float[]>(
+        new float[tensorData.GetShape().Size()]);
+    std::size_t idx = 0;
+    for (std::size_t ii = 0; ii < tensorData.DenseTotalLengthHost;
+         ii += tensorData.PaddedHostColSize)
+        for (std::size_t i = ii; i < ii + tensorData.GetShape().Cols(); ++i)
+        {
+            tempPtr[idx] = tensorData.GetDenseHost()[i];
+            idx++;
+        }
+
+    return tempPtr;
 }
 
-const float* Tensor::GetRawBackwardData() const
+std::unique_ptr<float[]> Tensor::GetBackwardDataCopy() const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
-    TensorUtil::TensorData tensorData = desc.GetBackwardData();
+    const TensorUtil::TensorData tensorData = desc.GetBackwardData();
 
     if (desc.Mode() == DeviceType::Cuda)
         desc.ToHost();
     else
         desc.ToCuda();
 
-    return tensorData.GetDenseHost();
+    auto tempPtr =
+        std::unique_ptr<float[]>(new float[tensorData.GetShape().Size()]);
+    std::size_t idx = 0;
+    for (std::size_t ii = 0; ii < tensorData.DenseTotalLengthHost;
+         ii += tensorData.PaddedHostColSize)
+        for (std::size_t i = ii; i < ii + tensorData.GetShape().Cols(); ++i)
+        {
+            tempPtr[idx] = tensorData.GetDenseHost()[i];
+            idx++;
+        }
+
+    return tempPtr;
 }
 } // namespace Sapphire

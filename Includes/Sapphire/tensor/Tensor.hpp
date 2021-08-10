@@ -8,6 +8,7 @@
 
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
+#include <memory>
 
 namespace Sapphire
 {
@@ -26,12 +27,12 @@ public:
     Tensor& operator=(const Tensor& tensor);
     Tensor& operator=(Tensor&& tensor) noexcept = delete;
 
-    [[nodiscard]] Shape GetForwardDataShape() const;
+    [[nodiscard]] Shape GetShape() const;
     [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
-    [[nodiscard]] const float* GetRawForwardData() const;
-    [[nodiscard]] const float* GetRawBackwardData() const;
+    [[nodiscard]] std::unique_ptr<float[]> GetForwardDataCopy() const;
+    [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
 
     void ToCuda();
     void ToHost();

@@ -54,6 +54,7 @@ TensorData::TensorData(const TensorData& tensorData)
       DenseMatCuda(tensorData.DenseMatCuda),
       m_parentDescKey(tensorData.m_parentDescKey),
       m_type(tensorData.m_type),
+      m_mode(tensorData.m_mode),
       m_device(tensorData.m_device)
 {
     if (DenseMatHost)
@@ -80,6 +81,7 @@ TensorData::TensorData(TensorData&& tensorData) noexcept
       DenseMatCuda(tensorData.DenseMatCuda),
       m_parentDescKey(tensorData.m_parentDescKey),
       m_type(tensorData.m_type),
+      m_mode(tensorData.m_mode),
       m_device(std::move(tensorData.m_device))
 {
     tensorData.DenseTotalLengthHost = 0;
@@ -106,6 +108,7 @@ TensorData& TensorData::operator=(const TensorData& tensorData)
     TensorShape = tensorData.TensorShape;
     m_parentDescKey = tensorData.m_parentDescKey;
     m_type = tensorData.m_type;
+    m_mode = tensorData.m_mode;
     m_device = tensorData.m_device;
 
     if (DenseMatHost)
@@ -134,6 +137,7 @@ TensorData& TensorData::operator=(TensorData&& tensorData) noexcept
     TensorShape = std::move(tensorData.TensorShape);
     m_parentDescKey = tensorData.m_parentDescKey;
     m_type = tensorData.m_type;
+    m_mode = tensorData.m_mode;
     m_device = std::move(tensorData.m_device);
 
     tensorData.DenseTotalLengthHost = 0;
