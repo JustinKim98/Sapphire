@@ -56,7 +56,7 @@ void BroadcastWithOneDimension(bool print)
     //! Set temporary buffer and copy the result
     auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
     std::memcpy(cpuGemmResult, Out.GetDenseHost(),
-                Out.DenseTotalLengthHost);
+                Out.DenseTotalLengthHost * sizeof(float));
 
     //! Initialize output with zeros
     Compute::Initialize::Zeros(Out);
@@ -66,12 +66,17 @@ void BroadcastWithOneDimension(bool print)
     B.ToCuda();
     C.ToCuda();
     Out.ToCuda();
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    C.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
 
     //! Perform Gemm on cuda
     Compute::Gemm(Out, A, B, C);
 
     //! Send output data to host
     Out.ToHost();
+    Out.SetMode(DeviceType::Host);
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
@@ -118,7 +123,8 @@ void BroadcastWithMissingDimension(bool print)
 
     //! Set temporary buffer and copy the result
     auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(), Out.DenseTotalLengthHost);
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
     //! Initialize output with zeros
     Compute::Initialize::Zeros(Out);
 
@@ -127,12 +133,16 @@ void BroadcastWithMissingDimension(bool print)
     B.ToCuda();
     C.ToCuda();
     Out.ToCuda();
-
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    C.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
     //! Perform Gemm on cuda
     Compute::Gemm(Out, A, B, C);
 
     //! Send output data to host
     Out.ToHost();
+    Out.SetMode(DeviceType::Host);
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
@@ -179,7 +189,8 @@ void BroadcastMixed(bool print)
 
     //! Set temporary buffer and copy the result
     auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(), Out.DenseTotalLengthHost);
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
     //! Initialize output with zeros
     Compute::Initialize::Zeros(Out);
 
@@ -188,12 +199,17 @@ void BroadcastMixed(bool print)
     B.ToCuda();
     C.ToCuda();
     Out.ToCuda();
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    C.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
 
     //! Perform Gemm on cuda
     Compute::Gemm(Out, A, B, C);
 
     //! Send output data to host
     Out.ToHost();
+    Out.SetMode(DeviceType::Host);
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),

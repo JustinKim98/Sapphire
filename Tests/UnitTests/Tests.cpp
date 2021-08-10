@@ -126,8 +126,8 @@ TEST_CASE("Gemm Test")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
-            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-            Gemm1(true);
+            std::cout << "Gemm test : " << loopIdx << std::endl;
+            Gemm1(false);
         }
     }
 }
