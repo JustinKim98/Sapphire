@@ -22,11 +22,13 @@
 #include <iostream>
 #include "doctest.h"
 
-//#define SparseTest
-//#define TensorFunctionalityTest
-//#define BasicsTest
-//#define GemmTest
-//#define GemmBroadcastTest
+#define SparseTest
+ #define TensorFunctionalityTest
+ #define BasicsTest
+ #define GemmTest
+ #define GemmBroadcastTest
+ #define InitializeTest
+#define ConvolutionTest
 #define GraphTest
 
 namespace Sapphire::Test
@@ -198,7 +200,7 @@ TEST_CASE("Gemm Broadcast Test")
 }
 #endif
 
-
+#ifdef InitializeTest
 TEST_CASE("InitializeTest")
 {
     const int testLoops = 3;
@@ -219,17 +221,37 @@ TEST_CASE("InitializeTest")
         }
     }
 }
+#endif
 
-TEST_CASE("ConvolutionTest")
+#ifdef ConvolutionTest
+TEST_CASE("Convolution")
 {
     const int testLoops = 3;
-    SUBCASE("Conv2D Backward")
+    SUBCASE("Conv2D")
     {
-        std::cout << "Conv2D Backward" << std::endl;
+        std::cout << "Conv2D" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            Conv2DForwardTest(false, false);
+            Conv2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("MaxPool2D")
+    {
+        std::cout << "MaxPool2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            MaxPool2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("AvgPool2D")
+    {
+        std::cout << "AvgPool2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            AvgPool2DTest(false, false);
+        Util::ResourceManager::ClearAll();
     }
 }
+#endif
 
 #ifdef GraphTest
 TEST_CASE("GraphTest")
@@ -237,7 +259,6 @@ TEST_CASE("GraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        std::cout << "Linear Test" << std::endl;
         Operation::LinearForwardTest();
     }
 }
