@@ -197,6 +197,26 @@ TEST_CASE("Gemm Broadcast Test")
 }
 #endif
 
+
+TEST_CASE("InitializeTest")
+{
+    const int testLoops = 3;
+    SUBCASE("Initialize Ones")
+    {
+        for (int i = 0; i < testLoops; i++)
+        {
+            EqualInitializeTest(Compute::Initialize::Ones, false);
+        }
+    }
+    SUBCASE("Initialize Normal")
+    {
+        for (int i = 0; i < testLoops; i++)
+        {
+            NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
+        }
+    }
+}
+
 #ifdef GraphTest
 TEST_CASE("GraphTest")
 {

@@ -91,4 +91,17 @@ void CheckNoneZeroEquality(
     }
     CHECK(!isAllZero);
 }
+
+void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
+                   unsigned padSize, bool print)
+{
+    for (unsigned int ii = 0; ii < size; ii += padSize)
+        for (unsigned int i = ii; i < ii + colSize; ++i)
+        {
+            if (print)
+                std::cout << "ptrA: " << ptr[i] << std::endl;
+            auto pass = ptr[i] > 0 || ptr[i] < 0;
+            CHECK(pass);
+        }
+}
 } // namespace Sapphire::Test

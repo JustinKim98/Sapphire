@@ -31,6 +31,9 @@ void CheckNoneZeroEquality(const float* ptrA, const float* ptrB, unsigned size,
                            float equalThreshold = std::numeric_limits<
                                float>::epsilon());
 
+void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
+                   unsigned padSize, bool print);
+
 template <typename Func>
 void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
                                        Func function)
@@ -107,8 +110,8 @@ void TestWithOneArgument(bool print, float equalThreshold,
     function(Out, In);
 
     //! Copy the host result to temporary buffer
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+    auto* cpuResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuResult, Out.GetDenseHost(),
                 Out.DenseTotalLengthHost * sizeof(float));
 
     //! Initialize output as zeros on host
@@ -128,10 +131,72 @@ void TestWithOneArgument(bool print, float equalThreshold,
     Out.SetMode(DeviceType::Host);
 
     //! Check the equality
-    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
+    CheckNoneZeroEquality(cpuResult, Out.GetDenseHost(),
                           Out.DenseTotalLengthHost, print, equalThreshold);
 
-    delete[] cpuGemmResult;
+    delete[] cpuResult;
+}
+
+template <typename Func>
+void EqualInitializeTest(Func function, bool print)
+{
+    const Shape shape = CreateRandomShape(5);
+    const CudaDevice cuda(0, "cuda0");
+
+    TensorUtil::TensorData data(shape, Type::Dense, cuda);
+    data.SetMode(DeviceType::Host);
+
+    function(data);
+
+    //! Copy the host result to temporary memory
+    auto* cpuResult = new float[data.DenseTotalLengthHost];
+    std::memcpy(cpuResult, data.GetDenseHost(),
+                data.DenseTotalLengthHost * sizeof(float));
+
+    //! Initialize host with zeros
+    Compute::Initialize::Zeros(data);
+
+    data.ToCuda();
+    data.SetMode(DeviceType::Cuda);
+    function(data);
+
+    data.ToHost();
+    data.SetMode(DeviceType::Host);
+
+    CheckNoneZeroEquality(cpuResult, data.GetDenseHost(),
+                          data.DenseTotalLengthHost, print);
+}
+
+template <typename Func, typename ...Ts>
+void NoneZeroTest(Func function, bool print, Ts ...params)
+{
+    const Shape shape = CreateRandomShape(5);
+    const CudaDevice cuda(0, "cuda0");
+
+    TensorUtil::TensorData data(shape, Type::Dense, cuda);
+    data.SetMode(DeviceType::Host);
+
+    function(data, params...);
+
+    CheckNoneZero(data.GetDenseHost(),
+                  data.DenseTotalLengthHost, data.GetShape().Cols()
+                  , data.PaddedHostColSize, print);
+
+    //! Initialize host with zeros
+    Compute::Initialize::Zeros(data);
+
+    data.ToCuda();
+    data.SetMode(DeviceType::Cuda);
+
+    function(data, params...);
+
+    data.ToHost();
+    data.SetMode(DeviceType::Host);
+
+    CheckNoneZero(data.GetDenseHost(),
+                  data.DenseTotalLengthHost,
+                  data.GetShape().Cols()
+                  , data.PaddedHostColSize, print);
 }
 } // namespace Sapphire::Test
 
