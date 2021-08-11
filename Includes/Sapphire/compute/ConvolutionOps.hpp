@@ -12,7 +12,7 @@ namespace Sapphire::Compute
 {
 using namespace TensorUtil;
 
-//! x, y, filter must have shape of C,H,W with Same batch size N (Data aligned in NCHW format)
+//! x, y, filter must have shape of (N, C,H,W) with Same batch size N (Data aligned in NCHW format)
 void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
                    int strideRow, int strideCol, int dilationRow,
                    int dilationCol, int rowPadding, int columnPadding);
@@ -30,12 +30,14 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     int strideRow, int strideCol, int dilationRow,
                     int dilationCol, int rowPadding, int columnPadding);
 
-void MaxPool2DBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
+void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
+                       const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding);
 
-void AvgPool2DBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
+void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
+                       const TensorData& x,
                        const TensorData& y, int windowHeight, int windowWidth,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding);

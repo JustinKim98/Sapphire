@@ -20,14 +20,15 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.GetBatchSize(3)),
-            static_cast<int>(filter.GetShape().At(2)),
+            static_cast<int>(filter.GetShape().At(
+                filter.GetShape().Dim() - 3)),
             static_cast<int>(filter.GetShape().Rows()),
             static_cast<int>(filter.GetShape().Cols())
         };
 
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };

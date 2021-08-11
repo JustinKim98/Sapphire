@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 #include <functional>
-#include <memory>
 
 namespace Sapphire::BackProp
 {

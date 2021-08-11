@@ -25,7 +25,7 @@ void TransposeTest(bool printResult)
 
     const int dim = distrib(gen) % 1 + 2;
 
-    const auto shapeInput = CreateRandomShape(dim, 30);
+    const auto shapeInput = CreateRandomShape(dim,30);
     const auto shapeTransposed = shapeInput.GetTranspose();
 
     const CudaDevice cuda(0, "device0");

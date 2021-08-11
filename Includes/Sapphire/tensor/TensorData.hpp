@@ -4,11 +4,10 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_UTIL_TENSORDATA_DECL_HPP
-#define Sapphire_UTIL_TENSORDATA_DECL_HPP
+#ifndef SAPPHIRE_TENSORUTIL_TENSOR_DATA_HPP
+#define SAPPHIRE_TENSORUTIL_TENSOR_DATA_HPP
 
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
 

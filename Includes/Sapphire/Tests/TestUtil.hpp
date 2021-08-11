@@ -13,6 +13,7 @@
 #include <Sapphire/compute/Initialize.hpp>
 #include <limits>
 #include <random>
+#include <cstring>
 
 namespace Sapphire::Test
 {

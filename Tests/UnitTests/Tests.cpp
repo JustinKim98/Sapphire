@@ -16,16 +16,17 @@
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
+#include <Sapphire/Tests/Conv2DTest.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <iostream>
 #include "doctest.h"
 
 //#define SparseTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define GemmTest
-#define GemmBroadcastTest
+//#define TensorFunctionalityTest
+//#define BasicsTest
+//#define GemmTest
+//#define GemmBroadcastTest
 #define GraphTest
 
 namespace Sapphire::Test
@@ -203,6 +204,7 @@ TEST_CASE("InitializeTest")
     const int testLoops = 3;
     SUBCASE("Initialize Ones")
     {
+        std::cout << "Initialize Ones" << std::endl;
         for (int i = 0; i < testLoops; i++)
         {
             EqualInitializeTest(Compute::Initialize::Ones, false);
@@ -210,10 +212,22 @@ TEST_CASE("InitializeTest")
     }
     SUBCASE("Initialize Normal")
     {
+        std::cout << "Initialize Normal" << std::endl;
         for (int i = 0; i < testLoops; i++)
         {
             NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
         }
+    }
+}
+
+TEST_CASE("ConvolutionTest")
+{
+    const int testLoops = 3;
+    SUBCASE("Conv2D Forward")
+    {
+        std::cout << "Conv2D Forward"<< std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            Conv2DForwardTest(false);
     }
 }
 
@@ -222,6 +236,7 @@ TEST_CASE("GraphTest")
 {
     SUBCASE("Linear Test")
     {
+        std::cout << "Linear" << std::endl;
         std::cout << "Linear Test" << std::endl;
         Operation::LinearForwardTest();
     }

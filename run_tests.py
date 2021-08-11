@@ -35,6 +35,7 @@ if __name__ == "__main__":
 	cmake_str += " ."
 
 	os.system(cmake_str)
+	os.system("rm ./bin/UnitTests")
 	os.system("make -j${nproc}")
 
 	repeat_num = 1
