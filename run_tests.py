@@ -37,9 +37,20 @@ if __name__ == "__main__":
 	os.system(cmake_str)
 	os.system("make -j${nproc}")
 
-	if(args.repeat is not None):
-		for i in range(0, args.repeat):
-			print("repeating  for : {n}".format(n = i))
-			os.system("./bin/UnitTests")
+	repeat_num = 1
+	if args.repeat is not None :
+		repeat_num = args.repeat
 
-	os.system("./bin/UnitTests")
+	num_failures = 0
+	for i in range(0, repeat_num):
+		print("repeating  for : {n}".format(n = i))
+		rtn_code = os.system("./bin/UnitTests")>>8
+		if rtn_code != 0:
+			print("failure!")
+			num_failures += 1
+
+	if num_failures == 0:
+		print("All tests were successful")
+	else:
+		print("Test failed for {0} times".format(num_failures))
+
