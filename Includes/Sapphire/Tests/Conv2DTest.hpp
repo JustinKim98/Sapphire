@@ -6,5 +6,5 @@
 
 namespace Sapphire::Test
 {
-void Conv2DForwardTest(bool print);
+void Conv2DForwardTest(bool printForward, bool printBackward);
 }

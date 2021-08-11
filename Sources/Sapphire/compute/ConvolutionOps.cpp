@@ -55,7 +55,7 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -82,7 +82,7 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -110,14 +110,14 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.GetBatchSize(3)),
-            static_cast<int>(filter.GetShape().At(2)),
+            static_cast<int>(filter.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(filter.GetShape().Rows()),
             static_cast<int>(filter.GetShape().Cols())
         };
 
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -148,7 +148,7 @@ void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -178,7 +178,7 @@ void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };

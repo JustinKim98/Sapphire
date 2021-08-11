@@ -225,9 +225,9 @@ TEST_CASE("ConvolutionTest")
     const int testLoops = 3;
     SUBCASE("Conv2D Forward")
     {
-        std::cout << "Conv2D Forward"<< std::endl;
+        std::cout << "Conv2D Forward" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            Conv2DForwardTest(false);
+            Conv2DForwardTest(false, true);
     }
 }
 

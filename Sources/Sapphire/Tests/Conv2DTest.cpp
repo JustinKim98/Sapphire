@@ -11,7 +11,7 @@
 
 namespace Sapphire::Test
 {
-void Conv2DForwardTest(bool print)
+void Conv2DForwardTest(bool printForward, bool printBackward)
 {
     auto shape = CreateRandomShape(5);
     CudaDevice cuda(0, "cuda0");
@@ -55,16 +55,25 @@ void Conv2DForwardTest(bool print)
                    static_cast<unsigned>(outputWidth) });
 
     TensorUtil::TensorData x(xShape, Type::Dense, cuda);
+    TensorUtil::TensorData dx(xShape, Type::Dense, cuda);
     TensorUtil::TensorData filter(filterShape, Type::Dense, cuda);
+    TensorUtil::TensorData dFilter(filterShape, Type::Dense, cuda);
     TensorUtil::TensorData y(yShape, Type::Dense, cuda);
+    TensorUtil::TensorData dy(yShape, Type::Dense, cuda);
 
     x.SetMode(DeviceType::Cuda);
+    dx.SetMode(DeviceType::Cuda);
     filter.SetMode(DeviceType::Cuda);
+    dFilter.SetMode(DeviceType::Cuda);
     y.SetMode(DeviceType::Cuda);
+    dy.SetMode(DeviceType::Cuda);
 
     Compute::Initialize::Ones(x);
+    Compute::Initialize::Zeros(dx);
     Compute::Initialize::Ones(filter);
-    Compute::Initialize::Ones(y);
+    Compute::Initialize::Ones(dFilter);
+    Compute::Initialize::Zeros(y);
+    Compute::Initialize::Ones(dy);
 
     Compute::Conv2DForward(y, x, filter, strideRow, strideCol, dilationRow,
                            dilationCol, rowPadding, colPadding);
@@ -72,9 +81,22 @@ void Conv2DForwardTest(bool print)
     y.ToHost();
     y.SetMode(DeviceType::Host);
 
-    auto* data = y.GetDenseHost();
-    if (print)
+    const auto* forwardOutput = y.GetDenseHost();
+    if (printForward)
         for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
-            std::cout << "data [" << i << "] : " << data[i] << std::endl;
+            std::cout << "forwardData [" << i << "] : " << forwardOutput[i] <<
+                std::endl;
+
+    y.SetMode(DeviceType::Cuda);
+
+    Compute::Conv2DBackward(dx, dFilter, dy, x, filter, strideRow, strideCol,
+                            dilationRow, dilationCol, rowPadding, colPadding);
+
+    dx.ToHost();
+
+    const auto* backwardOutput = dx.GetDenseHost();
+    for (unsigned i = 0; i < dy.DenseTotalLengthHost; ++i)
+        std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
+            << std::endl;
 }
 }
