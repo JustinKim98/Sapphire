@@ -223,11 +223,11 @@ TEST_CASE("InitializeTest")
 TEST_CASE("ConvolutionTest")
 {
     const int testLoops = 3;
-    SUBCASE("Conv2D Forward")
+    SUBCASE("Conv2D Backward")
     {
-        std::cout << "Conv2D Forward" << std::endl;
+        std::cout << "Conv2D Backward" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            Conv2DForwardTest(false, true);
+            Conv2DForwardTest(false, false);
     }
 }
 

@@ -21,15 +21,15 @@ void Conv2DForwardTest(bool printForward, bool printBackward)
     int inputWidth = 100;
     int inputChannels = 1;
 
-    int numFilters = 10;
+    int numFilters = 1;
     int filterWidth = 3;
     int filterHeight = 3;
-    int strideRow = 1;
-    int strideCol = 1;
-    int dilationRow = 1;
-    int dilationCol = 1;
-    int rowPadding = 0;
-    int colPadding = 0;
+    int strideRow = 2;
+    int strideCol = 2;
+    int dilationRow = 2;
+    int dilationCol = 2;
+    int rowPadding = 2;
+    int colPadding = 2;
 
     int outputChannels = numFilters;
     int outputHeight =
@@ -82,8 +82,8 @@ void Conv2DForwardTest(bool printForward, bool printBackward)
     y.SetMode(DeviceType::Host);
 
     const auto* forwardOutput = y.GetDenseHost();
-    if (printForward)
-        for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
+    for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
+        if (printForward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i] <<
                 std::endl;
 
@@ -96,7 +96,8 @@ void Conv2DForwardTest(bool printForward, bool printBackward)
 
     const auto* backwardOutput = dx.GetDenseHost();
     for (unsigned i = 0; i < dy.DenseTotalLengthHost; ++i)
-        std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
-            << std::endl;
+        if (printForward)
+            std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
+                << std::endl;
 }
 }
