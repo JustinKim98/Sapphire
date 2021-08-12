@@ -74,8 +74,8 @@ void Inverse(float* output, const float* input, unsigned int totalSize, unsigned
 void Mean(float* output, const float* input, unsigned int totalSize,
           unsigned int unitSize, unsigned colSize, unsigned padSize);
 
-void Softmax(float* output, const float* input, unsigned int totalSize,
-             unsigned int unitSize, unsigned int padSize);
+void Softmax(float* output, const float* input, unsigned int paddedTotalSize,
+             unsigned int unitSize, unsigned int paddedUnitSize);
 
 void SoftmaxBack(float* dx, const float* dy, const float* x,
                  unsigned int totalSize, unsigned int unitSize,

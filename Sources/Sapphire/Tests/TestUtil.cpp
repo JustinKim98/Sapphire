@@ -85,7 +85,8 @@ void CheckNoneZeroEquality(
         if (print)
             std::cout << "ptrA : " << ptrA[i] << " ptrB : " << ptrB[i] <<
                 std::endl;
-        CHECK(std::abs(ptrA[i] - ptrB[i]) <= equalThreshold);
+        if (!std::isnan(ptrA[i]) && !std::isnan(ptrB[i]))
+            CHECK(std::abs(ptrA[i] - ptrB[i]) <= equalThreshold);
         if (ptrA[i] > 0.0f || ptrA[i] < 0.0f)
             isAllZero = false;
     }

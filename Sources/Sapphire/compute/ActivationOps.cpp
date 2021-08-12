@@ -16,8 +16,8 @@ void SoftMax(TensorData& y, const TensorData& x)
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto unitSize = y.TensorShape.Size();
-    const auto totalSize = unitSize;
+    const auto unitSize = y.TensorShape.Cols();
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)

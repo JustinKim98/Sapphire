@@ -248,20 +248,20 @@ void Mean(float* output, const float* input, unsigned int totalSize,
     }
 }
 
-void Softmax(float* output, const float* input, unsigned int totalSize,
-             unsigned int unitSize, unsigned int padSize)
+void Softmax(float* output, const float* input, unsigned int paddedTotalSize,
+             unsigned int unitSize, unsigned int paddedUnitSize)
 {
-    const auto batchSize = totalSize / padSize;
+    const auto batchSize = paddedTotalSize / paddedUnitSize;
 
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         float sum = 0;
         for (unsigned int i = 0; i < unitSize; ++i)
-            sum += std::exp(input[padSize * batchIdx + i]);
+            sum += std::exp(input[paddedUnitSize * batchIdx + i]);
 
         for (unsigned int i = 0; i < unitSize; ++i)
-            output[padSize * batchIdx + i] =
-                input[padSize * batchIdx + i] / sum;
+            output[paddedUnitSize * batchIdx + i] =
+                std::exp(input[paddedUnitSize * batchIdx + i]) / sum;
     }
 }
 

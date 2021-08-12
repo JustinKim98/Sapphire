@@ -19,17 +19,19 @@
 #include <Sapphire/Tests/Conv2DTest.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
+#include <Sapphire/compute/ActivationOps.hpp>
 #include <iostream>
 #include "doctest.h"
 
-#define SparseTest
- #define TensorFunctionalityTest
- #define BasicsTest
- #define GemmTest
- #define GemmBroadcastTest
- #define InitializeTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
 #define ConvolutionTest
 #define GraphTest
+// #define SparseTest
 
 namespace Sapphire::Test
 {
@@ -119,7 +121,7 @@ TEST_CASE("Basics")
     {
         std::cout << "Log Test" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            TestWithOneArgument(false, 1.0f, Compute::log);
+            TestWithOneArgumentStatic(false, 1.0f, Compute::log);
         Util::ResourceManager::ClearAll();
     }
 
@@ -127,7 +129,7 @@ TEST_CASE("Basics")
     {
         std::cout << "Inverse"" Test" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            TestWithOneArgument(false, 1.0f, Compute::Inverse);
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Inverse);
         Util::ResourceManager::ClearAll();
     }
 
@@ -135,7 +137,7 @@ TEST_CASE("Basics")
     {
         std::cout << "SinTest" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            TestWithOneArgument(false, 1.0f, Compute::Sin);
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Sin);
         Util::ResourceManager::ClearAll();
     }
 
@@ -143,7 +145,7 @@ TEST_CASE("Basics")
     {
         std::cout << "Cos Test" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            TestWithOneArgument(false, 1.0f, Compute::Cos);
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Cos);
         Util::ResourceManager::ClearAll();
     }
 
@@ -151,7 +153,30 @@ TEST_CASE("Basics")
     {
         std::cout << "Tan Test" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            TestWithOneArgument(false, 1.0f, Compute::Tan);
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Tan);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+
+#ifdef ActivationTest
+TEST_CASE("ActivationTest")
+{
+    const int testLoops = 3;
+    SUBCASE("ReLU")
+    {
+        std::cout << "ReLU Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentNormal(false, 1.0f, Compute::ReLU, 0, 0.1f);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("SoftMax")
+    {
+        std::cout << "SoftMax Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentNormal(false, 1.0f, Compute::SoftMax, 0, 1.0f);
         Util::ResourceManager::ClearAll();
     }
 }

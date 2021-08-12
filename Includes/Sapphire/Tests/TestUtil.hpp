@@ -89,8 +89,8 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
 }
 
 template <typename Func>
-void TestWithOneArgument(bool print, float equalThreshold,
-                         Func function)
+void TestWithOneArgumentStatic(bool print, float equalThreshold,
+                               Func function)
 {
     const Shape shape = CreateRandomShape(5);
     const CudaDevice cuda(0, "cuda0");
@@ -105,6 +105,54 @@ void TestWithOneArgument(bool print, float equalThreshold,
     //! zeros
     Compute::Initialize::Ones(In);
     Compute::Scale(In, In, 10);
+    Compute::Initialize::Zeros(Out);
+
+    //! Invoke the function to be tested
+    function(Out, In);
+
+    //! Copy the host result to temporary buffer
+    auto* cpuResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
+
+    //! Initialize output as zeros on host
+    Compute::Initialize::Zeros(Out);
+
+    //! Send data to cuda
+    In.ToCuda();
+    Out.ToCuda();
+    In.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
+
+    //! Invoke function on cuda
+    function(Out, In);
+
+    //! Send the data back to host
+    Out.ToHost();
+    Out.SetMode(DeviceType::Host);
+
+    //! Check the equality
+    CheckNoneZeroEquality(cpuResult, Out.GetDenseHost(),
+                          Out.DenseTotalLengthHost, print, equalThreshold);
+
+    delete[] cpuResult;
+}
+
+template <typename Func>
+void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function, float mean, float sd)
+{
+    const Shape shape = CreateRandomShape(5);
+    const CudaDevice cuda(0, "cuda0");
+
+    //! Initialize data
+    TensorUtil::TensorData In(shape, Type::Dense, cuda);
+    TensorUtil::TensorData Out(shape, Type::Dense, cuda);
+    In.SetMode(DeviceType::Host);
+    Out.SetMode(DeviceType::Host);
+
+    //! Initialize the input data with normal distribution and output data as
+    //! zeros
+    Compute::Initialize::Normal(In, mean, sd);
     Compute::Initialize::Zeros(Out);
 
     //! Invoke the function to be tested
