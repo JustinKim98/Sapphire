@@ -6,18 +6,19 @@
 
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 
-namespace Sapphire::Comptue
+namespace Sapphire::Compute::Dense::Naive
 {
 using namespace TensorUtil;
 
 void Im2Col(TensorData& inputMatrix, TensorData& filter,
             const TensorData& input, int strideCol,
             int strideRow, int rowPadding, int colPadding, int dilationRow,
-            int dilationCol, int pad)
+            int dilationCol, float pad)
 {
     const auto inputShape = input.GetShape();
     const auto filterShape = filter.GetShape();
     const auto numChannels = filterShape.At(filterShape.Dim() - 3);
+    const auto inputMatrixShape = inputMatrix.GetShape();
 
     const Shape newFilterShape({ filterShape.Rows(),
                                  filterShape.Size() / filterShape.Rows() });
@@ -27,6 +28,7 @@ void Im2Col(TensorData& inputMatrix, TensorData& filter,
     for (unsigned int i = 0; i < inputShape.Dim() - 3; ++i)
         N *= static_cast<int>(inputShape.At(i));
 
+    //! Size of the output after the full convolution
     const int outputRows =
         (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
          dilationRow * (filterShape.Rows() - 1) - 1) /
@@ -38,6 +40,7 @@ void Im2Col(TensorData& inputMatrix, TensorData& filter,
         strideCol +
         1;
 
+    //! Padded total size of input and inputMatrix per batch
     const auto paddedInputTotalSize =
         (numChannels * inputShape.Rows() * inputShape.Cols() /
          input.PaddedHostColSize) *
@@ -45,13 +48,13 @@ void Im2Col(TensorData& inputMatrix, TensorData& filter,
         (numChannels * inputShape.Rows() * inputShape.Cols()) %
         input.PaddedHostColSize;
     const auto paddedInputMatrixTotalSize =
-        ((numChannels * filter.Rows() * filter.Cols() * outputCols) /
+        ((numChannels * filter.Rows() * filter.Cols() * inputMatrixShape.Cols())
+         /
          inputMatrix.PaddedHostColSize) *
         inputMatrix.PaddedHostColSize +
-        (numChannels * filter.Rows() * filter.Cols() * outputCols) %
+        (numChannels * filter.Rows() * filter.Cols() * inputMatrixShape.Cols())
+        %
         inputMatrix.PaddedHostColSize;
-
-    const int inputMatrixColSize = outputCols;
 
     auto* inputMatrixDataHost = inputMatrix.GetMutableDenseHost();
     const auto* inputDataHost = input.GetDenseHost();
@@ -93,7 +96,7 @@ void Im2Col(TensorData& inputMatrix, TensorData& filter,
                                  filterColIdx);
 
                             const auto combinedInputMatrixIdx =
-                                inputMatrixRowIdx * inputMatrixColSize +
+                                inputMatrixRowIdx * inputMatrixShape.Cols() +
                                 inputMatrixColIdx;
                             const auto combinedInputIdx =
                                 (inputRowIdx - rowPadding) * inputShape.Cols() +
@@ -239,4 +242,6 @@ void Col2Im(TensorData& input,
                         }
     }
 }
+
+
 } // namespace Sapphire::Comptue

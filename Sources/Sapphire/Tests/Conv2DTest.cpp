@@ -7,6 +7,7 @@
 #include <Sapphire/Tests/Conv2DTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
+#include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -233,7 +234,7 @@ void AvgPool2DTest(bool printForward, bool printBackward)
     for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
         if (printForward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i]
-                      << std::endl;
+                << std::endl;
 
     y.SetMode(DeviceType::Cuda);
 
@@ -246,6 +247,60 @@ void AvgPool2DTest(bool printForward, bool printBackward)
     for (unsigned i = 0; i < dy.DenseTotalLengthHost; ++i)
         if (printBackward)
             std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
-                      << std::endl;
+                << std::endl;
+}
+
+void HostIm2ColTest(bool print)
+{
+    const int N = 1;
+    const int numFilters = 2;
+    const int rowPadding = 0;
+    const int colPadding = 0;
+    const int dilationRow = 1;
+    const int dilationCol = 1;
+    const int strideRow = 1;
+    const int strideCol = 1;
+
+    const Shape inputShape({ N, 3, 3, 3 });
+    const Shape filterShape({ numFilters, 2, 2, 2 });
+
+    const int outputRows =
+        (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
+         dilationRow * (filterShape.Rows() - 1) - 1) /
+        strideRow +
+        1;
+    const int outputCols =
+        (static_cast<int>(inputShape.Cols()) + 2 * colPadding -
+         dilationCol * (filterShape.Cols() - 1) - 1) /
+        strideCol +
+        1;
+
+    const Shape outputShape({ 1, 2, static_cast<unsigned int>(outputRows),
+                              static_cast<unsigned int>(outputCols) });
+
+    const auto inputMatrixRows =
+        inputShape.At(inputShape.Dim() - 3) * inputShape.Rows() * inputShape.
+        Cols();
+    const auto inputMatrixCols =
+        static_cast<unsigned int>(outputRows * outputCols);
+
+    CudaDevice device(0, "cuda0");
+
+    const Shape inputMatrixShape({ N, inputMatrixRows, inputMatrixCols });
+
+    TensorUtil::TensorData inputData(inputShape, Type::Dense, device);
+    TensorUtil::TensorData filterData(filterShape, Type::Dense, device);
+    TensorUtil::TensorData inputMatrixData(inputMatrixShape, Type::Dense,
+                                           device);
+
+    Compute::Dense::Naive::Im2Col(inputMatrixData, filterData, inputData,
+                                  strideCol, strideRow, rowPadding,
+                                  colPadding, dilationRow, dilationCol, 0);
+
+    for (unsigned i = 0; i < inputMatrixData.DenseTotalLengthHost; ++i)
+        if (print)
+            std::cout << "backwardData[" << i << "]: " << inputMatrixData.
+                GetDenseHost()[i]
+                << std::endl;
 }
 }

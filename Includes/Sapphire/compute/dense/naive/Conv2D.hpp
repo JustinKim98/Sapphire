@@ -8,14 +8,14 @@
 #define SAPPHIRE_COMPUTE_CONV2D_HPP
 #include <Sapphire/tensor/TensorData.hpp>
 
-namespace Sapphire::Compute
+namespace Sapphire::Compute::Dense::Naive
 {
 using namespace TensorUtil;
 
 void Im2Col(TensorData& inputMatrix, TensorData& filter,
             const TensorData& input, int strideCol, int strideRow,
             int rowPadding, int colPadding, int dilationRow, int dilationCol,
-            int pad = 0);
+            float pad = 0.0f);
 
 void Col2Im(TensorData& inputMatrix, TensorData& filterMatrix,
             const TensorData& input, const TensorData& filter, int strideCol,
