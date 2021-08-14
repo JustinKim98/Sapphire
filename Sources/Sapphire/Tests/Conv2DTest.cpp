@@ -10,6 +10,8 @@
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <iostream>
 
+#include "doctest.h"
+
 namespace Sapphire::Test
 {
 void Conv2DTest(bool printForward, bool printBackward)
@@ -252,17 +254,23 @@ void AvgPool2DTest(bool printForward, bool printBackward)
 
 void HostIm2ColTest(bool print)
 {
-    const int N = 1;
+    const int N = 2;
     const int numFilters = 2;
+    const int numInputChannels = 3;
+    const int InputRows = 10;
+    const int InputCols = 10;
+    const int filterRows = 3;
+    const int filterCols = 2;
     const int rowPadding = 1;
     const int colPadding = 1;
     const int dilationRow = 2;
-    const int dilationCol = 2;
-    const int strideRow = 1;
-    const int strideCol = 1;
+    const int dilationCol = 1;
+    const int strideRow = 2;
+    const int strideCol = 3;
 
-    const Shape inputShape({ N, 3, 3, 3 });
-    const Shape filterShape({ numFilters, 3, 2, 2 });
+    const Shape inputShape({ N, numInputChannels, InputRows, InputCols });
+    const Shape filterShape({ numFilters, numInputChannels, filterRows,
+                              filterCols });
 
     const int outputRows =
         (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
@@ -275,7 +283,8 @@ void HostIm2ColTest(bool print)
         strideCol +
         1;
 
-    const Shape outputShape({ 1, 2, static_cast<unsigned int>(outputRows),
+    const Shape outputShape({ N, numFilters,
+                              static_cast<unsigned int>(outputRows),
                               static_cast<unsigned int>(outputCols) });
 
     const auto inputMatrixRows =
@@ -335,17 +344,23 @@ void HostIm2ColTest(bool print)
 
 void HostConv2DForwardTest(bool print)
 {
-    const int N = 1;
-    const int numFilters = 2;
-    const int rowPadding = 0;
-    const int colPadding = 0;
+    const int N = 2;
+    const int numFilters = 5;
+    const int numInputChannels = 3;
+    const int InputRows = 6;
+    const int InputCols = 6;
+    const int filterRows = 2;
+    const int filterCols = 2;
+    const int rowPadding = 1;
+    const int colPadding = 1;
     const int dilationRow = 1;
-    const int dilationCol = 1;
-    const int strideRow = 1;
-    const int strideCol = 1;
+    const int dilationCol = 2;
+    const int strideRow = 3;
+    const int strideCol = 2;
 
-    const Shape inputShape({ N, 3, 3, 3 });
-    const Shape filterShape({ numFilters, 3, 2, 2 });
+    const Shape inputShape({ N, numInputChannels, InputRows, InputCols });
+    const Shape filterShape(
+        { numFilters, numInputChannels, filterRows, filterCols });
 
     const int yRows =
         (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
@@ -358,7 +373,7 @@ void HostConv2DForwardTest(bool print)
         strideCol +
         1;
 
-    const Shape yShape({ 1, 2, static_cast<unsigned int>(yRows),
+    const Shape yShape({ N, numFilters, static_cast<unsigned int>(yRows),
                          static_cast<unsigned int>(yCols) });
 
     CudaDevice device(0, "cuda0");
@@ -382,16 +397,13 @@ void HostConv2DForwardTest(bool print)
     Compute::Dense::Naive::Conv2D(y, x, filter, strideRow, strideCol,
                                   rowPadding, colPadding, dilationRow,
                                   dilationCol, device);
-    if (print)
-    {
-        std::cout << "Host" << std::endl;
-        for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
-            for (unsigned int i = 0; i < y.Cols(); ++i)
-                std::cout
-                    << "y[" << ii * y.Cols() + i << "] = "
-                    << y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]
-                    << std::endl;
-    }
+
+    auto* hostTemp = new float[y.GetShape().Size()];
+
+    for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
+        for (unsigned int i = 0; i < y.Cols(); ++i)
+            hostTemp[ii * y.Cols() + i] =
+                y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i];
 
     x.ToCuda();
     filter.ToCuda();
@@ -404,15 +416,26 @@ void HostConv2DForwardTest(bool print)
                            rowPadding, colPadding);
 
     y.ToHost();
-    if (print)
-    {
-        std::cout << "CUDA" << std::endl;
-        for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
-            for (unsigned int i = 0; i < y.Cols(); ++i)
+
+    for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
+        for (unsigned int i = 0; i < y.Cols(); ++i)
+        {
+            if (!std::isnan(hostTemp[ii * y.Cols() + i]) &&
+                !std::isnan(
+                    y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]))
+                CHECK(std::abs(
+                    hostTemp[ii * y.Cols() + i] -
+                    y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]) <
+                0.01f);
+            if (print)
                 std::cout
-                    << "y[" << ii * y.Cols() + i << "] = "
+                    << "host[" << ii * y.Cols() + i
+                    << "] = " << hostTemp[ii * y.Cols() + i] << "  cuda["
+                    << ii * y.Cols() + i << "] = "
                     << y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]
                     << std::endl;
-    }
+        }
+
+    delete[] hostTemp;
 }
 }

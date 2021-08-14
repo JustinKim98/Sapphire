@@ -21,9 +21,9 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
             const TensorData& filter, int strideCol, int strideRow,
             int rowPadding, int colPadding, int dilationRow, int dilationCol);
 
-void ReshapeFilter(TensorData& filter);
+void Reshape(TensorData& tensorData, Shape newShape);
 
-void Conv2D(TensorData& y, const TensorData& input, const TensorData& filter,
+void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
             int dilationRow, int dilationCol, CudaDevice device);
 

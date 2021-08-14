@@ -241,40 +241,42 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
     }
 }
 
-void ReshapeFilter(TensorData& filter)
+void Reshape(TensorData& tensorData, Shape newShape)
 {
-    const Shape filterShape = filter.GetShape();
-    const Shape newFilterShape(
-        { filterShape.Rows(), filterShape.Size() / filterShape.Rows() });
+    const Shape tensorShape = tensorData.GetShape();
 
     const auto padUnitSize = static_cast<unsigned long>(32 / sizeof(float));
 
-    const auto paddedColumnSize =
-        newFilterShape.Cols() % padUnitSize == 0
-            ? newFilterShape.Cols()
-            : newFilterShape.Cols() / padUnitSize * padUnitSize + padUnitSize;
+    const auto newPaddedColSize =
+        newShape.Cols() % padUnitSize == 0
+            ? newShape.Cols()
+            : newShape.Cols() / padUnitSize * padUnitSize + padUnitSize;
 
-    auto* tempData = new float[filterShape.Size()];
-    for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < filter.Cols(); ++i)
+    auto* tempData = new float[tensorShape.Size()];
+    for (std::size_t ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
+        for (std::size_t i = 0; i < tensorData.Cols(); ++i)
         {
-            auto data =
-                filter.GetDenseHost()[ii * filter.PaddedHostColSize + i];
-            tempData[ii * filterShape.Cols() + i] = data;
+            const auto data =
+                tensorData.GetDenseHost()[
+                    ii * tensorData.PaddedHostColSize + i];
+            tempData[ii * tensorShape.Cols() + i] = data;
         }
 
-    filter.PaddedHostColSize = paddedColumnSize;
-    filter.TensorShape = newFilterShape;
+    tensorData.PaddedHostColSize = newPaddedColSize;
+    tensorData.TensorShape = newShape;
 
-    for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < filter.Cols(); ++i)
-            filter.GetMutableDenseHost()[
-                    ii * filter.PaddedHostColSize + i] =
-                tempData[ii * newFilterShape
-                         .Cols() + i];
+    for (std::size_t ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
+        for (std::size_t i = 0; i < tensorData.Cols(); ++i)
+        {
+            const auto data = tempData[ii * newShape.Cols() + i];
+            tensorData.GetMutableDenseHost()[
+                    ii * tensorData.PaddedHostColSize + i] =
+                data;
+        }
 
     delete[] tempData;
 }
+
 
 void ReshapeOutput(TensorData& output)
 {
@@ -299,14 +301,17 @@ void ReshapeOutput(TensorData& output)
     output.TensorShape = newOutputShape;
 }
 
-void Conv2D(TensorData& y, const TensorData& input, const TensorData& filter,
+void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
             int dilationRow, int dilationCol, CudaDevice device)
 {
     const auto filterShape = filter.GetShape();
+    const auto inputShape = x.GetShape();
+    const auto yShape = y.GetShape();
     const auto yRows = y.GetShape().Rows();
     const auto yCols = y.GetShape().Cols();
     const unsigned int N = y.GetBatchSize(3);
+    const unsigned int yChannels = yShape.At(yShape.Dim() - 3);
 
     const auto inputMatrixRows = filterShape.At(filterShape.Dim() - 3) *
                                  filterShape.Rows() * filterShape.Cols();
@@ -316,15 +321,22 @@ void Conv2D(TensorData& y, const TensorData& input, const TensorData& filter,
     const Shape inputMatrixShape({ N, inputMatrixRows, inputMatrixCols });
     TensorUtil::TensorData inputMatrix(inputMatrixShape, Type::Dense,
                                        device);
-    TensorUtil::TensorData reshapedFilter = filter;
-    TensorUtil::TensorData yMatrix = y;
 
-    ReshapeFilter(reshapedFilter);
-    ReshapeOutput(yMatrix);
+    TensorUtil::TensorData filterCopy = filter;
+    TensorUtil::TensorData yCopy = y;
 
-    Im2Col(inputMatrix, filter, input, strideRow, strideCol, rowPadding,
+    const Shape newFilterShape(
+        { yChannels, filterShape.Size() / yChannels });
+    const Shape newYShape({ N, yChannels, yRows * yCols });
+
+    Im2Col(inputMatrix, filter, x, strideRow, strideCol, rowPadding,
            colPadding, dilationRow, dilationCol, 0);
 
-    Compute::Gemm(yMatrix, reshapedFilter, inputMatrix, yMatrix);
+    Reshape(filterCopy, newFilterShape);
+    Reshape(yCopy, newYShape);
+
+    Compute::Gemm(yCopy, filterCopy, inputMatrix, yCopy);
+
+    Reshape(yCopy, yShape);
 }
 } // namespace Sapphire::Comptue
