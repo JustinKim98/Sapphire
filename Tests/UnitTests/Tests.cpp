@@ -259,7 +259,7 @@ TEST_CASE("Convolution")
 
     SUBCASE("HostConv2DForward")
     {
-        HostConv2DForwardTest(true);
+        HostConv2DForwardTest(false);
     }
 
     SUBCASE("Conv2D")

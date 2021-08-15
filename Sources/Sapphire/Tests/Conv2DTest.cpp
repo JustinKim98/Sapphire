@@ -9,6 +9,7 @@
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <iostream>
+#include <random>
 
 #include "doctest.h"
 
@@ -344,19 +345,23 @@ void HostIm2ColTest(bool print)
 
 void HostConv2DForwardTest(bool print)
 {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(-10, 10);
+
     const int N = 2;
     const int numFilters = 5;
-    const int numInputChannels = 3;
-    const int InputRows = 6;
-    const int InputCols = 6;
+    const int numInputChannels = 1;
+    const int InputRows = 10;
+    const int InputCols = 18;
     const int filterRows = 2;
-    const int filterCols = 2;
-    const int rowPadding = 1;
-    const int colPadding = 1;
-    const int dilationRow = 1;
-    const int dilationCol = 2;
-    const int strideRow = 3;
-    const int strideCol = 2;
+    const int filterCols = 3;
+    const int rowPadding = 2;
+    const int colPadding = 2;
+    const int dilationRow = 2;
+    const int dilationCol = 1;
+    const int strideRow = 2;
+    const int strideCol = 3;
 
     const Shape inputShape({ N, numInputChannels, InputRows, InputCols });
     const Shape filterShape(
@@ -385,14 +390,14 @@ void HostConv2DForwardTest(bool print)
     int count = 0;
     for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
         for (unsigned int i = 0; i < x.Cols(); ++i)
-            x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] =
-                static_cast<float>((count++) % 9);
+            x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] = static_cast<
+                float>(distrib(gen));
 
     count = 0;
     for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
         for (unsigned int i = 0; i < filter.Cols(); ++i)
             filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
-                1.0f;
+                static_cast<float>(distrib(gen));
 
     Compute::Dense::Naive::Conv2D(y, x, filter, strideRow, strideCol,
                                   rowPadding, colPadding, dilationRow,
