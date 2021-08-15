@@ -387,13 +387,11 @@ void HostConv2DForwardTest(bool print)
     TensorUtil::TensorData y(yShape, Type::Dense, device);
     Compute::Initialize::Zeros(y);
 
-    int count = 0;
     for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
         for (unsigned int i = 0; i < x.Cols(); ++i)
             x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] = static_cast<
                 float>(distrib(gen));
 
-    count = 0;
     for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
         for (unsigned int i = 0; i < filter.Cols(); ++i)
             filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =

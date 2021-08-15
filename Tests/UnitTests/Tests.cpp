@@ -23,14 +23,14 @@
 #include <iostream>
 #include "doctest.h"
 
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
 #define ConvolutionTest
-// #define GraphTest
+#define GraphTest
 // #define SparseTest
 
 namespace Sapphire::Test
@@ -254,11 +254,13 @@ TEST_CASE("Convolution")
     const int testLoops = 3;
     SUBCASE("Im2ColHost")
     {
+        std::cout << "Im2Col && Col2Im" << std::endl;
         HostIm2ColTest(false);
     }
 
     SUBCASE("HostConv2DForward")
     {
+        std::cout << "Host Conv2D Forward" << std::endl;
         HostConv2DForwardTest(false);
     }
 
