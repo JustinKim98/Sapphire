@@ -13,4 +13,6 @@ void MaxPool2DTest(bool printForward, bool printBackward);
 void AvgPool2DTest(bool printForward, bool printBackward);
 
 void HostIm2ColTest(bool print);
+
+void HostConv2DForwardTest(bool print);
 }

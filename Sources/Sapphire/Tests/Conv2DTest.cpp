@@ -254,15 +254,15 @@ void HostIm2ColTest(bool print)
 {
     const int N = 1;
     const int numFilters = 2;
-    const int rowPadding = 0;
-    const int colPadding = 0;
-    const int dilationRow = 1;
-    const int dilationCol = 1;
+    const int rowPadding = 1;
+    const int colPadding = 1;
+    const int dilationRow = 2;
+    const int dilationCol = 2;
     const int strideRow = 1;
     const int strideCol = 1;
 
     const Shape inputShape({ N, 3, 3, 3 });
-    const Shape filterShape({ numFilters, 2, 2, 2 });
+    const Shape filterShape({ numFilters, 3, 2, 2 });
 
     const int outputRows =
         (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
@@ -279,28 +279,140 @@ void HostIm2ColTest(bool print)
                               static_cast<unsigned int>(outputCols) });
 
     const auto inputMatrixRows =
-        inputShape.At(inputShape.Dim() - 3) * inputShape.Rows() * inputShape.
+        filterShape.At(filterShape.Dim() - 3) * filterShape.Rows() * filterShape
+        .
         Cols();
     const auto inputMatrixCols =
         static_cast<unsigned int>(outputRows * outputCols);
 
-    CudaDevice device(0, "cuda0");
-
     const Shape inputMatrixShape({ N, inputMatrixRows, inputMatrixCols });
 
+    CudaDevice device(0, "cuda0");
     TensorUtil::TensorData inputData(inputShape, Type::Dense, device);
     TensorUtil::TensorData filterData(filterShape, Type::Dense, device);
     TensorUtil::TensorData inputMatrixData(inputMatrixShape, Type::Dense,
                                            device);
 
+    TensorUtil::TensorData
+        reConvertedInputData(inputShape, Type::Dense, device);
+
+    int count = 0;
+    for (std::size_t ii = 0; ii < inputData.GetBatchSize(1); ++ii)
+        for (unsigned int i = 0; i < inputData.Cols(); ++i)
+            inputData
+                .GetMutableDenseHost()[ii * inputData.PaddedHostColSize + i] =
+                static_cast<float>((count++) % 9);
+
     Compute::Dense::Naive::Im2Col(inputMatrixData, filterData, inputData,
-                                  strideCol, strideRow, rowPadding,
+                                  strideRow, strideCol, rowPadding,
                                   colPadding, dilationRow, dilationCol, 0);
 
-    for (unsigned i = 0; i < inputMatrixData.DenseTotalLengthHost; ++i)
-        if (print)
-            std::cout << "backwardData[" << i << "]: " << inputMatrixData.
-                GetDenseHost()[i]
-                << std::endl;
+    if (print)
+        for (std::size_t ii = 0; ii < inputMatrixData.GetBatchSize(1); ++ii)
+            for (unsigned int i = 0; i < inputMatrixData.Cols(); ++i)
+                std::cout << "Im2Col[" << ii * inputMatrixData.Cols() + i
+                    << "]: " << inputMatrixData.GetDenseHost()[
+                        ii * inputMatrixData.PaddedHostColSize + i]
+                    << std::endl;
+
+    Compute::Dense::Naive::Col2Im(inputData, inputMatrixData, filterData,
+                                  strideCol, strideRow, rowPadding, colPadding,
+                                  dilationRow, dilationCol);
+
+    const Shape newFilterShape(
+        { filterShape.Rows(), filterShape.Size() / filterShape.Rows() });
+    filterData.TensorShape = newFilterShape;
+
+    if (print)
+        for (std::size_t ii = 0; ii < inputData.GetBatchSize(1); ++ii)
+            for (unsigned int i = 0; i < inputData.Cols(); ++i)
+                std::cout << "Col2Im[" << ii * inputData.Cols() + i
+                    << "] = " <<
+                    inputData.GetMutableDenseHost()
+                    [ii * inputData.PaddedHostColSize + i]
+                    << std::endl;
+}
+
+void HostConv2DForwardTest(bool print)
+{
+    const int N = 1;
+    const int numFilters = 2;
+    const int rowPadding = 0;
+    const int colPadding = 0;
+    const int dilationRow = 1;
+    const int dilationCol = 1;
+    const int strideRow = 1;
+    const int strideCol = 1;
+
+    const Shape inputShape({ N, 3, 3, 3 });
+    const Shape filterShape({ numFilters, 3, 2, 2 });
+
+    const int yRows =
+        (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
+         dilationRow * (filterShape.Rows() - 1) - 1) /
+        strideRow +
+        1;
+    const int yCols =
+        (static_cast<int>(inputShape.Cols()) + 2 * colPadding -
+         dilationCol * (filterShape.Cols() - 1) - 1) /
+        strideCol +
+        1;
+
+    const Shape yShape({ 1, 2, static_cast<unsigned int>(yRows),
+                         static_cast<unsigned int>(yCols) });
+
+    CudaDevice device(0, "cuda0");
+    TensorUtil::TensorData x(inputShape, Type::Dense, device);
+    TensorUtil::TensorData filter(filterShape, Type::Dense, device);
+    TensorUtil::TensorData y(yShape, Type::Dense, device);
+    Compute::Initialize::Zeros(y);
+
+    int count = 0;
+    for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
+        for (unsigned int i = 0; i < x.Cols(); ++i)
+            x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] =
+                static_cast<float>((count++) % 9);
+
+    count = 0;
+    for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
+        for (unsigned int i = 0; i < filter.Cols(); ++i)
+            filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
+                1.0f;
+
+    Compute::Dense::Naive::Conv2D(y, x, filter, strideRow, strideCol,
+                                  rowPadding, colPadding, dilationRow,
+                                  dilationCol, device);
+    if (print)
+    {
+        std::cout << "Host" << std::endl;
+        for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
+            for (unsigned int i = 0; i < y.Cols(); ++i)
+                std::cout
+                    << "y[" << ii * y.Cols() + i << "] = "
+                    << y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]
+                    << std::endl;
+    }
+
+    x.ToCuda();
+    filter.ToCuda();
+    x.SetMode(DeviceType::Cuda);
+    filter.SetMode(DeviceType::Cuda);
+    y.SetMode(DeviceType::Cuda);
+
+    Compute::Conv2DForward(y, x, filter, strideRow, strideCol, dilationRow,
+                           dilationCol,
+                           rowPadding, colPadding);
+
+    y.ToHost();
+    if (print)
+    {
+        std::cout << "CUDA" << std::endl;
+        for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
+            for (unsigned int i = 0; i < y.Cols(); ++i)
+                std::cout
+                    << "y[" << ii * y.Cols() + i << "] = "
+                    << y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]
+                    << std::endl;
+    }
 }
 }

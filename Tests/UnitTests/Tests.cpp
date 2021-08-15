@@ -254,7 +254,12 @@ TEST_CASE("Convolution")
     const int testLoops = 3;
     SUBCASE("Im2ColHost")
     {
-        HostIm2ColTest(true);
+        HostIm2ColTest(false);
+    }
+
+    SUBCASE("HostConv2DForward")
+    {
+        HostConv2DForwardTest(true);
     }
 
     SUBCASE("Conv2D")
