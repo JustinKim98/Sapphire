@@ -31,7 +31,7 @@ public:
     Linear& operator=(const Linear& linear) = default;
     Linear& operator=(Linear&& linear) noexcept = default;
 
-    Tensor operator()(Tensor& input);
+    Tensor operator()(Tensor& xTensor);
 
 private:
     [[nodiscard]] int m_registerOutputTensor(

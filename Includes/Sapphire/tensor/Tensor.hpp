@@ -31,6 +31,11 @@ public:
     [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
+    void SetDescriptorKey(int key)
+    {
+        m_tensorDescKey = key;
+    }
+
     [[nodiscard]] std::unique_ptr<float[]> GetForwardDataCopy() const;
     [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
 

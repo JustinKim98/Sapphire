@@ -53,14 +53,13 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
     m_mutableDataMap["transposedWeight"] = std::move(transposedWeight);
 }
 
-//! TODO : Set mode to Host Or Cuda according to input state
-Tensor Linear::operator()(Tensor& input)
+Tensor Linear::operator()(Tensor& xTensor)
 {
-    auto mode = input.Mode();
+    auto mode = xTensor.Mode();
     auto& model = ModelManager::GetCurrentModel();
 
     auto& xDesc =
-        model.GetDescriptor(input.TensorDescriptorKey());
+        model.GetDescriptor(xTensor.TensorDescriptorKey());
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
 
@@ -80,7 +79,7 @@ Tensor Linear::operator()(Tensor& input)
     bias.SetMode(mode);
     transposedWeight.SetMode(mode);
 
-    //! Reshape the data to match the requirements
+    //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
 
     Compute::Initialize::Zeros(y);
@@ -91,7 +90,7 @@ Tensor Linear::operator()(Tensor& input)
     auto backPropWrapper =
         Util::SharedPtr<BackProp::LinearBackProp>::Make(
             dx, dy, weight, bias, x.CreateCopy(), m_optimizer,
-            xDesc.GetShape().At(0));
+            x.GetBatchSize(2));
     SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                 std::make_tuple(&yDesc));
     return Tensor(yKey);

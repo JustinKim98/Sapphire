@@ -36,8 +36,8 @@ void LinearForwardTest()
         CHECK(std::abs(201.0f - forwardDataPtr[i]) <
         std::numeric_limits<float>::epsilon());
 
-    Initialize::InitializeBackwardData(output,
-                                       std::make_unique<Initialize::Ones>());
+    InitializeBackwardData(output,
+                           std::make_unique<Initialize::Ones>());
 
     output.ToCuda();
     ModelManager::GetCurrentModel().BackProp(output);

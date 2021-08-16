@@ -56,7 +56,7 @@ inline void AddOperandHistory(
 
 //! Saves history for tensors used in the unit
 //! Adds OperandHistory for inputs
-//! Adds OutputHistory for outputs
+//! After adding all operand history, Adds all OutputHistory for outputs
 //! \tparam inputIdx : current index of the input parameter
 //! \tparam InputTs : packed parameter types for inputs
 //! \tparam OutputTs : packed parameters types for outputs

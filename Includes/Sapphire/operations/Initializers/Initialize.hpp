@@ -8,6 +8,7 @@
 
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/compute/Initialize.hpp>
+#include <Sapphire/Model.hpp>
 
 namespace Sapphire::Initialize
 {

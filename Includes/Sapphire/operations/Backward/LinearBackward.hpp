@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_LINEARBACKWARD_HPP
-#define SAPPHIRE_LINEARBACKWARD_HPP
+#ifndef SAPPHIRE_BACKPROP_LINEARBACKWARD_HPP
+#define SAPPHIRE_BACKPROP_LINEARBACKWARD_HPP
 
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
