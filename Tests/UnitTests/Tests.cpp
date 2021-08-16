@@ -23,14 +23,14 @@
 #include <iostream>
 #include "doctest.h"
 
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
 #define ConvolutionTest
-#define GraphTest
+// #define GraphTest
 // #define SparseTest
 
 namespace Sapphire::Test
@@ -127,7 +127,7 @@ TEST_CASE("Basics")
 
     SUBCASE("Inverse")
     {
-        std::cout << "Inverse"" Test" << std::endl;
+        std::cout << "Inverse Test" << std::endl;
         for (int i = 0; i < testLoops; ++i)
             TestWithOneArgumentStatic(false, 1.0f, Compute::Inverse);
         Util::ResourceManager::ClearAll();
@@ -258,10 +258,10 @@ TEST_CASE("Convolution")
         HostIm2ColTest(false);
     }
 
-    SUBCASE("HostConv2DForward")
+    SUBCASE("HostConv2D")
     {
-        std::cout << "Host Conv2D Forward" << std::endl;
-        HostConv2DForwardTest(false);
+        std::cout << "Host Conv2D" << std::endl;
+        HostConv2DTest(false);
     }
 
     SUBCASE("Conv2D")

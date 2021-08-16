@@ -184,6 +184,20 @@ void Shape::Shrink(unsigned int dim)
     }
 }
 
+unsigned int Shape::GetBatchSize(unsigned int requiredDim) const
+{
+    if (const auto dim = Dim(); dim > requiredDim)
+    {
+        unsigned int batchSize = 1;
+        for (unsigned int i = 0; i < dim - requiredDim; ++i)
+        {
+            batchSize *= At(i);
+        }
+        return batchSize;
+    }
+    return 1;
+}
+
 Shape Shape::GetTranspose() const
 {
     if (m_shapeVector.empty())

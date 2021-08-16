@@ -156,18 +156,9 @@ TensorData::~TensorData()
     m_freeCuda();
 }
 
-std::size_t TensorData::GetBatchSize(unsigned int requiredDim) const
+unsigned TensorData::GetBatchSize(unsigned int requiredDim) const
 {
-    if (const auto dim = TensorShape.Dim(); dim > requiredDim)
-    {
-        std::size_t batchSize = 1;
-        for (unsigned int i = 0; i < dim - requiredDim; ++i)
-        {
-            batchSize *= TensorShape.At(i);
-        }
-        return batchSize;
-    }
-    return 1;
+    return TensorShape.GetBatchSize(requiredDim);
 }
 
 TensorData TensorData::CreateCopy() const

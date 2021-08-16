@@ -85,6 +85,7 @@ Tensor Linear::operator()(Tensor& input)
 
     Compute::Initialize::Zeros(y);
     Compute::Transpose(transposedWeight, weight);
+    //! Bias is broadcasted internally
     Compute::Gemm(y, x, transposedWeight, bias);
 
     auto backPropWrapper =

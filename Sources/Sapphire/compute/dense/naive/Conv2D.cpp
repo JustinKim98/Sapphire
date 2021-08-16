@@ -6,6 +6,9 @@
 
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
+#include <Sapphire/compute/IndexingOps.hpp>
+
+#include "Sapphire/compute/Initialize.hpp"
 
 namespace Sapphire::Compute::Dense::Naive
 {
@@ -135,9 +138,6 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
     const auto numChannels = filterShape.At(filterShape.Dim() - 3);
     const auto inputMatrixShape = inputMatrix.GetShape();
 
-    const Shape newFilterShape(
-        { filterShape.Rows(), filterShape.Size() / filterShape.Rows() });
-
     int N = 1;
     for (unsigned int i = 0; i < inputShape.Dim() - 3; ++i)
         N *= static_cast<int>(inputShape.At(i));
@@ -235,70 +235,12 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
                                 inputColIdx >= 0 &&
                                 inputColIdx <
                                 static_cast<int>(inputShape.Cols()))
-                                *inputDataPtr = *inputMatrixDataPtr;
+                                *inputDataPtr += *inputMatrixDataPtr;
                         }
         }
     }
 }
 
-void Reshape(TensorData& tensorData, Shape newShape)
-{
-    const Shape tensorShape = tensorData.GetShape();
-
-    const auto padUnitSize = static_cast<unsigned long>(32 / sizeof(float));
-
-    const auto newPaddedColSize =
-        newShape.Cols() % padUnitSize == 0
-            ? newShape.Cols()
-            : newShape.Cols() / padUnitSize * padUnitSize + padUnitSize;
-
-    auto* tempData = new float[tensorShape.Size()];
-    for (std::size_t ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
-        for (std::size_t i = 0; i < tensorData.Cols(); ++i)
-        {
-            const auto data =
-                tensorData
-                .GetDenseHost()[ii * tensorData.PaddedHostColSize + i];
-            tempData[ii * tensorShape.Cols() + i] = data;
-        }
-
-    tensorData.PaddedHostColSize = newPaddedColSize;
-    tensorData.TensorShape = newShape;
-
-    for (std::size_t ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
-        for (std::size_t i = 0; i < tensorData.Cols(); ++i)
-        {
-            const auto data = tempData[ii * newShape.Cols() + i];
-            tensorData
-                .GetMutableDenseHost()[ii * tensorData.PaddedHostColSize + i] =
-                data;
-        }
-
-    delete[] tempData;
-}
-
-void ReshapeOutput(TensorData& output)
-{
-    const Shape outputShape = output.GetShape();
-    std::vector<unsigned> newShapeVector(outputShape.Dim() - 1);
-
-    for (unsigned i = 0; i < outputShape.Dim() - 1; ++i)
-        newShapeVector[i] = outputShape.At(i);
-
-    newShapeVector[newShapeVector.size() - 1] *= outputShape.Cols();
-    const auto newOutputShape = Shape(newShapeVector);
-
-    const auto padUnitSize = static_cast<unsigned long>(32 / sizeof(float));
-
-    const auto paddedColumnSize =
-        newOutputShape.Cols() % padUnitSize == 0
-            ? newOutputShape.Cols()
-            : newOutputShape.Cols() / padUnitSize * padUnitSize + padUnitSize;
-
-    output.PaddedHostColSize = paddedColumnSize;
-
-    output.TensorShape = newOutputShape;
-}
 
 void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
@@ -309,37 +251,77 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
     const auto yShape = y.GetShape();
     const auto yRows = y.GetShape().Rows();
     const auto yCols = y.GetShape().Cols();
-    const unsigned int N = y.GetBatchSize(3);
-    const unsigned int yChannels = yShape.At(yShape.Dim() - 3);
+    const auto N = y.GetBatchSize(3);
+    const auto yChannels = yShape.At(yShape.Dim() - 3);
 
-    const auto inputMatrixRows = filterShape.At(filterShape.Dim() - 3) *
-                                 filterShape.Rows() * filterShape.Cols();
-    const auto inputMatrixCols = static_cast<unsigned int>(yRows * yCols);
+    const auto rXRows = filterShape.At(filterShape.Dim() - 3) *
+                        filterShape.Rows() * filterShape.Cols();
+    const auto rXCols = static_cast<unsigned int>(yRows * yCols);
 
-    const Shape inputMatrixShape({ N, inputMatrixRows, inputMatrixCols });
-    TensorUtil::TensorData inputMatrix(inputMatrixShape, Type::Dense, device);
+    const Shape rXShape({ N, rXRows, rXCols });
+    const Shape rFilterShape({ yChannels, filterShape.Size() / yChannels });
+    const Shape rYShape({ N, yChannels, yRows * yCols });
 
-    TensorUtil::TensorData filterCopy = filter;
-    TensorUtil::TensorData yCopy = y;
+    TensorData rX(rXShape, Type::Dense, device);
+    TensorData rFilter = filter;
+    TensorData rY = y;
 
-    const Shape newFilterShape({ yChannels, filterShape.Size() / yChannels });
-    const Shape newYShape({ N, yChannels, yRows * yCols });
-
-    Im2Col(inputMatrix, filter, x, strideRow, strideCol, rowPadding, colPadding,
+    Im2Col(rX, filter, x, strideRow, strideCol, rowPadding, colPadding,
            dilationRow, dilationCol, 0);
+    Reshape(rFilter, rFilterShape);
+    Reshape(rY, rYShape);
 
-    Reshape(filterCopy, newFilterShape);
-    Reshape(yCopy, newYShape);
+    Gemm(rY, rFilter, rX, rY);
 
-    Compute::Gemm(yCopy, filterCopy, inputMatrix, yCopy);
-
-    Reshape(filterCopy, filterShape);
-    Reshape(yCopy, yShape);
+    Reshape(rFilter, filterShape);
+    Reshape(rY, yShape);
 }
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
-                    int strideRow, int strideCol, int rowPadding,
-                    int colPadding, int dilationRow, int dilationCol)
+                    const TensorData& x, const TensorData& filter,
+                    int strideRow,
+                    int strideCol, int rowPadding, int colPadding,
+                    int dilationRow, int dilationCol, CudaDevice device)
 {
+    const auto dXShape = dx.GetShape();
+    const auto dFilterShape = dFilter.GetShape();
+    const auto dYShape = dy.GetShape();
+    const auto dyRows = dy.Rows();
+    const auto dyCols = dy.Cols();
+    const auto N = dy.GetBatchSize(3);
+    const auto dyChannels = dYShape.At(dYShape.Dim() - 3);
+
+    const auto drXRows = dFilterShape.At(dFilterShape.Dim() - 3) *
+                         dFilterShape.Rows() * dFilterShape.Cols();
+    const auto drXCols = static_cast<unsigned int>(dyRows * dyCols);
+
+    const Shape rXShape({ N, drXRows, drXCols });
+    const Shape rFilterShape({ dyChannels, dFilterShape.Size() / dyChannels });
+    const Shape drYShape({ N, dyChannels, dyRows * dyCols });
+
+    TensorData rX(rXShape, Type::Dense, device);
+    TensorData rXT(rXShape.GetTranspose(), Type::Dense, device);
+    TensorData drX(rXShape, Type::Dense, device);
+    TensorData rFilter = filter;
+    TensorData rFilterT(rFilterShape.GetTranspose(), Type::Dense, device);
+    TensorData drFilter = dFilter;
+    TensorData drY = dy;
+
+    Im2Col(rX, filter, x, strideRow, strideCol, rowPadding, colPadding,
+           dilationRow, dilationCol, 0);
+    Reshape(rFilter, rFilterShape);
+    Reshape(drFilter, rFilterShape);
+    Reshape(drY, drYShape);
+
+    Transpose(rFilterT, rFilter);
+    Gemm(drX, rFilterT, drY, drX);
+    Transpose(rXT, rX);
+    Gemm(drFilter, drY, rXT, drFilter);
+
+    Reshape(rFilter, dFilterShape);
+    Reshape(drFilter, dFilterShape);
+    Reshape(drY, dYShape);
+    Col2Im(dx, drX, dFilter, strideCol, strideRow, rowPadding, colPadding,
+           dilationRow, dilationCol);
 }
 } // namespace Sapphire::Comptue

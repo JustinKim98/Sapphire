@@ -101,8 +101,8 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     const TensorData& x, const TensorData& filter,
-                    int strideRow, int strideCol, int dilationRow,
-                    int dilationCol, int rowPadding, int columnPadding)
+                    int strideRow, int strideCol, int rowPadding,
+                    int colPadding, int dilationRow, int dilationCol)
 {
     const auto device = dx.GetCudaDevice();
     if (dx.Mode() == DeviceType::Cuda)
@@ -126,7 +126,7 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
             dx.GetMutableDenseCuda(), filter.GetDenseCuda(),
             dFilter.GetMutableDenseCuda(),
             x.GetDenseCuda(), dy.GetDenseCuda(), xShape, filterShape, strideRow,
-            strideCol, dilationRow, dilationCol, rowPadding, columnPadding,
+            strideCol, dilationRow, dilationCol, rowPadding, colPadding,
             device.GetID());
     }
     else

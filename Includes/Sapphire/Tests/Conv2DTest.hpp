@@ -14,5 +14,7 @@ void AvgPool2DTest(bool printForward, bool printBackward);
 
 void HostIm2ColTest(bool print);
 
-void HostConv2DForwardTest(bool print);
+void HostConv2DTest(bool print);
+
+void HostConv2DBackwardTest(bool print);
 }

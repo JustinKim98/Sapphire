@@ -85,6 +85,8 @@ public:
     //! Shrinks dimension to given dim
     void Shrink(unsigned int dim);
 
+    [[nodiscard]] unsigned int GetBatchSize(unsigned requiredDim) const;
+
     Shape GetReverse() const;
 
     [[nodiscard]] Shape GetTranspose() const;

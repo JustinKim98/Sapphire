@@ -27,8 +27,8 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     const TensorData& x, const TensorData& filter,
-                    int strideRow, int strideCol, int dilationRow,
-                    int dilationCol, int rowPadding, int columnPadding);
+                    int strideRow, int strideCol, int rowPadding,
+                    int colPadding, int dilationRow, int dilationCol);
 
 void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
                        const TensorData& x,

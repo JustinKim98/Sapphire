@@ -61,7 +61,7 @@ public:
         return m_parentDescKey;
     }
 
-    [[nodiscard]] std::size_t GetBatchSize(unsigned int requiredDim) const;
+    [[nodiscard]] unsigned GetBatchSize(unsigned int requiredDim) const;
 
     SparseMatrix* SparseMatHost = nullptr;
     SparseMatrix* SparseMatCuda = nullptr;
