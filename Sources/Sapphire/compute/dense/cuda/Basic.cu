@@ -111,16 +111,17 @@ __host__ void Dot(unsigned int totalSize, float* y, const float* a,
     const auto firstLaunchSize = blockDim * MAX_THREAD_DIM_X;
 
     if (firstLaunchSize > 0)
-        DotKernel<<<blockDim, threadDim>>>(
-            y, a, b, 0, firstLaunchSize, totalSize, inputStride,
-            broadcastInputA, broadcastInputB);
+        DotKernel<<<blockDim, threadDim>>>(y, a, b, 0, firstLaunchSize,
+                                           totalSize, inputStride,
+                                           broadcastInputA, broadcastInputB);
 
     if (totalSize > firstLaunchSize)
     {
         const unsigned int offset = firstLaunchSize;
+
         DotKernel<<<1, totalSize - firstLaunchSize>>>(
-            y, a, b, offset, totalSize - firstLaunchSize,
-            totalSize, inputStride, broadcastInputA, broadcastInputB);
+            y, a, b, offset, totalSize - firstLaunchSize, totalSize,
+            inputStride, broadcastInputA, broadcastInputB);
     }
 }
 
@@ -225,5 +226,4 @@ __host__ void Mean(float* y, const float* x, unsigned int totalSize,
             outputOffset, inputOffset, totalSize, unitSize);
     }
 }
-
 } // namespace Sapphire::Compute::Cuda::Dense

@@ -9,6 +9,7 @@
 
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -23,9 +24,8 @@ class TensorDescriptor
 {
 public:
     TensorDescriptor() = default;
-
-    TensorDescriptor(const Shape& shape, Type type, const Device& device,
-                     unsigned int batchSize, int key);
+    TensorDescriptor(const Shape& shape, Type type, const CudaDevice& device,
+                     int key);
 
     ~TensorDescriptor() = default;
 
@@ -34,16 +34,34 @@ public:
     TensorDescriptor& operator=(const TensorDescriptor& tensorData) = delete;
     TensorDescriptor& operator=(TensorDescriptor&& tensorDesc) noexcept;
 
-    //! TODO : Consider making these private
-    TensorData ForwardData;
-    TensorData BackwardData;
+    //! Gets shallow copy of the forward TensorData
+    [[nodiscard]] TensorData GetForwardData() const;
+    //! Gets shallow copy of the backward TensorData
+    [[nodiscard]] TensorData GetBackwardData() const;
+    //! Gets batch size of internal TensorData
+    [[nodiscard]] unsigned int GetBatchSize() const;
+
+    [[nodiscard]] Shape GetShape() const;
+    [[nodiscard]] CudaDevice GetDevice() const;
+    [[nodiscard]] Type GetType() const;
+
+    void SetShape(Shape shape);
+
+    //! Moves internal TensorData to cuda
+    void ToCuda();
+    //! Moves internal TensorData to host
+    void ToHost();
+
+    DeviceType Mode() const;
+
+    void SetMode(DeviceType deviceType);
 
     //! Add unit m_key if unit was used as output or flow-through type
     //! \param wrapper : BackPropWrapper for starting back propagation on this tensor
-    //! \param saveOutput : Forward output of this tensorDescriptor is preserved
+    //! \param location : Forward output of this tensorDescriptor is preserved
     //! if true
-    void AppendOutputHistory(std::unique_ptr<BackProp::BackPropWrapper> wrapper,
-                             bool saveOutput);
+    void AppendOutputHistory(Util::SharedPtr<BackProp::BackPropWrapper> wrapper,
+                             int location);
 
     //! Add unit key if unit was used as operand only
     //! \param tensorDescKey : m_key of the tensor that this tensor should receive
@@ -53,13 +71,13 @@ public:
     //! Removes the gradient input key
     //! The last history must not be output
     //! \param tensorDescKey : key of the operand target tensor to remove
-    void RemoveGradientInput(int tensorDescKey);
+    void RemoveOperand(int tensorDescKey);
 
     //! Removes last history from the history list if it is operand history and history list is not empty
     void PopIfOperandHistory();
 
     //! Removes the last history if not empty
-    void PopHistory();
+    void PopOutputHistory();
 
     //! Returns whether this tensorDescriptor is trainable
     //! \return : True if gradient is required false otherwise
@@ -72,9 +90,17 @@ public:
     //! \return : true if ready false otherwise
     [[nodiscard]] bool IsBackPropReady() const;
 
-    const std::unique_ptr<BackProp::BackPropWrapper>& GetBackPropWrapper()
+    std::pair<Util::SharedPtr<BackProp::BackPropWrapper>, int>
+    GetBackPropWrapperFromLastHistory()
     {
-        return m_history.back().BackPropWrapper;
+        const auto& history = m_history.back();
+        return std::make_pair(Util::SharedPtr(
+                                  history.BackPropWrapper), history.Location);
+    }
+
+    bool HasHistory()
+    {
+        return !m_history.empty();
     }
 
     [[nodiscard]] int GetKey() const
@@ -82,51 +108,92 @@ public:
         return m_key;
     }
 
-    [[nodiscard]] unsigned int GetBatchSize() const
-    {
-        return m_batchSize;
-    }
-
-    // todo : Create sendTo, GetDevice, GetType
-
 private:
+    TensorData m_forwardData;
+    TensorData m_backwardData;
+
     //! This describes history of the tensorData
     //! As tensorData is used in unit function as an operand or input/output.
     //! It is stored using this struct
     struct History
     {
-        explicit History(std::unique_ptr<BackProp::BackPropWrapper> wrapper)
+        //! This constructor creates output history, where tensor was newly created
+        //! This kind of history will invoke backPropWrapper
+        explicit History(Util::SharedPtr<BackProp::BackPropWrapper> wrapper,
+                         int location)
             : IsOutput(true),
+              Location(location),
               BackPropWrapper(std::move(wrapper))
         {
         }
 
+        //! This constructor creates operand history, where tensor gave its values to other units
+        //! to be used in other operations in forward pass
+        //! Tensor will have to receive gradients from all operations it gave out values in the backward pass
         History()
             : IsOutput(false)
         {
         }
 
-        History(History&& history) noexcept = default;
+        ~History() = default;
+
+        History(History&& history) noexcept
+            : IsOutput(history.IsOutput),
+              Location(history.Location),
+              GradientInputTensorKeyList(
+                  std::move(history.GradientInputTensorKeyList))
+        {
+            if (IsOutput)
+                BackPropWrapper = std::move(history.BackPropWrapper);
+        }
+
         History(const History& history) = delete;
-        History& operator=(History&& history) noexcept = default;
+
+        History& operator=(History&& history) noexcept
+        {
+            IsOutput = history.IsOutput;
+            Location = history.Location;
+            if (IsOutput)
+                BackPropWrapper = history.BackPropWrapper;
+            GradientInputTensorKeyList =
+                std::move(history.GradientInputTensorKeyList);
+            return *this;
+        }
+
         History& operator=(const History& history) = delete;
 
         //! Add tensor descriptor key to receive the gradient input
-        void AddGradientInputTensorDescKey(int tensorDescKey)
+        void AddOperand(int tensorDescKey)
         {
             GradientInputTensorKeyList.emplace_back(tensorDescKey);
         }
 
-        bool IsOutput;
+        void RemoveOperand(int tensorDescKey)
+        {
+            const auto it = std::find(
+                GradientInputTensorKeyList.begin(),
+                GradientInputTensorKeyList.end(), tensorDescKey);
 
-        std::unique_ptr<BackProp::BackPropWrapper> BackPropWrapper;
+            if (it == GradientInputTensorKeyList.end())
+                throw std::runtime_error(
+                    "History::RemoveOperand - given "
+                    "tensorDescKey was not found in the operand history");
+
+            GradientInputTensorKeyList.erase(it);
+        }
+
+        bool IsOutput;
+        //! Location specifies which index that tensor was created
+        int Location = 0;
+
+        Util::SharedPtr<BackProp::BackPropWrapper> BackPropWrapper;
         //! List of the units that was as operand
         std::list<int> GradientInputTensorKeyList;
     };
 
     //! m_key to identify tensor data
     int m_key = -1;
-    unsigned int m_batchSize;
+    unsigned int m_batchSize = 0;
     bool m_trainable = true;
 
     std::list<History> m_history;

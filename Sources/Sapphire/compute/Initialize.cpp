@@ -12,98 +12,110 @@
 
 namespace Sapphire::Compute::Initialize
 {
-void Normal(const TensorUtil::TensorData& data, float mean, float sd)
+void Normal(TensorUtil::TensorData& data, float mean, float sd)
 {
-    const auto device = data.GetDevice();
-    if (device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Normal(data.DenseMatCuda, mean, sd,
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Normal(data.GetMutableDenseCuda(), mean, sd,
                             data.DenseTotalLengthCuda,
                             static_cast<int>(std::clock()));
     }
     else
     {
-        Dense::Naive::Normal(data.DenseMatHost, mean, sd, data.TensorShape,
-                      data.PaddedHostColSize, data.BatchSize);
+        Dense::Naive::Normal(data.GetMutableDenseHost(), mean, sd,
+                             data.TensorShape,
+                             data.PaddedHostColSize);
     }
 }
 
-void Uniform(const TensorUtil::TensorData& data, float min, float max)
+void Uniform(TensorUtil::TensorData& data, float min, float max)
 {
-    const auto device = data.GetDevice();
-    if (device.Type() == DeviceType::CUDA)
+    if (const auto device = data.GetCudaDevice();
+        data.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Uniform(data.DenseMatCuda, min, max,
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Uniform(data.GetMutableDenseCuda(), min, max,
                              data.DenseTotalLengthCuda,
                              static_cast<int>(std::clock()));
     }
     else
     {
-        Dense::Naive::Uniform(data.DenseMatHost, min, max, data.TensorShape,
-                       data.PaddedHostColSize, data.BatchSize);
+        Dense::Naive::Uniform(data.GetMutableDenseHost(), min, max,
+                              data.TensorShape,
+                              data.PaddedHostColSize);
     }
 }
 
-void Ones(const TensorUtil::TensorData& data)
+void Ones(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetDevice();
-    if (device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Scalar(data.DenseMatCuda, 1.0f, data.DenseTotalLengthCuda);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Scalar(data.GetMutableDenseCuda(), 1.0f,
+                            data.DenseTotalLengthCuda);
     }
     else
     {
-        Dense::Naive::Scalar(data.DenseMatHost, 1.0f, data.TensorShape,
-                      data.PaddedHostColSize, data.BatchSize);
+        Dense::Naive::Scalar(data.GetMutableDenseHost(), 1.0f, data.TensorShape,
+                             data.PaddedHostColSize);
     }
 }
 
-void Zeros(const TensorUtil::TensorData& data)
+void Zeros(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetDevice();
-    if (device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Scalar(data.DenseMatCuda, 0.0f, data.DenseTotalLengthCuda);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Scalar(data.GetMutableDenseCuda(), 0.0f,
+                            data.DenseTotalLengthCuda);
     }
     else
     {
-        Dense::Naive::Scalar(data.DenseMatHost, 0.0f, data.TensorShape,
-                      data.PaddedHostColSize, data.BatchSize);
+        Dense::Naive::Scalar(data.GetMutableDenseHost(), 0.0f, data.TensorShape,
+                             data.PaddedHostColSize);
     }
 }
 
-void HeNormal(const TensorUtil::TensorData& data, int fanIn)
+void HeNormal(TensorUtil::TensorData& data, int fanIn)
 {
-    const auto device = data.GetDevice();
-    if (device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Normal(
-            data.DenseMatCuda, 0.0, 2.0f / std::sqrt(static_cast<float>(fanIn)),
+            data.GetMutableDenseCuda(), 0.0,
+            2.0f / std::sqrt(static_cast<float>(fanIn)),
             data.DenseTotalLengthCuda, static_cast<int>(std::clock()));
     }
     else
     {
-        Dense::Naive::Normal(data.DenseMatHost, 0.0,
-                      2.0f / std::sqrt(static_cast<float>(fanIn)),
-                      data.TensorShape, data.PaddedHostColSize, data.BatchSize);
+        Dense::Naive::Normal(data.GetMutableDenseHost(), 0.0,
+                             2.0f / std::sqrt(static_cast<float>(fanIn)),
+                             data.TensorShape, data.PaddedHostColSize);
     }
 }
 
-void Xavier(const TensorUtil::TensorData& data, int fanIn, int fanOut)
+void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
 {
-    const auto device = data.GetDevice();
-    if (device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Normal(
-            data.DenseMatCuda, 0.0,
+            data.GetMutableDenseCuda(), 0.0,
             1.0f / std::sqrt(static_cast<float>(fanIn + fanOut)),
             data.DenseTotalLengthCuda, static_cast<int>(std::clock()));
     }
     else
     {
-        Dense::Naive::Normal(data.DenseMatHost, 0.0,
-                      1.0f / std::sqrt(static_cast<float>(fanIn + fanOut)),
-                      data.TensorShape, data.PaddedHostColSize, data.BatchSize);
+        Dense::Naive::Normal(data.GetMutableDenseHost(), 0.0,
+                             1.0f / std::sqrt(
+                                 static_cast<float>(fanIn + fanOut)),
+                             data.TensorShape, data.PaddedHostColSize);
     }
 }
-}  // namespace Sapphire::Compute::Initialize
+} // namespace Sapphire::Compute::Initialize

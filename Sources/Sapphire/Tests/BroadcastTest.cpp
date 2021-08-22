@@ -5,253 +5,216 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/BroadcastTest.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/tensor/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/Device.hpp>
+#include <Sapphire/util/CudaDevice.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
-#include <atomic>
-#include <cmath>
+#include <Sapphire/Tests/TestUtil.hpp>
 #include <iostream>
 #include <random>
-#include "doctest.h"
 
 namespace Sapphire::Test
 {
-void BroadcastWithOneDimension()
+void BroadcastWithOneDimension(bool print)
 {
-    for (int j = 0; j < 1; j++)
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distrib(1, 10);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 10);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 3 + 1;
+    const unsigned int M = distrib(gen);
+    const unsigned int N = distrib(gen);
+    const unsigned int K = distrib(gen);
+    const unsigned int batchSize = distrib(gen) % 3 + 1;
 
-        const Shape shapeA({ 1, M, K });
-        const Shape shapeB({ M, K, N });
-        const Shape shapeC({ 1, M, N });
-        const Shape shapeOut({ M, M, N });
+    //! Set shape so they can be broadcasted
+    const Shape shapeA({ batchSize, 1, M, K });
+    const Shape shapeB({ batchSize, M, K, N });
+    const Shape shapeC({ batchSize, 1, M, N });
+    const Shape shapeOut({ batchSize, M, M, N });
 
-        std::cout << "M : " << M << " N: " << N << " K: " << K
-            << " batchSize : " << batchSize << std::endl;
+    std::cout << "M : " << M << " N: " << N << " K: " << K
+        << " batchSize : " << batchSize << std::endl;
+    const CudaDevice cuda(0, "device0");
 
-        const Device cuda(0, "device0");
-        const Device host("host");
+    //! Initialize tensors with cuda mode
+    TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
+    TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
+    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
+    TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
+    //! Initialize input tensors with normal distribution and output tensors as zeros
+    Compute::Initialize::Normal(A, 10, 5);
+    Compute::Initialize::Normal(B, 10, 5);
+    Compute::Initialize::Normal(C, 10, 5);
+    Compute::Initialize::Zeros(C);
+    Compute::Initialize::Zeros(Out);
 
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+    Compute::Gemm(Out, A, B, C);
 
-        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
+    //! Set temporary buffer and copy the result
+    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
 
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+    //! Initialize output with zeros
+    Compute::Initialize::Zeros(Out);
 
-        Compute::Initialize::Normal(A, 0, 5);
-        Compute::Initialize::Normal(B, 0, 5);
-        Compute::Initialize::Normal(C, 0, 5);
-        Compute::Initialize::Zeros(C);
-        Compute::Initialize::Zeros(Out);
+    //! Send data to cuda
+    A.ToCuda();
+    B.ToCuda();
+    C.ToCuda();
+    Out.ToCuda();
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    C.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
 
-        Compute::Gemm(Out, A, B, C);
+    //! Perform Gemm on cuda
+    Compute::Gemm(Out, A, B, C);
 
-        float* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    //! Send output data to host
+    Out.ToHost();
+    Out.SetMode(DeviceType::Host);
 
-#pragma omp parallel for default(shared) schedule(static)
-        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
-        {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
-        }
+    //! Check for non zero equality
+    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
+                          Out.DenseTotalLengthHost, print, 1.5f);
 
-        Compute::Initialize::Zeros(Out);
-
-        A.SendTo(cuda);
-        B.SendTo(cuda);
-        C.SendTo(cuda);
-        Out.SendTo(cuda);
-
-        Compute::Gemm(Out, A, B, C);
-
-        Out.SendTo(host);
-
-        std::atomic largestError = 0.0f;
-
-        //#pragma omp parallel for default(shared) schedule(static)
-        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
-        {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
-            if (largestError < error)
-                largestError = error;
-
-            CHECK(error < 1.5f);
-        }
-
-        std::cout << "Largest error : " << largestError << std::endl;
-        delete[] cpuGemmResult;
-    }
-
-    Util::ResourceManager::ClearAll();
+    delete[] cpuGemmResult;
 }
 
-void BroadcastWithMissingDimension()
+void BroadcastWithMissingDimension(bool print)
 {
-    for (int j = 0; j < 1; j++)
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with
-        std::uniform_int_distribution<> distrib(1, 16);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 10);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 3 + 1;
+    const unsigned int M = distrib(gen);
+    const unsigned int N = distrib(gen);
+    const unsigned int K = distrib(gen);
 
-        const Shape shapeA({ M, K });
-        const Shape shapeB({ M, K, N });
-        const Shape shapeC({ M, N });
-        const Shape shapeOut({ M, M, N });
+    //! Set shape so they can be broadcasted
+    const Shape shapeA({ M, K });
+    const Shape shapeB({ M, K, N });
+    const Shape shapeC({ M, N });
+    const Shape shapeOut({ M, M, N });
 
-        std::cout << "M : " << M << " N: " << N << " K: " << K
-            << " batchSize : " << batchSize << std::endl;
+    std::cout << "M : " << M << " N: " << N << " K: " << K << std::endl;
+    const CudaDevice cuda(0, "device0");
 
-        const Device cuda(0, "device0");
-        const Device host("host");
+    //! Initialize tensors with cuda mode
+    TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
+    TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
+    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
+    TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
+    //! Initialize input tensors with normal distribution and output tensors as
+    //! zeros
+    Compute::Initialize::Normal(A, 10, 5);
+    Compute::Initialize::Normal(B, 10, 5);
+    Compute::Initialize::Normal(C, 10, 5);
+    Compute::Initialize::Zeros(C);
+    Compute::Initialize::Zeros(Out);
 
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+    //! Perform Gemm on host
+    Compute::Gemm(Out, A, B, C);
 
-        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
+    //! Set temporary buffer and copy the result
+    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
+    //! Initialize output with zeros
+    Compute::Initialize::Zeros(Out);
 
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+    //! Send data to cuda
+    A.ToCuda();
+    B.ToCuda();
+    C.ToCuda();
+    Out.ToCuda();
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    C.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
+    //! Perform Gemm on cuda
+    Compute::Gemm(Out, A, B, C);
 
-        Compute::Initialize::Normal(A, 0, 5);
-        Compute::Initialize::Normal(B, 0, 5);
-        Compute::Initialize::Normal(C, 0, 5);
-        Compute::Initialize::Zeros(C);
-        Compute::Initialize::Zeros(Out);
+    //! Send output data to host
+    Out.ToHost();
+    Out.SetMode(DeviceType::Host);
 
-        Compute::Gemm(Out, A, B, C);
+    //! Check for non zero equality
+    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
+                          Out.DenseTotalLengthHost, print, 1.5f);
 
-        auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-
-#pragma omp parallel for default(shared) schedule(static)
-        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
-        {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
-        }
-
-        Compute::Initialize::Zeros(Out);
-
-        A.SendTo(cuda);
-        B.SendTo(cuda);
-        C.SendTo(cuda);
-        Out.SendTo(cuda);
-
-        Compute::Gemm(Out, A, B, C);
-
-        Out.SendTo(host);
-
-        std::atomic<float> largestError = 0.0f;
-
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
-        {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
-            if (largestError < error)
-                largestError = error;
-
-            //            std::cout << "cpu : " << cpuGemmResult[i]
-            //                      << " cuda : " << Out.DenseMatHost[i] <<
-            //                      std::endl;
-
-            CHECK(error < 1.5f);
-        }
-
-        std::cout << "Largest error : " << largestError << std::endl;
-        delete[] cpuGemmResult;
-    }
-
-    Util::ResourceManager::ClearAll();
+    delete[] cpuGemmResult;
 }
 
-void BroadcastMixed()
+void BroadcastMixed(bool print)
 {
-    for (int j = 0; j < 1; j++)
-    {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distrib(1, 10);
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(1, 10);
 
-        const unsigned int M = distrib(gen);
-        const unsigned int N = distrib(gen);
-        const unsigned int K = distrib(gen);
-        const auto batchSize = distrib(gen) % 3 + 1;
+    const unsigned int M = distrib(gen);
+    const unsigned int N = distrib(gen);
+    const unsigned int K = distrib(gen);
 
-        const Shape shapeA({ N, 1, M, K });
-        const Shape shapeB({ M, K, N });
-        const Shape shapeC({ 1, 1, M, N });
-        const Shape shapeOut({ N, M, M, N });
+    //! Set shape so they can be broadcasted
+    const Shape shapeA({ M, K });
+    const Shape shapeB({ N, M, K, N });
+    const Shape shapeC({ N, 1, M, N });
+    const Shape shapeOut({ M, K, 1, 1, M, M, N });
 
-        std::cout << "M : " << M << " N: " << N << " K: " << K
-            << " batchSize : " << batchSize << std::endl;
+    std::cout << "M : " << M << " N: " << N << " K: " << K << std::endl;
+    const CudaDevice cuda(0, "device0");
 
-        const Device cuda(0, "device0");
-        const Device host("host");
+    //! Initialize tensors with cuda mode
+    TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
+    TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
+    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
+    TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
-        TensorUtil::TensorData A(shapeA, Type::Dense, host, batchSize);
+    //! Initialize input tensors with normal distribution and output tensors
+    //! as zeros
+    Compute::Initialize::Normal(A, 10, 5);
+    Compute::Initialize::Normal(B, 10, 5);
+    Compute::Initialize::Normal(C, 10, 5);
+    Compute::Initialize::Zeros(C);
+    Compute::Initialize::Zeros(Out);
 
-        TensorUtil::TensorData B(shapeB, Type::Dense, host, batchSize);
+    //! Perform Gemm on host
+    Compute::Gemm(Out, A, B, C);
 
-        TensorUtil::TensorData C(shapeC, Type::Dense, host, batchSize);
+    //! Set temporary buffer and copy the result
+    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
+                Out.DenseTotalLengthHost * sizeof(float));
+    //! Initialize output with zeros
+    Compute::Initialize::Zeros(Out);
 
-        TensorUtil::TensorData Out(shapeOut, Type::Dense, host, batchSize);
+    //! Send data to cuda
+    A.ToCuda();
+    B.ToCuda();
+    C.ToCuda();
+    Out.ToCuda();
+    A.SetMode(DeviceType::Cuda);
+    B.SetMode(DeviceType::Cuda);
+    C.SetMode(DeviceType::Cuda);
+    Out.SetMode(DeviceType::Cuda);
 
-        Compute::Initialize::Normal(A, 0, 5);
-        Compute::Initialize::Normal(B, 0, 5);
-        Compute::Initialize::Normal(C, 0, 5);
-        Compute::Initialize::Zeros(C);
+    //! Perform Gemm on cuda
+    Compute::Gemm(Out, A, B, C);
 
-        Compute::Gemm(Out, A, B, C);
+    //! Send output data to host
+    Out.ToHost();
+    Out.SetMode(DeviceType::Host);
 
-        auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    //! Check for non zero equality
+    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
+                          Out.DenseTotalLengthHost, print, 1.5f);
 
-#pragma omp parallel for default(shared) schedule(static)
-        for (long i = 0; i < static_cast<long>(Out.DenseTotalLengthHost); ++i)
-        {
-            cpuGemmResult[i] = Out.DenseMatHost[i];
-        }
-
-        Compute::Initialize::Zeros(Out);
-
-        A.SendTo(cuda);
-        B.SendTo(cuda);
-        C.SendTo(cuda);
-        Out.SendTo(cuda);
-
-        Compute::Gemm(Out, A, B, C);
-
-        Out.SendTo(host);
-
-        std::atomic<float> largestError = 0.0f;
-
-        //#pragma omp parallel for default(shared) schedule(static)
-        for (size_t i = 0; i < Out.DenseTotalLengthHost; ++i)
-        {
-            auto error = std::abs(cpuGemmResult[i] - Out.DenseMatHost[i]);
-            if (largestError < error)
-                largestError = error;
-
-            CHECK(error < 1.5f);
-        }
-
-        std::cout << "Largest error : " << largestError << std::endl;
-        delete[] cpuGemmResult;
-    }
-
-    Util::ResourceManager::ClearAll();
+    delete[] cpuGemmResult;
 }
 } // namespace Sapphire::Test

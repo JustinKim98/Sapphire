@@ -9,8 +9,10 @@
 
 namespace Sapphire::Compute::Dense::Naive
 {
-void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
-               float* C, unsigned int M, unsigned int N, unsigned int paddedN,
+void NaiveGemm(unsigned int paddedSizeOut, float* out, const float* A,
+               const float* B,
+               const float* C, unsigned int M, unsigned int N,
+               unsigned int paddedN,
                unsigned int K, unsigned int paddedK)
 {
     const auto strideA = M * paddedK;
@@ -18,9 +20,6 @@ void NaiveGemm(unsigned int paddedSizeOut, float* out, float* A, float* B,
     const auto strideC = M * paddedN;
     const auto strideOut = M * paddedN;
 
-#pragma omp parallel for default(none) schedule(static)            \
-    shared(paddedSizeOut, strideOut, M, N, paddedN, K, paddedK, A, B, C, out, \
-           strideA, strideB, strideC)
     for (long chunkIdx = 0; chunkIdx < static_cast<long>(
                                 paddedSizeOut / strideOut); ++chunkIdx)
         for (size_t mIdx = 0; mIdx < M; ++mIdx)

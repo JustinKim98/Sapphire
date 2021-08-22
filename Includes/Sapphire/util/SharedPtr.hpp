@@ -4,19 +4,23 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_SHAREDPTR_HPP
-#define Sapphire_SHAREDPTR_HPP
+#ifndef SAPPHIRE_UTIL_SHARED_PTR_HPP
+#define SAPPHIRE_UTIL_SHARED_PTR_HPP
 
 #include <Sapphire/util/SharedPtrDecl.hpp>
+#include <Sapphire/util/SpinLock.hpp>
 
 namespace Sapphire::Util
 {
+//! We put locks around delete, construct and copy, move operators to prevent them overlap each other
+
 template <typename T>
 void SharedPtr<T>::m_delete() const
 {
     if (m_sharedObjectInfoPtr)
     {
-        if (m_sharedObjectInfoPtr->RefCount.load(std::memory_order_acquire) ==
+        m_sharedObjectInfoPtr->lock.Lock();
+        if (m_sharedObjectInfoPtr->RefCount.load(std::memory_order_relaxed) ==
             1)
         {
             delete m_sharedObjectInfoPtr;
@@ -25,82 +29,85 @@ void SharedPtr<T>::m_delete() const
         else
         {
             m_sharedObjectInfoPtr->RefCount.fetch_sub(
-                1, std::memory_order_release);
+                1, std::memory_order_relaxed);
+            m_sharedObjectInfoPtr->lock.Release();
         }
     }
 }
 
 template <typename T>
 template <typename U>
-SharedPtr<T>::SharedPtr(U* objectPtr, SharedObjectInfo* informationPtr)
-    : m_id(0), m_objectPtr(objectPtr), m_sharedObjectInfoPtr(informationPtr)
+SharedPtr<T>::SharedPtr(U* objectPtr,
+                        SharedObjectInfo* informationPtr)
+    : m_id(0),
+      m_objectPtr(objectPtr),
+      m_sharedObjectInfoPtr(informationPtr)
 {
     static_assert(std::is_same<std::decay_t<T>, std::decay_t<U>>::value ||
                   std::is_base_of<std::decay_t<T>, std::decay_t<U>>::value);
-    ;
 }
 
 template <typename T>
 template <typename U>
-SharedPtr<T>::SharedPtr(const SharedPtr<U>& sharedPtr)
-    : m_objectPtr(sharedPtr.m_objectPtr),
-      m_sharedObjectInfoPtr(sharedPtr.m_sharedObjectInfoPtr)
+SharedPtr<T>::SharedPtr(
+    const SharedPtr<U>& sharedPtr)
 {
     static_assert(std::is_same<std::decay_t<T>, std::decay_t<U>>::value ||
                   std::is_base_of<std::decay_t<T>, std::decay_t<U>>::value);
 
-    if (sharedPtr.m_sharedObjectInfoPtr)
-    {
-        int oldRefCount = sharedPtr.m_sharedObjectInfoPtr->RefCount.load(
-            std::memory_order_relaxed);
-        while (!sharedPtr.m_sharedObjectInfoPtr->RefCount.compare_exchange_weak(
-            oldRefCount, oldRefCount + 1, std::memory_order_release,
-            std::memory_order_relaxed))
-            ;
-    }
+    sharedPtr.m_sharedObjectInfoPtr->lock.Lock();
+    sharedPtr.m_sharedObjectInfoPtr->RefCount.fetch_add(
+        1, std::memory_order_relaxed);
+    m_objectPtr = sharedPtr.m_objectPtr;
+    m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    sharedPtr.m_sharedObjectInfoPtr->lock.Release();
 }
 
 template <typename T>
 SharedPtr<T>::SharedPtr(const SharedPtr<T>& sharedPtr)
 {
-    if (sharedPtr.m_sharedObjectInfoPtr)
-    {
-        int oldRefCount = sharedPtr.m_sharedObjectInfoPtr->RefCount.load(
-            std::memory_order_relaxed);
-        while (!sharedPtr.m_sharedObjectInfoPtr->RefCount.compare_exchange_weak(
-            oldRefCount, oldRefCount + 1, std::memory_order_release,
-            std::memory_order_relaxed))
-            ;
-    }
+    sharedPtr.m_sharedObjectInfoPtr->lock.Lock();
+    sharedPtr.m_sharedObjectInfoPtr->RefCount.fetch_add(
+        1, std::memory_order_relaxed);
     m_objectPtr = sharedPtr.m_objectPtr;
     m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    sharedPtr.m_sharedObjectInfoPtr->lock.Release();
 }
 
 template <typename T>
 template <typename U>
-SharedPtr<T>::SharedPtr(SharedPtr<U>&& sharedPtr) noexcept
-    : m_objectPtr(sharedPtr.m_objectPtr),
-      m_sharedObjectInfoPtr(sharedPtr.m_sharedObjectInfoPtr)
+SharedPtr<T>::SharedPtr(
+    SharedPtr<U>&& sharedPtr) noexcept
 {
     static_assert(std::is_same<std::decay_t<T>, std::decay_t<U>>::value ||
                   std::is_base_of<std::decay_t<T>, std::decay_t<U>>::value);
 
-    sharedPtr.m_objectPtr = nullptr;
-    sharedPtr.m_sharedObjectInfoPtr = nullptr;
-}
-
-template <typename T>
-SharedPtr<T>::SharedPtr(SharedPtr<T>&& sharedPtr) noexcept
-{
+    auto* objectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    objectInfoPtr->lock.Lock();
     m_objectPtr = sharedPtr.m_objectPtr;
     m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
     sharedPtr.m_objectPtr = nullptr;
     sharedPtr.m_sharedObjectInfoPtr = nullptr;
+    objectInfoPtr->lock.Release();
+}
+
+template <typename T>
+SharedPtr<T>::SharedPtr(
+    SharedPtr<T>&& sharedPtr) noexcept
+{
+    auto* objectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    objectInfoPtr->lock.Lock();
+    m_objectPtr = sharedPtr.m_objectPtr;
+    m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    sharedPtr.m_objectPtr = nullptr;
+    sharedPtr.m_sharedObjectInfoPtr = nullptr;
+    objectInfoPtr->lock.Release();
 }
 
 template <typename T>
 template <typename U>
-SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr<U>& sharedPtr)
+SharedPtr<T>& SharedPtr<T>::operator=(
+    const SharedPtr<U>& sharedPtr)
 {
     static_assert(std::is_same<std::decay_t<T>, std::decay_t<U>>::value ||
                   std::is_base_of<std::decay_t<T>, std::decay_t<U>>::value);
@@ -108,82 +115,82 @@ SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr<U>& sharedPtr)
     if (this == &sharedPtr)
         return *this;
 
-    int oldRefCount = sharedPtr.m_sharedObjectInfoPtr->RefCount.load(
-        std::memory_order_relaxed);
-    while (!sharedPtr.m_sharedObjectInfoPtr->RefCount.compare_exchange_weak(
-        oldRefCount, oldRefCount + 1, std::memory_order_release,
-        std::memory_order_relaxed))
-        ;
-
     m_delete();
+    auto* objectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    objectInfoPtr->lock.Lock();
     m_objectPtr = sharedPtr.m_objectPtr;
     m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
-
+    sharedPtr.m_sharedObjectInfoPtr->RefCount.fetch_add(1);
+    objectInfoPtr->lock.Release();
     return *this;
 }
 
 template <typename T>
-SharedPtr<T>& SharedPtr<T>::operator=(const SharedPtr<T>& sharedPtr)
+SharedPtr<T>& SharedPtr<T>::operator=(
+    const SharedPtr<T>& sharedPtr)
 {
     if (this == &sharedPtr)
         return *this;
 
-    int oldRefCount = sharedPtr.m_sharedObjectInfoPtr->RefCount.load(
-        std::memory_order_relaxed);
-    while (!sharedPtr.m_sharedObjectInfoPtr->RefCount.compare_exchange_weak(
-        oldRefCount, oldRefCount + 1, std::memory_order_release,
-        std::memory_order_relaxed))
-        ;
-
     m_delete();
+    auto* objectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    objectInfoPtr->lock.Lock();
     m_objectPtr = sharedPtr.m_objectPtr;
     m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
-
+    sharedPtr.m_sharedObjectInfoPtr->RefCount.fetch_add(1);
+    objectInfoPtr->lock.Release();
     return *this;
 }
 
 template <typename T>
 template <typename U>
-SharedPtr<T>& SharedPtr<T>::operator=(SharedPtr<U>&& sharedPtr) noexcept
+SharedPtr<T>& SharedPtr<T>::operator=(
+    SharedPtr<U>&& sharedPtr)
+noexcept
 {
     static_assert(std::is_same<std::decay_t<T>, std::decay_t<U>>::value ||
                   std::is_base_of<std::decay_t<T>, std::decay_t<U>>::value);
 
-    if (*this != sharedPtr)
-    {
-        m_delete();
-        m_objectPtr = sharedPtr.m_objectPtr;
-        m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
-    }
-
+    m_delete();
+    auto* sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    sharedObjectInfoPtr->lock.Lock();
+    m_objectPtr = sharedPtr.m_objectPtr;
+    m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
     sharedPtr.m_objectPtr = nullptr;
     sharedPtr.m_sharedObjectInfoPtr = nullptr;
-
+    sharedObjectInfoPtr->RefCount.fetch_add(1);
+    sharedObjectInfoPtr->lock.Release();
     return *this;
 }
 
 template <typename T>
-SharedPtr<T>& SharedPtr<T>::operator=(SharedPtr<T>&& sharedPtr) noexcept
+SharedPtr<T>& SharedPtr<T>::operator=(
+    SharedPtr<T>&& sharedPtr) noexcept
 {
-    if (*this != sharedPtr)
-    {
-        m_delete();
-        m_objectPtr = sharedPtr.m_objectPtr;
-        m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
-    }
-
+    m_delete();
+    auto* sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
+    sharedObjectInfoPtr->lock.Lock();
+    m_objectPtr = sharedPtr.m_objectPtr;
+    m_sharedObjectInfoPtr = sharedPtr.m_sharedObjectInfoPtr;
     sharedPtr.m_objectPtr = nullptr;
     sharedPtr.m_sharedObjectInfoPtr = nullptr;
-
+    sharedObjectInfoPtr->RefCount.fetch_add(1);
+    sharedObjectInfoPtr->lock.Release();
     return *this;
 }
+
+
+//! As long as object that's able to perform following operations are alive,
+//! m_sharedObjectPtr and m_objectPtr are guaranteed to be present
 
 template <typename T>
 template <typename U>
-bool SharedPtr<T>::operator==(const SharedPtr<U>& sharedPtr)
+bool SharedPtr<T>::operator==(
+    const SharedPtr<U>& sharedPtr)
 {
     static_assert(std::is_same<std::decay_t<T>, std::decay_t<U>>::value ||
                   std::is_base_of<std::decay_t<T>, std::decay_t<U>>::value);
+
     return m_sharedObjectInfoPtr == sharedPtr.m_sharedObjectInfoPtr &&
            m_objectPtr == sharedPtr.m_objectPtr;
 }
@@ -191,19 +198,22 @@ bool SharedPtr<T>::operator==(const SharedPtr<U>& sharedPtr)
 template <typename T>
 bool SharedPtr<T>::operator==(const SharedPtr<T>& sharedPtr)
 {
-    return m_sharedObjectInfoPtr == sharedPtr.m_sharedObjectInfoPtr &&
-           m_objectPtr == sharedPtr.m_objectPtr;
+    auto equality = m_sharedObjectInfoPtr == sharedPtr.m_sharedObjectInfoPtr &&
+                    m_objectPtr == sharedPtr.m_objectPtr;
+    return equality;
 }
 
 template <typename T>
 template <typename U>
-bool SharedPtr<T>::operator!=(const SharedPtr<U>& sharedPtr)
+bool SharedPtr<T>::operator!=(
+    const SharedPtr<U>& sharedPtr)
 {
     return !(*this == sharedPtr);
 }
 
 template <typename T>
-bool SharedPtr<T>::operator!=(const SharedPtr<T>& sharedPtr)
+bool SharedPtr<T>::operator!=(
+    const SharedPtr<T>& sharedPtr)
 {
     return !(*this == sharedPtr);
 }
@@ -220,12 +230,6 @@ auto& SharedPtr<T>::operator[](std::ptrdiff_t idx)
     return m_objectPtr[idx];
 }
 
-template <typename T>
-SharedPtr<T> SharedPtr<T>::Make(T* objectPtr)
-{
-    auto* infoPtr = new SharedObjectInfo();
-    return SharedPtr<T>(objectPtr, infoPtr);
-}
 
 template <typename T>
 SharedPtr<T> SharedPtr<T>::Make()
@@ -249,6 +253,6 @@ T* SharedPtr<T>::operator->() const
 {
     return m_objectPtr;
 }
-}  // namespace Sapphire::Util
+} // namespace Sapphire::Util
 
 #endif  // Takion_SHAREDPTR_IMPL_HPP

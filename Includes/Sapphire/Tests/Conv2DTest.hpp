@@ -6,7 +6,15 @@
 
 namespace Sapphire::Test
 {
-void Conv2DTestForward();
+void Conv2DTest(bool printForward, bool printBackward);
 
-void Conv2DTestBackward();
+void MaxPool2DTest(bool printForward, bool printBackward);
+
+void AvgPool2DTest(bool printForward, bool printBackward);
+
+void HostIm2ColTest(bool print);
+
+void HostConv2DTest(bool print);
+
+void HostConv2DBackwardTest(bool print);
 }

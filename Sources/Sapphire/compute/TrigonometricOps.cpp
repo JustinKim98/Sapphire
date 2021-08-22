@@ -12,123 +12,134 @@ namespace Sapphire::Compute
 {
 void Cos(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Cos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Cos(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::cos(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::cos(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Sin(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Sin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Sin(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::sin(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::sin(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Tan(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Tan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Tan(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::tan(y.DenseMatHost, x.DenseMatHost, totalSizeWithPadding);
+        Dense::Naive::tan(y.GetMutableDenseHost(), x.GetDenseHost(),
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Cosh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Cosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Cosh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::cosh(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
+        Dense::Naive::cosh(y.GetMutableDenseHost(), x.GetDenseHost(),
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Sinh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Sinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Sinh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::sinh(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
+        Dense::Naive::sinh(y.GetMutableDenseHost(), x.GetDenseHost(),
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Tanh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::Tanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Tanh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
-        Dense::Naive::tanh(y.DenseMatHost, x.DenseMatHost,
-                           totalSizeWithPadding);
+        Dense::Naive::tanh(y.GetMutableDenseHost(), x.GetDenseHost(),
+                           totalSizeWithPadding, N, paddedN);
     }
 }
 
 void ArcCos(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto device = y.GetCudaDevice();
+    const auto totalSize = y.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::ArcCos(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcCos(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                            totalSize);
     }
     else
     {
@@ -138,12 +149,14 @@ void ArcCos(TensorData& y, const TensorData& x)
 
 void Arcsin(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto device = y.GetCudaDevice();
+    const auto totalSize = y.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::ArcSin(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcSin(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                            totalSize);
     }
     else
     {
@@ -154,12 +167,14 @@ void Arcsin(TensorData& y, const TensorData& x)
 
 void ArcTan(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto device = y.GetCudaDevice();
+    const auto totalSize = y.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::ArcTan(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcTan(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                            totalSize);
     }
     else
     {
@@ -169,11 +184,13 @@ void ArcTan(TensorData& y, const TensorData& x)
 
 void ArcCosh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
-    if (device.Type() == DeviceType::CUDA)
+    const auto device = y.GetCudaDevice();
+    const auto totalSize = y.TensorShape.Size();
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::ArcCosh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcCosh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
@@ -183,12 +200,14 @@ void ArcCosh(TensorData& y, const TensorData& x)
 
 void ArcSinh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto device = y.GetCudaDevice();
+    const auto totalSize = y.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::ArcSinh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcSinh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
@@ -196,18 +215,236 @@ void ArcSinh(TensorData& y, const TensorData& x)
     }
 }
 
-void ArcTanh(TensorData& y, const TensorUtil::TensorData& x)
+void ArcTanh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size() * y.BatchSize;
+    const auto device = y.GetCudaDevice();
+    const auto totalSize = y.TensorShape.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
-        Dense::Cuda::ArcTanh(y.DenseMatCuda, x.DenseMatCuda, totalSize);
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcTanh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+                             totalSize);
     }
     else
     {
         throw std::runtime_error("Compute::ArcTanh - Host not implemented");
+    }
+}
+
+void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::CosBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                 x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error("Compute::CosBackward - Host not implemented");
+    }
+}
+
+void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::SinBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                 x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error("Compute::SinBackward - Host not implemented");
+    }
+}
+
+void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::TanBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                 x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error("Compute::TanBackward - Host not implemented");
+    }
+}
+
+void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::CoshBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::CoshBackward - Host not implemented");
+    }
+}
+
+void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::SinhBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::SinhBackward - Host not implemented");
+    }
+}
+
+void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::TanhBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                  x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::TanhBackward - Host not implemented");
+    }
+}
+
+void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcCosBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                    x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::ArcCosBackward - Host not implemented");
+    }
+}
+
+void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcSinBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                    x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::ArcSinBackward - Host not implemented");
+    }
+}
+
+void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcTanBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
+                                    x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::ArcTanBackward- Host not implemented");
+    }
+}
+
+void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcCoshBackward(dx.GetMutableDenseCuda(),
+                                     dy.GetDenseCuda(),
+                                     x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::ArcCoshBackward - Host not implemented");
+    }
+}
+
+void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcSinhBackward(dx.GetMutableDenseCuda(),
+                                     dy.GetDenseCuda(),
+                                     x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::ArcSinhBackward - Host not implemented");
+    }
+}
+
+void ArcTanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
+{
+    const auto device = dx.GetCudaDevice();
+    const auto totalSize = dx.TensorShape.Size();
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::ArcTanhBackward(dx.GetMutableDenseCuda(),
+                                     dy.GetDenseCuda(),
+                                     x.GetDenseCuda(), totalSize);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "Compute::ArcTanhBackward - Host not implemented");
     }
 }
 }

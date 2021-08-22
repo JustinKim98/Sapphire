@@ -6,21 +6,37 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Sapphire/Tests/BasicComputationTest.hpp>
 #include <Sapphire/Tests/BroadcastTest.hpp>
 #include <Sapphire/Tests/GemmTest.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
+#include <Sapphire/Tests/OperationTest/LinearTest.hpp>
+#include <Sapphire/Tests/Basics/TransposeTest.hpp>
+#include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
+#include <Sapphire/Tests/TestUtil.hpp>
+#include <Sapphire/Tests/Conv2DTest.hpp>
+#include <Sapphire/compute/TrigonometricOps.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
+#include <Sapphire/compute/ActivationOps.hpp>
+#include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
 #include <iostream>
 #include "doctest.h"
-#define EnableAllTest
+
+#define GraphTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
+//#define ConvolutionTest
+// #define BasicGraphTest
+// #define SparseTest
 
 namespace Sapphire::Test
 {
-#ifdef EnableAllTest
-
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
@@ -45,6 +61,130 @@ TEST_CASE("Check cuda")
 #endif
 }
 
+#ifdef TensorFunctionalityTest
+TEST_CASE("TensorFunctionalityTest")
+{
+    SUBCASE("TensorDataCopy")
+    {
+        for (int i = 0; i < 5; ++i)
+            SendDataBetweenHostDevice(false);
+    }
+
+    SUBCASE("TensorDataCopyOnCuda")
+    {
+        for (int i = 0; i < 5; ++i)
+            TensorDataCopyOnCuda(false);
+    }
+
+    SUBCASE("TensorDataCopyOnHost")
+    {
+        for (int i = 0; i < 5; ++i)
+            TensorDataCopyOnHost(false);
+    }
+}
+#endif
+
+#ifdef BasicsTest
+TEST_CASE("Basics")
+{
+    const int testLoops = 3;
+    SUBCASE("Transpose")
+    {
+        for (int i = 0; i < testLoops; ++i)
+            TransposeTest(false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Add")
+    {
+        std::cout << "Add Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Add);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Sub")
+    {
+        std::cout << "Sub Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Sub);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Dot")
+    {
+        std::cout << "Dot Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Dot);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("log")
+    {
+        std::cout << "Log Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::log);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Inverse")
+    {
+        std::cout << "Inverse Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Inverse);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Sin")
+    {
+        std::cout << "SinTest" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Sin);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Cos")
+    {
+        std::cout << "Cos Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Cos);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Tan")
+    {
+        std::cout << "Tan Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Tan);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+
+#ifdef ActivationTest
+TEST_CASE("ActivationTest")
+{
+    const int testLoops = 3;
+    SUBCASE("ReLU")
+    {
+        std::cout << "ReLU Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentNormal(false, 1.0f, Compute::ReLU, 0, 0.1f);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("SoftMax")
+    {
+        std::cout << "SoftMax Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentNormal(false, 1.0f, Compute::SoftMax, 0, 1.0f);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+#ifdef GemmTest
 TEST_CASE("Gemm Test")
 {
     const int testLoops = 3;
@@ -52,110 +192,123 @@ TEST_CASE("Gemm Test")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
-            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-            Gemm1();
+            std::cout << "Gemm test : " << loopIdx << std::endl;
+            Gemm1(false);
         }
-    }
-
-    SUBCASE("Initialize test With Cuda")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
-            Gemm2();
-        }
+        Util::ResourceManager::ClearAll();
     }
 }
+#endif
 
+#ifdef GemmBroadcastTest
 TEST_CASE("Gemm Broadcast Test")
 {
     const int testLoops = 3;
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastWithOneDimension();
+            BroadcastWithOneDimension(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("Broadcast test with Missing dimension")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastWithMissingDimension();
+            BroadcastWithMissingDimension(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("Broadcast test mixed")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastMixed();
-    }
-
-    SUBCASE("Gemm Broadcast")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
-            GemmBroadcast();
-        }
-    }
-
-    SUBCASE("Gemm Broadcast on output")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast on Output: " << loopIdx
-                << std::endl;
-            GemmBroadcastOnOutput();
-        }
+            BroadcastMixed(false);
+        Util::ResourceManager::ClearAll();
     }
 }
+#endif
 
-TEST_CASE("Basic computation test")
+#ifdef InitializeTest
+TEST_CASE("InitializeTest")
 {
-    const int testLoops = 5;
-    SUBCASE("Transpose")
+    const int testLoops = 3;
+    SUBCASE("Initialize Ones")
     {
+        std::cout << "Initialize Ones" << std::endl;
         for (int i = 0; i < testLoops; i++)
         {
-            std::cout << "Transpose : " << i << std::endl;
-            TestTranspose(false);
+            EqualInitializeTest(Compute::Initialize::Ones, false);
         }
     }
-
-    SUBCASE("General1")
+    SUBCASE("Initialize Normal")
     {
+        std::cout << "Initialize Normal" << std::endl;
         for (int i = 0; i < testLoops; i++)
         {
-            std::cout << "General1 : " << i << std::endl;
-            TestBasics1();
-        }
-    }
-
-    SUBCASE("General2")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "General2 : " << i << std::endl;
-            TestBasics2();
-        }
-    }
-
-    SUBCASE("AddWithBroadcast1")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "AddWithBroadcast1 : " << i << std::endl;
-            TestAddBroadcast1();
-        }
-    }
-
-    SUBCASE("AddWithBroadcast2")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "AddWithBroadcast2 : " << i << std::endl;
-            TestAddBroadcast2();
+            NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
         }
     }
 }
+#endif
+
+#ifdef ConvolutionTest
+TEST_CASE("Convolution")
+{
+    const int testLoops = 3;
+    SUBCASE("Im2ColHost")
+    {
+        std::cout << "Im2Col && Col2Im" << std::endl;
+        HostIm2ColTest(false);
+    }
+
+    SUBCASE("HostConv2D")
+    {
+        std::cout << "Host Conv2D" << std::endl;
+        HostConv2DTest(false);
+    }
+
+    SUBCASE("Conv2D")
+    {
+        std::cout << "Conv2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            Conv2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("MaxPool2D")
+    {
+        std::cout << "MaxPool2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            MaxPool2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("AvgPool2D")
+    {
+        std::cout << "AvgPool2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            AvgPool2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+#ifdef GraphTest
+TEST_CASE("BasicGraphTest")
+{
+    SUBCASE("BasicGraphy")
+    {
+        GraphFunctionalityTest();
+    }
+
+    SUBCASE("Linear Test")
+    {
+        std::cout << "Linear" << std::endl;
+        Operation::LinearForwardTest();
+    }
+}
+#endif
+
+#ifdef SparseTest
 
 TEST_CASE("SparseMemory function Test")
 {
@@ -209,7 +362,8 @@ TEST_CASE("Device Sparse Gemm Test")
             << std::endl;
     }
 }
-#endif
+
+
 TEST_CASE("Sparse Performance Test")
 {
     SUBCASE("Matrix conversion test")
@@ -278,4 +432,5 @@ TEST_CASE("Sparse Performance Test")
         }
     }
 }
+#endif
 } // namespace Sapphire::Test

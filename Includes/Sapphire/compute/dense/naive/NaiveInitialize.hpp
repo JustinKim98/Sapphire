@@ -4,21 +4,20 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_NAIVEINITIALIZE_HPP
-#define Sapphire_NAIVEINITIALIZE_HPP
-#include "Sapphire/tensor/Shape.hpp"
-#include "cstdlib"
+#ifndef SAPPHIRE_NAIVEINITIALIZE_HPP
+#define SAPPHIRE_NAIVEINITIALIZE_HPP
+#include <Sapphire/tensor/Shape.hpp>
 
 namespace Sapphire::Compute::Dense::Naive
 {
 void Normal(float* data, float mean, float sd, const Shape& shape,
-            size_t paddedCols, size_t batchSize);
+            std::size_t paddedCols);
 
 void Uniform(float* data, float min, float max, const Shape& shape,
-             size_t paddedCols, size_t batchSize);
+             std::size_t paddedCols);
 
-void Scalar(float* data, float value, const Shape& shape, size_t paddedCols,
-            size_t batchSize);
-}  // namespace Sapphire::Compute::Naive
+void Scalar(float* data, float value, const Shape& shape,
+            std::size_t paddedCols);
+} // namespace Sapphire::Compute::Naive
 
 #endif  // Sapphire_NAIVEINITIALIZE_HPP

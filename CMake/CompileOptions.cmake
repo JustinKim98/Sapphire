@@ -72,6 +72,9 @@ set(DEFAULT_COMPILE_OPTIONS)
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     # remove default warning level from CMAKE_CXX_FLAGS
     string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FS")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /FS")
+
     if (USE_AVX2 AND NOT MSVC_VERSION LESS 1800)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX /arch:AVX2")
         add_compile_definitions(WITH_AVX2)

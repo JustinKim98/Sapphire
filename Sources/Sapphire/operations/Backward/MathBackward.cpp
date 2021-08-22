@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MathBackward.hpp>
 #include <iostream>
 
@@ -14,36 +14,33 @@ MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
                          TensorUtil::TensorData da,
                          const TensorUtil::TensorData& b,
                          TensorUtil::TensorData db, TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) })
+    : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) },
+                      { a, b },
+                      { TensorUtil::TensorData(a.TensorShape.GetTranspose(),
+                                               a.GetType(),
+                                               a.GetCudaDevice()),
+                        TensorUtil::TensorData(b.TensorShape.GetTranspose(),
+                                               b.GetType(),
+                                               b.GetCudaDevice()) })
 {
-    TensorUtil::TensorData transposedA(a.TensorShape.GetTranspose(),
-                                       a.GetType(), a.GetDevice(), a.BatchSize);
-    TensorUtil::TensorData transposedB(b.TensorShape.GetTranspose(),
-                                       b.GetType(), b.GetDevice(), b.BatchSize);
-
-    m_savedTensorMap["a"] = a.CreateCopy();
-    m_savedTensorMap["b"] = b.CreateCopy();
-    m_savedTensorMap["transposedA"] = transposedA;
-    m_savedTensorMap["transposedB"] = transposedB;
 }
 
-bool MulBackProp::InvokeBackProp(const TensorUtil::TensorData& input)
+void MulBackProp::m_runBackProp()
 {
-    auto& dy = m_gradientInputs[0];
-    auto& da = m_gradientOutputs[0];
-    auto& db = m_gradientOutputs[1];
+    auto& dy = m_dyVector[0];
+    auto& da = m_dxVector[0];
+    auto& db = m_dxVector[1];
 
-    auto& a = m_savedTensorMap["a"];
-    auto& b = m_savedTensorMap["b"];
-    auto& transposedA = m_savedTensorMap["transposedA"];
-    auto& transposedB = m_savedTensorMap["transposedB"];
+    auto& a = m_constants[0];
+    auto& b = m_constants[1];
+    auto& transposedA = m_mutables[0];
+    auto& transposedB = m_mutables[1];
 
     Compute::Transpose(transposedA, a);
     Compute::Transpose(transposedB, b);
 
     Compute::Gemm(da, dy, transposedB, da);
     Compute::Gemm(db, transposedA, dy, db);
-    return true;
 }
 
 AddBackProp::AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
@@ -52,14 +49,12 @@ AddBackProp::AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
 {
 }
 
-bool AddBackProp::InvokeBackProp(const TensorUtil::TensorData& input)
+void AddBackProp::m_runBackProp()
 {
-    auto& dy = m_gradientInputs[0];
-    auto& da = m_gradientOutputs[0];
-    auto& db = m_gradientOutputs[1];
+    auto& dy = m_dyVector[0];
+    auto& da = m_dxVector[0];
+    auto& db = m_dxVector[1];
     Compute::Add(da, dy, da);
     Compute::Add(db, dy, db);
-    return true;
 }
-
-}  // namespace Sapphire::BackProp
+} // namespace Sapphire::BackProp

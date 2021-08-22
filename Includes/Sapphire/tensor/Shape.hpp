@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_UTIL_SHAPE_DECL_HPP
-#define Sapphire_UTIL_SHAPE_DECL_HPP
+#ifndef SAPPHIRE_UTIL_SHAPE_DECL_HPP
+#define SAPPHIRE_UTIL_SHAPE_DECL_HPP
 
 #include <stdexcept>
 #include <string>
@@ -21,7 +21,7 @@ enum class Type
 
 class Shape
 {
- public:
+public:
     Shape() = default;
     ~Shape() = default;
 
@@ -55,6 +55,8 @@ class Shape
 
     void Set(unsigned int dim, unsigned int value);
 
+    void SetCol(unsigned int value);
+
     [[nodiscard]] unsigned int Rows() const
     {
         return m_shapeVector.size() > 1
@@ -74,13 +76,24 @@ class Shape
     //! returns immediately
     void Expand(unsigned int dim);
 
+    //! Removes the dimension if given dimension has size 1
+    void Squeeze(unsigned int dim);
+
+    //! Removes all 1's in the given shape
+    void Squeeze();
+
+    //! Shrinks dimension to given dim
+    void Shrink(unsigned int dim);
+
+    [[nodiscard]] unsigned int GetBatchSize(unsigned requiredDim) const;
+
     Shape GetReverse() const;
 
     [[nodiscard]] Shape GetTranspose() const;
 
- private:
+private:
     std::vector<unsigned int> m_shapeVector;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

@@ -34,7 +34,31 @@ void ArcCosh(TensorData& y, const TensorData& x);
 
 void ArcSinh(TensorData& y, const TensorData& x);
 
-void ArcTanh(TensorData& y, const TensorUtil::TensorData& x);
+void ArcTanh(TensorData& y, const TensorData& x);
+
+void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
+
+void ArcTanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 }
 
 #endif

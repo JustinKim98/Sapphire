@@ -5,7 +5,10 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/TestUtil.hpp>
+#include <Sapphire/tensor/Shape.hpp>
 #include <random>
+#include <doctest.h>
+#include <iostream>
 
 namespace Sapphire::Test
 {
@@ -54,5 +57,52 @@ void InitRandomDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
                     matrixPtr[matrixIdx * m * paddedN + rowIdx * paddedN +
                               colIdx] = 0.0f;
             }
+}
+
+Shape CreateRandomShape(int dim, int maxDim)
+{
+    if (dim <= 0)
+        throw std::invalid_argument("Dimension must be greater than zero");
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, maxDim);
+    std::vector<unsigned int> shapeVector(dim);
+    for (int i = 0; i < dim; ++i)
+    {
+        shapeVector.at(i) = distrib(gen) % maxDim + 1;
+    }
+    return Shape(shapeVector);
+}
+
+void CheckNoneZeroEquality(
+    const float* ptrA, const float* ptrB, unsigned size, bool print,
+    float equalThreshold)
+{
+    bool isAllZero = true;
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        if (print)
+            std::cout << "ptrA : " << ptrA[i] << " ptrB : " << ptrB[i] <<
+                std::endl;
+        if (!std::isnan(ptrA[i]) && !std::isnan(ptrB[i]))
+            CHECK(std::abs(ptrA[i] - ptrB[i]) <= equalThreshold);
+        if (ptrA[i] > 0.0f || ptrA[i] < 0.0f)
+            isAllZero = false;
+    }
+    CHECK(!isAllZero);
+}
+
+void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
+                   unsigned padSize, bool print)
+{
+    for (unsigned int ii = 0; ii < size; ii += padSize)
+        for (unsigned int i = ii; i < ii + colSize; ++i)
+        {
+            if (print)
+                std::cout << "ptrA: " << ptr[i] << std::endl;
+            auto pass = ptr[i] > 0 || ptr[i] < 0;
+            CHECK(pass);
+        }
 }
 } // namespace Sapphire::Test

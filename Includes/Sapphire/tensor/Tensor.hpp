@@ -7,7 +7,8 @@
 #define SAPPHIRE_TENSOR_DECL_HPP
 
 #include <Sapphire/tensor/Shape.hpp>
-#include <Sapphire/util/Device.hpp>
+#include <Sapphire/util/CudaDevice.hpp>
+#include <memory>
 
 namespace Sapphire
 {
@@ -15,8 +16,9 @@ namespace Sapphire
 //! with attributes describing it
 class Tensor
 {
- public:
-    Tensor(unsigned int descKey);
+public:
+    Tensor(const Shape& shape, const CudaDevice& device, Type type);
+    Tensor(int descKey);
     ~Tensor() = default;
 
     Tensor(const Tensor& tensor) = default;
@@ -26,15 +28,25 @@ class Tensor
     Tensor& operator=(Tensor&& tensor) noexcept = delete;
 
     [[nodiscard]] Shape GetShape() const;
-    [[nodiscard]] Device GetDevice() const;
+    [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
-    //! Set Tensor device
-    void SendTo(const Device& device) const;
+    void SetDescriptorKey(int key)
+    {
+        m_tensorDescKey = key;
+    }
 
- private:
+    [[nodiscard]] std::unique_ptr<float[]> GetForwardDataCopy() const;
+    [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
+
+    void ToCuda();
+    void ToHost();
+    DeviceType Mode() const;
+    void SetMode(DeviceType mode);
+
+private:
     int m_tensorDescKey;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

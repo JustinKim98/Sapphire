@@ -10,13 +10,8 @@
 namespace Sapphire::Test
 {
 #ifdef WITH_CUDA
-void Gemm1();
+void Gemm1(bool print);
 
-void Gemm2();
-
-void GemmBroadcast();
-
-void GemmBroadcastOnOutput();
 
 #endif
 }  // namespace Sapphire::Test

@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <memory>
 
 namespace Sapphire::Test
 {

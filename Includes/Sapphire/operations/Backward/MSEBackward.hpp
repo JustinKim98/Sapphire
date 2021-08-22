@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_BACKPROP_MSEBACKPROP_HPP
-#define Sapphire_BACKPROP_MSEBACKPROP_HPP
+#ifndef SAPPHIRE_BACKPROP_MSEBACKPROP_HPP
+#define SAPPHIRE_BACKPROP_MSEBACKPROP_HPP
 
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 
@@ -13,12 +13,13 @@ namespace Sapphire::BackProp
 {
 class MSEBackward : public BackPropWrapper
 {
- public:
-    MSEBackward(const TensorUtil::TensorData& x, TensorUtil::TensorData dx,
-                const TensorUtil::TensorData& label, TensorUtil::TensorData dy);
+public:
+    MSEBackward(TensorUtil::TensorData dx, TensorUtil::TensorData x,
+                TensorUtil::TensorData label);
 
-    bool InvokeBackProp(const TensorUtil::TensorData& input) override;
+private:
+    void m_runBackProp() override;
 };
-}  // namespace Sapphire::BackProp
+} // namespace Sapphire::BackProp
 
 #endif  // Sapphire_MSEBACKPROP_HPP

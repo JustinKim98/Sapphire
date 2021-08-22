@@ -34,6 +34,41 @@ __host__ void ArcCosh(float* y, const float* x, unsigned int totalSize);
 __host__ void ArcSinh(float* y, const float* x, unsigned int totalSize);
 
 __host__ void ArcTanh(float* y, const float* x, unsigned int totalSize);
-}
 
+__host__ void CosBackward(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize);
+
+__host__ void SinBackward(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize);
+
+__host__ void TanBackward(float* dx, const float* dy, const float* x,
+                          unsigned int totalSize);
+
+__host__ void CoshBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize);
+
+__host__ void SinhBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize);
+
+__host__ void TanhBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize);
+
+__host__ void ArcCosBackward(float* dx, const float* dy, const float* x,
+                             unsigned int totalSize);
+
+__host__ void ArcSinBackward(float* dx, const float* dy, const float* x,
+                             unsigned int totalSize);
+
+__host__ void ArcTanBackward(float* dx, const float* dy, const float* x,
+                             unsigned int totalSize);
+
+__host__ void ArcCoshBackward(float* dx, const float* dy, const float* x,
+                              unsigned int totalSize);
+
+__host__ void ArcSinhBackward(float* dx, const float* dy, const float* x,
+                              unsigned int totalSize);
+
+__host__ void ArcTanhBackward(float* dx, const float* dy, const float* x,
+                              unsigned int totalSize);
+}
 #endif

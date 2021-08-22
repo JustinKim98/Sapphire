@@ -4,27 +4,48 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_LINEAR_HPP
-#define Sapphire_LINEAR_HPP
+#ifndef SAPPHIRE_NN_LINEAR_HPP
+#define SAPPHIRE_NN_LINEAR_HPP
 
 #include <Sapphire/tensor/Tensor.hpp>
+#include <Sapphire/operations/optimizers/Optimizer.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
+#include <Sapphire/operations/Unit.hpp>
+#include <Sapphire/operations/Initializers/Initialize.hpp>
 
 namespace Sapphire::NN
 {
-class Linear
+class Linear : public Unit
 {
- public:
+public:
     Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
-           const Device& device, bool bias = true, bool isSparse = false);
+           Util::SharedPtr<Optimizer::Optimizer> optimizer,
+           std::unique_ptr<Initialize::Initializer> weightInitializer,
+           std::unique_ptr<Initialize::Initializer> biasInitializer,
+           CudaDevice device,
+           bool isSparse = false);
+    ~Linear() override = default;
 
-    Tensor operator()(const Tensor& tensor) const;
+    Linear(const Linear& linear) = default;
+    Linear(Linear&& linear) noexcept = default;
+    Linear& operator=(const Linear& linear) = default;
+    Linear& operator=(Linear&& linear) noexcept = default;
 
- private:
-    int m_unitKey = -1;
+    Tensor operator()(Tensor& xTensor);
+
+private:
+    [[nodiscard]] int m_registerOutputTensor(
+        const TensorUtil::TensorDescriptor& xDesc) const;
+
+    bool m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor> arguments) override;
+
+    unsigned int m_inputs;
     unsigned int m_outputs;
-    Type m_type = Type::Dense;
-    bool m_bias;
+    Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
+    CudaDevice m_device;
+    bool m_isSparse;
 };
-}  // namespace Sapphire::NN
+} // namespace Sapphire::NN
 
 #endif  // Sapphire_LINEAR_HPP

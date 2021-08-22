@@ -19,13 +19,27 @@ __host__ void CreateCudnnPool2DMetaData(CudnnPool2DMetaData* metaData,
                                         cudnnNanPropagation_t nanPropagation,
                                         int deviceId)
 {
-    Shape4D outputShape = { 0, 0, 0, 0 };
+    int outputHeight =
+        (xShape.Height + 2 * rowPadding - (windowWidth - 1) - 1) / strideRow +
+        1;
+    int outputWidth =
+        (xShape.Width + 2 * columnPadding - (windowHeight - 1) - 1) / strideCol
+        + 1;
     cudaSetDevice(deviceId);
+    Shape4D outputShape = { xShape.N, xShape.Channels, outputHeight,
+                            outputWidth };
+
     checkCuDNN(cudnnCreatePoolingDescriptor(&metaData->PoolDesc));
     checkCuDNN(cudnnCreateTensorDescriptor(&metaData->xDesc));
+    checkCuDNN(cudnnCreateTensorDescriptor(&metaData->dxDesc));
     checkCuDNN(cudnnCreateTensorDescriptor(&metaData->yDesc));
+    checkCuDNN(cudnnCreateTensorDescriptor(&metaData->dyDesc));
+
     checkCuDNN(cudnnSetTensor4dDescriptor(
         metaData->xDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, xShape.N,
+        xShape.Channels, xShape.Height, xShape.Width));
+    checkCuDNN(cudnnSetTensor4dDescriptor(
+        metaData->dxDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, xShape.N,
         xShape.Channels, xShape.Height, xShape.Width));
     checkCuDNN(cudnnSetPooling2dDescriptor(
         metaData->PoolDesc, mode, nanPropagation, windowHeight, windowWidth,
@@ -36,11 +50,15 @@ __host__ void CreateCudnnPool2DMetaData(CudnnPool2DMetaData* metaData,
     checkCuDNN(cudnnSetTensor4dDescriptor(
         metaData->yDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, outputShape.N,
         outputShape.Channels, outputShape.Height, outputShape.Width));
+    checkCuDNN(cudnnSetTensor4dDescriptor(
+        metaData->dyDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, outputShape.N,
+        outputShape.Channels, outputShape.Height, outputShape.Width));
 }
 
 __host__ void CudnnPoolForward2d(CudnnPool2DMetaData* metaData, float* y,
-                                 float* x,
-                                 float* alpha, float* beta, int deviceId)
+                                 const float* x,
+                                 const float* alpha, const float* beta,
+                                 int deviceId)
 {
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
@@ -50,10 +68,10 @@ __host__ void CudnnPoolForward2d(CudnnPool2DMetaData* metaData, float* y,
                                    y));
 }
 
-__host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, float* y,
-                                  float* dy,
-                                  float* x, float* dx, float* alpha,
-                                  float* beta, int deviceId)
+__host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, const float* y,
+                                  const float* dy,
+                                  const float* x, float* dx, const float* alpha,
+                                  const float* beta, int deviceId)
 {
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
@@ -63,7 +81,7 @@ __host__ void CudnnPoolBackward2d(CudnnPool2DMetaData* metaData, float* y,
         metaData->dyDesc, dy, metaData->xDesc, x, beta, metaData->dxDesc, dx));
 }
 
-__host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
+__host__ void Pool2DForward(float* y, const float* x, Shape4D xShape,
                             int windowHeight, int windowWidth, int strideRow,
                             int strideCol, int rowPadding, int columnPadding,
                             PoolingMode mode,
@@ -80,8 +98,8 @@ __host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
         cudnnMode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
 
     if (const auto tid = std::this_thread::get_id();
-        !Util::ResourceManager::HasCublasHandle(deviceId, tid))
-        Util::ResourceManager::AddCublasHandle(deviceId, tid);
+        !Util::ResourceManager::HasCudnnHandle(deviceId, tid))
+        Util::ResourceManager::AddCudnnHandle(deviceId, tid);
 
     if (!Util::ResourceManager::HasPoolConfig(poolConfig))
         Util::ResourceManager::AddCudnnPool2DMetaData(
@@ -94,7 +112,8 @@ __host__ void Pool2DForward(float* y, float* x, Shape4D xShape,
     CudnnPoolForward2d(metaData, y, x, &alpha, &beta, deviceId);
 }
 
-__host__ void Pool2DBackward(float* y, float* dy, float* x, float* dx,
+__host__ void Pool2DBackward(const float* y, const float* dy, const float* x,
+                             float* dx,
                              Shape4D xShape,
                              int windowHeight,
                              int windowWidth, int strideRow, int strideCol,

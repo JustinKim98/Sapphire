@@ -36,7 +36,7 @@ __host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,
 
     checkCuDNN(cudnnSetConvolution2dDescriptor(
         metaData->ConvDesc, rowPadding, columnPadding, strideRow, strideCol,
-        dilationRow, dilationCol, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+        dilationRow, dilationCol, CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
 
     checkCuDNN(cudnnSetTensor4dDescriptor(
         metaData->InputDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, xShape.N,
@@ -104,7 +104,7 @@ __host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,
 
 __host__ void CudnnConvolutionForward2D(CudnnConv2DMetaData* metadata,
                                         float* output,
-                                        float* input, float* filter,
+                                        const float* input, const float* filter,
                                         int deviceId)
 {
     float alpha = 1.0f;
@@ -119,8 +119,8 @@ __host__ void CudnnConvolutionForward2D(CudnnConv2DMetaData* metadata,
 }
 
 __host__ void CudnnConvolutionBackward2D(
-    CudnnConv2DMetaData* descriptors, float* dataGradientOut, float* filter,
-    float* filterGradientOut, float* input, float* gradientInput, int deviceId)
+    CudnnConv2DMetaData* descriptors, float* dx, const float* filter,
+    float* dFilter, const float* x, const float* dy, int deviceId)
 {
     float alpha = 1.0f;
     float beta = 0.0f;
@@ -128,21 +128,21 @@ __host__ void CudnnConvolutionBackward2D(
         deviceId, std::this_thread::get_id());
     checkCuDNN(cudnnConvolutionBackwardData(
         *handle, &alpha, descriptors->FilterDesc, filter,
-        descriptors->OutputDesc, gradientInput, descriptors->ConvDesc,
+        descriptors->OutputDesc, dy, descriptors->ConvDesc,
         descriptors->BackwardDataAlgo, descriptors->BackwardDataWorkSpace,
         descriptors->BackwardDataWorkSpaceBytes, &beta, descriptors->InputDesc,
-        dataGradientOut));
+        dx));
 
     checkCuDNN(cudnnConvolutionBackwardFilter(
-        *handle, &alpha, descriptors->InputDesc, input,
-        descriptors->OutputDesc, gradientInput, descriptors->ConvDesc,
+        *handle, &alpha, descriptors->InputDesc, x,
+        descriptors->OutputDesc, dy, descriptors->ConvDesc,
         descriptors->BackwardFilterAlgo, descriptors->BackwardFilterWorkSpace,
         descriptors->BackwardFilterWorkSpaceBytes, &beta,
-        descriptors->FilterDesc, filterGradientOut));
+        descriptors->FilterDesc, dFilter));
 }
 
-__host__ void Conv2DForward(float* y, float* x,
-                            float
+__host__ void Conv2DForward(float* y, const float* x,
+                            const float
                             * filter, Shape4D inputShape, Shape4D filterShape,
                             int strideRow, int strideCol, int dilationRow,
                             int dilationCol, int rowPadding, int columnPadding,
@@ -170,12 +170,12 @@ __host__ void Conv2DForward(float* y, float* x,
     CudnnConvolutionForward2D(metaData, y, x, filter, deviceId);
 }
 
-__host__ void Conv2DBackward(float* dx, float* filter,
-                             float* dFilter, float* x,
-                             float* dy, Shape4D inputShape,
-                             Shape4D filterShape, int strideRow, int strideCol,
-                             int dilationRow, int dilationCol, int rowPadding,
-                             int columnPadding, int deviceId)
+__host__ void Conv2DBackward(float* dx, const float* filter, float* dFilter,
+                             const float* x, const float* dy,
+                             Shape4D inputShape, Shape4D filterShape,
+                             int strideRow, int strideCol, int dilationRow,
+                             int dilationCol, int rowPadding, int columnPadding,
+                             int deviceId)
 {
     const ConvConfig convConfig = { inputShape, filterShape, strideRow,
                                     strideCol, dilationRow, dilationCol,

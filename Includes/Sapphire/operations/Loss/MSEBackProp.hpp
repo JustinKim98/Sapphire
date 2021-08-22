@@ -7,19 +7,19 @@
 #ifndef MOTUTAPU_BACKPROP_MSEBACKPROP_HPP
 #define MOTUTAPU_BACKPROP_MSEBACKPROP_HPP
 
-#include <Motutapu/operations/Backward/BackPropWrapper.hpp>
+#include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 
-namespace Motutapu::BackProp
+namespace Sapphire::BackProp
 {
 class MSEBackProp : public BackPropWrapper
 {
- public:
+public:
     explicit MSEBackProp(const TensorUtil::TensorData& x,
                          TensorUtil::TensorData dx,
                          const TensorUtil::TensorData& label,
                          TensorUtil::TensorData dy);
     bool InvokeBackProp(const TensorUtil::TensorData& input) override;
 };
-}  // namespace Motutapu::BackProp
+} // namespace Motutapu::BackProp
 
 #endif  // MOTUTAPU_MSEBACKPROP_HPP

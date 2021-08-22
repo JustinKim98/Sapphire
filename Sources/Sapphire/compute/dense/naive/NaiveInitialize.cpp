@@ -10,9 +10,9 @@
 namespace Sapphire::Compute::Dense::Naive
 {
 void Normal(float* data, float mean, float sd, const Shape& shape,
-            size_t paddedCols, size_t batchSize)
+            std::size_t paddedCols)
 {
-    const auto totalSize = shape.Size() * batchSize;
+    const auto totalSize = shape.Size();
     const auto cols = shape.At(shape.Dim() - 1);
     std::random_device rd{};
     std::mt19937 gen{ rd() };
@@ -26,9 +26,9 @@ void Normal(float* data, float mean, float sd, const Shape& shape,
 }
 
 void Uniform(float* data, float min, float max, const Shape& shape,
-             size_t paddedCols, size_t batchSize)
+             std::size_t paddedCols)
 {
-    const auto totalSize = shape.Size() * batchSize;
+    const auto totalSize = shape.Size();
     const auto cols = shape.At(shape.Dim() - 1);
     std::random_device rd{};
     std::mt19937 gen{ rd() };
@@ -37,20 +37,20 @@ void Uniform(float* data, float min, float max, const Shape& shape,
 #pragma omp parallel for default(none) shared( \
     totalSize, cols, paddedCols, data, dist, gen) schedule(static)
     for (long i = 0; i < static_cast<long>(totalSize / cols); ++i)
-        for (size_t j = 0; j < cols; ++j)
+        for (std::size_t j = 0; j < cols; ++j)
             data[paddedCols * i + j] = dist(gen);
 }
 
-void Scalar(float* data, float value, const Shape& shape, size_t paddedCols,
-            size_t batchSize)
+void Scalar(float* data, float value, const Shape& shape,
+            std::size_t paddedCols)
 {
-    const auto totalSize = shape.Size() * batchSize;
+    const auto totalSize = shape.Size();
     const auto cols = shape.At(shape.Dim() - 1);
 
 #pragma omp parallel for default(none) shared( \
     totalSize, cols, paddedCols, data, value) schedule(static)
     for (long i = 0; i < static_cast<long>(totalSize / cols); ++i)
-        for (size_t j = 0; j < cols; ++j)
+        for (std::size_t j = 0; j < cols; ++j)
             data[paddedCols * i + j] = value;
 }
 } // namespace Sapphire::Compute::Dense::Naive

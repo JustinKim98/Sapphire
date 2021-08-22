@@ -26,17 +26,10 @@ public:
     Model& operator=(const Model& model) = delete;
     Model& operator=(Model&& model) noexcept = default;
 
-    //! Registers unitDataWrapper to the unit
-    //! Assigns new key to the given unitDataWrapper
-    //! \param unitDataWrapper : unitDataWrapper to register
-    //! \return : Assigned key
-    int RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
-
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const Device& device, unsigned int batchSize,
-                                 bool isTrainable);
+                                 const CudaDevice& device);
 
     //! Returns unitDataWrapper with given key
     [[nodiscard]] UnitDataWrapper& GetUnitDataWrapper(int key);
@@ -45,6 +38,14 @@ public:
     //! \param descKey : key of the descriptor
     //! \return : tensor descriptor of given key
     [[nodiscard]] TensorUtil::TensorDescriptor& GetDescriptor(int descKey);
+
+    //! Starts back propagation from the given tensor
+    //! \param tensor : tensor to start back propagation
+    void BackProp(Tensor tensor);
+
+    //! Clears the model
+    //! including forward and back prop data
+    void Clear();
 
 private:
     //! Automatically calculates gradient
@@ -59,15 +60,7 @@ private:
         int Counter = 0;
     };
 
-    class UnitPool
-    {
-    public:
-        std::unordered_map<int, UnitDataWrapper> UnitWrapperMap;
-        int Counter = 0;
-    };
-
     TensorDescriptorPool m_tensorDescriptorPool;
-    UnitPool m_unitPool;
     std::string m_name;
 };
 
@@ -75,7 +68,6 @@ private:
 class ModelManager
 {
 public:
-
     //! Gets the model with given modelName
     //! \param modelName : name of the model to get
     static Model& GetModel(const std::string& modelName);

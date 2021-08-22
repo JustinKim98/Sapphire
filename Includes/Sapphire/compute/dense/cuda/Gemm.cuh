@@ -12,11 +12,11 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-__host__ void Gemm(unsigned int totalSize, float* out, float* A, float* B,
-                   float* C, unsigned int M, unsigned int N, unsigned int K,
+__host__ void Gemm(unsigned int totalSize, float* out, const float* A, const float* B,
+                   const float* C, unsigned int M, unsigned int N, unsigned int K,
                    int deviceId);
 
-__host__ void GemmMatrixWiseBroadcast(float* out, float* A, float* B, float* C,
+__host__ void GemmMatrixWiseBroadcast(float* out, const float* A, const float* B, const float* C,
                                       unsigned int M, unsigned int N,
                                       unsigned int K, unsigned int batchSize,
                                       bool broadcastA, bool broadcastB,

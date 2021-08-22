@@ -48,6 +48,15 @@
         }                                                                  \
     }
 
+#define CHECK_CUBLAS(func)                                               \
+    {                                                                      \
+        cublasStatus_t status = (func);                                  \
+        if (status != CUBLAS_STATUS_SUCCESS)                             \
+        {                                                                  \
+            throw std::runtime_error("CUBLAS failed");                   \
+        }                                                                  \
+    }
+
 #endif
 
 #endif

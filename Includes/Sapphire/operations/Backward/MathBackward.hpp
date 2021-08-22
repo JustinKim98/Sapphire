@@ -13,23 +13,27 @@ namespace Sapphire::BackProp
 {
 class MulBackProp : public BackPropWrapper
 {
- public:
-    explicit MulBackProp(const TensorUtil::TensorData& a, TensorUtil::TensorData da,
-                         const TensorUtil::TensorData& b, TensorUtil::TensorData db,
+public:
+    explicit MulBackProp(const TensorUtil::TensorData& a,
+                         TensorUtil::TensorData da,
+                         const TensorUtil::TensorData& b,
+                         TensorUtil::TensorData db,
                          TensorUtil::TensorData dy);
 
-    bool InvokeBackProp(const TensorUtil::TensorData& input) override;
+
+private:
+    void m_runBackProp() override;
 };
 
 class AddBackProp : public BackPropWrapper
 {
- public:
+public:
     explicit AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
                          TensorUtil::TensorData dy);
 
-    bool InvokeBackProp(const TensorUtil::TensorData& input) override;
+private:
+    void m_runBackProp() override;
 };
-
-}  // namespace Sapphire::BackProp
+} // namespace Sapphire::BackProp
 
 #endif

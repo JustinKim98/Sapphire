@@ -8,11 +8,13 @@
 
 namespace Sapphire
 {
-Shape::Shape(std::initializer_list<unsigned int> shape) : m_shapeVector(shape)
+Shape::Shape(std::initializer_list<unsigned int> shape)
+    : m_shapeVector(shape)
 {
 }
 
-Shape::Shape(std::vector<unsigned int> shape) : m_shapeVector(std::move(shape))
+Shape::Shape(std::vector<unsigned int> shape)
+    : m_shapeVector(std::move(shape))
 {
 }
 
@@ -76,6 +78,8 @@ unsigned int Shape::Dim() const
 unsigned int Shape::Size() const noexcept
 {
     unsigned int size = 1;
+    if (m_shapeVector.empty())
+        return 0;
     for (auto i : m_shapeVector)
     {
         size *= i;
@@ -92,7 +96,21 @@ void Shape::Set(unsigned int dim, unsigned int value)
             "Shape::Set - Given dimension exceeds shape dimension");
     }
 
+    if (value == 0)
+    {
+        throw std::invalid_argument(
+            "Shape::Set - Shape cannot have dimension with '0'");
+    }
+
     m_shapeVector.at(dim) = value;
+}
+
+void Shape::SetCol(unsigned int value)
+{
+    if (m_shapeVector.empty())
+        throw std::runtime_error("Shape::SetCol - Shape is empty");
+
+    m_shapeVector.at(Dim() - 1) = value;
 }
 
 void Shape::Expand(unsigned int dim)
@@ -113,21 +131,95 @@ void Shape::Expand(unsigned int dim)
     m_shapeVector = newShapeVector;
 }
 
+void Shape::Squeeze(unsigned int dim)
+{
+    if (dim >= Dim())
+        return;
+
+    const auto dimIdx = m_shapeVector.size() - 1 - dim;
+
+    if (m_shapeVector.at(dimIdx) > 1)
+        return;
+
+    std::vector<unsigned int> newShapeVector(m_shapeVector.size() - 1);
+    int newIdx = static_cast<int>(m_shapeVector.size()) - 2;
+
+    for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
+        if (i != static_cast<int>(dimIdx))
+        {
+            newShapeVector.at(newIdx) = m_shapeVector.at(i);
+            newIdx -= 1;
+        }
+}
+
+void Shape::Squeeze()
+{
+    std::vector<unsigned int> newShapeVector;
+    newShapeVector.reserve(m_shapeVector.size());
+
+    for (unsigned int i : m_shapeVector)
+    {
+        if (i > 1)
+            newShapeVector.emplace_back(i);
+    }
+
+    m_shapeVector = newShapeVector;
+}
+
+void Shape::Shrink(unsigned int dim)
+{
+    if (dim >= Dim())
+        return;
+
+    const auto dimIdx = m_shapeVector.size() - dim;
+    std::vector<unsigned int> newShapeVector(dim);
+
+    for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
+    {
+        if (i >= static_cast<int>(dimIdx))
+            newShapeVector.at(i - (m_shapeVector.size() - dim)) =
+                m_shapeVector.at(i);
+        else
+            newShapeVector.at(0) *= m_shapeVector.at(i);
+    }
+}
+
+unsigned int Shape::GetBatchSize(unsigned int requiredDim) const
+{
+    if (const auto dim = Dim(); dim > requiredDim)
+    {
+        unsigned int batchSize = 1;
+        for (unsigned int i = 0; i < dim - requiredDim; ++i)
+        {
+            batchSize *= At(i);
+        }
+        return batchSize;
+    }
+    return 1;
+}
+
 Shape Shape::GetTranspose() const
 {
-    if (m_shapeVector.size() < 2)
+    if (m_shapeVector.empty())
     {
         throw std::runtime_error(
-            "GetTranspose - Shape must have dimension of at least 2 to perform "
+            "GetTranspose - Shape cannot be empty  to perform "
             "transpose");
     }
 
+    if (m_shapeVector.size() == 1)
+    {
+        std::vector<unsigned int> newShape(2);
+        newShape.at(0) = m_shapeVector.at(0);
+        newShape.at(1) = 1;
+        return Shape(newShape);
+    }
+
     auto vector = m_shapeVector;
-    auto temp = vector.at(vector.size() - 1);
+    const auto temp = vector.at(vector.size() - 1);
     vector.at(vector.size() - 1) = vector.at(vector.size() - 2);
     vector.at(vector.size() - 2) = temp;
 
     return Shape(vector);
 }
-
-}  // namespace Sapphire
+} // namespace Sapphire

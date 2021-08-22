@@ -4,14 +4,34 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_UNIT_DECL_HPP
-#define Sapphire_UNIT_DECL_HPP
+#ifndef SAPPHIRE_UNIT_DECL_HPP
+#define SAPPHIRE_UNIT_DECL_HPP
 
 #include <Sapphire/tensor/TensorData.hpp>
 #include <unordered_map>
+#include <Sapphire/tensor/TensorDescriptor.hpp>
+
 
 namespace Sapphire
 {
+class Unit
+{
+public:
+    Unit() = default;
+    virtual ~Unit() = default;
+
+    Unit(const Unit& unit) = default;
+    Unit(Unit&& unit) noexcept = default;
+    Unit& operator=(const Unit& unit) = default;
+    Unit& operator=(Unit&& unit) noexcept = default;
+
+protected:
+    virtual bool m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor> arguments) = 0;
+    std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
+    std::unordered_map<std::string, TensorUtil::TensorData> m_mutableDataMap;
+};
+
 //! UnitDataWrapper
 //! Wraps required temporary data of the unit
 class UnitDataWrapper
