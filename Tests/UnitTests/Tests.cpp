@@ -20,17 +20,19 @@
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
+#include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
 #include <iostream>
 #include "doctest.h"
 
+#define GraphTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
 // #define GemmTest
 // #define GemmBroadcastTest
 // #define InitializeTest
-#define ConvolutionTest
-// #define GraphTest
+//#define ConvolutionTest
+// #define BasicGraphTest
 // #define SparseTest
 
 namespace Sapphire::Test
@@ -291,8 +293,13 @@ TEST_CASE("Convolution")
 #endif
 
 #ifdef GraphTest
-TEST_CASE("GraphTest")
+TEST_CASE("BasicGraphTest")
 {
+    SUBCASE("BasicGraphy")
+    {
+        GraphFunctionalityTest();
+    }
+
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;

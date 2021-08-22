@@ -8,7 +8,6 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Backward/BasicBackward.hpp>
 
-
 namespace Sapphire::BackProp
 {
 BasicBackward::BasicBackward(TensorUtil::TensorData dx,

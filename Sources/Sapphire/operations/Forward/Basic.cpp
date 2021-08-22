@@ -61,7 +61,7 @@ Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
     return Tensor(yKey);
 }
 
-Tensor TwoOutputs::operator()(Tensor& xTensor)
+std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
 {
     auto& model = ModelManager::GetCurrentModel();
 
@@ -85,7 +85,7 @@ Tensor TwoOutputs::operator()(Tensor& xTensor)
     SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                 std::make_tuple(&y1Desc, &y2Desc));
 
-    return Tensor(y1Key);
+    return std::make_pair(Tensor(y1Key), Tensor(y2Key));
 }
 
 void InplaceOp::operator()(Tensor& xTensor)
@@ -97,7 +97,7 @@ void InplaceOp::operator()(Tensor& xTensor)
     auto dx = xDesc.GetBackwardData();
     Shape outputShape = xTensor.GetShape();
 
-    std::cout << "Basic Forward called" << std::endl;
+    std::cout << "In-place Forward called " << std::endl;
 
     auto backPropWrapper =
         Util::SharedPtr<BackProp::BackwardInplace>::Make(dx, dx);

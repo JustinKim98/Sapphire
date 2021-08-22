@@ -83,7 +83,7 @@ public:
     {
         std::vector<int> tensorKeys(m_dxVector.size());
 
-        for (std::size_t i = 0; i < m_dyVector.size(); ++i)
+        for (std::size_t i = 0; i < m_dxVector.size(); ++i)
             tensorKeys[i] = m_dxVector[i].GetDescriptorKey();
 
         return tensorKeys;

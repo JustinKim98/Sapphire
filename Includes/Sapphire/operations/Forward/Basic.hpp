@@ -71,12 +71,19 @@ public:
     TwoOutputs& operator=(const TwoOutputs& twoOutputs) = default;
     TwoOutputs& operator=(TwoOutputs&& twoOutputs) noexcept = default;
 
-    Tensor operator()(Tensor& xTensor);
+    std::pair<Tensor, Tensor> operator()(Tensor& xTensor);
+
+private:
+    bool m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor> arguments) override
+    {
+        return true;
+    }
 };
 
-class InplaceOp: public Unit
+class InplaceOp : public Unit
 {
- public:
+public:
     InplaceOp() = default;
     ~InplaceOp() override = default;
 
@@ -86,6 +93,13 @@ class InplaceOp: public Unit
     InplaceOp& operator=(InplaceOp&& inplaceOp) noexcept = default;
 
     void operator()(Tensor& xTensor);
+
+private:
+    bool m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor> arguments) override
+    {
+        return true;
+    }
 };
 }
 
