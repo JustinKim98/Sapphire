@@ -78,6 +78,8 @@ unsigned int Shape::Dim() const
 unsigned int Shape::Size() const noexcept
 {
     unsigned int size = 1;
+    if (m_shapeVector.empty())
+        return 0;
     for (auto i : m_shapeVector)
     {
         size *= i;
@@ -101,6 +103,14 @@ void Shape::Set(unsigned int dim, unsigned int value)
     }
 
     m_shapeVector.at(dim) = value;
+}
+
+void Shape::SetCol(unsigned int value)
+{
+    if (m_shapeVector.empty())
+        throw std::runtime_error("Shape::SetCol - Shape is empty");
+
+    m_shapeVector.at(Dim() - 1) = value;
 }
 
 void Shape::Expand(unsigned int dim)
@@ -172,6 +182,20 @@ void Shape::Shrink(unsigned int dim)
         else
             newShapeVector.at(0) *= m_shapeVector.at(i);
     }
+}
+
+unsigned int Shape::GetBatchSize(unsigned int requiredDim) const
+{
+    if (const auto dim = Dim(); dim > requiredDim)
+    {
+        unsigned int batchSize = 1;
+        for (unsigned int i = 0; i < dim - requiredDim; ++i)
+        {
+            batchSize *= At(i);
+        }
+        return batchSize;
+    }
+    return 1;
 }
 
 Shape Shape::GetTranspose() const

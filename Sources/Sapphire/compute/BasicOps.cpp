@@ -7,9 +7,7 @@
 #include <Sapphire/compute/Broadcast.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/dense/cuda/Basic.cuh>
-#include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Gemm.cuh>
-#include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
@@ -19,8 +17,7 @@ namespace Sapphire::Compute
 {
 void Add(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
+    const auto device = y.GetCudaDevice();
     const auto paddedN = y.PaddedHostColSize;
 
     auto shapeOut = y.TensorShape;
@@ -38,8 +35,9 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.GetMutableDenseCuda(), a.GetDenseCuda(),
                              b.GetDenseCuda(), 0,
@@ -47,11 +45,12 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / N) * paddedN;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedN);
+        shapeB.SetCol(paddedN);
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.GetMutableDenseHost(),
                              a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Add, 0, false, false);
     }
@@ -59,8 +58,7 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
+    const auto device = y.GetCudaDevice();
     const auto paddedN = y.PaddedHostColSize;
 
     auto shapeOut = y.TensorShape;
@@ -78,8 +76,9 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.GetMutableDenseCuda(), a.GetDenseCuda(),
                              b.GetDenseCuda(), 0, 1, Dense::Cuda::Sub, 0, false,
@@ -87,11 +86,12 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / N) * paddedN;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedN);
+        shapeB.SetCol(paddedN);
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.GetMutableDenseHost(),
                              a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Sub, 0, false, false);
     }
@@ -99,8 +99,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    const auto device = y.GetDevice();
-    const auto N = y.Cols();
+    const auto device = y.GetCudaDevice();
     const auto paddedN = y.PaddedHostColSize;
 
     auto shapeOut = y.TensorShape;
@@ -118,8 +117,9 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.GetMutableDenseCuda(), a.GetDenseCuda(),
                              b.GetDenseCuda(), 0, 1, Dense::Cuda::Dot, 0, false,
@@ -127,11 +127,12 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / N) * paddedN;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, y.GetMutableDenseHost(),
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedN);
+        shapeB.SetCol(paddedN);
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.GetMutableDenseHost(),
                              a.GetDenseHost(), b.GetDenseHost(), 0, 1,
                              Dense::Naive::Dot, 0, false, false);
     }
@@ -151,7 +152,7 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     shapeB.Expand(2);
     shapeC.Expand(2);
 
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto M = shapeOut.Rows();
     const auto N = shapeOut.Cols();
     const auto K = shapeA.Cols();
@@ -166,8 +167,9 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     {
         const auto batchSize = y.GetBatchSize(2);
 
-        if (device.Type() == DeviceType::CUDA)
+        if (y.Mode() == DeviceType::Cuda)
         {
+            cudaSetDevice(device.GetID());
             Dense::Cuda::GemmMatrixWiseBroadcast(
                 y.GetMutableDenseCuda(), a.GetDenseCuda(), b.GetDenseCuda(),
                 c.GetDenseCuda(),
@@ -192,8 +194,9 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     const auto sizeB = shapeB.Size();
     const auto sizeC = shapeC.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
                              sizeB, sizeC, y.GetMutableDenseCuda(),
                              a.GetDenseCuda(),
@@ -202,13 +205,13 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     }
     else
     {
-        const auto paddedSizeOut = (sizeOut / N) * paddedN;
-        const auto paddedSizeA = (sizeA / K) * paddedK;
-        const auto paddedSizeB = (sizeB / N) * paddedN;
-        const auto paddedSizeC = (sizeC / N) * paddedN;
+        shapeOut.SetCol(paddedN);
+        shapeA.SetCol(paddedK);
+        shapeB.SetCol(paddedN);
+        shapeC.SetCol(paddedN);
 
-        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, paddedSizeOut,
-                             paddedSizeA, paddedSizeB, paddedSizeC,
+        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(), shapeC.Size(),
                              y.GetMutableDenseHost(), a.GetDenseHost(),
                              b.GetDenseHost(),
                              c.GetDenseHost(), 0, 2, Dense::Naive::NaiveGemm, M,
@@ -218,27 +221,29 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
 
 void Scale(TensorData& y, const TensorData& x, const float factor)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Scale(y.GetMutableDenseCuda(), x.GetDenseCuda(), factor,
                            totalSize);
     }
     else
     {
+        auto shapeY = y.GetShape();
+        shapeY.SetCol(paddedN);
         Dense::Naive::Scale(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
-                            totalSizeWithPadding);
+                            shapeY.Size(), N, paddedN);
     }
 }
 
 void Transpose(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto inputM = x.Rows();
     const auto inputN = x.Cols();
     const auto paddedM = y.PaddedHostColSize;
@@ -246,8 +251,9 @@ void Transpose(TensorData& y, const TensorData& x)
     const auto broadcast = x.GetBatchSize(2) == 1;
     const auto chunkSize = y.TensorShape.Size() / (inputM * inputN);
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Transpose(y.GetMutableDenseCuda(), x.GetDenseCuda(),
                                inputM, inputN,
                                chunkSize, broadcast);
@@ -263,94 +269,99 @@ void Transpose(TensorData& y, const TensorData& x)
 //! Performs y = x^factor for each element
 void Pow(TensorData& y, const TensorData& x, const float factor)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Pow(y.GetMutableDenseCuda(), x.GetDenseCuda(), factor,
                          totalSize);
     }
     else
     {
         Dense::Naive::Pow(y.GetMutableDenseHost(), x.GetDenseHost(), factor,
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
 void log(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::log(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
     }
     else
     {
         Dense::Naive::log(y.GetMutableDenseHost(), x.GetDenseHost(),
-                          totalSizeWithPadding);
+                          totalSizeWithPadding, N, paddedN);
     }
 }
 
 void log10(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::log10(y.GetMutableDenseCuda(), x.GetDenseCuda(),
                            totalSize);
     }
     else
     {
         Dense::Naive::log10(y.GetMutableDenseHost(), x.GetDenseHost(),
-                            totalSizeWithPadding);
+                            totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Inverse(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Inverse(y.GetMutableDenseCuda(), x.GetDenseCuda(),
                              totalSize);
     }
     else
     {
         Dense::Naive::Inverse(y.GetMutableDenseHost(), x.GetDenseHost(),
-                              totalSizeWithPadding);
+                              totalSizeWithPadding, N, paddedN);
     }
 }
 
 void Mean(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto unitSize = y.TensorShape.Size();
     const auto totalSize = unitSize;
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
-    if (device.Type() == DeviceType::CUDA)
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Mean(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize,
                           unitSize);
     }
@@ -358,27 +369,14 @@ void Mean(TensorData& y, const TensorData& x)
     {
         Dense::Naive::Mean(y.GetMutableDenseHost(), x.GetDenseHost(),
                            totalSizeWithPadding,
-                           unitSize);
+                           unitSize, N, paddedN);
     }
 }
 
 void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
                  const TensorData& a, const TensorData& b)
 {
-    const auto device = dy.GetDevice();
-
-    if (dy.TensorShape == a.TensorShape && dy.TensorShape == b.TensorShape &&
-        dy.GetBatchSize(2) > 1)
-    {
-        if (device.Type() == DeviceType::CUDA)
-        {
-            return;
-        }
-        if (device.Type() == DeviceType::HOST)
-        {
-            return;
-        }
-    }
+    const auto device = dy.GetCudaDevice();
 
     const auto maxDim = std::max(
         { dy.TensorShape.Dim(), da.TensorShape.Dim(), db.TensorShape.Dim() });
@@ -395,8 +393,9 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
 
-    if (device.Type() == DeviceType::CUDA)
+    if (dy.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         BroadcastBackwardWith2Inputs(
             shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB, dy.GetDenseCuda(),
             da.GetMutableDenseCuda(), db.GetMutableDenseCuda(),

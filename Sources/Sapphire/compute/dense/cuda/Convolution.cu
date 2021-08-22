@@ -36,7 +36,7 @@ __host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,
 
     checkCuDNN(cudnnSetConvolution2dDescriptor(
         metaData->ConvDesc, rowPadding, columnPadding, strideRow, strideCol,
-        dilationRow, dilationCol, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+        dilationRow, dilationCol, CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
 
     checkCuDNN(cudnnSetTensor4dDescriptor(
         metaData->InputDesc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, xShape.N,

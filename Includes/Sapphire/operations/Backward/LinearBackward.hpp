@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_LINEARBACKWARD_HPP
-#define SAPPHIRE_LINEARBACKWARD_HPP
+#ifndef SAPPHIRE_BACKPROP_LINEARBACKWARD_HPP
+#define SAPPHIRE_BACKPROP_LINEARBACKWARD_HPP
 
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
@@ -22,9 +22,9 @@ class LinearBackProp : public BackPropWrapper
 {
 public:
     explicit LinearBackProp(TensorUtil::TensorData dx,
+                            TensorUtil::TensorData dy,
                             TensorUtil::TensorData weight,
                             TensorUtil::TensorData bias,
-                            TensorUtil::TensorData dy,
                             TensorUtil::TensorData x,
                             Util::SharedPtr<Optimizer::Optimizer> optimizer,
                             unsigned int batchSize);
@@ -32,7 +32,7 @@ public:
 private:
     void m_runBackProp() override;
 
-    void m_backProp(const TensorUtil::TensorData& weight);
+    void m_backProp(TensorUtil::TensorData& weight);
 
     void m_updateWeight(TensorUtil::TensorData& weight) const;
 

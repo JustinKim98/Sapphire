@@ -10,6 +10,7 @@
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/compute/dense/cuda/CudnnStruct.cuh>
 
+
 namespace Sapphire::Compute::Dense::Cuda
 {
 __host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,

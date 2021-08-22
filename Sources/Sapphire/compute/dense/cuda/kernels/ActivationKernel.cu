@@ -39,7 +39,7 @@ __global__ void SoftMaxKernel(float* y, const float* x, unsigned int totalSize,
                               unsigned int unitSize)
 {
     const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto curBatch = unitId / blockDim.x;
+    const auto curBatch = unitId / unitSize;
     const auto curIdx = unitId % unitSize;
 
     if (unitId < totalSize)

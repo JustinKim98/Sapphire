@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
+#include <Sapphire/util/SharedPtr.hpp>
 #include <functional>
-#include <memory>
 
 namespace Sapphire::BackProp
 {
@@ -83,7 +83,7 @@ public:
     {
         std::vector<int> tensorKeys(m_dxVector.size());
 
-        for (std::size_t i = 0; i < m_dyVector.size(); ++i)
+        for (std::size_t i = 0; i < m_dxVector.size(); ++i)
             tensorKeys[i] = m_dxVector[i].GetDescriptorKey();
 
         return tensorKeys;
@@ -119,7 +119,7 @@ protected:
 
     //! Vector of tensorData that should give its output
     std::vector<TensorUtil::TensorData> m_dxVector;
-    const std::vector<TensorUtil::TensorData> m_dyVector;
+    std::vector<TensorUtil::TensorData> m_dyVector; // const
     std::vector<TensorUtil::TensorData> m_trainableData;
     const std::vector<TensorUtil::TensorData> m_constants;
     std::vector<TensorUtil::TensorData> m_mutables;

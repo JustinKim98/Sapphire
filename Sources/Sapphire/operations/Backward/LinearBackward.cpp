@@ -11,9 +11,9 @@
 namespace Sapphire::BackProp
 {
 LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
+                               TensorUtil::TensorData dy,
                                TensorUtil::TensorData weight,
                                TensorUtil::TensorData bias,
-                               TensorUtil::TensorData dy,
                                TensorUtil::TensorData x,
                                Util::SharedPtr<Optimizer::Optimizer> optimizer,
                                unsigned int batchSize)
@@ -35,10 +35,10 @@ void LinearBackProp::m_runBackProp()
     m_updateBias(bias);
 }
 
-void LinearBackProp::m_backProp(const TensorUtil::TensorData& weight)
+void LinearBackProp::m_backProp(TensorUtil::TensorData& weight)
 {
     TensorUtil::TensorData& dx = m_dxVector[dxIdx];
-    const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
+    TensorUtil::TensorData& dy = m_dyVector[dyIdx];
 
     Compute::Gemm(dx, dy, weight, dx);
 }
@@ -49,11 +49,11 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     const TensorUtil::TensorData& x = m_constants[xIdx];
     TensorUtil::TensorData xTranspose(x.GetShape().GetTranspose(),
                                       x.GetType(),
-                                      x.GetDevice(), 1);
+                                      x.GetCudaDevice(), 1);
     TensorUtil::TensorData dyTranspose(dy.GetShape().GetTranspose(),
-                                       dy.GetType(), dy.GetDevice(), 1);
+                                       dy.GetType(), dy.GetCudaDevice(), 1);
     TensorUtil::TensorData dw(weight.GetShape().GetTranspose(),
-                              weight.GetType(), weight.GetDevice(), 1);
+                              weight.GetType(), weight.GetCudaDevice(), 1);
 
     Compute::Transpose(xTranspose, x);
     Compute::Transpose(dyTranspose, dy);
@@ -68,9 +68,9 @@ void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
     const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
     TensorUtil::TensorData ones(Shape({ m_batchSize }),
                                 dy.GetType(),
-                                dy.GetDevice(), 1);
+                                dy.GetCudaDevice(), 1);
     TensorUtil::TensorData dB(bias.GetShape(), bias.GetType(),
-                              bias.GetDevice(), 1);
+                              bias.GetCudaDevice(), 1);
 
     Compute::Initialize::Ones(ones);
     Compute::Initialize::Zeros(dB);

@@ -18,10 +18,10 @@ MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
                       { a, b },
                       { TensorUtil::TensorData(a.TensorShape.GetTranspose(),
                                                a.GetType(),
-                                               a.GetDevice()),
+                                               a.GetCudaDevice()),
                         TensorUtil::TensorData(b.TensorShape.GetTranspose(),
                                                b.GetType(),
-                                               b.GetDevice()) })
+                                               b.GetCudaDevice()) })
 {
 }
 

@@ -22,7 +22,7 @@ public:
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
            std::unique_ptr<Initialize::Initializer> weightInitializer,
            std::unique_ptr<Initialize::Initializer> biasInitializer,
-           Device device,
+           CudaDevice device,
            bool isSparse = false);
     ~Linear() override = default;
 
@@ -31,7 +31,7 @@ public:
     Linear& operator=(const Linear& linear) = default;
     Linear& operator=(Linear&& linear) noexcept = default;
 
-    Tensor operator()(Tensor& input);
+    Tensor operator()(Tensor& xTensor);
 
 private:
     [[nodiscard]] int m_registerOutputTensor(
@@ -43,7 +43,7 @@ private:
     unsigned int m_inputs;
     unsigned int m_outputs;
     Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
-    Device m_device;
+    CudaDevice m_device;
     bool m_isSparse;
 };
 } // namespace Sapphire::NN

@@ -4,25 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/util/Device.hpp>
+#include <Sapphire/util/CudaDevice.hpp>
 #include <stdexcept>
 
 namespace Sapphire
 {
-Device::Device(std::string name)
-    : m_id(-1),
-      m_type(DeviceType::HOST),
-      m_name(std::move(name)),
-      m_padByteSize(32)
-{
-    //! todo : change padByteSize according to hardware support
-}
-
-Device::Device(int id, std::string name)
+CudaDevice::CudaDevice(int id, std::string name)
     : m_id(id),
-      m_type(DeviceType::CUDA),
-      m_name(std::move(name)),
-      m_padByteSize(32)
+      m_name(std::move(name))
 {
     if (id >= GetAvailableCudaDeviceCount())
     {
@@ -38,14 +27,13 @@ Device::Device(int id, std::string name)
     m_cudaCapability = majorCapability * 10 + minorCapability;
 }
 
-bool Device::operator==(const Device& device) const
+bool CudaDevice::operator==(const CudaDevice& device) const
 {
-    return m_id == device.m_id && m_type == device.m_type &&
-           m_name == device.m_name && m_padByteSize == device.m_padByteSize;
+    return m_id == device.m_id && m_name == device.m_name;
 }
 
-bool Device::operator!=(const Device& device) const
+bool CudaDevice::operator!=(const CudaDevice& device) const
 {
     return !(*this == device);
 }
-}  // namespace Sapphire
+} // namespace Sapphire

@@ -21,7 +21,7 @@ enum class Type
 
 class Shape
 {
- public:
+public:
     Shape() = default;
     ~Shape() = default;
 
@@ -55,6 +55,8 @@ class Shape
 
     void Set(unsigned int dim, unsigned int value);
 
+    void SetCol(unsigned int value);
+
     [[nodiscard]] unsigned int Rows() const
     {
         return m_shapeVector.size() > 1
@@ -83,13 +85,15 @@ class Shape
     //! Shrinks dimension to given dim
     void Shrink(unsigned int dim);
 
+    [[nodiscard]] unsigned int GetBatchSize(unsigned requiredDim) const;
+
     Shape GetReverse() const;
 
     [[nodiscard]] Shape GetTranspose() const;
 
- private:
+private:
     std::vector<unsigned int> m_shapeVector;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

@@ -14,7 +14,7 @@ Model::Model(std::string name)
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
-                                    const Device& device)
+                                    const CudaDevice& device)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
     TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey);
@@ -32,10 +32,13 @@ void Model::m_autoGrad(int tensorKey)
         descriptor.PopIfOperandHistory();
         if (!descriptor.HasHistory())
             return;
+
         const auto& [wrapper, location] =
             descriptor.GetBackPropWrapperFromLastHistory();
         const auto outputGradientKeyVector = wrapper->
             GetGradientOutputDescriptorKeys();
+
+        auto data = descriptor.GetBackwardData();
 
         //! Checks if wrapper is ready to backprop. If it does, performs backprop
         //! Update the operands if successes

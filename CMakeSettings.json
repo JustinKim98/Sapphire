@@ -21,24 +21,6 @@
       "buildCommandArgs": "-j24",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x64_x64" ]
-    },
-    {
-      "name": "Linux-GCC-Debug",
-      "generator": "Ninja",
-      "configurationType": "Debug",
-      "cmakeExecutable": "cmake",
-      "remoteCopySourcesExclusionList": [ ".vs", ".git", "out" ],
-      "buildCommandArgs": "",
-      "ctestCommandArgs": "",
-      "inheritEnvironments": [ "linux_x64" ],
-      "remoteMachineName": "398347837;127.0.0.1 (username=jwkim98, port=3456, authentication=Password)",
-      "remoteCMakeListsRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/src",
-      "remoteBuildRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/build/${name}",
-      "remoteInstallRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/install/${name}",
-      "remoteCopySources": true,
-      "rsyncCommandArgs": "-t --delete --delete-excluded",
-      "remoteCopyBuildOutput": false,
-      "remoteCopySourcesMethod": "rsync"
     }
   ]
 }

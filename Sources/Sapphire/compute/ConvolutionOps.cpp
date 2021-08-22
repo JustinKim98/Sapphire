@@ -14,19 +14,21 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
                    int strideRow, int strideCol, int dilationRow,
                    int dilationCol, int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
-
+    const auto device = y.GetCudaDevice();
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.GetBatchSize(3)),
-            static_cast<int>(filter.GetShape().At(2)),
+            static_cast<int>(filter.GetShape().At(
+                filter.GetShape().Dim() - 3)),
             static_cast<int>(filter.GetShape().Rows()),
             static_cast<int>(filter.GetShape().Cols())
         };
 
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -43,22 +45,24 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
     }
 }
 
-void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
-                      int windowWidth, int strideRow, int strideCol,
+void MaxPool2DForward(TensorData& y, const TensorData& x, int windowRows,
+                      int windowCols, int strideRow, int strideCol,
                       int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = y.GetCudaDevice();
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
 
         Dense::Cuda::Pool2DForward(
-            y.GetMutableDenseCuda(), x.GetDenseCuda(), xShape, windowHeight,
-            windowWidth, strideRow, strideCol, rowPadding, columnPadding,
+            y.GetMutableDenseCuda(), x.GetDenseCuda(), xShape, windowRows,
+            windowCols, strideRow, strideCol, rowPadding, columnPadding,
             Dense::Cuda::PoolingMode::Max, CUDNN_PROPAGATE_NAN, device.GetID());
     }
     else
@@ -68,22 +72,24 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
     }
 }
 
-void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
-                      int windowWidth, int strideRow, int strideCol,
+void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
+                      int windowCols, int strideRow, int strideCol,
                       int rowPadding, int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = y.GetCudaDevice();
+    if (y.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
 
         Dense::Cuda::Pool2DForward(
-            y.GetMutableDenseCuda(), x.GetDenseCuda(), xShape, windowHeight,
-            windowWidth, strideRow, strideCol, rowPadding, columnPadding,
+            y.GetMutableDenseCuda(), x.GetDenseCuda(), xShape, windowRows,
+            windowCols, strideRow, strideCol, rowPadding, columnPadding,
             Dense::Cuda::PoolingMode::Avg, CUDNN_PROPAGATE_NAN, device.GetID());
     }
     else
@@ -95,21 +101,23 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowHeight,
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     const TensorData& x, const TensorData& filter,
-                    int strideRow, int strideCol, int dilationRow,
-                    int dilationCol, int rowPadding, int columnPadding)
+                    int strideRow, int strideCol, int rowPadding,
+                    int colPadding, int dilationRow, int dilationCol)
 {
-    if (const auto device = dx.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = dx.GetCudaDevice();
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
             static_cast<int>(filter.GetBatchSize(3)),
-            static_cast<int>(filter.GetShape().At(2)),
+            static_cast<int>(filter.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(filter.GetShape().Rows()),
             static_cast<int>(filter.GetShape().Cols())
         };
 
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -118,7 +126,7 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
             dx.GetMutableDenseCuda(), filter.GetDenseCuda(),
             dFilter.GetMutableDenseCuda(),
             x.GetDenseCuda(), dy.GetDenseCuda(), xShape, filterShape, strideRow,
-            strideCol, dilationRow, dilationCol, rowPadding, columnPadding,
+            strideCol, dilationRow, dilationCol, rowPadding, colPadding,
             device.GetID());
     }
     else
@@ -128,16 +136,19 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     }
 }
 
-void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
-                       const TensorData& y, int windowHeight, int windowWidth,
+void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
+                       const TensorData& x,
+                       const TensorData& y, int windowRows, int windowCols,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = dx.GetCudaDevice();
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -145,7 +156,7 @@ void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
         Dense::Cuda::Pool2DBackward(
             y.GetDenseCuda(), dy.GetDenseCuda(), x.GetDenseCuda(),
             dx.GetMutableDenseCuda(),
-            xShape, windowHeight, windowWidth, strideRow, strideCol, rowPadding,
+            xShape, windowRows, windowCols, strideRow, strideCol, rowPadding,
             columnPadding, Dense::Cuda::PoolingMode::Max, device.GetID());
     }
     else
@@ -155,16 +166,19 @@ void MaxPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
     }
 }
 
-void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
-                       const TensorData& y, int windowHeight, int windowWidth,
+void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
+                       const TensorData& x,
+                       const TensorData& y, int windowRows, int windowCols,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding)
 {
-    if (const auto device = y.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = dx.GetCudaDevice();
+    if (dx.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
             static_cast<int>(x.GetBatchSize(3)),
-            static_cast<int>(x.GetShape().At(2)),
+            static_cast<int>(x.GetShape().At(x.GetShape().Dim() - 3)),
             static_cast<int>(x.GetShape().Rows()),
             static_cast<int>(x.GetShape().Cols())
         };
@@ -172,7 +186,7 @@ void AvgPool2DBackward(TensorData& dy, TensorData& dx, const TensorData& x,
         Dense::Cuda::Pool2DBackward(
             y.GetDenseCuda(), dy.GetDenseCuda(), x.GetDenseCuda(),
             dx.GetMutableDenseCuda(),
-            xShape, windowHeight, windowWidth, strideRow, strideCol, rowPadding,
+            xShape, windowRows, windowCols, strideRow, strideCol, rowPadding,
             columnPadding, Dense::Cuda::PoolingMode::Avg, device.GetID());
     }
     else

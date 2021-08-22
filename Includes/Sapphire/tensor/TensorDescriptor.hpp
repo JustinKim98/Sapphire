@@ -24,7 +24,7 @@ class TensorDescriptor
 {
 public:
     TensorDescriptor() = default;
-    TensorDescriptor(const Shape& shape, Type type, const Device& device,
+    TensorDescriptor(const Shape& shape, Type type, const CudaDevice& device,
                      int key);
 
     ~TensorDescriptor() = default;
@@ -42,12 +42,19 @@ public:
     [[nodiscard]] unsigned int GetBatchSize() const;
 
     [[nodiscard]] Shape GetShape() const;
-    [[nodiscard]] Device GetDevice() const;
+    [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] Type GetType() const;
 
     void SetShape(Shape shape);
-    //! Moves internal TensorData to new device
-    void SendTo(Device device);
+
+    //! Moves internal TensorData to cuda
+    void ToCuda();
+    //! Moves internal TensorData to host
+    void ToHost();
+
+    DeviceType Mode() const;
+
+    void SetMode(DeviceType deviceType);
 
     //! Add unit m_key if unit was used as output or flow-through type
     //! \param wrapper : BackPropWrapper for starting back propagation on this tensor

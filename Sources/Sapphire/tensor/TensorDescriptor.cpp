@@ -5,13 +5,12 @@
 // property of any third parties.
 
 #include <Sapphire/tensor/TensorDescriptor.hpp>
-#include <Sapphire/util/ResourceManager.hpp>
 #include <algorithm>
 
 namespace Sapphire::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
-                                   const Device& device,
+                                   const CudaDevice& device,
                                    int key)
     : m_forwardData(shape, type, device, key),
       m_backwardData(shape, type, device, key),
@@ -62,9 +61,9 @@ Shape TensorDescriptor::GetShape() const
     return m_forwardData.TensorShape;
 }
 
-Device TensorDescriptor::GetDevice() const
+CudaDevice TensorDescriptor::GetDevice() const
 {
-    return m_forwardData.GetDevice();
+    return m_forwardData.GetCudaDevice();
 }
 
 Type TensorDescriptor::GetType() const
@@ -78,10 +77,29 @@ void TensorDescriptor::SetShape(Shape shape)
     m_backwardData.TensorShape = shape;
 }
 
-void TensorDescriptor::SendTo(Device device)
+void TensorDescriptor::ToCuda()
 {
-    m_forwardData.SendTo(device);
-    m_backwardData.SendTo(device);
+    m_forwardData.ToCuda();
+    m_backwardData.ToCuda();
+}
+
+
+void TensorDescriptor::ToHost()
+{
+    m_forwardData.ToHost();
+    m_backwardData.ToHost();
+}
+
+
+DeviceType TensorDescriptor::Mode() const
+{
+    return m_forwardData.Mode();
+}
+
+void TensorDescriptor::SetMode(DeviceType deviceType)
+{
+    m_forwardData.SetMode(deviceType);
+    m_backwardData.SetMode(deviceType);
 }
 
 void TensorDescriptor::AppendOutputHistory(

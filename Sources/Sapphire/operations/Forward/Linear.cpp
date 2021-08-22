@@ -20,7 +20,7 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
                std::unique_ptr<Initialize::Initializer> weightInitializer,
                std::unique_ptr<Initialize::Initializer> biasInitializer,
-               Device device, bool isSparse)
+               CudaDevice device, bool isSparse)
     : m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
       m_optimizer(std::move(optimizer)),
@@ -33,54 +33,64 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
 
-    m_trainableDataMap["weight"] = TensorUtil::TensorData(
-        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device, 1);
-    m_trainableDataMap["bias"] =
-        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device, 1);
-    m_mutableDataMap["transposedWeight"] = TensorUtil::TensorData(
-        Shape({ outputFeatureSize, inputFeatureSize }), type, m_device, 1);
+    auto weight = TensorUtil::TensorData(
+        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device);
+    auto bias =
+        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device);
+    auto transposedWeight = TensorUtil::TensorData(
+        Shape({ outputFeatureSize, inputFeatureSize }), type, m_device);
 
-    m_trainableDataMap["weight"].SendTo(Device("host"));
-    m_trainableDataMap["bias"].SendTo(Device("host"));
+    weightInitializer->operator()(weight);
+    biasInitializer->operator()(bias);
 
-    weightInitializer->operator()(m_trainableDataMap["weight"]);
-    biasInitializer->operator()(m_trainableDataMap["bias"]);
+    weight.ToCuda();
+    bias.ToCuda();
+    weight.ToHost();
+    bias.ToHost();
 
-    m_trainableDataMap["weight"].SendTo(device);
-    m_trainableDataMap["bias"].SendTo(device);
+    m_trainableDataMap["weight"] = std::move(weight);
+    m_trainableDataMap["bias"] = std::move(bias);
+    m_mutableDataMap["transposedWeight"] = std::move(transposedWeight);
 }
 
-
-Tensor Linear::operator()(Tensor& input)
+Tensor Linear::operator()(Tensor& xTensor)
 {
+    auto mode = xTensor.Mode();
     auto& model = ModelManager::GetCurrentModel();
 
     auto& xDesc =
-        model.GetDescriptor(input.TensorDescriptorKey());
+        model.GetDescriptor(xTensor.TensorDescriptorKey());
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
+
+    yDesc.SetMode(mode);
 
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    const auto& weight = m_trainableDataMap.at("weight");
-    const auto& bias = m_trainableDataMap.at("bias");
-    auto& transposedWeight =
+    auto weight = m_trainableDataMap.at("weight");
+    auto bias = m_trainableDataMap.at("bias");
+    auto transposedWeight =
         m_mutableDataMap["transposedWeight"];
 
-    //! Reshape the data to match the requirements
+    weight.SetMode(mode);
+    bias.SetMode(mode);
+    transposedWeight.SetMode(mode);
+
+    //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
 
     Compute::Initialize::Zeros(y);
     Compute::Transpose(transposedWeight, weight);
+    //! Bias is broadcasted internally
     Compute::Gemm(y, x, transposedWeight, bias);
 
     auto backPropWrapper =
         Util::SharedPtr<BackProp::LinearBackProp>::Make(
             dx, dy, weight, bias, x.CreateCopy(), m_optimizer,
-            xDesc.GetShape().At(0));
+            x.GetBatchSize(2));
     SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                 std::make_tuple(&yDesc));
     return Tensor(yKey);
@@ -95,7 +105,7 @@ int Linear::m_registerOutputTensor(
     Shape outputShape = shapeInput;
     outputShape[outputShape.Dim() - 1] = m_outputs;
     const auto yKey = model.RegisterTensorDescriptor(
-        outputShape, x.GetType(), x.GetDevice());
+        outputShape, x.GetType(), x.GetCudaDevice());
     return yKey;
 }
 
@@ -105,8 +115,8 @@ bool Linear::m_checkArguments(
     const auto& input = arguments.at(0);
     if (input.GetForwardData().GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-    if (input.GetForwardData().GetDevice() != m_device)
-        throw std::invalid_argument("NN::Linear - Device mismatch");
+    if (input.GetForwardData().GetCudaDevice() != m_device)
+        throw std::invalid_argument("NN::Linear - CudaDevice mismatch");
 
     return true;
 }

@@ -56,7 +56,7 @@ inline void AddOperandHistory(
 
 //! Saves history for tensors used in the unit
 //! Adds OperandHistory for inputs
-//! Adds OutputHistory for outputs
+//! After adding all operand history, Adds all OutputHistory for outputs
 //! \tparam inputIdx : current index of the input parameter
 //! \tparam InputTs : packed parameter types for inputs
 //! \tparam OutputTs : packed parameters types for outputs
@@ -79,46 +79,31 @@ inline void SaveHistory(
     }
 }
 
-template <typename T>
-inline bool CheckBatchSizeEquality(unsigned int batchSize, const T& param)
+template <typename T, typename... Ts>
+inline bool CheckDeviceEquality(const T& paramA, const T& paramB)
 {
-    return batchSize == param.GetBatchSize();
+    if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
+        return false;
+
+    if (paramA.Mode() == DeviceType::Cuda &&
+        paramA.GetCudaDevice() != paramB.GetCudaDevice())
+        return false;
+
+    return true;
 }
 
 template <typename T, typename... Ts>
-inline bool CheckBatchSizeEquality(unsigned int batchSize, const T& param,
-                                   const Ts&... params)
-{
-    if (batchSize == param.GetBatchSize())
-        return CheckBatchSizeEquality(batchSize, params...);
-    return false;
-}
-
-template <typename T, typename ...Ts>
-inline bool CheckBatchSizeEquality(const T& param, const Ts&... params)
-{
-    return CheckBatchSizeEquality(param.GetBatchSize(), params...);
-}
-
-template <typename T>
-inline bool CheckDeviceEquality(const Device& device, const T& param)
-{
-    return device == param.GetDevice();
-}
-
-template <typename T, typename... Ts>
-inline bool CheckDeviceEquality(const Device& device, const T& param,
+inline bool CheckDeviceEquality(const T& paramA, const T& paramB,
                                 const Ts&... params)
 {
-    if (device == param.GetDevice())
-        return CheckDeviceEquality(device, params...);
-    return false;
-}
+    if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
+        return false;
 
-template <typename T, typename... Ts>
-inline bool CheckDeviceEquality(const T& param, const Ts&... params)
-{
-    return CheckDeviceEquality(param.GetDevice(), params...);
+    if (paramA.Mode() == DeviceType::Cuda &&
+        paramA.GetCudaDevice() != paramB.GetCudaDevice())
+        return false;
+
+    return CheckDeviceEquality(paramB, params...);
 }
 
 

@@ -14,8 +14,10 @@ namespace Sapphire::Compute::Initialize
 {
 void Normal(TensorUtil::TensorData& data, float mean, float sd)
 {
-    if (const auto device = data.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Normal(data.GetMutableDenseCuda(), mean, sd,
                             data.DenseTotalLengthCuda,
                             static_cast<int>(std::clock()));
@@ -30,8 +32,10 @@ void Normal(TensorUtil::TensorData& data, float mean, float sd)
 
 void Uniform(TensorUtil::TensorData& data, float min, float max)
 {
-    if (const auto device = data.GetDevice(); device.Type() == DeviceType::CUDA)
+    if (const auto device = data.GetCudaDevice();
+        data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Uniform(data.GetMutableDenseCuda(), min, max,
                              data.DenseTotalLengthCuda,
                              static_cast<int>(std::clock()));
@@ -46,8 +50,10 @@ void Uniform(TensorUtil::TensorData& data, float min, float max)
 
 void Ones(TensorUtil::TensorData& data)
 {
-    if (const auto device = data.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Scalar(data.GetMutableDenseCuda(), 1.0f,
                             data.DenseTotalLengthCuda);
     }
@@ -60,8 +66,10 @@ void Ones(TensorUtil::TensorData& data)
 
 void Zeros(TensorUtil::TensorData& data)
 {
-    if (const auto device = data.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Scalar(data.GetMutableDenseCuda(), 0.0f,
                             data.DenseTotalLengthCuda);
     }
@@ -74,8 +82,10 @@ void Zeros(TensorUtil::TensorData& data)
 
 void HeNormal(TensorUtil::TensorData& data, int fanIn)
 {
-    if (const auto device = data.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Normal(
             data.GetMutableDenseCuda(), 0.0,
             2.0f / std::sqrt(static_cast<float>(fanIn)),
@@ -91,8 +101,10 @@ void HeNormal(TensorUtil::TensorData& data, int fanIn)
 
 void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
 {
-    if (const auto device = data.GetDevice(); device.Type() == DeviceType::CUDA)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == DeviceType::Cuda)
     {
+        cudaSetDevice(device.GetID());
         Dense::Cuda::Normal(
             data.GetMutableDenseCuda(), 0.0,
             1.0f / std::sqrt(static_cast<float>(fanIn + fanOut)),
