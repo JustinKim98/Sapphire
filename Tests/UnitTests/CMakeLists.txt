@@ -3,6 +3,7 @@ set(target UnitTests)
 
 # Includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Includes)
 
 # Sources
 file(GLOB_RECURSE sources

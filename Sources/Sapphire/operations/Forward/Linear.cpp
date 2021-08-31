@@ -43,11 +43,6 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
     weightInitializer->operator()(weight);
     biasInitializer->operator()(bias);
 
-    weight.ToCuda();
-    bias.ToCuda();
-    weight.ToHost();
-    bias.ToHost();
-
     m_trainableDataMap["weight"] = std::move(weight);
     m_trainableDataMap["bias"] = std::move(bias);
     m_mutableDataMap["transposedWeight"] = std::move(transposedWeight);
@@ -62,7 +57,6 @@ Tensor Linear::operator()(Tensor& xTensor)
         model.GetDescriptor(xTensor.TensorDescriptorKey());
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
-
     yDesc.SetMode(mode);
 
     auto x = xDesc.GetForwardData();

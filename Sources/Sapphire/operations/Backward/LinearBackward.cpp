@@ -49,11 +49,11 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     const TensorUtil::TensorData& x = m_constants[xIdx];
     TensorUtil::TensorData xTranspose(x.GetShape().GetTranspose(),
                                       x.GetType(),
-                                      x.GetCudaDevice(), 1);
+                                      x.GetCudaDevice());
     TensorUtil::TensorData dyTranspose(dy.GetShape().GetTranspose(),
-                                       dy.GetType(), dy.GetCudaDevice(), 1);
+                                       dy.GetType(), dy.GetCudaDevice());
     TensorUtil::TensorData dw(weight.GetShape().GetTranspose(),
-                              weight.GetType(), weight.GetCudaDevice(), 1);
+                              weight.GetType(), weight.GetCudaDevice());
 
     Compute::Transpose(xTranspose, x);
     Compute::Transpose(dyTranspose, dy);

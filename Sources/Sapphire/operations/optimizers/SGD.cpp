@@ -19,9 +19,10 @@ SGD::SGD(SGD&& sgd) noexcept
 {
 }
 
-void SGD::operator()(TensorData& z, TensorData& dz)
+void SGD::operator()(TensorData& z, const TensorData& dz)
 {
-    Compute::Scale(dz, dz, m_learningRate);
-    Compute::Sub(z, z, dz);
+    TensorData temp(dz.GetShape(), dz.GetType(), dz.GetCudaDevice());
+    Compute::Scale(temp, dz, m_learningRate);
+    Compute::Sub(z, z, temp);
 }
 }

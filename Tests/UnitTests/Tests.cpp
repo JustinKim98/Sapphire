@@ -12,7 +12,7 @@
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
-#include <Sapphire/Tests/OperationTest/LinearTest.hpp>
+#include <OperationTest/LinearTest.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
@@ -303,7 +303,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        Operation::LinearForwardTest();
+        TestLinear();
     }
 }
 #endif

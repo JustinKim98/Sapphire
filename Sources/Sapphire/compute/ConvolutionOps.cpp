@@ -7,6 +7,8 @@
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
+#include <Sapphire/compute/dense/naive/Conv2D.hpp>
+
 
 namespace Sapphire::Compute
 {
@@ -40,8 +42,8 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
     }
     else
     {
-        throw std::invalid_argument(
-            "Compute::Conv2DForward - Host mode Not implemented");
+        Dense::Naive::Conv2D(y, x, filter, strideRow, strideCol, rowPadding,
+                             columnPadding, dilationRow, dilationCol, device);
     }
 }
 
@@ -131,8 +133,9 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     }
     else
     {
-        throw std::invalid_argument(
-            "Compute::Conv2DBackward - Host mode not implemented");
+        Dense::Naive::Conv2DBackward(dx, dFilter, dy, x, filter, strideRow,
+                                     strideCol, rowPadding, colPadding,
+                                     dilationRow, dilationCol, device);
     }
 }
 

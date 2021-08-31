@@ -24,9 +24,9 @@ MSEBackward::MSEBackward(TensorUtil::TensorData dx,
 
 void MSEBackward::m_runBackProp()
 {
-    auto& x = m_constants[xIdx];
-    auto& label = m_constants[labelIdx];
-    auto& dx = m_dxVector[dxIdx];
+    auto x = m_constants[xIdx];
+    auto label = m_constants[labelIdx];
+    auto dx = m_dxVector[dxIdx];
     auto temp = label.CreateCopy();
 
     Compute::Sub(temp, temp, x);
