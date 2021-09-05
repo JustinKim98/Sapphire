@@ -18,9 +18,8 @@ Tensor ReLU(Tensor xTensor)
 {
     Model& model = ModelManager::GetCurrentModel();
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
-    const auto numFeatures = xDesc.GetShape().Cols();
     const auto yDescKey = model.RegisterTensorDescriptor(
-        Shape({ numFeatures }), xDesc.GetType(), xDesc.GetDevice());
+        xDesc.GetShape(), xDesc.GetType(), xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
 
     auto x = xDesc.GetForwardData().CreateCopy();

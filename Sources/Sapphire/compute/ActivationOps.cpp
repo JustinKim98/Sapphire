@@ -87,6 +87,7 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
     assert(dx.GetCudaDevice() == dy.GetCudaDevice() &&
         dx.GetCudaDevice() == x.GetCudaDevice());
     const auto device = dx.GetCudaDevice();
+    const auto paddedColSize = dx.PaddedHostColSize;
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -97,8 +98,9 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
     }
     else
     {
-        throw std::runtime_error(
-            "Compute::ReLUBackward - Host not implemented");
+        Dense::Naive::ReLUBackward(dx.GetMutableDenseHost(), dy.GetDenseHost(),
+                                   x.GetDenseHost(), totalSize, dx.Cols(),
+                                   paddedColSize);
     }
 }
 

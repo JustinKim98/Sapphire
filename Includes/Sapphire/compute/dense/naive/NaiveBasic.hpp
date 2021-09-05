@@ -59,7 +59,7 @@ void log10(float* output, const float* input, unsigned int totalSize, unsigned c
 void ReLU(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
           padSize);
 
-void ReLUBackward(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void ReLUBackward(float* dx, const float* dy, const float* x, unsigned int totalSize, unsigned colSize, unsigned
                   padSize);
 
 void LeakyReLU(float* output, const float* input, float a,
@@ -77,7 +77,7 @@ void Mean(float* output, const float* input, unsigned int totalSize,
 void Softmax(float* output, const float* input, unsigned int paddedTotalSize,
              unsigned int unitSize, unsigned int paddedUnitSize);
 
-void SoftmaxBack(float* dx, const float* dy, const float* x,
+void SoftmaxBackward(float* dx, const float* dy, const float* x,
                  unsigned int totalSize, unsigned int unitSize,
                  unsigned int padSize);
 }  // namespace Sapphire::Compute::Naive::Dense

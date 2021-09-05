@@ -188,14 +188,14 @@ void ReLU(float* output, const float* input, unsigned int totalSize,
         }
 }
 
-void ReLUBackward(float* output, const float* input, unsigned int totalSize,
-                  unsigned colSize, unsigned
+void ReLUBackward(float* dx, const float* dy, const float* x,
+                  unsigned int totalSize, unsigned colSize, unsigned
                   padSize)
 {
     for (unsigned int ii = 0; ii < totalSize; ii += padSize)
         for (unsigned int i = ii; i < ii + colSize; i++)
         {
-            output[i] = input[i] > 0.0f ? 1.0f : 0.0f;
+            dx[i] = x[i] > 0.0f ? dy[i] : 0.0f;
         }
 }
 
@@ -265,7 +265,7 @@ void Softmax(float* output, const float* input, unsigned int paddedTotalSize,
     }
 }
 
-void SoftmaxBack(float* dx, const float* dy, const float* x,
+void SoftmaxBackward(float* dx, const float* dy, const float* x,
                  unsigned int totalSize, unsigned int unitSize,
                  unsigned int padSize)
 {
