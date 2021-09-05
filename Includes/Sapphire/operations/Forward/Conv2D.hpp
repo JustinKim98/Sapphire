@@ -26,7 +26,7 @@ public:
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
            std::unique_ptr<Initialize::Initializer> kernelInitializer,
            std::unique_ptr<Initialize::Initializer> biasInitializer,
-           CudaDevice device, bool isSparse = false);
+           CudaDevice device = CudaDevice(), bool isSparse = false);
     ~Conv2D() override = default;
 
     Conv2D(const Conv2D& conv2D) = default;
@@ -40,10 +40,11 @@ private:
     [[nodiscard]] int m_registerOutputTensor(
         const TensorUtil::TensorDescriptor& xDesc) const;
 
-    [[nodiscard]] bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) override;
 
-    int m_inputChannels, m_outputChannels;
+    void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const override;
+
+    int m_xChannels, m_yChannels;
     std::pair<int, int> m_inputSize, m_kernelSize, m_stride, m_padSize,
                         m_dilation;
     bool m_useBias;

@@ -23,6 +23,12 @@ MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
                                                b.GetType(),
                                                b.GetCudaDevice()) })
 {
+    auto& aData = m_constants[0];
+    auto& bData = m_constants[1];
+    auto& transposedA = m_mutables[0];
+    auto& transposedB = m_mutables[1];
+    transposedA.SetMode(aData.Mode());
+    transposedB.SetMode(bData.Mode());
 }
 
 void MulBackProp::m_runBackProp()
@@ -38,6 +44,10 @@ void MulBackProp::m_runBackProp()
 
     Compute::Transpose(transposedA, a);
     Compute::Transpose(transposedB, b);
+
+    dy.ToHost();
+    b.ToHost();
+    transposedB.ToHost();
 
     Compute::Gemm(da, dy, transposedB, da);
     Compute::Gemm(db, transposedA, dy, db);

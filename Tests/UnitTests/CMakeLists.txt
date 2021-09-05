@@ -11,7 +11,7 @@ file(GLOB_RECURSE sources
 
 # Build executable
 add_executable(${target}
-        ${sources})
+        ${sources} "Sources/OperationTest/MathTest.cpp")
 
 # Project options
 set_target_properties(${target}

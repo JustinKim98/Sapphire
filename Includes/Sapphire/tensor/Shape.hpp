@@ -55,6 +55,8 @@ public:
 
     void Set(unsigned int dim, unsigned int value);
 
+    void SetRow(unsigned int value);
+
     void SetCol(unsigned int value);
 
     [[nodiscard]] unsigned int Rows() const

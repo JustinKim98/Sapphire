@@ -21,7 +21,7 @@ void SoftMax(TensorData& y, const TensorData& x);
 
 void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
-void LeakyReluBackward(TensorData& dx, const TensorData& dy, const TensorData& x, float a);
+void LeakyReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x, float a);
 
 void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 

@@ -63,6 +63,7 @@ void Conv2DBackProp::m_runBackProp()
 
     TensorUtil::TensorData dKernel(kernel.GetShape(), kernel.GetType(),
                                    kernel.GetCudaDevice());
+    dKernel.SetMode(kernel.Mode());
 
     Compute::Conv2DBackward(dx, dKernel, dy, x, kernel, strideRow, strideCol,
                             rowPadding, colPadding, dilationRow, dilationCol);

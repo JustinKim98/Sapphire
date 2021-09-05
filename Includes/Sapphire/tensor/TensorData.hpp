@@ -17,8 +17,9 @@ class TensorData
 {
 public:
     TensorData() = default;
+    //! TensorData is defined only in Host Mode
     TensorData(Shape shape, Type type);
-
+    //! TensorData is configured in both Host and Cuda Mode
     TensorData(Shape shape, Type type, CudaDevice device);
 
     TensorData(Shape shape, Type type, CudaDevice device,
@@ -124,11 +125,11 @@ public:
     //! Transfers data to target cuda device from current device
     //! immediately returns false if change device is requested to same device
     //! This operation is available only on Cuda type tensorData
-    void ToCuda();
+    void ToCuda() const;
 
     //! Sends data to host
     //! This operation is available only on Cuda type tensorData
-    void ToHost();
+    void ToHost() const;
 
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the

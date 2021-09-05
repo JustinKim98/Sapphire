@@ -108,26 +108,44 @@ inline bool CheckDeviceEquality(const T& paramA, const T& paramB,
 
 
 inline std::optional<Shape> GetBroadcastedShape(const Shape& shapeA,
-                                                const Shape& shapeB)
+                                                const Shape& shapeB,
+                                                int requiredDim)
 {
-    int dimA = static_cast<int>(shapeA.Dim()) - 1;
-    int dimB = static_cast<int>(shapeB.Dim()) - 1;
-    std::vector<unsigned int> outputShapeVector(dimA > dimB ? dimA : dimB);
-    int dimOut = static_cast<int>(outputShapeVector.size()) - 1;
+    int dimA = static_cast<int>(shapeA.Dim()) - 1 - requiredDim;
+    int dimB = static_cast<int>(shapeB.Dim()) - 1 - requiredDim;
+    std::vector<unsigned int> outputShapeVector(
+        shapeA.Dim() > shapeB.Dim()
+            ? shapeA.Dim()
+            : shapeB.Dim());
+
+    int dimOut = static_cast<int>(outputShapeVector.size()) - 1 - requiredDim;
 
     while (dimA >= 0 && dimB >= 0)
     {
-        if (shapeA.At(dimA) == shapeB.At(dimB))
-            outputShapeVector[dimOut] = shapeA.At(dimA);
-        else if (shapeA.At(dimA) == 1)
+        if (shapeA.At(dimA) == 1)
             outputShapeVector[dimOut] = shapeB.At(dimB);
-        else if (shapeB.At(dimB) == 1)
+        else if (shapeB.At(dimB) == 1 || shapeB.At(dimB) == shapeA.At(dimA))
             outputShapeVector[dimOut] = shapeA.At(dimA);
         else
             return {};
 
         dimA -= 1;
         dimB -= 1;
+        dimOut -= 1;
+    }
+
+    while (dimOut >= 0)
+    {
+        if (dimA >= 0)
+        {
+            outputShapeVector[dimOut] = shapeA.At(dimA);
+            dimA -= 1;
+        }
+        if (dimB >= 0)
+        {
+            outputShapeVector[dimOut] = shapeB.At(dimB);
+            dimB -= 1;
+        }
         dimOut -= 1;
     }
 

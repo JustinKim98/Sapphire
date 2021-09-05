@@ -4,15 +4,12 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_TEST_LINEAR_TEST_HPP
-#define SAPPHIRE_TEST_LINEAR_TEST_HPP
+#ifndef SAPPHIRE_TEST_MATH_TEST_HPP
+#define SAPPHIRE_TEST_MATH_TEST_HPP
 
-namespace Sapphire::Test::Operation
+namespace Sapphire::Test
 {
-
- void LinearForwardTest();
-
-
+void TestMultiply();
 }
 
 #endif

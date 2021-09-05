@@ -13,48 +13,70 @@
 
 namespace Sapphire::NN::Functional
 {
-static Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
+Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 {
     Model& model = ModelManager::GetCurrentModel();
+
+    if (inputA.Mode() != inputB.Mode())
+        throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
+
+    if (inputA.GetDevice() != inputB.GetDevice())
+        throw std::invalid_argument("NN::Functional::MulOp - Device mismatch");
+
+    auto mode = inputA.Mode();
 
     auto& aDesc =
         model.GetDescriptor(inputA.TensorDescriptorKey());
     auto& bDesc =
         model.GetDescriptor(inputB.TensorDescriptorKey());
 
-    const auto outputShape =
-        Util::GetBroadcastedShape(aDesc.GetShape(), bDesc.GetShape());
-    if (!outputShape)
+    const auto aShape = aDesc.GetShape();
+    const auto bShape = bDesc.GetShape();
+
+    if (aShape.Cols() != bShape.Rows())
+        throw std::invalid_argument("NN::Functional::MulOp - Shape mismatch");
+
+    const auto yShapeOption =
+        Util::GetBroadcastedShape(aDesc.GetShape(), bDesc.GetShape(), 2);
+    if (!yShapeOption)
     {
         throw std::invalid_argument(
-            "NN::Functional::MulOp - Given shapes failed to broadcast");
+            "NN::Functional::MulOp - Broadcast failed");
     }
+
+    auto yShape = yShapeOption.value();
+    yShape.SetRow(inputA.GetShape().Rows());
+    yShape.SetCol(inputB.GetShape().Cols());
 
     const Type type = aDesc.GetType();
     const CudaDevice device = aDesc.GetDevice();
     const int outputKey = model.RegisterTensorDescriptor(
-        outputShape.value(), type, device);
+        yShape, type, device);
 
     auto& yDesc = model.GetDescriptor(outputKey);
+    yDesc.SetMode(mode);
 
-    auto a = aDesc.GetForwardData().CreateCopy();
+    auto a = aDesc.GetForwardData();
+    auto aCopy = a.CreateCopy();
     auto da = aDesc.GetBackwardData();
-    auto b = bDesc.GetForwardData().CreateCopy();
+    auto b = bDesc.GetForwardData();
+    auto bCopy = b.CreateCopy();
     auto db = bDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
+    Compute::Gemm(y, aCopy, bCopy, y);
+
     const auto backPropWrapper =
-        Util::SharedPtr<BackProp::MulBackProp>::Make(a, da, b, db, y);
+        Util::SharedPtr<BackProp::MulBackProp>::Make(aCopy, da, bCopy, db, y);
 
     Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
                       std::make_tuple(&yDesc));
 
-    Compute::Gemm(y, a, b, y);
     return Tensor(outputKey);
 }
 
-static Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
+Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
 {
     Model& model = ModelManager::GetCurrentModel();
 
@@ -67,12 +89,15 @@ static Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
     const auto shapeA = aDesc.GetShape();
     const auto shapeB = bDesc.GetShape();
 
+    const auto outputShape = Util::GetBroadcastedShape(shapeA, shapeB, 0);
+    if (!outputShape)
+        throw std::invalid_argument("NN::Functional::AddOp - Broadcast failed");
+
     const Type type = aDesc.GetForwardData().GetType();
     const CudaDevice device = aDesc.GetForwardData().GetCudaDevice();
 
-    const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
-
-    const auto outKey = model.RegisterTensorDescriptor(outputShape, type,
+    const auto outKey = model.RegisterTensorDescriptor(
+        outputShape.value(), type,
         device);
     auto& yDesc = model.GetDescriptor(outKey);
 

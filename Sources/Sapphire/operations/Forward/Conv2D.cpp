@@ -20,8 +20,8 @@ Conv2D::Conv2D(int inChannels, int outChannels, std::pair<int, int> inputSize,
                std::unique_ptr<Initialize::Initializer> kernelInitializer,
                std::unique_ptr<Initialize::Initializer> biasInitializer,
                CudaDevice device, bool isSparse)
-    : m_inputChannels(inChannels),
-      m_outputChannels(outChannels),
+    : m_xChannels(inChannels),
+      m_yChannels(outChannels),
       m_inputSize(inputSize),
       m_kernelSize(kernelSize),
       m_stride(stride),
@@ -58,7 +58,12 @@ Conv2D::Conv2D(int inChannels, int outChannels, std::pair<int, int> inputSize,
                 static_cast<unsigned int>(kernelCols) }), type,
         m_device);
     kernelInitializer->operator()(kernel);
-    kernel.ToCuda();
+    if (m_device.GetID() >= 0)
+    {
+        kernel.ToCuda();
+        kernel.SetMode(DeviceType::Cuda);
+    }
+
     m_trainableDataMap["kernel"] = std::move(kernel);
 
     if (useBias)
@@ -70,7 +75,11 @@ Conv2D::Conv2D(int inChannels, int outChannels, std::pair<int, int> inputSize,
                         static_cast<unsigned int>(m_yCols) }),
                 type, m_device);
         biasInitializer->operator()(bias);
-        bias.ToCuda();
+        if (m_device.GetID() >= 0)
+        {
+            bias.ToCuda();
+            bias.SetMode(DeviceType::Cuda);
+        }
         m_trainableDataMap["bias"] = std::move(bias);
     }
 }
@@ -81,14 +90,13 @@ Tensor Conv2D::operator()(Tensor& tensor)
     auto& model = ModelManager::GetCurrentModel();
 
     auto& xDesc = model.GetDescriptor(tensor.TensorDescriptorKey());
+    m_checkArguments({ &xDesc });
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
     yDesc.SetMode(mode);
 
     auto [dilationRows, dilationCols] = m_dilation;
-    auto [inputRows, inputCols] = m_inputSize;
     auto [rowPadding, colPadding] = m_padSize;
-    auto [kernelRows, kernelCols] = m_kernelSize;
     auto [strideRows, strideCols] = m_stride;
 
     auto x = xDesc.GetForwardData();
@@ -97,7 +105,6 @@ Tensor Conv2D::operator()(Tensor& tensor)
     auto dy = yDesc.GetBackwardData();
 
     auto kernel = m_trainableDataMap.at("kernel");
-    kernel.SetMode(mode);
 
     Util::ChangeTensorDataDimension(4, x, dx, y, dy);
 
@@ -108,7 +115,6 @@ Tensor Conv2D::operator()(Tensor& tensor)
     if (m_useBias)
     {
         auto bias = m_trainableDataMap.at("bias");
-        bias.SetMode(mode);
         Compute::Add(y, y, bias);
         auto backPropWrapper = Util::SharedPtr<BackProp::Conv2DBackProp>::Make(
             dx, dy, kernel, bias, x, m_stride, m_dilation, m_padSize,
@@ -124,5 +130,35 @@ Tensor Conv2D::operator()(Tensor& tensor)
                     std::make_tuple(&yDesc));
     }
     return Tensor(yKey);
+}
+
+int Conv2D::m_registerOutputTensor(
+    const TensorUtil::TensorDescriptor& xDesc) const
+{
+    auto& model = ModelManager::GetCurrentModel();
+    const auto x = xDesc.GetForwardData();
+    const Shape xShape = xDesc.GetShape();
+    Shape yShape = xShape;
+    yShape.SetCol(m_yCols);
+    yShape.SetRow(m_yRows);
+    yShape[yShape.Dim() - 3] = m_yChannels;
+    const auto yKey =
+        model.RegisterTensorDescriptor(yShape, x.GetType(), x.GetCudaDevice());
+    return yKey;
+}
+
+void Conv2D::m_checkArguments(
+    std::vector<TensorUtil::TensorDescriptor*> arguments) const
+{
+    const auto xDescPtr = arguments.at(0);
+    const auto xShape = xDescPtr->GetShape();
+    if (xShape.Dim() < 3)
+        throw std::invalid_argument(
+            "NN::Conv2D - input shape must have at least 3 dimension");
+    if (xShape.At(xShape.Dim() - 3) != static_cast<unsigned int>(m_xChannels))
+        throw std::invalid_argument(
+            "NN::Conv2D - Number of channels does not match ");
+    if (xDescPtr->GetDevice() != m_device)
+        throw std::invalid_argument("NN::Conv2D - Device mismatch");
 }
 }

@@ -12,10 +12,10 @@
 namespace Sapphire::NN::Functional
 {
 [[maybe_unused]]
-static Tensor MulOp(const Tensor& inputA, const Tensor& inputB);
+Tensor MulOp(const Tensor& inputA, const Tensor& inputB);
 
 [[maybe_unused]]
-static Tensor AddOp(const Tensor& inputA, const Tensor& inputB);
+Tensor AddOp(const Tensor& inputA, const Tensor& inputB);
 }
 
 #endif

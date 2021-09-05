@@ -35,13 +35,6 @@ public:
     bool operator==(const CudaDevice& device) const;
     bool operator!=(const CudaDevice& device) const;
 
-    [[nodiscard]] DeviceType Type() const
-    {
-        if (m_id == -1)
-            return DeviceType::Host;
-        return DeviceType::Cuda;
-    }
-
     [[nodiscard]] std::string Name() const
     {
         return m_name;

@@ -16,6 +16,10 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
                    int strideRow, int strideCol, int dilationRow,
                    int dilationCol, int rowPadding, int columnPadding)
 {
+    assert(y.Mode() == x.Mode() && y.Mode() == filter.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice() &&
+        y.GetCudaDevice() == filter.GetCudaDevice());
+
     const auto device = y.GetCudaDevice();
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -51,6 +55,9 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowRows,
                       int windowCols, int strideRow, int strideCol,
                       int rowPadding, int columnPadding)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
+
     const auto device = y.GetCudaDevice();
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -78,6 +85,8 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
                       int windowCols, int strideRow, int strideCol,
                       int rowPadding, int columnPadding)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -106,6 +115,12 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     int strideRow, int strideCol, int rowPadding,
                     int colPadding, int dilationRow, int dilationCol)
 {
+    assert(dy.Mode() == dx.Mode() && dy.Mode() == dFilter.Mode());
+    assert(dy.Mode() == x.Mode() && dy.Mode() == filter.Mode());
+    assert(dy.GetCudaDevice() == x.GetCudaDevice() &&
+        dy.GetCudaDevice() == filter.GetCudaDevice());
+    assert(dy.GetCudaDevice() == dx.GetCudaDevice() &&
+        dy.GetCudaDevice() == dFilter.GetCudaDevice());
     const auto device = dx.GetCudaDevice();
     if (dx.Mode() == DeviceType::Cuda)
     {
@@ -145,6 +160,12 @@ void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding)
 {
+    assert(dx.Mode() == dy.Mode() && dx.Mode() == x.Mode() &&
+        dx.Mode() == y.Mode());
+    assert(dx.GetCudaDevice() == dy.GetCudaDevice() &&
+        dx.GetCudaDevice() == x.GetCudaDevice() &&
+        dx.GetCudaDevice() == y.GetCudaDevice());
+
     const auto device = dx.GetCudaDevice();
     if (dx.Mode() == DeviceType::Cuda)
     {
@@ -175,6 +196,13 @@ void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
                        int strideRow, int strideCol, int rowPadding,
                        int columnPadding)
 {
+    assert(
+        dx.Mode() == dy.Mode() && dx.Mode() == x.Mode() && dx.Mode() == y.Mode(
+        ));
+    assert(dx.GetCudaDevice() == dy.GetCudaDevice() &&
+        dx.GetCudaDevice() == x.GetCudaDevice() &&
+        dx.GetCudaDevice() == y.GetCudaDevice());
+
     const auto device = dx.GetCudaDevice();
     if (dx.Mode() == DeviceType::Cuda)
     {

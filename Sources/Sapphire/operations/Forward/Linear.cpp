@@ -43,6 +43,17 @@ Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
     weightInitializer->operator()(weight);
     biasInitializer->operator()(bias);
 
+    //! Synchronize data between host and device
+    if (m_device.GetID() >= 0)
+    {
+        weight.ToCuda();
+        bias.ToCuda();
+        transposedWeight.ToCuda();
+        weight.SetMode(DeviceType::Cuda);
+        bias.SetMode(DeviceType::Cuda);
+        transposedWeight.SetMode(DeviceType::Cuda);
+    }
+
     m_trainableDataMap["weight"] = std::move(weight);
     m_trainableDataMap["bias"] = std::move(bias);
     m_mutableDataMap["transposedWeight"] = std::move(transposedWeight);
@@ -55,6 +66,7 @@ Tensor Linear::operator()(Tensor& xTensor)
 
     auto& xDesc =
         model.GetDescriptor(xTensor.TensorDescriptorKey());
+    m_checkArguments({ &xDesc });
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
     yDesc.SetMode(mode);
@@ -68,10 +80,6 @@ Tensor Linear::operator()(Tensor& xTensor)
     auto bias = m_trainableDataMap.at("bias");
     auto transposedWeight =
         m_mutableDataMap["transposedWeight"];
-
-    weight.SetMode(mode);
-    bias.SetMode(mode);
-    transposedWeight.SetMode(mode);
 
     //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
@@ -95,23 +103,21 @@ int Linear::m_registerOutputTensor(
 {
     auto& model = ModelManager::GetCurrentModel();
     const auto x = xDesc.GetForwardData();
-    const Shape shapeInput = xDesc.GetShape();
-    Shape outputShape = shapeInput;
-    outputShape[outputShape.Dim() - 1] = m_outputs;
+    const Shape xShape = xDesc.GetShape();
+    Shape yShape = xShape;
+    yShape[yShape.Dim() - 1] = m_outputs;
     const auto yKey = model.RegisterTensorDescriptor(
-        outputShape, x.GetType(), x.GetCudaDevice());
+        yShape, x.GetType(), x.GetCudaDevice());
     return yKey;
 }
 
-bool Linear::m_checkArguments(
-    std::vector<TensorUtil::TensorDescriptor> arguments)
+void Linear::m_checkArguments(
+    std::vector<TensorUtil::TensorDescriptor*> arguments) const
 {
-    const auto& input = arguments.at(0);
-    if (input.GetForwardData().GetShape().Cols() != m_inputs)
+    const auto input = arguments.at(0);
+    if (input->GetForwardData().GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-    if (input.GetForwardData().GetCudaDevice() != m_device)
-        throw std::invalid_argument("NN::Linear - CudaDevice mismatch");
-
-    return true;
+    if (input->GetForwardData().GetCudaDevice() != m_device)
+        throw std::invalid_argument("NN::Linear - Device mismatch");
 }
 } // namespace Sapphire::NN

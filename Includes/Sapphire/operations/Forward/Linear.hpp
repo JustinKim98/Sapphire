@@ -22,7 +22,7 @@ public:
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
            std::unique_ptr<Initialize::Initializer> weightInitializer,
            std::unique_ptr<Initialize::Initializer> biasInitializer,
-           CudaDevice device,
+           CudaDevice device = CudaDevice(),
            bool isSparse = false);
     ~Linear() override = default;
 
@@ -37,8 +37,8 @@ private:
     [[nodiscard]] int m_registerOutputTensor(
         const TensorUtil::TensorDescriptor& xDesc) const;
 
-    bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) override;
+    void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const override;
 
     unsigned int m_inputs;
     unsigned int m_outputs;

@@ -17,6 +17,10 @@ namespace Sapphire::Compute
 {
 void Add(TensorData& y, const TensorData& a, const TensorData& b)
 {
+    assert(y.Mode() == a.Mode());
+    assert(y.Mode() == b.Mode());
+    assert(y.GetCudaDevice() == a.GetCudaDevice());
+    assert(y.GetCudaDevice() == b.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto paddedN = y.PaddedHostColSize;
 
@@ -58,6 +62,10 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 {
+    assert(y.Mode() == a.Mode());
+    assert(y.Mode() == b.Mode());
+    assert(y.GetCudaDevice() == a.GetCudaDevice());
+    assert(y.GetCudaDevice() == b.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto paddedN = y.PaddedHostColSize;
 
@@ -99,6 +107,10 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 {
+    assert(y.Mode() == a.Mode());
+    assert(y.Mode() == b.Mode());
+    assert(y.GetCudaDevice() == a.GetCudaDevice());
+    assert(y.GetCudaDevice() == b.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto paddedN = y.PaddedHostColSize;
 
@@ -141,6 +153,12 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
           const TensorData& c)
 {
+    assert(y.Mode() == a.Mode());
+    assert(y.Mode() == b.Mode());
+    assert(y.Mode() == c.Mode());
+    assert(y.GetCudaDevice() == a.GetCudaDevice());
+    assert(y.GetCudaDevice() == b.GetCudaDevice());
+    assert(y.GetCudaDevice() == c.GetCudaDevice());
     auto shapeOut = y.TensorShape;
     auto shapeA = a.TensorShape;
     auto shapeB = b.TensorShape;
@@ -221,6 +239,8 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
 
 void Scale(TensorData& y, const TensorData& x, const float factor)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
@@ -243,6 +263,8 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
 
 void Transpose(TensorData& y, const TensorData& x)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto inputM = x.Rows();
     const auto inputN = x.Cols();
@@ -269,6 +291,8 @@ void Transpose(TensorData& y, const TensorData& x)
 //! Performs y = x^factor for each element
 void Pow(TensorData& y, const TensorData& x, const float factor)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
@@ -290,6 +314,8 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
 
 void log(TensorData& y, const TensorData& x)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
@@ -310,6 +336,8 @@ void log(TensorData& y, const TensorData& x)
 
 void log10(TensorData& y, const TensorData& x)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
@@ -331,6 +359,8 @@ void log10(TensorData& y, const TensorData& x)
 
 void Inverse(TensorData& y, const TensorData& x)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
@@ -352,6 +382,8 @@ void Inverse(TensorData& y, const TensorData& x)
 
 void Mean(TensorData& y, const TensorData& x)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.GetCudaDevice() == x.GetCudaDevice());
     const auto device = y.GetCudaDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
@@ -376,6 +408,14 @@ void Mean(TensorData& y, const TensorData& x)
 void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
                  const TensorData& a, const TensorData& b)
 {
+    assert(dy.Mode() == da.Mode());
+    assert(dy.Mode() == db.Mode());
+    assert(dy.Mode() == a.Mode());
+    assert(dy.Mode() == b.Mode());
+    assert(dy.GetCudaDevice() == da.GetCudaDevice());
+    assert(dy.GetCudaDevice() == db.GetCudaDevice());
+    assert(dy.GetCudaDevice() == a.GetCudaDevice());
+    assert(dy.GetCudaDevice() == b.GetCudaDevice());
     const auto device = dy.GetCudaDevice();
 
     const auto maxDim = std::max(

@@ -26,8 +26,8 @@ public:
     Unit& operator=(Unit&& unit) noexcept = default;
 
 protected:
-    virtual bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) = 0;
+    virtual void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const = 0;
     std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
     std::unordered_map<std::string, TensorUtil::TensorData> m_mutableDataMap;
 };

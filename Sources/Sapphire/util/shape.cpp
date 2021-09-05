@@ -105,6 +105,14 @@ void Shape::Set(unsigned int dim, unsigned int value)
     m_shapeVector.at(dim) = value;
 }
 
+void Shape::SetRow(unsigned int value)
+{
+    if (m_shapeVector.size() < 2)
+        throw std::runtime_error("Shape::SetRow - Shape has less dimension than 2");
+
+    m_shapeVector.at(Dim() - 2) = value;
+}
+
 void Shape::SetCol(unsigned int value)
 {
     if (m_shapeVector.empty())

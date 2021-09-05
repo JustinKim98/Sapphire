@@ -30,10 +30,9 @@ public:
     Tensor operator()(Tensor& xTensor);
 
 private:
-    bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) override
+    void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const override
     {
-        return true;
     }
 };
 
@@ -53,10 +52,9 @@ public:
     Tensor operator()(Tensor& x1Tensor, Tensor& x2Tensor);
 
 private:
-    bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) override
+    void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const override
     {
-        return true;
     }
 };
 
@@ -74,10 +72,9 @@ public:
     std::pair<Tensor, Tensor> operator()(Tensor& xTensor);
 
 private:
-    bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) override
+    void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const override
     {
-        return true;
     }
 };
 
@@ -95,10 +92,9 @@ public:
     void operator()(Tensor& xTensor);
 
 private:
-    bool m_checkArguments(
-        std::vector<TensorUtil::TensorDescriptor> arguments) override
+    void m_checkArguments(
+        std::vector<TensorUtil::TensorDescriptor*> arguments) const override
     {
-        return true;
     }
 };
 }

@@ -12,7 +12,9 @@
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
+#include <OperationTest/MathTest.hpp>
 #include <OperationTest/LinearTest.hpp>
+#include <OperationTest/Conv2DTest.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
@@ -300,10 +302,22 @@ TEST_CASE("BasicGraphTest")
         GraphFunctionalityTest();
     }
 
+    SUBCASE("MultiplyTest")
+    {
+        std::cout << "Multiply" << std::endl;
+        TestMultiply();
+    }
+
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
         TestLinear();
+    }
+
+    SUBCASE("Conv2DTest")
+    {
+        std::cout << "Conv2D" << std::endl;
+        TestConv2D();
     }
 }
 #endif
