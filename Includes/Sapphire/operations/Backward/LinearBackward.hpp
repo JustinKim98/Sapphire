@@ -27,7 +27,7 @@ public:
                             TensorUtil::TensorData bias,
                             TensorUtil::TensorData x,
                             Util::SharedPtr<Optimizer::Optimizer> optimizer,
-                            unsigned int batchSize);
+                            int batchSize);
 
 private:
     void m_runBackProp() override;
@@ -38,7 +38,7 @@ private:
 
     void m_updateBias(TensorUtil::TensorData& bias) const;
 
-    unsigned int m_batchSize;
+    int m_batchSize;
 };
 } // namespace Sapphire::BackProp
 

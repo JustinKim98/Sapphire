@@ -373,8 +373,8 @@ void Mean(TensorData& y, const TensorData& x, int dim)
 {
     assert(y.Mode() == x.Mode());
 
-    unsigned int stride = 1;
-    for (unsigned int i = dim; i < y.GetShape().Dim(); ++i)
+    int stride = 1;
+    for ( int i = dim; i < y.GetShape().Dim(); ++i)
     {
         stride *= y.GetShape().At(i);
     }
@@ -452,8 +452,8 @@ void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
     const auto yShape = dy.TensorShape;
     const auto xShape = dx.TensorShape;
 
-    unsigned int stride = 1;
-    for (unsigned int i = dim; i < yShape.Dim(); ++i)
+    int stride = 1;
+    for (int i = dim; i < yShape.Dim(); ++i)
     {
         stride *= yShape.At(i);
     }

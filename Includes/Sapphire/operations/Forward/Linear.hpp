@@ -18,7 +18,7 @@ namespace Sapphire::NN
 class Linear : public Unit
 {
 public:
-    Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
+    Linear(int inputFeatureSize, int outputFeatureSize,
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
            std::unique_ptr<Initialize::Initializer> weightInitializer,
            std::unique_ptr<Initialize::Initializer> biasInitializer,
@@ -40,8 +40,8 @@ private:
     void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const override;
 
-    unsigned int m_inputs;
-    unsigned int m_outputs;
+    int m_inputs;
+    int m_outputs;
     Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
     CudaDevice m_device;
     bool m_isSparse;

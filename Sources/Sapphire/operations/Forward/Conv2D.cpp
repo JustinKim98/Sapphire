@@ -12,75 +12,77 @@
 
 namespace Sapphire::NN
 {
-Conv2D::Conv2D(int inChannels, int outChannels, std::pair<int, int> inputSize,
-               std::pair<int, int> kernelSize,
-               std::pair<int, int> stride, std::pair<int, int> padSize,
-               std::pair<int, int> dilation, bool useBias,
+Conv2D::Conv2D(std::pair<int, int> inputSize, std::pair<int, int> stride,
+               std::pair<int, int> padSize, std::pair<int, int> dilation,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
-               std::unique_ptr<Initialize::Initializer> kernelInitializer,
-               std::unique_ptr<Initialize::Initializer> biasInitializer,
-               CudaDevice device, bool isSparse)
-    : m_xChannels(inChannels),
-      m_yChannels(outChannels),
-      m_inputSize(inputSize),
-      m_kernelSize(kernelSize),
-      m_stride(stride),
-      m_padSize(padSize),
-      m_dilation(dilation),
-      m_useBias(useBias),
-      m_device(std::move(device)),
-      m_isSparse(isSparse),
-      m_optimizer(std::move(optimizer))
+               Tensor kernel,
+               Tensor bias)
 {
-    const Type type = m_isSparse ? Type::Sparse : Type::Dense;
+    const auto kernelShape = kernel.GetShape();
+    const auto device = kernel.GetDevice();
 
-    if (m_isSparse)
+    if (kernelShape.Dim() != 4)
+    {
         throw std::invalid_argument(
-            "NN::Linear - Sparse version not implemented");
+            "NN::Conv2D - kernel should be in 4 dimensions");
+    }
 
-    auto [dilationRows, dilationCols] = dilation;
-    auto [inputRows, inputCols] = inputSize;
-    auto [rowPadding, colPadding] = padSize;
-    auto [kernelRows, kernelCols] = kernelSize;
-    auto [strideRows, strideCols] = stride;
+    if (bias.TensorDescriptorKey() > 0)
+    {
+        const auto biasShape = bias.GetShape();
+        if (biasShape.Dim() != 1)
+            throw std::invalid_argument(
+                "NN::Conv2D - Bias should be in 1 dimension");
+        if (biasShape.At(0) != kernelShape.At(0))
+        {
+            throw std::invalid_argument(
+                "NN::Conv2D - Bias should have same size with output channels");
+        }
+
+        if (bias.GetDevice() != device)
+            throw std::invalid_argument(
+                "NN::Conv2D - Device mismatch between kernel and bias");
+        m_useBias = true;
+    }
+
+    const auto outputChannels = kernelShape.At(0);
+    const auto inputChannels = kernelShape.At(1);
+    const auto kernelRows = kernelShape.At(2);
+    const auto kernelCols = kernelShape.At(3);
+    const auto [dilationRows, dilationCols] = dilation;
+    const auto [inputRows, inputCols] = inputSize;
+    const auto [rowPadding, colPadding] = padSize;
+    const auto [strideRows, strideCols] = stride;
+
+    m_xChannels = inputChannels;
+    m_yChannels = outputChannels;
+    m_inputSize = inputSize;
+    m_kernelSize = std::make_pair(kernelRows, kernelCols);
+    m_stride = stride;
+    m_dilation = dilation;
+    m_isSparse = false;
+    m_optimizer = std::move(optimizer);
+    m_padSize = padSize;
 
     m_yRows =
         (inputRows + 2 * rowPadding - dilationRows * (kernelRows - 1) - 1) /
-        strideRows + 1;
+        strideRows +
+        1;
     m_yCols =
         (inputCols + 2 * colPadding - dilationCols * (kernelCols - 1) - 1) /
-        strideCols + 1;
+        strideCols +
+        1;
 
-    auto kernel = TensorUtil::TensorData(
-        Shape({ static_cast<unsigned int>(outChannels),
-                static_cast<unsigned int>(inChannels),
-                static_cast<unsigned int>(kernelRows),
-                static_cast<unsigned int>(kernelCols) }), type,
-        m_device);
-    kernelInitializer->operator()(kernel);
-    if (m_device.GetID() >= 0)
+    const int kernelDescKey = kernel.TensorDescriptorKey();
+    auto& model = ModelManager::GetCurrentModel();
+    const auto& kernelDesc = model.GetDescriptor(kernelDescKey);
+    m_trainableDataMap["kernel"] = kernelDesc.GetForwardData();
+
+    if (bias.TensorDescriptorKey() > 0)
     {
-        kernel.ToCuda();
-        kernel.SetMode(DeviceType::Cuda);
-    }
-
-    m_trainableDataMap["kernel"] = std::move(kernel);
-
-    if (useBias)
-    {
-        auto bias =
-            TensorUtil::TensorData(
-                Shape({ static_cast<unsigned int>(outChannels),
-                        static_cast<unsigned int>(m_yRows),
-                        static_cast<unsigned int>(m_yCols) }),
-                type, m_device);
-        biasInitializer->operator()(bias);
-        if (m_device.GetID() >= 0)
-        {
-            bias.ToCuda();
-            bias.SetMode(DeviceType::Cuda);
-        }
-        m_trainableDataMap["bias"] = std::move(bias);
+        const int biasDescKey = bias.TensorDescriptorKey();
+        const auto& biasDesc = model.GetDescriptor(biasDescKey);
+        m_trainableDataMap["bias"] = biasDesc.GetForwardData();
     }
 }
 
@@ -88,6 +90,8 @@ Tensor Conv2D::operator()(Tensor& tensor)
 {
     auto mode = tensor.Mode();
     auto& model = ModelManager::GetCurrentModel();
+
+    auto device = tensor.GetDevice();
 
     auto& xDesc = model.GetDescriptor(tensor.TensorDescriptorKey());
     m_checkArguments({ &xDesc });
@@ -105,6 +109,9 @@ Tensor Conv2D::operator()(Tensor& tensor)
     auto dy = yDesc.GetBackwardData();
 
     auto kernel = m_trainableDataMap.at("kernel");
+    if (device != kernel.GetDevice())
+        throw std::runtime_error(
+            "NN::Conv2D::operator() - kernel and tensor device mismatch");
 
     Util::ChangeTensorDataDimension(4, x, dx, y, dy);
 
@@ -115,6 +122,9 @@ Tensor Conv2D::operator()(Tensor& tensor)
     if (m_useBias)
     {
         auto bias = m_trainableDataMap.at("bias");
+        if (device != bias.GetDevice())
+            throw std::runtime_error(
+                "NN::Conv2D::operator() - bias and tensor device mismatch");
         Compute::Add(y, y, bias);
         auto backPropWrapper = Util::SharedPtr<BackProp::Conv2DBackProp>::Make(
             dx, dy, kernel, bias, x, m_stride, m_dilation, m_padSize,
@@ -155,10 +165,8 @@ void Conv2D::m_checkArguments(
     if (xShape.Dim() < 3)
         throw std::invalid_argument(
             "NN::Conv2D - input shape must have at least 3 dimension");
-    if (xShape.At(xShape.Dim() - 3) != static_cast<unsigned int>(m_xChannels))
+    if (xShape.At(xShape.Dim() - 3) != m_xChannels)
         throw std::invalid_argument(
             "NN::Conv2D - Number of channels does not match ");
-    if (xDescPtr->GetDevice() != m_device)
-        throw std::invalid_argument("NN::Conv2D - Device mismatch");
 }
 }

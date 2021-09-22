@@ -158,7 +158,7 @@ TensorData::~TensorData()
     m_freeCuda();
 }
 
-unsigned TensorData::GetBatchSize(unsigned int requiredDim) const
+int TensorData::GetBatchSize(unsigned int requiredDim) const
 {
     return TensorShape.GetBatchSize(requiredDim);
 }

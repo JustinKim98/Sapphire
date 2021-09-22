@@ -8,12 +8,12 @@
 
 namespace Sapphire
 {
-Shape::Shape(std::initializer_list<unsigned int> shape)
+Shape::Shape(std::initializer_list<int> shape)
     : m_shapeVector(shape)
 {
 }
 
-Shape::Shape(std::vector<unsigned int> shape)
+Shape::Shape(std::vector<int> shape)
     : m_shapeVector(std::move(shape))
 {
 }
@@ -37,7 +37,7 @@ Shape& Shape::operator=(Shape&& shape) noexcept
     return *this;
 }
 
-unsigned int& Shape::operator[](unsigned int index)
+int& Shape::operator[](int index)
 {
     return m_shapeVector.at(index);
 }
@@ -65,19 +65,19 @@ std::string Shape::ToString() const
     return msg;
 }
 
-unsigned int Shape::At(unsigned int index) const
+int Shape::At(int index) const
 {
     return m_shapeVector.at(index);
 }
 
-unsigned int Shape::Dim() const
+int Shape::Dim() const
 {
-    return static_cast<unsigned int>(m_shapeVector.size());
+    return m_shapeVector.size();
 }
 
-unsigned int Shape::Size() const noexcept
+int Shape::Size() const noexcept
 {
-    unsigned int size = 1;
+    int size = 1;
     if (m_shapeVector.empty())
         return 0;
     for (auto i : m_shapeVector)
@@ -88,7 +88,7 @@ unsigned int Shape::Size() const noexcept
     return size;
 }
 
-void Shape::Set(unsigned int dim, unsigned int value)
+void Shape::Set(int dim, int value)
 {
     if (dim >= m_shapeVector.size())
     {
@@ -105,15 +105,16 @@ void Shape::Set(unsigned int dim, unsigned int value)
     m_shapeVector.at(dim) = value;
 }
 
-void Shape::SetRow(unsigned int value)
+void Shape::SetRow(int value)
 {
     if (m_shapeVector.size() < 2)
-        throw std::runtime_error("Shape::SetRow - Shape has less dimension than 2");
+        throw std::runtime_error(
+            "Shape::SetRow - Shape has less dimension than 2");
 
     m_shapeVector.at(Dim() - 2) = value;
 }
 
-void Shape::SetCol(unsigned int value)
+void Shape::SetCol(int value)
 {
     if (m_shapeVector.empty())
         throw std::runtime_error("Shape::SetCol - Shape is empty");
@@ -121,13 +122,13 @@ void Shape::SetCol(unsigned int value)
     m_shapeVector.at(Dim() - 1) = value;
 }
 
-void Shape::Expand(unsigned int dim)
+void Shape::Expand(int dim)
 {
     if (dim <= Dim())
         return;
 
-    std::vector<unsigned int> newShapeVector(dim);
-    for (unsigned int i = 0; i < dim; i++)
+    std::vector<int> newShapeVector(dim);
+    for (int i = 0; i < dim; i++)
     {
         if (i < dim - m_shapeVector.size())
             newShapeVector.at(i) = 1;
@@ -139,7 +140,7 @@ void Shape::Expand(unsigned int dim)
     m_shapeVector = newShapeVector;
 }
 
-void Shape::Squeeze(unsigned int dim)
+void Shape::Squeeze(int dim)
 {
     if (dim >= Dim())
         return;
@@ -149,7 +150,7 @@ void Shape::Squeeze(unsigned int dim)
     if (m_shapeVector.at(dimIdx) > 1)
         return;
 
-    std::vector<unsigned int> newShapeVector(m_shapeVector.size() - 1);
+    std::vector<int> newShapeVector(m_shapeVector.size() - 1);
     int newIdx = static_cast<int>(m_shapeVector.size()) - 2;
 
     for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
@@ -162,10 +163,10 @@ void Shape::Squeeze(unsigned int dim)
 
 void Shape::Squeeze()
 {
-    std::vector<unsigned int> newShapeVector;
+    std::vector<int> newShapeVector;
     newShapeVector.reserve(m_shapeVector.size());
 
-    for (unsigned int i : m_shapeVector)
+    for (int i : m_shapeVector)
     {
         if (i > 1)
             newShapeVector.emplace_back(i);
@@ -174,13 +175,13 @@ void Shape::Squeeze()
     m_shapeVector = newShapeVector;
 }
 
-void Shape::Shrink(unsigned int dim)
+void Shape::Shrink(int dim)
 {
     if (dim >= Dim())
         return;
 
     const auto dimIdx = m_shapeVector.size() - dim;
-    std::vector<unsigned int> newShapeVector(dim);
+    std::vector<int> newShapeVector(dim);
 
     for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
     {
@@ -192,12 +193,12 @@ void Shape::Shrink(unsigned int dim)
     }
 }
 
-unsigned int Shape::GetBatchSize(unsigned int requiredDim) const
+int Shape::GetBatchSize(int requiredDim) const
 {
     if (const auto dim = Dim(); dim > requiredDim)
     {
-        unsigned int batchSize = 1;
-        for (unsigned int i = 0; i < dim - requiredDim; ++i)
+        int batchSize = 1;
+        for (int i = 0; i < dim - requiredDim; ++i)
         {
             batchSize *= At(i);
         }
@@ -217,7 +218,7 @@ Shape Shape::GetTranspose() const
 
     if (m_shapeVector.size() == 1)
     {
-        std::vector<unsigned int> newShape(2);
+        std::vector<int> newShape(2);
         newShape.at(0) = m_shapeVector.at(0);
         newShape.at(1) = 1;
         return Shape(newShape);

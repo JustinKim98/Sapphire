@@ -17,6 +17,7 @@ namespace Sapphire
 class Tensor
 {
 public:
+    Tensor();
     Tensor(const Shape& shape, const CudaDevice& device, Type type);
     Tensor(int descKey);
     ~Tensor() = default;

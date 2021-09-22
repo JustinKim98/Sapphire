@@ -16,7 +16,7 @@
 
 namespace Sapphire::NN
 {
-Linear::Linear(unsigned int inputFeatureSize, unsigned int outputFeatureSize,
+Linear::Linear(int inputFeatureSize, int outputFeatureSize,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
                std::unique_ptr<Initialize::Initializer> weightInitializer,
                std::unique_ptr<Initialize::Initializer> biasInitializer,
@@ -117,7 +117,7 @@ void Linear::m_checkArguments(
     const auto input = arguments.at(0);
     if (input->GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-    if (input->GetDevice()!= m_device)
+    if (input->GetDevice() != m_device)
         throw std::invalid_argument("NN::Linear - Device mismatch");
 }
 } // namespace Sapphire::NN

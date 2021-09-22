@@ -18,7 +18,7 @@ void TestMean(bool print)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<unsigned int> dist(1, 10);
+    std::uniform_int_distribution dist(1, 10);
 
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -33,7 +33,7 @@ void TestMean(bool print)
     Initialize::Initialize(
         x, std::make_unique<Initialize::Normal>(5.0f, 1.0f));
 
-    const int dim = static_cast<int>(dist(gen) % 3);
+    const int dim = dist(gen) % 3;
 
     x.ToCuda();
     auto yGpu = NN::Functional::MeanOp(x, dim);
@@ -73,19 +73,19 @@ void TestMean(bool print)
     if (print)
     {
         std::cout << "YForward (GPU)" << std::endl;
-        for (std::size_t i = 0; i < yShape.Size(); ++i)
+        for (int i = 0; i < yShape.Size(); ++i)
             std::cout << yForwardGpu[i] << std::endl;
 
         std::cout << "YForward (Host)" << std::endl;
-        for (std::size_t i = 0; i < yShape.Size(); ++i)
+        for (int i = 0; i < yShape.Size(); ++i)
             std::cout << yForwardHost[i] << std::endl;
 
         std::cout << "XBackward (GPU)" << std::endl;
-        for (std::size_t i = 0; i < xShape.Size(); ++i)
+        for (int i = 0; i < xShape.Size(); ++i)
             std::cout << xBackwardGpu[i] << std::endl;
 
         std::cout << "XBackward (Host)" << std::endl;
-        for (std::size_t i = 0; i < xShape.Size(); ++i)
+        for (int i = 0; i < xShape.Size(); ++i)
             std::cout << xBackwardHost[i] << std::endl;
     }
 

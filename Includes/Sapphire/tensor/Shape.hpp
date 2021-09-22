@@ -25,48 +25,48 @@ public:
     Shape() = default;
     ~Shape() = default;
 
-    Shape(std::initializer_list<unsigned int> shape);
-    explicit Shape(std::vector<unsigned int> shape);
+    Shape(std::initializer_list<int> shape);
+    explicit Shape(std::vector<int> shape);
 
     Shape(const Shape& shape) = default;
     Shape(Shape&& shape) noexcept;
 
     Shape& operator=(const Shape& shape);
     Shape& operator=(Shape&& shape) noexcept;
-    unsigned int& operator[](unsigned int index);
+    int& operator[](int index);
 
     bool operator==(const Shape& shape) const;
     bool operator!=(const Shape& shape) const;
 
     [[nodiscard]] std::string ToString() const;
 
-    [[nodiscard]] unsigned int At(unsigned int index) const;
+    [[nodiscard]] int At(int index) const;
 
     //! Get the total dimension
-    [[nodiscard]] unsigned int Dim() const;
+    [[nodiscard]] int Dim() const;
 
     //! Get number of total elements
-    [[nodiscard]] unsigned int Size() const noexcept;
+    [[nodiscard]] int Size() const noexcept;
 
-    [[nodiscard]] std::vector<unsigned int> GetShapeVector() const
+    [[nodiscard]] std::vector<int> GetShapeVector() const
     {
         return m_shapeVector;
     }
 
-    void Set(unsigned int dim, unsigned int value);
+    void Set(int dim, int value);
 
-    void SetRow(unsigned int value);
+    void SetRow(int value);
 
-    void SetCol(unsigned int value);
+    void SetCol(int value);
 
-    [[nodiscard]] unsigned int Rows() const
+    [[nodiscard]] int Rows() const
     {
         return m_shapeVector.size() > 1
                    ? m_shapeVector.at(m_shapeVector.size() - 2)
                    : 1;
     }
 
-    [[nodiscard]] unsigned int Cols() const
+    [[nodiscard]] int Cols() const
     {
         return !m_shapeVector.empty()
                    ? m_shapeVector.at(m_shapeVector.size() - 1)
@@ -76,25 +76,25 @@ public:
     //! Expands the shape to dim
     //! If shape has already equal or higher dimension than requested dimension,
     //! returns immediately
-    void Expand(unsigned int dim);
+    void Expand(int dim);
 
     //! Removes the dimension if given dimension has size 1
-    void Squeeze(unsigned int dim);
+    void Squeeze(int dim);
 
     //! Removes all 1's in the given shape
     void Squeeze();
 
     //! Shrinks dimension to given dim
-    void Shrink(unsigned int dim);
+    void Shrink(int dim);
 
-    [[nodiscard]] unsigned int GetBatchSize(unsigned requiredDim) const;
+    [[nodiscard]] int GetBatchSize(int requiredDim) const;
 
     Shape GetReverse() const;
 
     [[nodiscard]] Shape GetTranspose() const;
 
 private:
-    std::vector<unsigned int> m_shapeVector;
+    std::vector<int> m_shapeVector;
 };
 } // namespace Sapphire
 

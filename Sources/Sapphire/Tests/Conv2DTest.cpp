@@ -44,18 +44,18 @@ void Conv2DTest(bool printForward, bool printBackward)
         strideCol +
         1;
 
-    Shape xShape({ static_cast<unsigned>(N),
-                   static_cast<unsigned>(inputChannels),
-                   static_cast<unsigned>(inputHeight),
-                   static_cast<unsigned>(inputWidth) });
-    Shape filterShape({ static_cast<unsigned>(numFilters),
-                        static_cast<unsigned>(inputChannels),
-                        static_cast<unsigned>(filterHeight),
-                        static_cast<unsigned>(filterWidth) });
-    Shape yShape({ static_cast<unsigned>(N),
-                   static_cast<unsigned>(outputChannels),
-                   static_cast<unsigned>(outputHeight),
-                   static_cast<unsigned>(outputWidth) });
+    Shape xShape({ (N),
+                   (inputChannels),
+                   (inputHeight),
+                   (inputWidth) });
+    Shape filterShape({ (numFilters),
+                        (inputChannels),
+                        (filterHeight),
+                        (filterWidth) });
+    Shape yShape({ (N),
+                   (outputChannels),
+                   (outputHeight),
+                   (outputWidth) });
 
     TensorUtil::TensorData x(xShape, Type::Dense, cuda);
     TensorUtil::TensorData dx(xShape, Type::Dense, cuda);
@@ -130,14 +130,14 @@ void MaxPool2DTest(bool printForward, bool printBackward)
         strideCol +
         1;
 
-    Shape xShape({ static_cast<unsigned>(N),
-                   static_cast<unsigned>(inputChannels),
-                   static_cast<unsigned>(inputHeight),
-                   static_cast<unsigned>(inputWidth) });
-    Shape yShape({ static_cast<unsigned>(N),
-                   static_cast<unsigned>(outputChannels),
-                   static_cast<unsigned>(outputHeight),
-                   static_cast<unsigned>(outputWidth) });
+    Shape xShape({ (N),
+                   (inputChannels),
+                   (inputHeight),
+                   (inputWidth) });
+    Shape yShape({ (N),
+                   (outputChannels),
+                   (outputHeight),
+                   (outputWidth) });
 
     TensorUtil::TensorData x(xShape, Type::Dense, cuda);
     TensorUtil::TensorData dx(xShape, Type::Dense, cuda);
@@ -203,14 +203,14 @@ void AvgPool2DTest(bool printForward, bool printBackward)
     int outputWidth =
         (inputWidth + 2 * colPadding - (windowRows - 1) - 1) / strideCol + 1;
 
-    Shape xShape({ static_cast<unsigned>(N),
-                   static_cast<unsigned>(inputChannels),
-                   static_cast<unsigned>(inputHeight),
-                   static_cast<unsigned>(inputWidth) });
-    Shape yShape({ static_cast<unsigned>(N),
-                   static_cast<unsigned>(outputChannels),
-                   static_cast<unsigned>(outputHeight),
-                   static_cast<unsigned>(outputWidth) });
+    Shape xShape({ (N),
+                   (inputChannels),
+                   (inputHeight),
+                   (inputWidth) });
+    Shape yShape({ (N),
+                   (outputChannels),
+                   (outputHeight),
+                   (outputWidth) });
 
     TensorUtil::TensorData x(xShape, Type::Dense, cuda);
     TensorUtil::TensorData dx(xShape, Type::Dense, cuda);
@@ -285,15 +285,15 @@ void HostIm2ColTest(bool print)
         1;
 
     const Shape outputShape({ N, numFilters,
-                              static_cast<unsigned int>(outputRows),
-                              static_cast<unsigned int>(outputCols) });
+                              (outputRows),
+                              (outputCols) });
 
     const auto inputMatrixRows =
         filterShape.At(filterShape.Dim() - 3) * filterShape.Rows() * filterShape
         .
         Cols();
     const auto inputMatrixCols =
-        static_cast<unsigned int>(outputRows * outputCols);
+        (outputRows * outputCols);
 
     const Shape inputMatrixShape({ N, inputMatrixRows, inputMatrixCols });
 
@@ -308,7 +308,7 @@ void HostIm2ColTest(bool print)
 
     int count = 0;
     for (std::size_t ii = 0; ii < inputData.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < inputData.Cols(); ++i)
+        for (int i = 0; i < inputData.Cols(); ++i)
             inputData
                 .GetMutableDenseHost()[ii * inputData.PaddedHostColSize + i] =
                 static_cast<float>((count++) % 9);
@@ -319,7 +319,7 @@ void HostIm2ColTest(bool print)
 
     if (print)
         for (std::size_t ii = 0; ii < inputMatrixData.GetBatchSize(1); ++ii)
-            for (unsigned int i = 0; i < inputMatrixData.Cols(); ++i)
+            for (int i = 0; i < inputMatrixData.Cols(); ++i)
                 std::cout << "Im2Col[" << ii * inputMatrixData.Cols() + i
                     << "]: " << inputMatrixData.GetDenseHost()[
                         ii * inputMatrixData.PaddedHostColSize + i]
@@ -337,7 +337,7 @@ void HostIm2ColTest(bool print)
 
     if (print)
         for (std::size_t ii = 0; ii < inputData.GetBatchSize(1); ++ii)
-            for (unsigned int i = 0; i < inputData.Cols(); ++i)
+            for (int i = 0; i < inputData.Cols(); ++i)
                 std::cout << "Col2Im[" << ii * inputData.Cols() + i
                     << "] = " <<
                     inputData.GetMutableDenseHost()
@@ -380,8 +380,8 @@ void HostConv2DTest(bool print)
         strideCol +
         1;
 
-    const Shape yShape({ N, numFilters, static_cast<unsigned int>(yRows),
-                         static_cast<unsigned int>(yCols) });
+    const Shape yShape({ N, numFilters, (yRows),
+                         (yCols) });
 
     CudaDevice device(0, "cuda0");
     TensorUtil::TensorData x(xShape, Type::Dense, device);
@@ -394,12 +394,12 @@ void HostConv2DTest(bool print)
     Compute::Initialize::Zeros(y);
 
     for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < x.Cols(); ++i)
+        for (int i = 0; i < x.Cols(); ++i)
             x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] = static_cast<
                 float>(distrib(gen));
 
     for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < filter.Cols(); ++i)
+        for (int i = 0; i < filter.Cols(); ++i)
             filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
 
@@ -410,7 +410,7 @@ void HostConv2DTest(bool print)
     auto* hostTemp = new float[y.GetShape().Size()];
 
     for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < y.Cols(); ++i)
+        for (int i = 0; i < y.Cols(); ++i)
             hostTemp[ii * y.Cols() + i] =
                 y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i];
 
@@ -427,7 +427,7 @@ void HostConv2DTest(bool print)
     y.ToHost();
 
     for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < y.Cols(); ++i)
+        for (int i = 0; i < y.Cols(); ++i)
         {
             if (!std::isnan(hostTemp[ii * y.Cols() + i]) &&
                 !std::isnan(
@@ -446,17 +446,17 @@ void HostConv2DTest(bool print)
         }
 
     for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < x.Cols(); ++i)
+        for (int i = 0; i < x.Cols(); ++i)
             x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
 
     for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < filter.Cols(); ++i)
+        for (int i = 0; i < filter.Cols(); ++i)
             filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
 
     for (std::size_t ii = 0; ii < dy.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < dy.Cols(); ++i)
+        for (int i = 0; i < dy.Cols(); ++i)
             dy.GetMutableDenseHost()[ii * dy.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
 
@@ -475,13 +475,13 @@ void HostConv2DTest(bool print)
 
     auto* dxTemp = new float[dx.GetShape().Size()];
     for (std::size_t ii = 0; ii < dx.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < dx.Cols(); ++i)
+        for (int i = 0; i < dx.Cols(); ++i)
             dxTemp[ii * dx.Cols() + i] =
                 dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize + i];
 
     auto* dFilterTemp = new float[dFilter.GetShape().Size()];
     for (std::size_t ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < dFilter.Cols(); ++i)
+        for (int i = 0; i < dFilter.Cols(); ++i)
             dFilterTemp[ii * dFilter.Cols() + i] =
                 dFilter
                 .GetMutableDenseHost()[ii * dFilter.PaddedHostColSize + i];
@@ -508,7 +508,7 @@ void HostConv2DTest(bool print)
     dFilter.ToHost();
 
     for (std::size_t ii = 0; ii < dx.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < dx.Cols(); ++i)
+        for (int i = 0; i < dx.Cols(); ++i)
         {
             if (!std::isnan(dxTemp[ii * dx.Cols() + i]) &&
                 !std::isnan(
@@ -528,7 +528,7 @@ void HostConv2DTest(bool print)
 
     std::cout << "Filter" << std::endl;
     for (std::size_t ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
-        for (unsigned int i = 0; i < dFilter.Cols(); ++i)
+        for (int i = 0; i < dFilter.Cols(); ++i)
         {
             if (!std::isnan(dFilterTemp[ii * dFilter.Cols() + i]) &&
                 !std::isnan(dFilter.GetMutableDenseHost()

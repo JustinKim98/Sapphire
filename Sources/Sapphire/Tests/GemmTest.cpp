@@ -23,10 +23,10 @@ void Gemm1(bool print)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distribution(1, 100);
 
-    const unsigned int M = distribution(gen);
-    const unsigned int N = distribution(gen);
-    const unsigned int K = distribution(gen);
-    const unsigned int batchSize = distribution(gen) % 30 + 1;
+    const int M = distribution(gen);
+    const int N = distribution(gen);
+    const int K = distribution(gen);
+    const int batchSize = distribution(gen) % 30 + 1;
 
     //! Randomly create with dimension size 3 with batchsize intergrated in the shape
     const Shape shapeA({ batchSize, M, K });

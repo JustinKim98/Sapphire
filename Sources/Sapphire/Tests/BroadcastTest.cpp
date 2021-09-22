@@ -23,10 +23,10 @@ void BroadcastWithOneDimension(bool print)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(1, 10);
 
-    const unsigned int M = distrib(gen);
-    const unsigned int N = distrib(gen);
-    const unsigned int K = distrib(gen);
-    const unsigned int batchSize = distrib(gen) % 3 + 1;
+    const int M = distrib(gen);
+    const int N = distrib(gen);
+    const int K = distrib(gen);
+    const int batchSize = distrib(gen) % 3 + 1;
 
     //! Set shape so they can be broadcasted
     const Shape shapeA({ batchSize, 1, M, K });
@@ -91,9 +91,9 @@ void BroadcastWithMissingDimension(bool print)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(1, 10);
 
-    const unsigned int M = distrib(gen);
-    const unsigned int N = distrib(gen);
-    const unsigned int K = distrib(gen);
+    const int M = distrib(gen);
+    const int N = distrib(gen);
+    const int K = distrib(gen);
 
     //! Set shape so they can be broadcasted
     const Shape shapeA({ M, K });
@@ -157,9 +157,9 @@ void BroadcastMixed(bool print)
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(1, 10);
 
-    const unsigned int M = distrib(gen);
-    const unsigned int N = distrib(gen);
-    const unsigned int K = distrib(gen);
+    const int M = distrib(gen);
+    const int N = distrib(gen);
+    const int K = distrib(gen);
 
     //! Set shape so they can be broadcasted
     const Shape shapeA({ M, K });

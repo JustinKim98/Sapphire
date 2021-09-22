@@ -19,14 +19,12 @@ namespace Sapphire::NN
 class Conv2D : public Unit
 {
 public:
-    Conv2D(int inChannels, int outChannels, std::pair<int, int> inputSize,
-           std::pair<int, int> kernelSize,
-           std::pair<int, int> stride, std::pair<int, int> padSize,
-           std::pair<int, int> dilation, bool useBias,
+    Conv2D(std::pair<int, int> inputSize,
+           std::pair<int, int> stride,
+           std::pair<int, int> padSize, std::pair<int, int> dilation,
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
-           std::unique_ptr<Initialize::Initializer> kernelInitializer,
-           std::unique_ptr<Initialize::Initializer> biasInitializer,
-           CudaDevice device = CudaDevice(), bool isSparse = false);
+           Tensor kernel, Tensor bias = Tensor());
+
     ~Conv2D() override = default;
 
     Conv2D(const Conv2D& conv2D) = default;
@@ -49,7 +47,6 @@ private:
                         m_dilation;
     bool m_useBias;
 
-    CudaDevice m_device;
     bool m_isSparse;
     int m_yRows, m_yCols;
 

@@ -22,8 +22,8 @@ void TestConv2D(bool print)
     const CudaDevice gpu(0, "cuda0");
     const int inputChannels = 3;
     const int outputChannels = 3;
-    const int inputRows = 10;
-    const int inputCols = 10;
+    const int inputRows = 4;
+    const int inputCols = 4;
 
     const auto inputSize = std::make_pair(inputRows, inputCols);
     const auto kernelSize = std::make_pair(3, 3);
@@ -31,16 +31,24 @@ void TestConv2D(bool print)
     const auto dilation = std::make_pair(1, 1);
     const auto padSize = std::make_pair(1, 1);
 
-    NN::Conv2D conv2D(inputChannels, outputChannels, inputSize, kernelSize,
-                      stride, padSize, dilation, false,
-                      Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
-                      std::make_unique<Initialize::Ones>(),
-                      std::make_unique<Initialize::Ones>(), gpu);
-
     Tensor input(Shape({ inputChannels, inputRows, inputCols }), gpu,
                  Type::Dense);
+    Tensor kernel(Shape({ outputChannels, inputChannels,
+                          std::get<0>(kernelSize), std::get<1>(kernelSize) }),
+                  gpu, Type::Dense);
+    Tensor bias(Shape({ outputChannels }), gpu, Type::Dense);
+
     Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
+    Initialize::Initialize(kernel, std::make_unique<Initialize::Ones>());
+    Initialize::Initialize(bias, std::make_unique<Initialize::Zeros>());
     input.ToCuda();
+    kernel.ToCuda();
+    bias.ToCuda();
+
+    NN::Conv2D conv2D(inputSize, stride, padSize, dilation,
+                      Util::SharedPtr<Optimizer::SGD>::Make(0.1f), kernel,
+                      bias);
+
     auto output = conv2D(input);
     output.ToHost();
 
@@ -53,23 +61,28 @@ void TestConv2D(bool print)
 
     output.ToCuda();
     ModelManager::GetCurrentModel().BackProp(output);
-
     input.ToHost();
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
 
-    NN::Conv2D conv2DHost(inputChannels, outputChannels, inputSize, kernelSize,
-                          stride, padSize, dilation, false,
-                          Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
-                          std::make_unique<Initialize::Ones>(),
-                          std::make_unique<Initialize::Ones>());
+    kernel.ToHost();
+    bias.ToHost();
 
-    const auto hostOutput = conv2DHost(input);
+    Initialize::Initialize(kernel, std::make_unique<Initialize::Ones>());
+    Initialize::Initialize(bias, std::make_unique<Initialize::Zeros>());
+
+    NN::Conv2D conv2DHost(inputSize, stride, padSize, dilation,
+                          Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
+                          kernel,
+                          bias);
+    auto hostOutput = conv2DHost(input);
     const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
 
-    Initialize::InitializeBackwardData(output,
+    Initialize::InitializeBackwardData(hostOutput,
                                        std::make_unique<Initialize::Ones>());
+    Initialize::InitializeBackwardData(input,
+                                       std::make_unique<Initialize::Zeros>());
     ModelManager::GetCurrentModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();
 
@@ -96,21 +109,21 @@ void TestConv2D(bool print)
         }
 
         std::cout << "Conv2D forward result (Cuda)" << std::endl;
-        for (std::size_t i = 0; i < outputRows; ++i)
+        for (int i = 0; i < outputRows; ++i)
         {
-            for (std::size_t j = 0; j < outputCols; ++j)
+            for (int j = 0; j < outputCols; ++j)
             {
-                std::cout << gpuForwardPtr[i * outputCols + j] << " ";
+                std::cout << gpuForwardPtr[i * inputCols + j] << " ";
             }
             std::cout << std::endl;
         }
 
         std::cout << "Conv2D backward result (Cuda)" << std::endl;
-        for (std::size_t i = 0; i < inputRows; ++i)
+        for (int i = 0; i < inputRows; ++i)
         {
-            for (std::size_t j = 0; j < inputCols; ++j)
+            for (int j = 0; j < inputCols; ++j)
             {
-                std::cout << gpuBackwardPtr[i * outputCols + j] << " ";
+                std::cout << gpuBackwardPtr[i * inputCols + j] << " ";
             }
             std::cout << std::endl;
         }

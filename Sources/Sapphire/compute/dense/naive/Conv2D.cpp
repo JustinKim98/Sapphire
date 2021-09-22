@@ -26,17 +26,17 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
     const auto inputMatrixShape = inputMatrix.GetShape();
 
     int N = 1;
-    for (unsigned int i = 0; i < inputShape.Dim() - 3; ++i)
-        N *= static_cast<int>(inputShape.At(i));
+    for (int i = 0; i < inputShape.Dim() - 3; ++i)
+        N *= inputShape.At(i);
 
     //! Size of the output after the full convolution
     const int outputRows =
-        (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
+        (inputShape.Rows() + 2 * rowPadding -
          dilationRow * (filterShape.Rows() - 1) - 1) /
         strideRow +
         1;
     const int outputCols =
-        (static_cast<int>(inputShape.Cols()) + 2 * colPadding -
+        (inputShape.Cols() + 2 * colPadding -
          dilationCol * (filterShape.Cols() - 1) - 1) /
         strideCol +
         1;
@@ -60,7 +60,7 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
     {
         inputDataHost += paddedInputTotalSize * nIdx;
         inputMatrixDataHost += paddedInputMatrixTotalSize * nIdx;
-        for (int channelIdx = 0; channelIdx < static_cast<int>(numChannels);
+        for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
         {
             for (int outputRowIdx = 0; outputRowIdx < outputRows;
@@ -68,11 +68,11 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
                 for (int outputColIdx = 0; outputColIdx < outputCols;
                      outputColIdx += 1)
                     for (int filterRowIdx = 0;
-                         filterRowIdx < static_cast<int>(filterShape.Rows());
+                         filterRowIdx < (filterShape.Rows());
                          ++filterRowIdx)
                         for (int filterColIdx = 0;
                              filterColIdx <
-                             static_cast<int>(filterShape.Cols());
+                             (filterShape.Cols());
                              ++filterColIdx)
                         {
                             const auto windowRowIdx = outputRowIdx * strideRow;
@@ -118,10 +118,10 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
 
                             if (inputRowIdx >= 0 &&
                                 inputRowIdx <
-                                static_cast<int>(inputShape.Rows()) &&
+                                (inputShape.Rows()) &&
                                 inputColIdx >= 0 &&
                                 inputColIdx <
-                                static_cast<int>(inputShape.Cols()))
+                                (inputShape.Cols()))
                                 *inputMatrixDataPtr = *inputDataPtr;
                             else
                                 *inputMatrixDataPtr = pad;
@@ -140,17 +140,17 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
     const auto inputMatrixShape = inputMatrix.GetShape();
 
     int N = 1;
-    for (unsigned int i = 0; i < inputShape.Dim() - 3; ++i)
-        N *= static_cast<int>(inputShape.At(i));
+    for (int i = 0; i < inputShape.Dim() - 3; ++i)
+        N *= (inputShape.At(i));
 
     //! Size of the output after the full convolution
     const int outputRows =
-        (static_cast<int>(inputShape.Rows()) + 2 * rowPadding -
+        ((inputShape.Rows()) + 2 * rowPadding -
          dilationRow * (filterShape.Rows() - 1) - 1) /
         strideRow +
         1;
     const int outputCols =
-        (static_cast<int>(inputShape.Cols()) + 2 * colPadding -
+        ((inputShape.Cols()) + 2 * colPadding -
          dilationCol * (filterShape.Cols() - 1) - 1) /
         strideCol +
         1;
@@ -174,7 +174,7 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
     {
         inputDataHost += paddedInputTotalSize * nIdx;
         inputMatrixDataHost += paddedInputMatrixTotalSize * nIdx;
-        for (int channelIdx = 0; channelIdx < static_cast<int>(numChannels);
+        for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
         {
             for (int outputRowIdx = 0; outputRowIdx < outputRows;
@@ -182,11 +182,11 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
                 for (int outputColIdx = 0; outputColIdx < outputCols;
                      outputColIdx += 1)
                     for (int filterRowIdx = 0;
-                         filterRowIdx < static_cast<int>(filterShape.Rows());
+                         filterRowIdx < (filterShape.Rows());
                          ++filterRowIdx)
                         for (int filterColIdx = 0;
                              filterColIdx <
-                             static_cast<int>(filterShape.Cols());
+                             (filterShape.Cols());
                              ++filterColIdx)
                         {
                             const auto windowRowIdx = outputRowIdx * strideRow;
@@ -232,10 +232,10 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
 
                             if (inputRowIdx >= 0 &&
                                 inputRowIdx <
-                                static_cast<int>(inputShape.Rows()) &&
+                                (inputShape.Rows()) &&
                                 inputColIdx >= 0 &&
                                 inputColIdx <
-                                static_cast<int>(inputShape.Cols()))
+                                (inputShape.Cols()))
                                 *inputDataPtr += *inputMatrixDataPtr;
                         }
         }
@@ -259,7 +259,7 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
 
     const auto rXRows = filterShape.At(filterShape.Dim() - 3) *
                         filterShape.Rows() * filterShape.Cols();
-    const auto rXCols = static_cast<unsigned int>(yRows * yCols);
+    const auto rXCols = yRows * yCols;
 
     const Shape rXShape({ N, rXRows, rXCols });
     const Shape rFilterShape({ yChannels, filterShape.Size() / yChannels });
@@ -302,7 +302,7 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
 
     const auto drXRows = dFilterShape.At(dFilterShape.Dim() - 3) *
                          dFilterShape.Rows() * dFilterShape.Cols();
-    const auto drXCols = static_cast<unsigned int>(dyRows * dyCols);
+    const auto drXCols = dyRows * dyCols;
 
     const Shape rXShape({ N, drXRows, drXCols });
     const Shape rFilterShape({ dyChannels, dFilterShape.Size() / dyChannels });

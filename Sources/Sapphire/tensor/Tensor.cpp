@@ -9,6 +9,11 @@
 
 namespace Sapphire
 {
+Tensor::Tensor()
+    : m_tensorDescKey(-1)
+{
+}
+
 Tensor::Tensor(const Shape& shape, const CudaDevice& device,
                Type type)
     : m_tensorDescKey(-1)

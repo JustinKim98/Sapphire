@@ -67,7 +67,7 @@ Shape CreateRandomShape(int dim, int maxDim)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distrib(0, maxDim);
-    std::vector<unsigned int> shapeVector(dim);
+    std::vector<int> shapeVector(dim);
     for (int i = 0; i < dim; ++i)
     {
         shapeVector.at(i) = distrib(gen) % maxDim + 1;

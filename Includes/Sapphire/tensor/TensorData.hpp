@@ -62,18 +62,18 @@ public:
         return m_parentDescKey;
     }
 
-    [[nodiscard]] unsigned GetBatchSize(unsigned int requiredDim) const;
+    [[nodiscard]] int GetBatchSize(unsigned int requiredDim) const;
 
     SparseMatrix* SparseMatHost = nullptr;
     SparseMatrix* SparseMatCuda = nullptr;
     Shape TensorShape;
 
-    [[nodiscard]] unsigned int Rows() const
+    [[nodiscard]] int Rows() const
     {
         return TensorShape.Rows();
     }
 
-    [[nodiscard]] unsigned int Cols() const
+    [[nodiscard]] int Cols() const
     {
         return TensorShape.Cols();
     }
@@ -82,7 +82,7 @@ public:
     //! \return : device descriptor
     [[nodiscard]] CudaDevice GetDevice() const
     {
-        if(Mode() == DeviceType::Host)
+        if (Mode() == DeviceType::Host)
             return CudaDevice();
         return m_device;
     }

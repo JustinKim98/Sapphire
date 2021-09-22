@@ -111,9 +111,9 @@ inline std::optional<Shape> GetBroadcastedShape(const Shape& shapeA,
                                                 const Shape& shapeB,
                                                 int requiredDim)
 {
-    int dimA = static_cast<int>(shapeA.Dim()) - 1 - requiredDim;
-    int dimB = static_cast<int>(shapeB.Dim()) - 1 - requiredDim;
-    std::vector<unsigned int> outputShapeVector(
+    int dimA = shapeA.Dim() - 1 - requiredDim;
+    int dimB = shapeB.Dim() - 1 - requiredDim;
+    std::vector<int> outputShapeVector(
         shapeA.Dim() > shapeB.Dim()
             ? shapeA.Dim()
             : shapeB.Dim());
