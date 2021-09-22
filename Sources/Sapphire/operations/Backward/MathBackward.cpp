@@ -18,10 +18,10 @@ MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
                       { a, b },
                       { TensorUtil::TensorData(a.TensorShape.GetTranspose(),
                                                a.GetType(),
-                                               a.GetCudaDevice()),
+                                               a.GetDevice()),
                         TensorUtil::TensorData(b.TensorShape.GetTranspose(),
                                                b.GetType(),
-                                               b.GetCudaDevice()) })
+                                               b.GetDevice()) })
 {
     auto& aData = m_constants[0];
     auto& bData = m_constants[1];
@@ -61,10 +61,26 @@ AddBackProp::AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
 
 void AddBackProp::m_runBackProp()
 {
-    auto& dy = m_dyVector[0];
+    const auto& dy = m_dyVector[0];
     auto& da = m_dxVector[0];
     auto& db = m_dxVector[1];
     Compute::Add(da, dy, da);
     Compute::Add(db, dy, db);
+}
+
+MeanBackProp::MeanBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData x,
+                           TensorUtil::TensorData dy, unsigned int dim)
+    : BackPropWrapper({ std::move(dx) }, { std::move(dy) }, { std::move(x) },
+                      {}),
+      m_dim(dim)
+{
+}
+
+void MeanBackProp::m_runBackProp()
+{
+    auto& dx = m_dxVector[0];
+    const auto& dy = m_dyVector[0];
+    const auto& x = m_constants[0];
+    Compute::MeanBackward(dx, dy, x, m_dim);
 }
 } // namespace Sapphire::BackProp

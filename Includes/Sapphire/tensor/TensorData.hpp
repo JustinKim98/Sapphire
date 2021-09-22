@@ -80,8 +80,10 @@ public:
 
     //! Gets device descriptor (Sparse or Dense)
     //! \return : device descriptor
-    [[nodiscard]] const CudaDevice& GetCudaDevice() const
+    [[nodiscard]] CudaDevice GetDevice() const
     {
+        if(Mode() == DeviceType::Host)
+            return CudaDevice();
         return m_device;
     }
 

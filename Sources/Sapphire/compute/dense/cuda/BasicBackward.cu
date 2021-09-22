@@ -57,4 +57,16 @@ __host__ void PowBackward(float* dx, const float* dy, const float* x,
             dxOffset, dyOffset, xOffset, factor, totalSize - firstLaunchSize);
     }
 }
+
+__host__ void MeanBackward(float* dx, const float* x, const float* dy,
+                         unsigned int yTotalSize, unsigned int unitSize,
+                         unsigned int stride)
+{
+    const auto threadDim = MAX_THREAD_DIM_X / 8;
+    const auto blockDim = yTotalSize%threadDim == 0 ? 
+        yTotalSize/threadDim : yTotalSize / threadDim + 1;
+
+    MeanBackwardKernel<<<blockDim, threadDim>>>(dx, x, dy, yTotalSize,
+                                                 unitSize, stride);
+}
 }

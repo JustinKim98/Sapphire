@@ -27,7 +27,8 @@ TensorData::TensorData(Shape shape, Type type, CudaDevice device)
       m_type(type),
       m_device(std::move(device))
 {
-    m_allocateCuda();
+    if (device.GetID() >= 0)
+        m_allocateCuda();
     m_allocateHost();
 }
 
@@ -38,7 +39,8 @@ TensorData::TensorData(Shape shape, Type type, CudaDevice device,
       m_type(type),
       m_device(std::move(device))
 {
-    m_allocateCuda();
+    if (device.GetID() >= 0)
+        m_allocateCuda();
     m_allocateHost();
 }
 
@@ -163,7 +165,7 @@ unsigned TensorData::GetBatchSize(unsigned int requiredDim) const
 
 TensorData TensorData::CreateCopy() const
 {
-    TensorData tensorData(TensorShape, GetType(), GetCudaDevice(),
+    TensorData tensorData(TensorShape, GetType(), GetDevice(),
                           m_parentDescKey);
     tensorData.SetMode(m_mode);
 
@@ -280,7 +282,8 @@ void TensorData::m_freeHost()
 
 void TensorData::m_freeCuda()
 {
-    Compute::Cuda::CudaSetDevice(m_device.GetID());
+    if (m_device.GetID() >= 0)
+        Compute::Cuda::CudaSetDevice(m_device.GetID());
 
     if (m_type == Type::Sparse && SparseMatCuda)
     {

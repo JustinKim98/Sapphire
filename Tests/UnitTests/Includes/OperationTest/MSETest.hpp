@@ -4,14 +4,11 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_TEST_CONV2D_TEST_HPP
-#define SAPPHIRE_TEST_CONV2D_TEST_HPP
 
+#ifndef SAPPHIRE_TEST_MSE_TEST_HPP
+#define SAPPHIRE_TEST_MSE_TEST_HPP
 namespace Sapphire::Test
 {
-void Conv2DTestForward();
-
-void Conv2DTestBackward();
+    void TestMSE(bool print);
 }
-
 #endif

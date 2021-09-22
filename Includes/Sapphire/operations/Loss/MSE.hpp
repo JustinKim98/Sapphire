@@ -10,7 +10,7 @@
 
 namespace Sapphire::NN::Loss
 {
-[[maybe_unused]] static Tensor MSE(const Tensor& input, const Tensor& label);
+[[maybe_unused]] Tensor MSE(const Tensor& input, const Tensor& label);
 }
 
 #endif  // Sapphire_MSE_HPP

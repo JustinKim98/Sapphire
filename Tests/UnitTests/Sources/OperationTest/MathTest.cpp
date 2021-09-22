@@ -13,7 +13,7 @@
 
 namespace Sapphire::Test
 {
-void TestMultiply()
+void TestMultiply(bool print)
 {
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -29,8 +29,10 @@ void TestMultiply()
     Tensor inputA(shapeA, gpu, Type::Dense);
     Tensor inputB(shapeB, gpu, Type::Dense);
 
-    Initialize::Initialize(inputA, std::make_unique<Initialize::Ones>());
-    Initialize::Initialize(inputB, std::make_unique<Initialize::Ones>());
+    Initialize::Initialize(
+        inputA, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
+    Initialize::Initialize(
+        inputB, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
 
     inputA.ToCuda();
     inputB.ToCuda();
@@ -41,17 +43,8 @@ void TestMultiply()
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 
-    std::cout << "Y Forward" << std::endl;
-    for (std::size_t i = 0; i < outputRows; ++i)
-    {
-        for (std::size_t j = 0; j < outputCols; ++j)
-        {
-            std::cout << forwardDataPtr[i * outputCols + j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    Initialize::InitializeBackwardData(y, std::make_unique<Initialize::Ones>());
+    Initialize::InitializeBackwardData(
+        y, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
     y.ToCuda();
     ModelManager::GetCurrentModel().BackProp(y);
 
@@ -59,28 +52,119 @@ void TestMultiply()
     inputB.ToHost();
 
     const auto backwardDataPtrA = inputA.GetBackwardDataCopy();
-    std::cout << "inputA Backward" << std::endl;
-    for (std::size_t i = 0; i < inputA.GetShape().Rows(); ++i)
+    const auto backwardDataPtrB = inputB.GetBackwardDataCopy();
+
+    if (print)
     {
-        for (std::size_t j = 0; j < inputA.GetShape().Cols(); ++j)
+        std::cout << "Y Forward" << std::endl;
+        for (std::size_t i = 0; i < outputRows; ++i)
         {
-            std::cout << backwardDataPtrA[i * inputA.GetShape().Cols() + j] <<
-                " ";
+            for (std::size_t j = 0; j < outputCols; ++j)
+            {
+                std::cout << forwardDataPtr[i * outputCols + j] << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
+
+        std::cout << "inputA Backward" << std::endl;
+        for (std::size_t i = 0; i < inputA.GetShape().Rows(); ++i)
+        {
+            for (std::size_t j = 0; j < inputA.GetShape().Cols(); ++j)
+            {
+                std::cout << backwardDataPtrA[i * inputA.GetShape().Cols() + j]
+                    << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "inputB Backward" << std::endl;
+        for (std::size_t i = 0; i < inputB.GetShape().Rows(); ++i)
+        {
+            for (std::size_t j = 0; j < inputB.GetShape().Cols(); ++j)
+            {
+                std::cout << backwardDataPtrB[i * inputB.GetShape().Cols() + j]
+                    << " ";
+            }
+            std::cout << std::endl;
+        }
     }
 
-    std::cout << "inputB Backward" << std::endl;
-    for (std::size_t i = 0; i < inputB.GetShape().Rows(); ++i)
-    {
-        for (std::size_t j = 0; j < inputB.GetShape().Cols(); ++j)
-        {
-            std::cout << backwardDataPtrA[i * inputB.GetShape().Cols() + j]
-                << " ";
-        }
-        std::cout << std::endl;
-    }
+    ModelManager::GetCurrentModel().Clear();
+}
 
+void TestAdd(bool print)
+{
+    const CudaDevice gpu(0, "cuda0");
+    const auto m = 10;
+    const auto n = 10;
+    const auto k = 10;
+
+    const Shape shapeA = Shape({ 1, m, k });
+    const Shape shapeB = Shape({ 1, k, n });
+
+    Tensor inputA(shapeA, gpu, Type::Dense);
+    Tensor inputB(shapeB, gpu, Type::Dense);
+
+    inputA.ToCuda();
+    inputB.ToCuda();
+
+    Initialize::Initialize(inputA,
+                           std::make_unique<Initialize::Normal>(0.0f, 10.0f));
+    Initialize::Initialize(inputB,
+                           std::make_unique<Initialize::Normal>(0.0f, 10.0f));
+
+    auto y = NN::Functional::AddOp(inputA, inputB);
+
+    y.ToHost();
+    const auto forwardDataPtr = y.GetForwardDataCopy();
+    const auto outputRows = y.GetShape().Rows();
+    const auto outputCols = y.GetShape().Cols();
+
+    Initialize::InitializeBackwardData(
+        y, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    y.ToCuda();
+    ModelManager::GetCurrentModel().BackProp(y);
+
+    inputA.ToHost();
+    inputB.ToHost();
+
+    const auto backwardDataPtrA = inputA.GetBackwardDataCopy();
+    const auto backwardDataPtrB = inputB.GetBackwardDataCopy();
+
+    if (print)
+    {
+        std::cout << "Y Forward" << std::endl;
+        for (std::size_t i = 0; i < outputRows; ++i)
+        {
+            for (std::size_t j = 0; j < outputCols; ++j)
+            {
+                std::cout << forwardDataPtr[i * outputCols + j] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "inputA Backward" << std::endl;
+        for (std::size_t i = 0; i < inputA.GetShape().Rows(); ++i)
+        {
+            for (std::size_t j = 0; j < inputA.GetShape().Cols(); ++j)
+            {
+                std::cout << backwardDataPtrA[i * inputA.GetShape().Cols() + j]
+                    << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "inputB Backward" << std::endl;
+        for (std::size_t i = 0; i < inputB.GetShape().Rows(); ++i)
+        {
+            for (std::size_t j = 0; j < inputB.GetShape().Cols(); ++j)
+            {
+                std::cout << backwardDataPtrB[i * inputB.GetShape().Cols() + j]
+                    << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
     ModelManager::GetCurrentModel().Clear();
 }
 }

@@ -45,7 +45,7 @@ __global__ void log10Kernel(float* y, const float* x,
                             unsigned int totalSize);
 
 __global__ void MeanKernel(float* y, const float* x,
-                           unsigned int totalSize, unsigned int unitSize);
+                           unsigned int yTotalSize, unsigned int unitSize, unsigned int stride);
 
 __global__ void InverseKernel(float* y, const float* x, unsigned int totalSize);
 } // namespace Sapphire::Compute::Cuda::Dense

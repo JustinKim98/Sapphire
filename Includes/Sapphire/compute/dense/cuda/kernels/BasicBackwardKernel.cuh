@@ -20,6 +20,10 @@ __global__ void DotBackwardKernel(float* da, float* db, const float* dy,
 
 __global__ void PowBackwardKernel(float* dx, const float* dy, const float* x,
                                   const float factor, unsigned totalSize);
+
+__global__ void MeanBackwardKernel(float* dx, const float* x, const float* dy,
+                                   unsigned int yTotalSize,
+                                   unsigned int unitSize, unsigned int stride);
 }
 
 #endif

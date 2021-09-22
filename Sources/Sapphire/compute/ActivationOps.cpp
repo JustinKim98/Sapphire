@@ -14,8 +14,8 @@ namespace Sapphire::Compute
 void SoftMax(TensorData& y, const TensorData& x)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetCudaDevice() == x.GetCudaDevice());
-    const auto device = y.GetCudaDevice();
+    assert(y.GetDevice() == x.GetDevice());
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto unitSize = y.TensorShape.Cols();
@@ -39,8 +39,8 @@ void SoftMax(TensorData& y, const TensorData& x)
 void LeakyReLU(TensorData& y, const TensorData& x, float a)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetCudaDevice() == x.GetCudaDevice());
-    const auto device = y.GetCudaDevice();
+    assert(y.GetDevice() == x.GetDevice());
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -62,8 +62,8 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
 void ReLU(TensorData& y, const TensorData& x)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetCudaDevice() == x.GetCudaDevice());
-    const auto device = y.GetCudaDevice();
+    assert(y.GetDevice() == x.GetDevice());
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -84,9 +84,9 @@ void ReLU(TensorData& y, const TensorData& x)
 void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     assert(dx.Mode() == dy.Mode() && dx.Mode() == x.Mode());
-    assert(dx.GetCudaDevice() == dy.GetCudaDevice() &&
-        dx.GetCudaDevice() == x.GetCudaDevice());
-    const auto device = dx.GetCudaDevice();
+    assert(dx.GetDevice() == dy.GetDevice() &&
+        dx.GetDevice() == x.GetDevice());
+    const auto device = dx.GetDevice();
     const auto paddedColSize = dx.PaddedHostColSize;
     const auto totalSize = dx.TensorShape.Size();
 
@@ -107,7 +107,7 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
                        const TensorData& x, float a)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)

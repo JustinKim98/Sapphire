@@ -63,7 +63,14 @@ Shape TensorDescriptor::GetShape() const
 
 CudaDevice TensorDescriptor::GetDevice() const
 {
-    return m_forwardData.GetCudaDevice();
+    if (Mode() == DeviceType::Cuda)
+        return m_forwardData.GetDevice();
+    return CudaDevice();
+}
+
+CudaDevice TensorDescriptor::GetCudaDevice() const
+{
+    return m_forwardData.GetDevice();
 }
 
 Type TensorDescriptor::GetType() const

@@ -205,25 +205,15 @@ __host__ void Inverse(float* y, const float* x, unsigned int totalSize)
 }
 
 //! y size should be totalSize/unitSize
-__host__ void Mean(float* y, const float* x, unsigned int totalSize,
-                   unsigned int unitSize)
+__host__ void Mean(float* y, const float* x, unsigned int yTotalSize,
+                   unsigned int unitSize,unsigned int stride)
 {
-    const auto threadDim = MAX_THREAD_DIM_X / NUM_LOOPS;
+    const auto threadDim = MAX_THREAD_DIM_X/8;
+    const auto requiredThreadNum = yTotalSize;
+    const auto blockDim = (requiredThreadNum % threadDim == 0)
+                              ? requiredThreadNum / threadDim
+                              : requiredThreadNum / threadDim + 1;
 
-    const auto requiredThreadNum = totalSize / unitSize;
-    const auto blockDim = requiredThreadNum / (threadDim * NUM_LOOPS);
-    const auto firstLaunchSize = blockDim * threadDim * NUM_LOOPS;
-
-    if (firstLaunchSize > 0)
-        MeanKernel<<<blockDim, threadDim>>>(y, x, firstLaunchSize,
-                                            unitSize);
-    if (requiredThreadNum > firstLaunchSize)
-    {
-        const float* inputOffset = x + firstLaunchSize;
-        float* outputOffset = y + firstLaunchSize;
-
-        MeanKernel<<<1, requiredThreadNum - firstLaunchSize>>>(
-            outputOffset, inputOffset, totalSize, unitSize);
-    }
+    MeanKernel<<<blockDim + 1, threadDim>>>(y, x, yTotalSize, unitSize, stride);
 }
 } // namespace Sapphire::Compute::Cuda::Dense

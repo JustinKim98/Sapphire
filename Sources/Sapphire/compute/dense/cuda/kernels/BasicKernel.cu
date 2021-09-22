@@ -167,15 +167,19 @@ __global__ void log10Kernel(float* y, const float* x, unsigned int totalSize)
 }
 
 
-__global__ void MeanKernel(float* y, const float* x, unsigned int totalSize,
-                           unsigned int unitSize)
+__global__ void MeanKernel(float* y, const float* x, unsigned int yTotalSize,
+                           unsigned int unitSize, unsigned int stride)
 {
-    if (const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-        unitId < totalSize)
+    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto outerId = unitId / stride;
+    const auto innerId = unitId % stride;
+
+    if (unitId < yTotalSize)
     {
         for (unsigned int i = 0; i < unitSize; i++)
         {
-            y[unitId] += x[unitSize * unitId + i];
+            y[unitId] +=
+                x[unitSize * stride * outerId + i * stride + innerId];
         }
         y[unitId] /= static_cast<float>(unitSize);
     }

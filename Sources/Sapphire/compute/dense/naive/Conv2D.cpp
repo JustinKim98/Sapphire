@@ -4,6 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <cassert>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/IndexingOps.hpp>
@@ -246,6 +247,8 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
             int dilationRow, int dilationCol, CudaDevice device)
 {
+    assert(y.Mode() == x.Mode());
+    assert(y.Mode() == filter.Mode());
     const auto filterShape = filter.GetShape();
     const auto inputShape = x.GetShape();
     const auto yShape = y.GetShape();
@@ -283,6 +286,12 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     int strideCol, int rowPadding, int colPadding,
                     int dilationRow, int dilationCol, CudaDevice device)
 {
+    assert(dx.Mode() == DeviceType::Host);
+    assert(dFilter.Mode() == DeviceType::Host);
+    assert(dy.Mode() == DeviceType::Host);
+    assert(x.Mode() == DeviceType::Host);
+    assert(filter.Mode() == DeviceType::Host);
+
     const auto dXShape = dx.GetShape();
     const auto dFilterShape = dFilter.GetShape();
     const auto dYShape = dy.GetShape();
@@ -306,6 +315,14 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     TensorData rFilterT(rFilterShape.GetTranspose(), Type::Dense, device);
     TensorData drFilter = dFilter;
     TensorData drY = dy;
+
+    rX.SetMode(DeviceType::Host);
+    rXT.SetMode(DeviceType::Host);
+    drX.SetMode(DeviceType::Host);
+    rFilter.SetMode(DeviceType::Host);
+    rFilterT.SetMode(DeviceType::Host);
+    drFilter.SetMode(DeviceType::Host);
+    drY.SetMode(DeviceType::Host);
 
     Im2Col(rX, filter, x, strideRow, strideCol, rowPadding, colPadding,
            dilationRow, dilationCol, 0);

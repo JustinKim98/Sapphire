@@ -49,11 +49,11 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     const TensorUtil::TensorData& x = m_constants[xIdx];
     TensorUtil::TensorData xTranspose(x.GetShape().GetTranspose(),
                                       x.GetType(),
-                                      x.GetCudaDevice());
+                                      x.GetDevice());
     TensorUtil::TensorData dyTranspose(dy.GetShape().GetTranspose(),
-                                       dy.GetType(), dy.GetCudaDevice());
+                                       dy.GetType(), dy.GetDevice());
     TensorUtil::TensorData dw(weight.GetShape().GetTranspose(),
-                              weight.GetType(), weight.GetCudaDevice());
+                              weight.GetType(), weight.GetDevice());
 
     xTranspose.SetMode(x.Mode());
     dyTranspose.SetMode(dy.Mode());
@@ -72,9 +72,9 @@ void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
     const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
     TensorUtil::TensorData ones(Shape({ m_batchSize }),
                                 dy.GetType(),
-                                dy.GetCudaDevice(), 1);
+                                dy.GetDevice(), 1);
     TensorUtil::TensorData dB(bias.GetShape(), bias.GetType(),
-                              bias.GetCudaDevice(), 1);
+                              bias.GetDevice(), 1);
 
     dB.SetMode(bias.Mode());
     ones.SetMode(bias.Mode());

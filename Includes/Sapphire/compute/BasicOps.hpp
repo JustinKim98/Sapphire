@@ -48,8 +48,6 @@ void exp(TensorData& y, const TensorData& x);
 
 void Inverse(TensorData& y, const TensorData& x);
 
-void Mean(TensorData& y, const TensorData& x);
-
 void Mean(TensorData& y, const TensorData& x, int dim);
 
 void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
@@ -64,11 +62,8 @@ void log10Backward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
-void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
-
 void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
                   int dim);
-
 } // namespace Sapphire::Compute
 
 #endif

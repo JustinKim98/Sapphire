@@ -463,6 +463,12 @@ void HostConv2DTest(bool print)
     Compute::Initialize::Zeros(dx);
     Compute::Initialize::Zeros(dFilter);
 
+    dx.SetMode(DeviceType::Host);
+    dFilter.SetMode(DeviceType::Host);
+    dy.SetMode(DeviceType::Host);
+    x.SetMode(DeviceType::Host);
+    filter.SetMode(DeviceType::Host);
+
     Compute::Dense::Naive::Conv2DBackward(dx, dFilter, dy, x, filter, strideRow,
                                           strideCol, rowPadding, colPadding,
                                           dilationRow, dilationCol, device);

@@ -21,12 +21,12 @@ Tensor MSE(const Tensor& input, const Tensor& label)
     auto& labelDesc = model.GetDescriptor(label.TensorDescriptorKey());
     const auto yDescKey = model.RegisterTensorDescriptor(
         Shape({ 1 }), xDesc.GetType(),
-        xDesc.GetDevice());
+        xDesc.GetCudaDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
 
     TensorUtil::TensorData temp(
         input.GetShape(), xDesc.GetType(),
-        xDesc.GetDevice(), xDesc.GetBatchSize());
+        xDesc.GetCudaDevice(), xDesc.GetBatchSize());
 
     auto x = xDesc.GetForwardData();
     auto lb = labelDesc.GetForwardData();
@@ -41,7 +41,7 @@ Tensor MSE(const Tensor& input, const Tensor& label)
 
     Compute::Sub(temp, lb, x);
     Compute::Pow(temp, temp, 2.0f);
-    Compute::Mean(y, temp);
+    Compute::Mean(y, temp, 0);
     return Tensor(yDescKey);
 }
 } // namespace Sapphire::NN::Loss

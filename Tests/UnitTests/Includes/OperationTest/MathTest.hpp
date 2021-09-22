@@ -9,7 +9,9 @@
 
 namespace Sapphire::Test
 {
-void TestMultiply();
+void TestMultiply(bool print);
+
+void TestAdd(bool print);
 }
 
 #endif

@@ -32,54 +32,72 @@ void Transpose(float* output, const float* input, unsigned int inputRows,
 void Pow(float* output, const float* input, float exponent,
          unsigned int totalSize, unsigned colSize, unsigned padSize);
 
-void cos(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void cos(float* output, const float* input, unsigned int totalSize,
+         unsigned colSize, unsigned
          padSize);
 
-void sin(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void sin(float* output, const float* input, unsigned int totalSize,
+         unsigned colSize, unsigned
          padSize);
 
-void tan(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void tan(float* output, const float* input, unsigned int totalSize,
+         unsigned colSize, unsigned
          padSize);
 
-void cosh(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void cosh(float* output, const float* input, unsigned int totalSize,
+          unsigned colSize, unsigned
           padSize);
 
-void sinh(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void sinh(float* output, const float* input, unsigned int totalSize,
+          unsigned colSize, unsigned
           padSize);
 
-void tanh(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void tanh(float* output, const float* input, unsigned int totalSize,
+          unsigned colSize, unsigned
           padSize);
 
-void log(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void log(float* output, const float* input, unsigned int totalSize,
+         unsigned colSize, unsigned
          padSize);
 
-void log10(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void log10(float* output, const float* input, unsigned int totalSize,
+           unsigned colSize, unsigned
            padSize);
 
-void ReLU(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void ReLU(float* output, const float* input, unsigned int totalSize,
+          unsigned colSize, unsigned
           padSize);
 
-void ReLUBackward(float* dx, const float* dy, const float* x, unsigned int totalSize, unsigned colSize, unsigned
+void ReLUBackward(float* dx, const float* dy, const float* x,
+                  unsigned int totalSize, unsigned colSize, unsigned
                   padSize);
 
 void LeakyReLU(float* output, const float* input, float a,
                unsigned int totalSize, unsigned colSize, unsigned padSize);
 
 void LeakyReLUBackward(float* output, const float* input, float a,
-                       unsigned int totalSize, unsigned colSize, unsigned padSize);
+                       unsigned int totalSize, unsigned colSize,
+                       unsigned padSize);
 
-void Inverse(float* output, const float* input, unsigned int totalSize, unsigned colSize, unsigned
+void Inverse(float* output, const float* input, unsigned int totalSize,
+             unsigned colSize, unsigned
              padSize);
 
-void Mean(float* output, const float* input, unsigned int totalSize,
-          unsigned int unitSize, unsigned colSize, unsigned padSize);
+void Mean(float* y, const float* x,
+          unsigned ySize, unsigned int unitSize, unsigned stride,
+          unsigned yCols, unsigned yPadSize, unsigned xCols, unsigned xPadSize);
+
+void MeanBackward(float* dx, const float* x, const float* dy,
+                  unsigned int ySize, unsigned int unitSize,
+                  unsigned int stride, unsigned int yCols, unsigned int yPadSize, unsigned xCols, unsigned
+                  xPadSize);
 
 void Softmax(float* output, const float* input, unsigned int paddedTotalSize,
              unsigned int unitSize, unsigned int paddedUnitSize);
 
 void SoftmaxBackward(float* dx, const float* dy, const float* x,
-                 unsigned int totalSize, unsigned int unitSize,
-                 unsigned int padSize);
-}  // namespace Sapphire::Compute::Naive::Dense
+                     unsigned int totalSize, unsigned int unitSize,
+                     unsigned int padSize);
+} // namespace Sapphire::Compute::Naive::Dense
 
 #endif  // Sapphire_NAIVEBASIC_HPP

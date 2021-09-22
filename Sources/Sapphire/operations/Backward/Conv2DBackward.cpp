@@ -62,7 +62,7 @@ void Conv2DBackProp::m_runBackProp()
     const auto [rowPadding, colPadding] = m_padding;
 
     TensorUtil::TensorData dKernel(kernel.GetShape(), kernel.GetType(),
-                                   kernel.GetCudaDevice());
+                                   kernel.GetDevice());
     dKernel.SetMode(kernel.Mode());
 
     Compute::Conv2DBackward(dx, dKernel, dy, x, kernel, strideRow, strideCol,

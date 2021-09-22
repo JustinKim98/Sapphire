@@ -43,6 +43,7 @@ public:
 
     [[nodiscard]] Shape GetShape() const;
     [[nodiscard]] CudaDevice GetDevice() const;
+    [[nodiscard]] CudaDevice GetCudaDevice() const;
     [[nodiscard]] Type GetType() const;
 
     void SetShape(Shape shape);

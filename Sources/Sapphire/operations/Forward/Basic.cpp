@@ -20,8 +20,8 @@ Tensor Basic::operator()(Tensor& xTensor)
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     Shape outputShape = xTensor.GetShape();
-    const auto yKey = model.RegisterTensorDescriptor(outputShape, x.GetType(),
-        x.GetCudaDevice());
+    const auto yKey = model.RegisterTensorDescriptor(outputShape, xDesc.GetType(),
+        xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yKey);
     auto dy = yDesc.GetBackwardData();
 
@@ -46,8 +46,8 @@ Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
     auto dx1 = x1Desc.GetBackwardData();
     auto dx2 = x2Desc.GetBackwardData();
     Shape outputShape = x1Tensor.GetShape();
-    const auto yKey = model.RegisterTensorDescriptor(outputShape, x1.GetType(),
-        x1.GetCudaDevice());
+    const auto yKey = model.RegisterTensorDescriptor(outputShape, x1Desc.GetType(),
+        x1Desc.GetDevice());
     auto& yDesc = model.GetDescriptor(yKey);
     auto dy = yDesc.GetBackwardData();
 
@@ -69,10 +69,10 @@ std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     Shape outputShape = xTensor.GetShape();
-    const auto y1Key = model.RegisterTensorDescriptor(outputShape, x.GetType(),
-        x.GetCudaDevice());
-    const auto y2Key = model.RegisterTensorDescriptor(outputShape, x.GetType(),
-        x.GetCudaDevice());
+    const auto y1Key = model.RegisterTensorDescriptor(outputShape, xDesc.GetType(),
+        xDesc.GetDevice());
+    const auto y2Key = model.RegisterTensorDescriptor(outputShape, xDesc.GetType(),
+        xDesc.GetDevice());
     auto& y1Desc = model.GetDescriptor(y1Key);
     auto& y2Desc = model.GetDescriptor(y2Key);
     auto dy1 = y1Desc.GetBackwardData();

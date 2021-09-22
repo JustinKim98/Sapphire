@@ -34,6 +34,17 @@ public:
 private:
     void m_runBackProp() override;
 };
+
+class MeanBackProp : public BackPropWrapper
+{
+public:
+    explicit MeanBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData x,
+                          TensorUtil::TensorData dy, unsigned int dim);
+
+private:
+    void m_runBackProp() override;
+    int m_dim;
+};
 } // namespace Sapphire::BackProp
 
 #endif

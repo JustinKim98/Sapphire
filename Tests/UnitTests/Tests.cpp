@@ -13,6 +13,8 @@
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
 #include <OperationTest/MathTest.hpp>
+#include <OperationTest/MeanTest.hpp>
+#include <OperationTest/MSETest.hpp>
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
@@ -33,7 +35,7 @@
 // #define GemmTest
 // #define GemmBroadcastTest
 // #define InitializeTest
-//#define ConvolutionTest
+// #define ConvolutionTest
 // #define BasicGraphTest
 // #define SparseTest
 
@@ -297,15 +299,34 @@ TEST_CASE("Convolution")
 #ifdef GraphTest
 TEST_CASE("BasicGraphTest")
 {
-    SUBCASE("BasicGraphy")
+    SUBCASE("BasicGraph")
     {
+        std::cout << "Basic graph test" << std::endl;
         GraphFunctionalityTest();
     }
 
     SUBCASE("MultiplyTest")
     {
         std::cout << "Multiply" << std::endl;
-        TestMultiply();
+        TestMultiply(false);
+    }
+
+    SUBCASE("MeanTest")
+    {
+        std::cout << "Mean" << std::endl;
+        TestMean(false);
+    }
+
+    SUBCASE("MSETest")
+    {
+        std::cout << "MSE" << std::endl;
+        TestMSE(true);
+    }
+
+    SUBCASE("AddTest")
+    {
+        std::cout << "Add" << std::endl;
+        TestAdd(false);
     }
 
     SUBCASE("Linear Test")
@@ -317,7 +338,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        TestConv2D();
+        TestConv2D(false);
     }
 }
 #endif

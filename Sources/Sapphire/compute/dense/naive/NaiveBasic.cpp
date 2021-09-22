@@ -231,20 +231,44 @@ void Inverse(float* output, const float* input, unsigned int totalSize,
         }
 }
 
-void Mean(float* output, const float* input, unsigned int totalSize,
-          unsigned int unitSize, unsigned colSize, unsigned padSize)
+void Mean(float* y, const float* x,
+          unsigned ySize, unsigned int unitSize, unsigned stride,
+          unsigned yCols, unsigned yPadSize, unsigned xCols, unsigned xPadSize)
 {
-    for (unsigned int unitIdx = 0; unitIdx < totalSize / unitSize; unitIdx++)
+    for (unsigned int unitId = 0; unitId < ySize; unitId++)
     {
-        const auto outputIdx = unitIdx;
-        for (unsigned int idx = 0; idx < unitSize; idx++)
+        const auto yIdx = (unitId / yCols) * yPadSize + unitId % yCols;
+        const auto outerId = unitId / stride;
+        const auto innerId = unitId % stride;
+
+        for (unsigned int i = 0; i < unitSize; i++)
         {
-            if (const auto inputIdx = unitIdx * unitSize + idx;
-                outputIdx % padSize < colSize && inputIdx %
-                padSize < colSize)
-                output[outputIdx] += input[inputIdx];
+            const auto xIdx =
+                unitSize * stride * outerId + i * stride + innerId;
+            y[yIdx] += x[(xIdx / xCols) * xPadSize + xIdx % xCols];
         }
-        output[unitIdx] /= static_cast<float>(unitSize);
+        y[yIdx] /= static_cast<float>(unitSize);
+    }
+}
+
+void MeanBackward(float* dx, const float* x, const float* dy,
+                  unsigned int ySize, unsigned int unitSize,
+                  unsigned int stride,
+                  unsigned int yCols, unsigned int yPadSize,
+                  unsigned xCols, unsigned xPadSize)
+{
+    for (unsigned int unitId = 0; unitId < ySize; unitId++)
+    {
+        const auto yIdx = (unitId / yCols) * yPadSize + unitId % yCols;
+        const auto outerId = unitId / stride;
+        const auto innerId = unitId % stride;
+
+        for (unsigned int i = 0; i < unitSize; i++)
+        {
+            const auto xIdx =
+                unitSize * stride * outerId + i * stride + innerId;
+            dx[(xIdx / xCols) * xPadSize + xIdx % xCols] += dy[yIdx] / static_cast<float>(unitSize);
+        }
     }
 }
 
@@ -266,8 +290,8 @@ void Softmax(float* output, const float* input, unsigned int paddedTotalSize,
 }
 
 void SoftmaxBackward(float* dx, const float* dy, const float* x,
-                 unsigned int totalSize, unsigned int unitSize,
-                 unsigned int padSize)
+                     unsigned int totalSize, unsigned int unitSize,
+                     unsigned int padSize)
 {
     const auto batchSize = totalSize / padSize;
 

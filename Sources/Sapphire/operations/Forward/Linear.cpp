@@ -107,7 +107,7 @@ int Linear::m_registerOutputTensor(
     Shape yShape = xShape;
     yShape[yShape.Dim() - 1] = m_outputs;
     const auto yKey = model.RegisterTensorDescriptor(
-        yShape, x.GetType(), x.GetCudaDevice());
+        yShape, xDesc.GetType(), xDesc.GetDevice());
     return yKey;
 }
 
@@ -115,9 +115,9 @@ void Linear::m_checkArguments(
     std::vector<TensorUtil::TensorDescriptor*> arguments) const
 {
     const auto input = arguments.at(0);
-    if (input->GetForwardData().GetShape().Cols() != m_inputs)
+    if (input->GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-    if (input->GetForwardData().GetCudaDevice() != m_device)
+    if (input->GetDevice()!= m_device)
         throw std::invalid_argument("NN::Linear - Device mismatch");
 }
 } // namespace Sapphire::NN

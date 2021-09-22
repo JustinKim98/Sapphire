@@ -42,7 +42,7 @@ public:
     void ToCuda();
     void ToHost();
     DeviceType Mode() const;
-    void SetMode(DeviceType mode);
+    void SetMode(DeviceType mode) const;
 
 private:
     int m_tensorDescKey;

@@ -12,7 +12,7 @@ namespace Sapphire::Compute
 {
 void Cos(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -32,7 +32,7 @@ void Cos(TensorData& y, const TensorData& x)
 
 void Sin(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -52,7 +52,7 @@ void Sin(TensorData& y, const TensorData& x)
 
 void Tan(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -72,7 +72,7 @@ void Tan(TensorData& y, const TensorData& x)
 
 void Cosh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -92,7 +92,7 @@ void Cosh(TensorData& y, const TensorData& x)
 
 void Sinh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -112,7 +112,7 @@ void Sinh(TensorData& y, const TensorData& x)
 
 void Tanh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.TensorShape.Size();
@@ -132,7 +132,7 @@ void Tanh(TensorData& y, const TensorData& x)
 
 void ArcCos(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto totalSize = y.TensorShape.Size();
 
     if (y.Mode() == DeviceType::Cuda)
@@ -149,7 +149,7 @@ void ArcCos(TensorData& y, const TensorData& x)
 
 void Arcsin(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto totalSize = y.TensorShape.Size();
 
     if (y.Mode() == DeviceType::Cuda)
@@ -167,7 +167,7 @@ void Arcsin(TensorData& y, const TensorData& x)
 
 void ArcTan(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto totalSize = y.TensorShape.Size();
 
     if (y.Mode() == DeviceType::Cuda)
@@ -184,7 +184,7 @@ void ArcTan(TensorData& y, const TensorData& x)
 
 void ArcCosh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto totalSize = y.TensorShape.Size();
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -200,7 +200,7 @@ void ArcCosh(TensorData& y, const TensorData& x)
 
 void ArcSinh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto totalSize = y.TensorShape.Size();
 
     if (y.Mode() == DeviceType::Cuda)
@@ -217,7 +217,7 @@ void ArcSinh(TensorData& y, const TensorData& x)
 
 void ArcTanh(TensorData& y, const TensorData& x)
 {
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDevice();
     const auto totalSize = y.TensorShape.Size();
 
     if (y.Mode() == DeviceType::Cuda)
@@ -234,7 +234,7 @@ void ArcTanh(TensorData& y, const TensorData& x)
 
 void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -251,7 +251,7 @@ void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -268,7 +268,7 @@ void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -285,7 +285,7 @@ void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -303,7 +303,7 @@ void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -321,7 +321,7 @@ void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -339,7 +339,7 @@ void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -357,7 +357,7 @@ void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -375,7 +375,7 @@ void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -393,7 +393,7 @@ void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -412,7 +412,7 @@ void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -431,7 +431,7 @@ void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
 void ArcTanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    const auto device = dx.GetCudaDevice();
+    const auto device = dx.GetDevice();
     const auto totalSize = dx.TensorShape.Size();
 
     if (dx.Mode() == DeviceType::Cuda)

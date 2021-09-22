@@ -51,9 +51,8 @@ __host__ void LeakyReLUBackward(float* dx, const float* dy, const float* x,
 __host__ void Inverse(float* y, const float* x,
                       unsigned int totalSize);
 
-__host__ void Mean(float* y, const float* x, unsigned int totalSize,
-                   unsigned int unitSize);
-
+__host__ void Mean(float* y, const float* x, unsigned int yTotalSize,
+                   unsigned int unitSize, unsigned int stride);
 } // namespace Sapphire::Compute::Cuda::Dense
 
 #endif  // Sapphire_BASIC_CUH

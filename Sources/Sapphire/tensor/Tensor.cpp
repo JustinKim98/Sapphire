@@ -77,7 +77,7 @@ DeviceType Tensor::Mode() const
     return desc.Mode();
 }
 
-void Tensor::SetMode(DeviceType mode)
+void Tensor::SetMode(DeviceType mode) const
 {
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
@@ -89,11 +89,6 @@ std::unique_ptr<float[]> Tensor::GetForwardDataCopy() const
     Model& model = ModelManager::GetCurrentModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     const TensorUtil::TensorData tensorData = desc.GetForwardData();
-
-    // if (desc.Mode() == DeviceType::Cuda)
-    //     desc.ToHost();
-    // else
-    //     desc.ToCuda();
 
     auto tempPtr = std::unique_ptr<float[]>(
         new float[tensorData.GetShape().Size()]);

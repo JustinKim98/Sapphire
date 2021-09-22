@@ -16,6 +16,9 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB);
 
 [[maybe_unused]]
 Tensor AddOp(const Tensor& inputA, const Tensor& inputB);
+
+[[maybe_unused]]
+Tensor MeanOp(const Tensor& input, int dim);
 }
 
 #endif

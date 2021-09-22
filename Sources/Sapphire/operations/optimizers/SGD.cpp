@@ -21,7 +21,7 @@ SGD::SGD(SGD&& sgd) noexcept
 
 void SGD::operator()(TensorData& z, const TensorData& dz)
 {
-    TensorData temp(dz.GetShape(), dz.GetType(), dz.GetCudaDevice());
+    TensorData temp(dz.GetShape(), dz.GetType(), dz.GetDevice());
     temp.SetMode(dz.Mode());
     Compute::Scale(temp, dz, m_learningRate);
     Compute::Sub(z, z, temp);

@@ -9,6 +9,6 @@
 
 namespace Sapphire::Test
 {
-void TestConv2D();
+void TestConv2D(bool print);
 }
 #endif

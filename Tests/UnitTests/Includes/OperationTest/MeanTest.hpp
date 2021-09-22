@@ -4,7 +4,12 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#ifndef SAPPHIRE_TEST_MEAN_TEST_HPP
+#define SAPPHIRE_TEST_MEAN_TEST_HPP
+
 namespace Sapphire::Test
 {
-void GraphFunctionalityTest();
+void TestMean(bool print);
 }
+
+#endif

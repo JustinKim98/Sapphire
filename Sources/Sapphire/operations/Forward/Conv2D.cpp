@@ -143,7 +143,7 @@ int Conv2D::m_registerOutputTensor(
     yShape.SetRow(m_yRows);
     yShape[yShape.Dim() - 3] = m_yChannels;
     const auto yKey =
-        model.RegisterTensorDescriptor(yShape, x.GetType(), x.GetCudaDevice());
+        model.RegisterTensorDescriptor(yShape, x.GetType(), xDesc.GetDevice());
     return yKey;
 }
 
