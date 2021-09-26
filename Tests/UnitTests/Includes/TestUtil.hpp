@@ -26,6 +26,5 @@ inline bool TestEquality(T a, T b)
 {
     return std::abs(a - b) < static_cast<T>(FP_EQUAL_THRESHOLD);
 }
-
 }
 #endif

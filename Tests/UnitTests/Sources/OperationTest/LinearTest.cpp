@@ -10,22 +10,29 @@
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <iostream>
+#include <random>
 #include <doctest/doctest.h>
 
 namespace Sapphire::Test
 {
 void TestLinear()
 {
+    const int batchSize = 1;
+    const int inputCols = 100;
+
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist;
+    Tensor input(Shape({ batchSize, inputCols }), gpu, Type::Dense);
 
     NN::Linear linear(200, 200, Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
                       std::make_unique<Initialize::Ones>(),
                       std::make_unique<Initialize::Ones>(), gpu);
 
-    Tensor input(Shape({ 200 }), gpu, Type::Dense);
     Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
     input.ToCuda();
     auto output = linear(input);

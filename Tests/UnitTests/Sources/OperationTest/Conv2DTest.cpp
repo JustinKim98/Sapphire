@@ -10,6 +10,8 @@
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <iostream>
 #include <doctest/doctest.h>
+
+#include <random>
 #include <TestUtil.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 
@@ -21,18 +23,45 @@ void TestConv2D(bool print)
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
+    const int batchSize = 2;
     const int inputChannels = 3;
     const int outputChannels = 3;
     const int inputRows = 4;
     const int inputCols = 4;
+    const int kernelRows = 3;
+    const int kernelCols = 3;
+    const int strideRows = 1;
+    const int strideCols = 1;
+    const int dilationRows = 1;
+    const int dilationCols = 1;
+    const int padSizeRows = 1;
+    const int padSizeCols = 1;
 
     const auto inputSize = std::make_pair(inputRows, inputCols);
-    const auto kernelSize = std::make_pair(3, 3);
-    const auto stride = std::make_pair(1, 1);
-    const auto dilation = std::make_pair(1, 1);
-    const auto padSize = std::make_pair(1, 1);
+    const auto kernelSize = std::make_pair(kernelRows, kernelCols);
+    const auto stride = std::make_pair(strideRows, strideCols);
+    const auto dilation = std::make_pair(dilationRows, dilationCols);
+    const auto padSize = std::make_pair(padSizeRows, padSizeCols);
 
-    Tensor input(Shape({ inputChannels, inputRows, inputCols }), gpu,
+    const auto outputRows =
+        (inputRows + 2 * padSizeRows - dilationRows * (kernelRows - 1) - 1) /
+        strideRows +
+        1;
+    const auto outputCols =
+        (inputCols + 2 * padSizeCols - dilationCols * (kernelCols - 1) - 1) /
+        strideCols +
+        1;
+
+    //! Initialize backward data
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> dist;
+    std::vector<float> backwardData(batchSize *
+                                    outputChannels * outputRows * outputCols);
+    for (auto& data : backwardData)
+        data = dist(gen);
+
+    Tensor input(Shape({ batchSize, inputChannels, inputRows, inputCols }), gpu,
                  Type::Dense);
     Tensor kernel(Shape({ outputChannels, inputChannels,
                           std::get<0>(kernelSize), std::get<1>(kernelSize) }),
@@ -45,32 +74,30 @@ void TestConv2D(bool print)
     Initialize::Initialize(
         kernel, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(bias, std::make_unique<Initialize::Zeros>());
+
+    //! Move tensors to gpu
     input.ToCuda();
     kernel.ToCuda();
     bias.ToCuda();
 
+    //! Test Conv2D on gpu
     NN::Conv2D conv2D(inputSize, stride, padSize, dilation,
                       Util::SharedPtr<Optimizer::SGD>::Make(0.0f), kernel,
                       bias);
-
-    auto output = conv2D(input);
-    output.ToHost();
-
-    const auto gpuForwardPtr = output.GetForwardDataCopy();
-    const auto outputRows = output.GetShape().Rows();
-    const auto outputCols = output.GetShape().Cols();
-
-    Initialize::InitializeBackwardData(output,
-                                       std::make_unique<Initialize::Ones>());
-
-    output.ToCuda();
-    ModelManager::GetCurrentModel().BackProp(output);
-    input.ToHost();
+    auto gpuOutput = conv2D(input);
+    CHECK(gpuOutput.GetShape().Rows() == outputRows);
+    CHECK(gpuOutput.GetShape().Cols() == outputCols);
+    const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
+    gpuOutput.SetBackwardData(backwardData);
+    ModelManager::GetCurrentModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
 
+    //! Move tensors to host
+    input.ToHost();
     kernel.ToHost();
     bias.ToHost();
 
+    //! Initialize backward data
     Initialize::InitializeBackwardData(
         kernel, std::make_unique<Initialize::Zeros>());
     Initialize::InitializeBackwardData(
@@ -78,6 +105,7 @@ void TestConv2D(bool print)
     Initialize::InitializeBackwardData(input,
                                        std::make_unique<Initialize::Zeros>());
 
+    //! Test Conv2D on host
     NN::Conv2D conv2DHost(inputSize, stride, padSize, dilation,
                           Util::SharedPtr<Optimizer::SGD>::Make(0.0f),
                           kernel,
@@ -86,9 +114,7 @@ void TestConv2D(bool print)
     const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
-
-    Initialize::InitializeBackwardData(hostOutput,
-                                       std::make_unique<Initialize::Ones>());
+    hostOutput.SetBackwardData(backwardData);
     ModelManager::GetCurrentModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();
 
@@ -138,29 +164,13 @@ void TestConv2D(bool print)
     CHECK(outputRows == outputRowsHost);
     CHECK(outputCols == outputColsHost);
 
-    for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
-        for (int rowIdx = 0; rowIdx < outputRows; ++rowIdx)
-            for (int colIdx = 0; colIdx < outputCols; ++ colIdx)
-            {
-                CHECK(
-                    TestEquality(hostForwardPtr[channelIdx * outputRows *
-                            outputCols +
-                            rowIdx * outputCols + colIdx],
-                        gpuForwardPtr[channelIdx * outputRows * outputCols +
-                            rowIdx * outputCols + colIdx]));
-            }
+    for (int idx = 0;
+         idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
+        CHECK(TestEquality(hostForwardPtr[idx], gpuForwardPtr[idx]));
 
-    for (int channelIdx = 0; channelIdx < inputChannels; ++channelIdx)
-        for (int rowIdx = 0; rowIdx < inputRows; ++rowIdx)
-            for (int colIdx = 0; colIdx < inputCols; ++ colIdx)
-            {
-                CHECK(
-                    TestEquality(hostBackwardPtr[channelIdx * inputRows *
-                            inputCols +
-                            rowIdx * inputCols + colIdx],
-                        gpuBackwardPtr[channelIdx * inputRows * inputCols +
-                            rowIdx * inputCols + colIdx]));
-            }
+    for (int idx = 0;
+         idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
+        CHECK(TestEquality(hostBackwardPtr[idx], gpuBackwardPtr[idx]));
 
     ModelManager::GetCurrentModel().Clear();
 }

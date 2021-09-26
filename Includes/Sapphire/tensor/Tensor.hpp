@@ -41,7 +41,7 @@ public:
     [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
 
     void SetForwardData(std::vector<float> data) const;
-    void SetBackwardData(std::vector<float> data) const;
+    void SetBackwardData(const std::vector<float>& data) const;
 
     void ToCuda();
     void ToHost();

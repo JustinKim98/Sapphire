@@ -95,6 +95,9 @@ std::unique_ptr<float[]> Tensor::GetForwardDataCopy() const
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     const TensorUtil::TensorData tensorData = desc.GetForwardData();
 
+    if (desc.Mode() == DeviceType::Cuda)
+        desc.ToHost();
+
     auto dataPtr = std::unique_ptr<float[]>(
         new float[tensorData.GetShape().Size()]);
     std::size_t idx = 0;
@@ -117,8 +120,6 @@ std::unique_ptr<float[]> Tensor::GetBackwardDataCopy() const
 
     if (desc.Mode() == DeviceType::Cuda)
         desc.ToHost();
-    else
-        desc.ToCuda();
 
     auto dataPtr =
         std::unique_ptr<float[]>(new float[tensorData.GetShape().Size()]);
@@ -163,7 +164,7 @@ void Tensor::SetForwardData(std::vector<float> data) const
         desc.ToCuda();
 }
 
-void Tensor::SetBackwardData(std::vector<float> data) const
+void Tensor::SetBackwardData(const std::vector<float>& data) const
 {
     const auto shape = GetShape();
     if (static_cast<int>(data.size()) != shape.Size())
