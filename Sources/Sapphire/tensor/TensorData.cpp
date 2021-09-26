@@ -158,7 +158,7 @@ TensorData::~TensorData()
     m_freeCuda();
 }
 
-int TensorData::GetBatchSize(unsigned int requiredDim) const
+int TensorData::GetBatchSize(int requiredDim) const
 {
     return TensorShape.GetBatchSize(requiredDim);
 }
@@ -232,7 +232,7 @@ void TensorData::m_toCuda(const TensorData& tensorData)
     const auto colSize = tensorData.Cols();
     const auto totalSize = tensorData.TensorShape.Size();
 
-    for (size_t rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
+    for (int rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
     {
         float* cudaPtr = tensorData.DenseMatCuda + rowIdx * colSize;
         float* hostPtr =
@@ -254,7 +254,7 @@ void TensorData::m_toHost(const TensorData& tensorData)
 
     const auto colSize = tensorData.Cols();
     const auto totalSize = tensorData.TensorShape.Size();
-    for (size_t rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
+    for (int rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
     {
         float* cudaPtr = tensorData.DenseMatCuda + rowIdx * colSize;
         float* hostPtr =

@@ -6,7 +6,7 @@
 
 #ifndef SAPPHIRE_COMPUTE_BROADCAST_HPP
 #define SAPPHIRE_COMPUTE_BROADCAST_HPP
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <algorithm>
 
 namespace Sapphire::Compute

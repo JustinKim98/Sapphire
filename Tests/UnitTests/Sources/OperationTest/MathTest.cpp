@@ -57,9 +57,9 @@ void TestMultiply(bool print)
     if (print)
     {
         std::cout << "Y Forward" << std::endl;
-        for (std::size_t i = 0; i < outputRows; ++i)
+        for (int i = 0; i < outputRows; ++i)
         {
-            for (std::size_t j = 0; j < outputCols; ++j)
+            for (int j = 0; j < outputCols; ++j)
             {
                 std::cout << forwardDataPtr[i * outputCols + j] << " ";
             }
@@ -67,9 +67,9 @@ void TestMultiply(bool print)
         }
 
         std::cout << "inputA Backward" << std::endl;
-        for (std::size_t i = 0; i < inputA.GetShape().Rows(); ++i)
+        for (int i = 0; i < inputA.GetShape().Rows(); ++i)
         {
-            for (std::size_t j = 0; j < inputA.GetShape().Cols(); ++j)
+            for (int j = 0; j < inputA.GetShape().Cols(); ++j)
             {
                 std::cout << backwardDataPtrA[i * inputA.GetShape().Cols() + j]
                     << " ";
@@ -78,9 +78,9 @@ void TestMultiply(bool print)
         }
 
         std::cout << "inputB Backward" << std::endl;
-        for (std::size_t i = 0; i < inputB.GetShape().Rows(); ++i)
+        for (int i = 0; i < inputB.GetShape().Rows(); ++i)
         {
-            for (std::size_t j = 0; j < inputB.GetShape().Cols(); ++j)
+            for (int j = 0; j < inputB.GetShape().Cols(); ++j)
             {
                 std::cout << backwardDataPtrB[i * inputB.GetShape().Cols() + j]
                     << " ";
@@ -134,9 +134,9 @@ void TestAdd(bool print)
     if (print)
     {
         std::cout << "Y Forward" << std::endl;
-        for (std::size_t i = 0; i < outputRows; ++i)
+        for (int i = 0; i < outputRows; ++i)
         {
-            for (std::size_t j = 0; j < outputCols; ++j)
+            for (int j = 0; j < outputCols; ++j)
             {
                 std::cout << forwardDataPtr[i * outputCols + j] << " ";
             }
@@ -144,9 +144,9 @@ void TestAdd(bool print)
         }
 
         std::cout << "inputA Backward" << std::endl;
-        for (std::size_t i = 0; i < inputA.GetShape().Rows(); ++i)
+        for (int i = 0; i < inputA.GetShape().Rows(); ++i)
         {
-            for (std::size_t j = 0; j < inputA.GetShape().Cols(); ++j)
+            for (int j = 0; j < inputA.GetShape().Cols(); ++j)
             {
                 std::cout << backwardDataPtrA[i * inputA.GetShape().Cols() + j]
                     << " ";
@@ -155,9 +155,9 @@ void TestAdd(bool print)
         }
 
         std::cout << "inputB Backward" << std::endl;
-        for (std::size_t i = 0; i < inputB.GetShape().Rows(); ++i)
+        for (int i = 0; i < inputB.GetShape().Rows(); ++i)
         {
-            for (std::size_t j = 0; j < inputB.GetShape().Cols(); ++j)
+            for (int j = 0; j < inputB.GetShape().Cols(); ++j)
             {
                 std::cout << backwardDataPtrB[i * inputB.GetShape().Cols() + j]
                     << " ";

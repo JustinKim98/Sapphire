@@ -6,7 +6,8 @@
 
 #ifndef SAPPHIRE_NAIVEINITIALIZE_HPP
 #define SAPPHIRE_NAIVEINITIALIZE_HPP
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
+
 
 namespace Sapphire::Compute::Dense::Naive
 {

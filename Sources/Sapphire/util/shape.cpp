@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 
 namespace Sapphire
 {
@@ -90,7 +90,7 @@ int Shape::Size() const noexcept
 
 void Shape::Set(int dim, int value)
 {
-    if (dim >= m_shapeVector.size())
+    if (dim >= static_cast<int>(m_shapeVector.size()))
     {
         throw std::invalid_argument(
             "Shape::Set - Given dimension exceeds shape dimension");
@@ -111,7 +111,7 @@ void Shape::SetRow(int value)
         throw std::runtime_error(
             "Shape::SetRow - Shape has less dimension than 2");
 
-    m_shapeVector.at(Dim() - 2) = value;
+    m_shapeVector.at(static_cast<std::size_t>(Dim()) - 2) = value;
 }
 
 void Shape::SetCol(int value)
@@ -119,7 +119,7 @@ void Shape::SetCol(int value)
     if (m_shapeVector.empty())
         throw std::runtime_error("Shape::SetCol - Shape is empty");
 
-    m_shapeVector.at(Dim() - 1) = value;
+    m_shapeVector.at(static_cast<std::size_t>(Dim()) - 1) = value;
 }
 
 void Shape::Expand(int dim)
@@ -130,7 +130,7 @@ void Shape::Expand(int dim)
     std::vector<int> newShapeVector(dim);
     for (int i = 0; i < dim; i++)
     {
-        if (i < dim - m_shapeVector.size())
+        if (i < dim - static_cast<int>(m_shapeVector.size()))
             newShapeVector.at(i) = 1;
         else
             newShapeVector.at(i) =

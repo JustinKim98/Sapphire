@@ -20,20 +20,20 @@ void Reshape(TensorUtil::TensorData& tensorData, Shape newShape)
             : newShape.Cols() / padUnitSize * padUnitSize + padUnitSize;
 
     auto* tempData = new float[tensorShape.Size()];
-    for (std::size_t ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
-        for (std::size_t i = 0; i < tensorData.Cols(); ++i)
+    for (int ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
+        for (int i = 0; i < tensorData.Cols(); ++i)
         {
             const auto data =
                 tensorData
-                    .GetDenseHost()[ii * tensorData.PaddedHostColSize + i];
+                .GetDenseHost()[ii * tensorData.PaddedHostColSize + i];
             tempData[ii * tensorShape.Cols() + i] = data;
         }
 
     tensorData.PaddedHostColSize = newPaddedColSize;
     tensorData.TensorShape = newShape;
 
-    for (std::size_t ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
-        for (std::size_t i = 0; i < tensorData.Cols(); ++i)
+    for (int ii = 0; ii < tensorData.GetBatchSize(1); ++ii)
+        for (int i = 0; i < tensorData.Cols(); ++i)
         {
             const auto data = tempData[ii * newShape.Cols() + i];
             tensorData
@@ -43,5 +43,4 @@ void Reshape(TensorUtil::TensorData& tensorData, Shape newShape)
 
     delete[] tempData;
 }
-
 }

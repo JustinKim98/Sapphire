@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/TestUtil.hpp>
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <random>
 #include <doctest.h>
 #include <iostream>

@@ -32,7 +32,7 @@ void TestLinear()
     output.ToHost();
 
     const auto forwardDataPtr = output.GetForwardDataCopy();
-    for (std::size_t i = 0; i < output.GetShape().Size(); ++i)
+    for (int i = 0; i < output.GetShape().Size(); ++i)
         CHECK(std::abs(201.0f - forwardDataPtr[i]) <
         std::numeric_limits<float>::epsilon());
 
@@ -43,7 +43,7 @@ void TestLinear()
 
     input.ToHost();
     const auto backwardDataPtr = input.GetBackwardDataCopy();
-    for (std::size_t i = 0; i < input.GetShape().Size(); ++i)
+    for (int i = 0; i < input.GetShape().Size(); ++i)
         CHECK(std::abs(200.0f - backwardDataPtr[i]) <
         std::numeric_limits<float>::epsilon());
 

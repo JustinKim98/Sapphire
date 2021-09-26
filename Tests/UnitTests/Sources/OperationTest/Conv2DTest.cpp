@@ -10,6 +10,7 @@
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <iostream>
 #include <doctest/doctest.h>
+#include <TestUtil.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 
 namespace Sapphire::Test
@@ -38,15 +39,18 @@ void TestConv2D(bool print)
                   gpu, Type::Dense);
     Tensor bias(Shape({ outputChannels }), gpu, Type::Dense);
 
-    Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
-    Initialize::Initialize(kernel, std::make_unique<Initialize::Ones>());
+    //! Initialize input, kernel and bias
+    Initialize::Initialize(
+        input, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    Initialize::Initialize(
+        kernel, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(bias, std::make_unique<Initialize::Zeros>());
     input.ToCuda();
     kernel.ToCuda();
     bias.ToCuda();
 
     NN::Conv2D conv2D(inputSize, stride, padSize, dilation,
-                      Util::SharedPtr<Optimizer::SGD>::Make(0.1f), kernel,
+                      Util::SharedPtr<Optimizer::SGD>::Make(0.0f), kernel,
                       bias);
 
     auto output = conv2D(input);
@@ -67,11 +71,15 @@ void TestConv2D(bool print)
     kernel.ToHost();
     bias.ToHost();
 
-    Initialize::Initialize(kernel, std::make_unique<Initialize::Ones>());
-    Initialize::Initialize(bias, std::make_unique<Initialize::Zeros>());
+    Initialize::InitializeBackwardData(
+        kernel, std::make_unique<Initialize::Zeros>());
+    Initialize::InitializeBackwardData(
+        bias, std::make_unique<Initialize::Zeros>());
+    Initialize::InitializeBackwardData(input,
+                                       std::make_unique<Initialize::Zeros>());
 
     NN::Conv2D conv2DHost(inputSize, stride, padSize, dilation,
-                          Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
+                          Util::SharedPtr<Optimizer::SGD>::Make(0.0f),
                           kernel,
                           bias);
     auto hostOutput = conv2DHost(input);
@@ -81,17 +89,15 @@ void TestConv2D(bool print)
 
     Initialize::InitializeBackwardData(hostOutput,
                                        std::make_unique<Initialize::Ones>());
-    Initialize::InitializeBackwardData(input,
-                                       std::make_unique<Initialize::Zeros>());
     ModelManager::GetCurrentModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();
 
     if (print)
     {
         std::cout << "Conv2D forward result (Host)" << std::endl;
-        for (std::size_t i = 0; i < outputRowsHost; ++i)
+        for (int i = 0; i < outputRowsHost; ++i)
         {
-            for (std::size_t j = 0; j < outputColsHost; ++j)
+            for (int j = 0; j < outputColsHost; ++j)
             {
                 std::cout << hostForwardPtr[i * outputCols + j] << " ";
             }
@@ -99,9 +105,9 @@ void TestConv2D(bool print)
         }
 
         std::cout << "Conv2D backward result (Host)" << std::endl;
-        for (std::size_t i = 0; i < inputRows; ++i)
+        for (int i = 0; i < inputRows; ++i)
         {
-            for (std::size_t j = 0; j < inputCols; ++j)
+            for (int j = 0; j < inputCols; ++j)
             {
                 std::cout << hostBackwardPtr[i * outputCols + j] << " ";
             }
@@ -132,24 +138,28 @@ void TestConv2D(bool print)
     CHECK(outputRows == outputRowsHost);
     CHECK(outputCols == outputColsHost);
 
-    for (std::size_t channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
-        for (std::size_t rowIdx = 0; rowIdx < outputRows; ++rowIdx)
-            for (std::size_t colIdx = 0; colIdx < outputCols; ++ colIdx)
+    for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
+        for (int rowIdx = 0; rowIdx < outputRows; ++rowIdx)
+            for (int colIdx = 0; colIdx < outputCols; ++ colIdx)
             {
-                CHECK(hostForwardPtr[channelIdx * outputRows * outputCols +
-                        rowIdx * outputCols + colIdx] ==
-                    gpuForwardPtr[channelIdx * outputRows * outputCols +
-                        rowIdx * outputCols + colIdx]);
+                CHECK(
+                    TestEquality(hostForwardPtr[channelIdx * outputRows *
+                            outputCols +
+                            rowIdx * outputCols + colIdx],
+                        gpuForwardPtr[channelIdx * outputRows * outputCols +
+                            rowIdx * outputCols + colIdx]));
             }
 
-    for (std::size_t channelIdx = 0; channelIdx < inputChannels; ++channelIdx)
-        for (std::size_t rowIdx = 0; rowIdx < inputRows; ++rowIdx)
-            for (std::size_t colIdx = 0; colIdx < inputCols; ++ colIdx)
+    for (int channelIdx = 0; channelIdx < inputChannels; ++channelIdx)
+        for (int rowIdx = 0; rowIdx < inputRows; ++rowIdx)
+            for (int colIdx = 0; colIdx < inputCols; ++ colIdx)
             {
-                CHECK(hostBackwardPtr[channelIdx * inputRows * inputCols +
-                        rowIdx * inputCols + colIdx] ==
-                    gpuBackwardPtr[channelIdx * inputRows * inputCols +
-                        rowIdx * inputCols + colIdx]);
+                CHECK(
+                    TestEquality(hostBackwardPtr[channelIdx * inputRows *
+                            inputCols +
+                            rowIdx * inputCols + colIdx],
+                        gpuBackwardPtr[channelIdx * inputRows * inputCols +
+                            rowIdx * inputCols + colIdx]));
             }
 
     ModelManager::GetCurrentModel().Clear();

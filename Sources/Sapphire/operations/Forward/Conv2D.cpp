@@ -9,6 +9,7 @@
 #include <Sapphire/operations/Backward/Conv2DBackward.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
+#include <Sapphire/util/Shape.hpp>
 
 namespace Sapphire::NN
 {

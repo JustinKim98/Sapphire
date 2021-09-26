@@ -126,7 +126,7 @@ Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
 
 Tensor MeanOp(const Tensor& input, int dim)
 {
-    if (dim < 0 || static_cast<std::size_t>(dim) >= input.GetShape().Dim())
+    if (dim < 0 || dim >= input.GetShape().Dim())
         throw std::invalid_argument("NN::Functional::MeanOp - Invalid dim");
 
     Model& model = ModelManager::GetCurrentModel();

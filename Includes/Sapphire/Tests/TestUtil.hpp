@@ -7,7 +7,7 @@
 #ifndef SAPPHIRE_TEST_TEST_UTIL_HPP
 #define SAPPHIRE_TEST_TEST_UTIL_HPP
 
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>

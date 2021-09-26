@@ -45,7 +45,7 @@ void TestMean(bool print)
     const auto yForwardHost = yHost.GetForwardDataCopy();
     const auto yShape = yGpu.GetShape();
 
-    for (std::size_t i = 0; i < yShape.Size(); ++i)
+    for (int i = 0; i < yShape.Size(); ++i)
         CHECK(std::abs(yForwardGpu[i] - yForwardHost[i]) <
         std::numeric_limits<float>::epsilon());
 
@@ -66,7 +66,7 @@ void TestMean(bool print)
 
     const auto xBackwardHost = x.GetBackwardDataCopy();
 
-    for (std::size_t i = 0; i < xShape.Size(); ++i)
+    for (int i = 0; i < xShape.Size(); ++i)
         CHECK(std::abs(xBackwardGpu[i] - xBackwardHost[i]) <
         std::numeric_limits<float>::epsilon());
 

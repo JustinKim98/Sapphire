@@ -34,7 +34,7 @@ void TestMSE(bool print)
     if (print)
     {
         std::cout << "Loss " << std::endl;
-        for (std::size_t i = 0; i < lossShape.Size(); ++i)
+        for (int i = 0; i < lossShape.Size(); ++i)
             std::cout << lossData[i] << std::endl;
     }
 

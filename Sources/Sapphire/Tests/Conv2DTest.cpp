@@ -8,6 +8,7 @@
 #include <Sapphire/Tests/TestUtil.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <iostream>
 #include <random>
 
@@ -307,7 +308,7 @@ void HostIm2ColTest(bool print)
         reConvertedInputData(inputShape, Type::Dense, device);
 
     int count = 0;
-    for (std::size_t ii = 0; ii < inputData.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < inputData.GetBatchSize(1); ++ii)
         for (int i = 0; i < inputData.Cols(); ++i)
             inputData
                 .GetMutableDenseHost()[ii * inputData.PaddedHostColSize + i] =
@@ -318,7 +319,7 @@ void HostIm2ColTest(bool print)
                                   colPadding, dilationRow, dilationCol, 0);
 
     if (print)
-        for (std::size_t ii = 0; ii < inputMatrixData.GetBatchSize(1); ++ii)
+        for (int ii = 0; ii < inputMatrixData.GetBatchSize(1); ++ii)
             for (int i = 0; i < inputMatrixData.Cols(); ++i)
                 std::cout << "Im2Col[" << ii * inputMatrixData.Cols() + i
                     << "]: " << inputMatrixData.GetDenseHost()[
@@ -336,7 +337,7 @@ void HostIm2ColTest(bool print)
     filterData.TensorShape = newFilterShape;
 
     if (print)
-        for (std::size_t ii = 0; ii < inputData.GetBatchSize(1); ++ii)
+        for (int ii = 0; ii < inputData.GetBatchSize(1); ++ii)
             for (int i = 0; i < inputData.Cols(); ++i)
                 std::cout << "Col2Im[" << ii * inputData.Cols() + i
                     << "] = " <<
@@ -393,12 +394,12 @@ void HostConv2DTest(bool print)
 
     Compute::Initialize::Zeros(y);
 
-    for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < x.GetBatchSize(1); ++ii)
         for (int i = 0; i < x.Cols(); ++i)
             x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] = static_cast<
                 float>(distrib(gen));
 
-    for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < filter.GetBatchSize(1); ++ii)
         for (int i = 0; i < filter.Cols(); ++i)
             filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
@@ -409,7 +410,7 @@ void HostConv2DTest(bool print)
 
     auto* hostTemp = new float[y.GetShape().Size()];
 
-    for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < y.GetBatchSize(1); ++ii)
         for (int i = 0; i < y.Cols(); ++i)
             hostTemp[ii * y.Cols() + i] =
                 y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i];
@@ -426,7 +427,7 @@ void HostConv2DTest(bool print)
 
     y.ToHost();
 
-    for (std::size_t ii = 0; ii < y.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < y.GetBatchSize(1); ++ii)
         for (int i = 0; i < y.Cols(); ++i)
         {
             if (!std::isnan(hostTemp[ii * y.Cols() + i]) &&
@@ -445,17 +446,17 @@ void HostConv2DTest(bool print)
                     << std::endl;
         }
 
-    for (std::size_t ii = 0; ii < x.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < x.GetBatchSize(1); ++ii)
         for (int i = 0; i < x.Cols(); ++i)
             x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
 
-    for (std::size_t ii = 0; ii < filter.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < filter.GetBatchSize(1); ++ii)
         for (int i = 0; i < filter.Cols(); ++i)
             filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
 
-    for (std::size_t ii = 0; ii < dy.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < dy.GetBatchSize(1); ++ii)
         for (int i = 0; i < dy.Cols(); ++i)
             dy.GetMutableDenseHost()[ii * dy.PaddedHostColSize + i] =
                 static_cast<float>(distrib(gen));
@@ -474,13 +475,13 @@ void HostConv2DTest(bool print)
                                           dilationRow, dilationCol, device);
 
     auto* dxTemp = new float[dx.GetShape().Size()];
-    for (std::size_t ii = 0; ii < dx.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < dx.GetBatchSize(1); ++ii)
         for (int i = 0; i < dx.Cols(); ++i)
             dxTemp[ii * dx.Cols() + i] =
                 dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize + i];
 
     auto* dFilterTemp = new float[dFilter.GetShape().Size()];
-    for (std::size_t ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
         for (int i = 0; i < dFilter.Cols(); ++i)
             dFilterTemp[ii * dFilter.Cols() + i] =
                 dFilter
@@ -507,7 +508,7 @@ void HostConv2DTest(bool print)
     dx.ToHost();
     dFilter.ToHost();
 
-    for (std::size_t ii = 0; ii < dx.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < dx.GetBatchSize(1); ++ii)
         for (int i = 0; i < dx.Cols(); ++i)
         {
             if (!std::isnan(dxTemp[ii * dx.Cols() + i]) &&
@@ -527,7 +528,7 @@ void HostConv2DTest(bool print)
         }
 
     std::cout << "Filter" << std::endl;
-    for (std::size_t ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
+    for (int ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
         for (int i = 0; i < dFilter.Cols(); ++i)
         {
             if (!std::isnan(dFilterTemp[ii * dFilter.Cols() + i]) &&

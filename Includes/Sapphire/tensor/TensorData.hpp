@@ -8,7 +8,7 @@
 #define SAPPHIRE_TENSORUTIL_TENSOR_DATA_HPP
 
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
 
 namespace Sapphire::TensorUtil
@@ -62,7 +62,7 @@ public:
         return m_parentDescKey;
     }
 
-    [[nodiscard]] int GetBatchSize(unsigned int requiredDim) const;
+    [[nodiscard]] int GetBatchSize(int requiredDim) const;
 
     SparseMatrix* SparseMatHost = nullptr;
     SparseMatrix* SparseMatCuda = nullptr;

@@ -6,7 +6,7 @@
 #ifndef SAPPHIRE_TENSOR_DECL_HPP
 #define SAPPHIRE_TENSOR_DECL_HPP
 
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
 #include <memory>
 
@@ -40,9 +40,12 @@ public:
     [[nodiscard]] std::unique_ptr<float[]> GetForwardDataCopy() const;
     [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
 
+    void SetForwardData(std::vector<float> data) const;
+    void SetBackwardData(std::vector<float> data) const;
+
     void ToCuda();
     void ToHost();
-    DeviceType Mode() const;
+    [[nodiscard]] DeviceType Mode() const;
     void SetMode(DeviceType mode) const;
 
 private:

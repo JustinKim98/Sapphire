@@ -6,7 +6,7 @@
 
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
-#include <Sapphire/tensor/Shape.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
