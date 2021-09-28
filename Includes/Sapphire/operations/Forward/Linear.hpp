@@ -20,8 +20,6 @@ class Linear : public Unit
 public:
     Linear(int inputFeatureSize, int outputFeatureSize,
            Util::SharedPtr<Optimizer::Optimizer> optimizer,
-           std::unique_ptr<Initialize::Initializer> weightInitializer,
-           std::unique_ptr<Initialize::Initializer> biasInitializer,
            CudaDevice device = CudaDevice(),
            bool isSparse = false);
     ~Linear() override = default;
@@ -31,7 +29,7 @@ public:
     Linear& operator=(const Linear& linear) = default;
     Linear& operator=(Linear&& linear) noexcept = default;
 
-    Tensor operator()(Tensor& xTensor);
+    Tensor operator()(Tensor& x, Tensor weight, Tensor bias);
 
 private:
     [[nodiscard]] int m_registerOutputTensor(

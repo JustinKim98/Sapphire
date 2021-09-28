@@ -7,7 +7,7 @@
 #ifndef SAPPHIRE_TESTS_TEST_UTIL_HPP
 #define SAPPHIRE_TESTS_TEST_UTIL_HPP
 
-#define FP_EQUAL_THRESHOLD  0.001
+#define FP_EQUAL_THRESHOLD  0.01
 
 #include <type_traits>
 #include <limits>

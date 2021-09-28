@@ -9,16 +9,18 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <TestUtil.hpp>
 #include <iostream>
 #include <random>
 #include <doctest/doctest.h>
 
 namespace Sapphire::Test
 {
-void TestLinear()
+void TestLinear(bool print)
 {
     const int batchSize = 1;
-    const int inputCols = 100;
+    const int inputs = 100;
+    const int outputs = 100;
 
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -26,33 +28,97 @@ void TestLinear()
     const CudaDevice gpu(0, "cuda0");
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist;
-    Tensor input(Shape({ batchSize, inputCols }), gpu, Type::Dense);
+    std::uniform_real_distribution dist(-1.0f, 1.0f);
+    std::vector<float> backwardData(batchSize * outputs);
+    for (auto& data : backwardData)
+        data = dist(gen);
 
-    NN::Linear linear(200, 200, Util::SharedPtr<Optimizer::SGD>::Make(0.1f),
-                      std::make_unique<Initialize::Ones>(),
-                      std::make_unique<Initialize::Ones>(), gpu);
+    Tensor input(Shape({ batchSize, inputs }), gpu, Type::Dense);
+    Tensor weight(Shape({ inputs, outputs }), gpu, Type::Dense);
+    Tensor bias(Shape({ outputs }), gpu, Type::Dense);
 
-    Initialize::Initialize(input, std::make_unique<Initialize::Ones>());
+    Initialize::Initialize(input,
+                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    Initialize::Initialize(weight,
+                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+
     input.ToCuda();
-    auto output = linear(input);
-    output.ToHost();
+    weight.ToCuda();
+    bias.ToCuda();
 
-    const auto forwardDataPtr = output.GetForwardDataCopy();
-    for (int i = 0; i < output.GetShape().Size(); ++i)
-        CHECK(std::abs(201.0f - forwardDataPtr[i]) <
-        std::numeric_limits<float>::epsilon());
+    NN::Linear linear(inputs, outputs,
+                      Util::SharedPtr<Optimizer::SGD>::Make(0.0f),
+                      gpu);
 
-    InitializeBackwardData(output, std::make_unique<Initialize::Ones>());
-
-    output.ToCuda();
-    ModelManager::GetCurrentModel().BackProp(output);
+    auto gpuOutput = linear(input, weight, bias);
+    const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
+    gpuOutput.SetBackwardData(backwardData);
+    ModelManager::GetCurrentModel().BackProp(gpuOutput);
+    const auto gpuBackwardPtr = input.GetBackwardDataCopy();
 
     input.ToHost();
-    const auto backwardDataPtr = input.GetBackwardDataCopy();
+    weight.ToHost();
+    bias.ToHost();
+
+    Initialize::InitializeBackwardData(input,
+                                       std::make_unique<Initialize::Zeros>());
+
+    NN::Linear linearHost(inputs, outputs,
+                          Util::SharedPtr<Optimizer::SGD>::Make(0.0f), gpu);
+    const auto hostOutput = linearHost(input, weight, bias);
+    const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
+    hostOutput.SetBackwardData(backwardData);
+    ModelManager::GetCurrentModel().BackProp(hostOutput);
+    const auto hostBackwardPtr = input.GetBackwardDataCopy();
+
+    if (print)
+    {
+        std::cout << "Linear forward result (Host)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            for (int i = 0; i < outputs; ++i)
+            {
+                std::cout << hostForwardPtr[batchIdx * outputs + i] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "Linear backward result (Host)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            for (int i = 0; i < outputs; ++i)
+            {
+                std::cout << hostBackwardPtr[batchIdx * outputs + i] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "Linear forward result (Cuda)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            for (int i = 0; i < outputs; ++i)
+            {
+                std::cout << gpuForwardPtr[batchIdx * outputs + i] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "Linear backward result (Cuda)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            for (int i = 0; i < outputs; ++i)
+            {
+                std::cout << gpuBackwardPtr[batchIdx * outputs + i] << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    for (int i = 0; i < gpuOutput.GetShape().Size(); ++i)
+        CHECK(TestEquality(hostForwardPtr[i], gpuForwardPtr[i]));
+
     for (int i = 0; i < input.GetShape().Size(); ++i)
-        CHECK(std::abs(200.0f - backwardDataPtr[i]) <
-        std::numeric_limits<float>::epsilon());
+        CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
     ModelManager::GetCurrentModel().Clear();
 }

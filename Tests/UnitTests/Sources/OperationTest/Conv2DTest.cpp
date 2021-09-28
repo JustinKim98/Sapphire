@@ -8,12 +8,10 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <TestUtil.hpp>
 #include <iostream>
 #include <doctest/doctest.h>
-
 #include <random>
-#include <TestUtil.hpp>
-#include <Sapphire/operations/Forward/Linear.hpp>
 
 namespace Sapphire::Test
 {
@@ -55,7 +53,7 @@ void TestConv2D(bool print)
     //! Initialize backward data
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<float> dist;
+    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
     std::vector<float> backwardData(batchSize *
                                     outputChannels * outputRows * outputCols);
     for (auto& data : backwardData)
@@ -98,10 +96,6 @@ void TestConv2D(bool print)
     bias.ToHost();
 
     //! Initialize backward data
-    Initialize::InitializeBackwardData(
-        kernel, std::make_unique<Initialize::Zeros>());
-    Initialize::InitializeBackwardData(
-        bias, std::make_unique<Initialize::Zeros>());
     Initialize::InitializeBackwardData(input,
                                        std::make_unique<Initialize::Zeros>());
 

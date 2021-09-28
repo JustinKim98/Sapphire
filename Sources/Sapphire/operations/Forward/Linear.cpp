@@ -18,8 +18,7 @@ namespace Sapphire::NN
 {
 Linear::Linear(int inputFeatureSize, int outputFeatureSize,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
-               std::unique_ptr<Initialize::Initializer> weightInitializer,
-               std::unique_ptr<Initialize::Initializer> biasInitializer,
+
                CudaDevice device, bool isSparse)
     : m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
@@ -32,67 +31,46 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
-
-    auto weight = TensorUtil::TensorData(
-        Shape({ inputFeatureSize, outputFeatureSize }), type, m_device);
-    auto bias =
-        TensorUtil::TensorData(Shape({ outputFeatureSize }), type, m_device);
-    auto transposedWeight = TensorUtil::TensorData(
-        Shape({ outputFeatureSize, inputFeatureSize }), type, m_device);
-
-    weightInitializer->operator()(weight);
-    biasInitializer->operator()(bias);
-
-    //! Synchronize data between host and device
-    if (m_device.GetID() >= 0)
-    {
-        weight.ToCuda();
-        bias.ToCuda();
-        transposedWeight.ToCuda();
-        weight.SetMode(DeviceType::Cuda);
-        bias.SetMode(DeviceType::Cuda);
-        transposedWeight.SetMode(DeviceType::Cuda);
-    }
-
-    m_trainableDataMap["weight"] = std::move(weight);
-    m_trainableDataMap["bias"] = std::move(bias);
-    m_mutableDataMap["transposedWeight"] = std::move(transposedWeight);
 }
 
-Tensor Linear::operator()(Tensor& xTensor)
+Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
 {
-    auto mode = xTensor.Mode();
+    auto mode = x.Mode();
     auto& model = ModelManager::GetCurrentModel();
 
     auto& xDesc =
-        model.GetDescriptor(xTensor.TensorDescriptorKey());
+        model.GetDescriptor(x.TensorDescriptorKey());
     m_checkArguments({ &xDesc });
+    auto& weightDesc = model.GetDescriptor(weight.TensorDescriptorKey());
+    auto& biasDesc = model.GetDescriptor(bias.TensorDescriptorKey());
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
     yDesc.SetMode(mode);
 
-    auto x = xDesc.GetForwardData();
-    auto dx = xDesc.GetBackwardData();
-    auto y = yDesc.GetForwardData();
-    auto dy = yDesc.GetBackwardData();
+    auto weightData = weightDesc.GetForwardData();
+    auto biasData = biasDesc.GetForwardData();
+    auto xData = xDesc.GetForwardData();
+    auto dxData = xDesc.GetBackwardData();
+    auto yData = yDesc.GetForwardData();
+    auto dyData = yDesc.GetBackwardData();
 
-    auto weight = m_trainableDataMap.at("weight");
-    auto bias = m_trainableDataMap.at("bias");
-    auto transposedWeight =
-        m_mutableDataMap["transposedWeight"];
+    auto transposedWeight = TensorUtil::TensorData(
+        Shape({ m_outputs, m_inputs }), Type::Dense, weight.GetDevice());
+    transposedWeight.SetMode(weight.Mode());
 
     //! Change the dimension of the data to match the requirements
-    Util::ChangeTensorDataDimension(2, x, dx, y, dy);
+    Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData);
 
-    Compute::Initialize::Zeros(y);
-    Compute::Transpose(transposedWeight, weight);
+    Compute::Initialize::Zeros(yData);
+    Compute::Transpose(transposedWeight, weightData);
     //! Bias is broadcasted internally
-    Compute::Gemm(y, x, transposedWeight, bias);
+    Compute::Gemm(yData, xData, transposedWeight, biasData);
 
     auto backPropWrapper =
         Util::SharedPtr<BackProp::LinearBackProp>::Make(
-            dx, dy, weight, bias, x.CreateCopy(), m_optimizer,
-            x.GetBatchSize(2));
+            dxData, dyData, weightData, biasData, xData.CreateCopy(),
+            m_optimizer,
+            xData.GetBatchSize(2));
     SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                 std::make_tuple(&yDesc));
     return Tensor(yKey);
@@ -117,7 +95,6 @@ void Linear::m_checkArguments(
     const auto input = arguments.at(0);
     if (input->GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-    if (input->GetDevice() != m_device)
-        throw std::invalid_argument("NN::Linear - Device mismatch");
+
 }
 } // namespace Sapphire::NN

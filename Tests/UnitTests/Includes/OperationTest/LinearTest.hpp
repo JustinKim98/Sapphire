@@ -8,7 +8,7 @@
 
 namespace Sapphire::Test
 {
-void TestLinear();
+void TestLinear(bool print);
 }
 
 

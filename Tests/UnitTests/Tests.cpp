@@ -332,7 +332,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear();
+        TestLinear(true);
     }
 
     SUBCASE("Conv2DTest")
