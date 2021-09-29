@@ -21,9 +21,7 @@ void TestMSE(bool print)
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution dist(-1.0f, 1.0f);
+
     const auto batchSize = 1;
     const int inputs = 10;
 
@@ -32,7 +30,7 @@ void TestMSE(bool print)
     Tensor x(xShape, gpu, Type::Dense);
     Tensor label(xShape, gpu, Type::Dense);
 
-    const std::vector backwardData = { dist(gen) };
+    const std::vector backwardData = { 0.0f };
 
     Initialize::Initialize(x, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(
@@ -56,7 +54,7 @@ void TestMSE(bool print)
     const auto hostBackwardPtr = x.GetBackwardDataCopy();
 
     CHECK(gpuLoss.GetShape().Cols() == 1);
-    //CHECK(gpuLoss.GetShape().Rows() == batchSize);
+    CHECK(gpuLoss.GetShape().Rows() == batchSize);
 
     if (print)
     {
@@ -72,7 +70,7 @@ void TestMSE(bool print)
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             for (int i = 0; i < inputs; ++i)
-                std::cout << gpuBackwardPtr[batchSize*inputs + i] << " ";
+                std::cout << gpuBackwardPtr[batchSize * inputs + i] << " ";
             std::cout << std::endl;
         }
 
@@ -88,7 +86,7 @@ void TestMSE(bool print)
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             for (int i = 0; i < inputs; ++i)
-                std::cout << hostBackwardPtr[batchSize*inputs + i] << " ";
+                std::cout << hostBackwardPtr[batchSize * inputs + i] << " ";
             std::cout << std::endl;
         }
     }
