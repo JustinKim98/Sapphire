@@ -261,13 +261,13 @@ TEST_CASE("Convolution")
     SUBCASE("Im2ColHost")
     {
         std::cout << "Im2Col && Col2Im" << std::endl;
-        HostIm2ColTest(false);
+        HostIm2ColTest(true);
     }
 
     SUBCASE("HostConv2D")
     {
         std::cout << "Host Conv2D" << std::endl;
-        HostConv2DTest(false);
+        HostConv2DTest(true);
     }
 
     SUBCASE("Conv2D")

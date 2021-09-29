@@ -18,7 +18,6 @@ namespace Sapphire::NN
 {
 Linear::Linear(int inputFeatureSize, int outputFeatureSize,
                Util::SharedPtr<Optimizer::Optimizer> optimizer,
-
                CudaDevice device, bool isSparse)
     : m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
@@ -26,8 +25,6 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
       m_device(std::move(device)),
       m_isSparse(isSparse)
 {
-    const Type type = m_isSparse ? Type::Sparse : Type::Dense;
-
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
@@ -36,6 +33,8 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
 Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
 {
     auto mode = x.Mode();
+    if (!Util::CheckModeEquality(mode, weight, bias))
+        throw std::invalid_argument("NN::Linear - Device mode inequality");
     auto& model = ModelManager::GetCurrentModel();
 
     auto& xDesc =
@@ -95,6 +94,5 @@ void Linear::m_checkArguments(
     const auto input = arguments.at(0);
     if (input->GetShape().Cols() != m_inputs)
         throw std::invalid_argument("NN::Linear - Shape mismatch");
-
 }
 } // namespace Sapphire::NN

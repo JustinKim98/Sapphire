@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <cassert>
+#include <memory>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/IndexingOps.hpp>
@@ -53,13 +54,13 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
         (InputMatrixSizePerBatch / inputMatrix.Cols()) *
         inputMatrix.PaddedHostColSize;
 
-    auto* inputMatrixDataHost = inputMatrix.GetMutableDenseHost();
-    const auto* inputDataHost = input.GetDenseHost();
-
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
-        inputDataHost += paddedInputTotalSize * nIdx;
-        inputMatrixDataHost += paddedInputMatrixTotalSize * nIdx;
+        const auto* inputDataHost =
+            input.GetDenseHost() + paddedInputTotalSize * nIdx;
+        auto* inputMatrixDataHost =
+            inputMatrix.GetMutableDenseHost() + paddedInputMatrixTotalSize *
+            nIdx;
         for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
         {
@@ -167,13 +168,12 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
         (InputMatrixSizePerBatch / inputMatrix.Cols()) *
         inputMatrix.PaddedHostColSize;
 
-    const auto* inputMatrixDataHost = inputMatrix.GetDenseHost();
-    auto* inputDataHost = input.GetMutableDenseHost();
-
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
-        inputDataHost += paddedInputTotalSize * nIdx;
-        inputMatrixDataHost += paddedInputMatrixTotalSize * nIdx;
+        auto* inputDataHost =
+            input.GetMutableDenseHost() + paddedInputTotalSize * nIdx;
+        const auto* inputMatrixDataHost =
+            inputMatrix.GetDenseHost() + paddedInputMatrixTotalSize * nIdx;
         for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
         {
@@ -262,7 +262,7 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
     const auto rXCols = yRows * yCols;
 
     const Shape rXShape({ N, rXRows, rXCols });
-    const Shape rFilterShape({ yChannels, filterShape.Size() / yChannels });
+    const Shape rFilterShape({ 1, yChannels, filterShape.Size() / yChannels });
     const Shape rYShape({ N, yChannels, yRows * yCols });
 
     TensorData rX(rXShape, Type::Dense, device);
@@ -273,6 +273,16 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
            dilationRow, dilationCol, 0);
     Reshape(rFilter, rFilterShape);
     Reshape(rY, rYShape);
+
+    auto dataPtr = std::unique_ptr<float[]>(new float[rX.GetShape().Size()]);
+    std::size_t idx = 0;
+    for (std::size_t ii = 0; ii < rFilter.DenseTotalLengthHost;
+         ii += rFilter.PaddedHostColSize)
+        for (std::size_t i = ii; i < ii + rFilter.GetShape().Cols(); ++i)
+        {
+            dataPtr[idx] = rFilter.GetDenseHost()[i];
+            idx++;
+        }
 
     Gemm(rY, rFilter, rX, rY);
 
@@ -305,7 +315,8 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     const auto drXCols = dyRows * dyCols;
 
     const Shape rXShape({ N, drXRows, drXCols });
-    const Shape rFilterShape({ dyChannels, dFilterShape.Size() / dyChannels });
+    const Shape rFilterShape(
+        { 1, dyChannels, dFilterShape.Size() / dyChannels });
     const Shape drYShape({ N, dyChannels, dyRows * dyCols });
 
     TensorData rX(rXShape, Type::Dense, device);

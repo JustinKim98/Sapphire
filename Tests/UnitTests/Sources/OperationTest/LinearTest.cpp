@@ -18,7 +18,7 @@ namespace Sapphire::Test
 {
 void TestLinear(bool print)
 {
-    const int batchSize = 1;
+    const int batchSize = 4;
     const int inputs = 100;
     const int outputs = 100;
 
@@ -33,9 +33,9 @@ void TestLinear(bool print)
     for (auto& data : backwardData)
         data = dist(gen);
 
-    Tensor input(Shape({ batchSize, inputs }), gpu, Type::Dense);
+    Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense);
     Tensor weight(Shape({ inputs, outputs }), gpu, Type::Dense);
-    Tensor bias(Shape({ outputs }), gpu, Type::Dense);
+    Tensor bias(Shape({ 1, outputs }), gpu, Type::Dense);
 
     Initialize::Initialize(input,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));

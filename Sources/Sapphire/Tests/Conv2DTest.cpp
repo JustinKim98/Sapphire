@@ -20,7 +20,7 @@ void Conv2DTest(bool printForward, bool printBackward)
 {
     CudaDevice cuda(0, "cuda0");
 
-    int N = 1;
+    int N = 4;
     int inputHeight = 100;
     int inputWidth = 100;
     int inputChannels = 1;
@@ -256,7 +256,7 @@ void AvgPool2DTest(bool printForward, bool printBackward)
 
 void HostIm2ColTest(bool print)
 {
-    const int N = 1;
+    const int N = 4;
     const int numFilters = 2;
     const int numInputChannels = 3;
     const int InputRows = 3;

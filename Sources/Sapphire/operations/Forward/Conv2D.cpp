@@ -93,7 +93,6 @@ Tensor Conv2D::operator()(Tensor& tensor)
     auto& model = ModelManager::GetCurrentModel();
 
     auto device = tensor.GetDevice();
-
     auto& xDesc = model.GetDescriptor(tensor.TensorDescriptorKey());
     m_checkArguments({ &xDesc });
     const auto yKey = m_registerOutputTensor(xDesc);

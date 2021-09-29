@@ -21,7 +21,7 @@ void TestConv2D(bool print)
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
-    const int batchSize = 2;
+    const int batchSize = 4;
     const int inputChannels = 3;
     const int outputChannels = 3;
     const int inputRows = 4;
@@ -115,43 +115,99 @@ void TestConv2D(bool print)
     if (print)
     {
         std::cout << "Conv2D forward result (Host)" << std::endl;
-        for (int i = 0; i < outputRowsHost; ++i)
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
-            for (int j = 0; j < outputColsHost; ++j)
+            std::cout << "batch : " << batchIdx << std::endl;
+            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
             {
-                std::cout << hostForwardPtr[i * outputCols + j] << " ";
+                std::cout << "channel" << channelIdx << std::endl;
+                for (int i = 0; i < outputRowsHost; ++i)
+                {
+                    for (int j = 0; j < outputColsHost; ++j)
+                    {
+                        std::cout
+                            << hostForwardPtr[batchIdx * outputRows *
+                                              outputCols * outputChannels +
+                                              channelIdx * outputRows *
+                                              outputCols +
+                                              i * inputCols + j]
+                            << " ";
+                    }
+                    std::cout << std::endl;
+                }
             }
-            std::cout << std::endl;
         }
 
         std::cout << "Conv2D backward result (Host)" << std::endl;
-        for (int i = 0; i < inputRows; ++i)
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
-            for (int j = 0; j < inputCols; ++j)
+            std::cout << "batch : " << batchIdx << std::endl;
+            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
             {
-                std::cout << hostBackwardPtr[i * outputCols + j] << " ";
+                std::cout << "channel : " << channelIdx << std::endl;
+                for (int i = 0; i < inputRows; ++i)
+                {
+                    for (int j = 0; j < inputCols; ++j)
+                    {
+                        std::cout
+                            << hostBackwardPtr[batchIdx * outputRows *
+                                               outputCols * outputChannels +
+                                               channelIdx * outputRows *
+                                               outputCols +
+                                               i * inputCols + j]
+                            << " ";
+                    }
+                    std::cout << std::endl;
+                }
             }
-            std::cout << std::endl;
         }
 
         std::cout << "Conv2D forward result (Cuda)" << std::endl;
-        for (int i = 0; i < outputRows; ++i)
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
-            for (int j = 0; j < outputCols; ++j)
+            std::cout << "batch : " << batchIdx << std::endl;
+            for (int channelIdx = 0; channelIdx < batchSize; ++channelIdx)
             {
-                std::cout << gpuForwardPtr[i * inputCols + j] << " ";
+                std::cout << "channel : " << channelIdx << std::endl;
+                for (int i = 0; i < outputRows; ++i)
+                {
+                    for (int j = 0; j < outputCols; ++j)
+                    {
+                        std::cout << gpuForwardPtr[
+                                batchIdx * outputRows * outputCols *
+                                outputChannels +
+                                channelIdx * outputRows *
+                                outputCols +
+                                i * inputCols + j]
+                            << " ";
+                    }
+                    std::cout << std::endl;
+                }
             }
-            std::cout << std::endl;
         }
 
         std::cout << "Conv2D backward result (Cuda)" << std::endl;
-        for (int i = 0; i < inputRows; ++i)
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
-            for (int j = 0; j < inputCols; ++j)
+            std::cout << "batch : " << batchIdx << std::endl;
+            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
             {
-                std::cout << gpuBackwardPtr[i * inputCols + j] << " ";
+                std::cout << "channel : " << channelIdx << std::endl;
+                for (int i = 0; i < inputRows; ++i)
+                {
+                    for (int j = 0; j < inputCols; ++j)
+                    {
+                        std::cout
+                            << gpuBackwardPtr[batchIdx * outputRows *
+                                                  outputCols * outputChannels +
+                                              channelIdx * outputRows *
+                                                  outputCols +
+                                              i * inputCols + j]
+                            << " ";
+                    }
+                    std::cout << std::endl;
+                }
             }
-            std::cout << std::endl;
         }
     }
 

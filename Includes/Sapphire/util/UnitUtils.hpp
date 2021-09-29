@@ -151,6 +151,22 @@ inline std::optional<Shape> GetBroadcastedShape(const Shape& shapeA,
 
     return Shape(outputShapeVector);
 }
+
+template <typename TensorT>
+bool CheckModeEquality(DeviceType mode, TensorT tensor)
+{
+    return mode == tensor.Mode();
+}
+
+template <typename TensorT, typename ...TensorTs>
+bool CheckModeEquality(DeviceType mode, TensorT tensor,
+                       TensorTs ... tensors)
+{
+    if (mode == tensor.Mode())
+        return CheckModeEquality(mode, tensors...);
+    else
+        return false;
+}
 }
 
 #endif
