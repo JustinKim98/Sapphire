@@ -55,7 +55,8 @@ __global__ void MeanBackwardKernel(float* dx, const float* x, const float* dy,
     if (unitId < yTotalSize)
     {
         for (unsigned int i = 0; i < unitSize; ++i)
-            dx[unitSize * stride * outerId + i * stride + innerId] +=dy[unitId]/((float) unitSize);
+            dx[unitSize * stride * outerId + i * stride + innerId] +=
+            dy[unitId]/((float) unitSize);
     }
 }
 

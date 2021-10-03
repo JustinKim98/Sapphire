@@ -22,6 +22,8 @@ Tensor MSE(const Tensor& input, const Tensor& label)
 
     auto& xDesc = model.GetDescriptor(input.TensorDescriptorKey());
     auto& labelDesc = model.GetDescriptor(label.TensorDescriptorKey());
+    
+
     const auto yDescKey = model.RegisterTensorDescriptor(
         Shape({ 1 }), xDesc.GetType(),
         xDesc.GetCudaDevice());

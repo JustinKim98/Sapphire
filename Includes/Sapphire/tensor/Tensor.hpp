@@ -23,10 +23,10 @@ public:
     ~Tensor() = default;
 
     Tensor(const Tensor& tensor) = default;
-    Tensor(Tensor&& tensor) noexcept = delete;
+    Tensor(Tensor&& tensor) = default;
     /// move assignment operator
     Tensor& operator=(const Tensor& tensor);
-    Tensor& operator=(Tensor&& tensor) noexcept = delete;
+    Tensor& operator=(Tensor&& tensor) = default;
 
     [[nodiscard]] Shape GetShape() const;
     [[nodiscard]] CudaDevice GetDevice() const;

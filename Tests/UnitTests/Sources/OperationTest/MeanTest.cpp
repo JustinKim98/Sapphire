@@ -72,21 +72,22 @@ void TestMean(bool print)
 
     if (print)
     {
+        std::cout << " dim " << dim << std::endl;
         std::cout << "YForward (GPU)" << std::endl;
         for (int i = 0; i < yShape.Size(); ++i)
-            std::cout << yForwardGpu[i] << std::endl;
+            std::cout << yForwardGpu[i] << " ";
 
         std::cout << "YForward (Host)" << std::endl;
         for (int i = 0; i < yShape.Size(); ++i)
-            std::cout << yForwardHost[i] << std::endl;
+            std::cout << yForwardHost[i] << " ";
 
         std::cout << "XBackward (GPU)" << std::endl;
         for (int i = 0; i < xShape.Size(); ++i)
-            std::cout << xBackwardGpu[i] << std::endl;
+            std::cout << xBackwardGpu[i] << " ";
 
         std::cout << "XBackward (Host)" << std::endl;
         for (int i = 0; i < xShape.Size(); ++i)
-            std::cout << xBackwardHost[i] << std::endl;
+            std::cout << xBackwardHost[i] << " ";
     }
 
     ModelManager::GetCurrentModel().Clear();

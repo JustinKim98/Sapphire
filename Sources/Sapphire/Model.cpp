@@ -71,6 +71,12 @@ void Model::Clear()
     m_tensorDescriptorPool.TensorDescMap.clear();
 }
 
+void Model::InitGradient()
+{
+    for (auto& [id, tensorDesc] : m_tensorDescriptorPool.TensorDescMap)
+        tensorDesc.InitGradient();
+}
+
 std::string ModelManager::m_currentModel;
 
 std::unordered_map<std::string, Model> ModelManager::m_modelMap;

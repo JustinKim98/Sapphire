@@ -21,6 +21,7 @@ Tensor ReLU(Tensor xTensor)
     const auto yDescKey = model.RegisterTensorDescriptor(
         xDesc.GetShape(), xDesc.GetType(), xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
+    yDesc.SetMode(xDesc.Mode());
 
     auto x = xDesc.GetForwardData().CreateCopy();
     auto dx = xDesc.GetBackwardData();

@@ -20,16 +20,17 @@ Tensor Basic::operator()(Tensor& xTensor)
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     Shape outputShape = xTensor.GetShape();
-    const auto yKey = model.RegisterTensorDescriptor(outputShape, xDesc.GetType(),
+    const auto yKey = model.RegisterTensorDescriptor(
+        outputShape, xDesc.GetType(),
         xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yKey);
     auto dy = yDesc.GetBackwardData();
 
     std::cout << "Basic Forward called" << std::endl;
 
-    auto backPropWrapper =
+    auto wrapper =
         Util::SharedPtr<BackProp::BasicBackward>::Make(dx, dy);
-    SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+    SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
                 std::make_tuple(&yDesc));
 
     return Tensor(yKey);
@@ -46,16 +47,17 @@ Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
     auto dx1 = x1Desc.GetBackwardData();
     auto dx2 = x2Desc.GetBackwardData();
     Shape outputShape = x1Tensor.GetShape();
-    const auto yKey = model.RegisterTensorDescriptor(outputShape, x1Desc.GetType(),
+    const auto yKey = model.RegisterTensorDescriptor(
+        outputShape, x1Desc.GetType(),
         x1Desc.GetDevice());
     auto& yDesc = model.GetDescriptor(yKey);
     auto dy = yDesc.GetBackwardData();
 
     std::cout << "TwoInputs Forward called" << std::endl;
 
-    auto backPropWrapper =
+    auto wrapper =
         Util::SharedPtr<BackProp::BackwardTwoInputs>::Make(dx1, dx2, dy);
-    SaveHistory(backPropWrapper, std::make_tuple(&x1Desc, &x2Desc),
+    SaveHistory(std::move(wrapper), std::make_tuple(&x1Desc, &x2Desc),
                 std::make_tuple(&yDesc));
 
     return Tensor(yKey);
@@ -69,9 +71,11 @@ std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     Shape outputShape = xTensor.GetShape();
-    const auto y1Key = model.RegisterTensorDescriptor(outputShape, xDesc.GetType(),
+    const auto y1Key = model.RegisterTensorDescriptor(
+        outputShape, xDesc.GetType(),
         xDesc.GetDevice());
-    const auto y2Key = model.RegisterTensorDescriptor(outputShape, xDesc.GetType(),
+    const auto y2Key = model.RegisterTensorDescriptor(
+        outputShape, xDesc.GetType(),
         xDesc.GetDevice());
     auto& y1Desc = model.GetDescriptor(y1Key);
     auto& y2Desc = model.GetDescriptor(y2Key);
@@ -80,9 +84,9 @@ std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
 
     std::cout << "TwoOutputs Forward called" << std::endl;
 
-    auto backPropWrapper =
+    auto wrapper =
         Util::SharedPtr<BackProp::BackwardTwoOutputs>::Make(dx, dy1, dy2);
-    SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+    SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
                 std::make_tuple(&y1Desc, &y2Desc));
 
     return std::make_pair(Tensor(y1Key), Tensor(y2Key));
@@ -99,9 +103,9 @@ void InplaceOp::operator()(Tensor& xTensor)
 
     std::cout << "In-place Forward called " << std::endl;
 
-    auto backPropWrapper =
+    auto wrapper =
         Util::SharedPtr<BackProp::BackwardInplace>::Make(dx, dx);
-    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+    Util::SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
                       std::make_tuple(&xDesc));
 }
 }

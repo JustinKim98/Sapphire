@@ -7,6 +7,8 @@
 #include <Sapphire/tensor/TensorDescriptor.hpp>
 #include <algorithm>
 
+#include "Sapphire/operations/Initializers/Initialize.hpp"
+
 namespace Sapphire::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
@@ -107,6 +109,12 @@ void TensorDescriptor::SetMode(DeviceType deviceType)
 {
     m_forwardData.SetMode(deviceType);
     m_backwardData.SetMode(deviceType);
+}
+
+void TensorDescriptor::InitGradient()
+{
+    Initialize::Zeros zeroInitializer;
+    zeroInitializer(m_backwardData);
 }
 
 void TensorDescriptor::AppendOutputHistory(

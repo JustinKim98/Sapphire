@@ -47,6 +47,9 @@ public:
     //! including forward and back prop data
     void Clear();
 
+    //! Initializes gradients to zero
+    void InitGradient();
+
 private:
     //! Automatically calculates gradient
     //! \param tensorKey : tensor key to the descriptor to start back

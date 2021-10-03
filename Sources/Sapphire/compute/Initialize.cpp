@@ -80,6 +80,22 @@ void Zeros(TensorUtil::TensorData& data)
     }
 }
 
+void Scalar(TensorUtil::TensorData& data, float value)
+{
+    const auto device = data.GetDevice();
+    if (data.Mode() == DeviceType::Cuda)
+    {
+        cudaSetDevice(device.GetID());
+        Dense::Cuda::Scalar(data.GetMutableDenseCuda(), value,
+                            data.DenseTotalLengthCuda);
+    }
+    else
+    {
+        Dense::Naive::Scalar(data.GetMutableDenseHost(), value, data.TensorShape,
+                             data.PaddedHostColSize);
+    }
+}
+
 void HeNormal(TensorUtil::TensorData& data, int fanIn)
 {
     const auto device = data.GetDevice();

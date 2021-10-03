@@ -47,8 +47,8 @@ void* ResourceManager::GetMemoryCuda(size_t byteSize, int deviceId)
     void* cudaPtr = nullptr;
 
     auto allocationSize = byteSize;
-        // (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
-        // ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
+    // (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
+    // ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
 
     const auto itr =
         m_cudaFreeMemoryPool.find(std::make_pair(deviceId, allocationSize));
@@ -80,9 +80,9 @@ void* ResourceManager::GetMemoryHost(size_t byteSize)
     std::lock_guard lock(m_hostPoolMtx);
     void* dataPtr;
 
-    const auto allocationSize = byteSize;
-        // (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
-        // ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
+    const auto allocationSize =
+        (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
+        ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
 
     const auto itr = m_hostFreeMemoryPool.find(allocationSize);
     if (itr != m_hostFreeMemoryPool.end())

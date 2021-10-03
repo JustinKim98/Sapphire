@@ -17,10 +17,11 @@ void Ones(TensorUtil::TensorData& data);
 
 void Zeros(TensorUtil::TensorData& data);
 
+void Scalar(TensorUtil::TensorData& data, float value);
+
 void HeNormal(TensorUtil::TensorData& data, int fanIn);
 
 void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut);
-
-}  // namespace Sapphire::Compute::Initialize
+} // namespace Sapphire::Compute::Initialize
 
 #endif  // Sapphire_INITIALIZE_HPP

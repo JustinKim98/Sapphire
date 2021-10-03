@@ -17,6 +17,7 @@
 #include <OperationTest/MSETest.hpp>
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
+#include<ModelTest/SimpleLinearModel.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
@@ -25,17 +26,19 @@
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
 #include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
+#include <Sapphire/Tests/Basics/ReshapeTest.hpp>
 #include <iostream>
 #include "doctest.h"
 
-#define GraphTest
+//#define GraphTest
+// #define ModelTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
 // #define GemmTest
 // #define GemmBroadcastTest
 // #define InitializeTest
-// #define ConvolutionTest
+#define ConvolutionTest
 // #define BasicGraphTest
 // #define SparseTest
 
@@ -94,8 +97,17 @@ TEST_CASE("Basics")
     const int testLoops = 3;
     SUBCASE("Transpose")
     {
+        std::cout << "Transpose" << std::endl;
         for (int i = 0; i < testLoops; ++i)
             TransposeTest(false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Reshape")
+    {
+        std::cout << "Reshape" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            ReshapeTest(false);
         Util::ResourceManager::ClearAll();
     }
 
@@ -163,6 +175,24 @@ TEST_CASE("Basics")
         Util::ResourceManager::ClearAll();
     }
 }
+#endif
+
+#ifdef ModelTest
+
+TEST_CASE("Model Test")
+{
+    SUBCASE("SimpleLinearModelTest")
+    {
+        int xFeatures = 200;
+        int yFeatures = 200;
+        int batchSize = 10;
+        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.5f);
+        std::vector<float> yFeatureVector(yFeatures * batchSize, 1.0f);
+        SimpleLinearModel(xFeatureVector, yFeatureVector, xFeatures, yFeatures,
+                          0.000001f, batchSize, 1000);
+    }
+}
+
 #endif
 
 
@@ -314,13 +344,13 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("MeanTest")
     {
         std::cout << "Mean" << std::endl;
-        TestMean(false);
+        TestMean(true);
     }
 
     SUBCASE("MSETest")
     {
         std::cout << "MSE" << std::endl;
-        TestMSE(true);
+        TestMSE(false);
     }
 
     SUBCASE("AddTest")
@@ -332,13 +362,13 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear(true);
+        TestLinear(false);
     }
 
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        TestConv2D(true);
+        TestConv2D(false);
     }
 }
 #endif

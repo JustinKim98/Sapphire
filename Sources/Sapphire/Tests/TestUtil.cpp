@@ -9,6 +9,7 @@
 #include <random>
 #include <doctest.h>
 #include <iostream>
+#include <algorithm>
 
 namespace Sapphire::Test
 {
@@ -74,6 +75,28 @@ Shape CreateRandomShape(int dim, int maxDim)
     }
     return Shape(shapeVector);
 }
+
+Shape ShuffleShape(int dim, Shape shape)
+{
+    if (dim <= 0)
+        throw std::invalid_argument("Dimension must be greater than zero");
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1, shape.Dim());
+    const std::size_t newDim = dist(gen);
+
+    std::vector<int> shapeVector = shape.GetShapeVector();
+    std::shuffle(shapeVector.begin(), shapeVector.end(), rd);
+    while (shapeVector.size() != newDim)
+    {
+        std::shuffle(shapeVector.begin(), shapeVector.end(), rd);
+        shapeVector.front() = shapeVector.back() * shapeVector.front();
+        shapeVector.pop_back();
+    }
+    return Shape(shapeVector);
+}
+
 
 void CheckNoneZeroEquality(
     const float* ptrA, const float* ptrB, unsigned size, bool print,

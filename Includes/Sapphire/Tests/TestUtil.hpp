@@ -14,6 +14,7 @@
 #include <limits>
 #include <random>
 #include <cstring>
+#include <tuple>
 
 namespace Sapphire::Test
 {
@@ -139,7 +140,8 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
 }
 
 template <typename Func>
-void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function, float mean, float sd)
+void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
+                               float mean, float sd)
 {
     const Shape shape = CreateRandomShape(5);
     const CudaDevice cuda(0, "cuda0");
@@ -246,6 +248,97 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
                   data.DenseTotalLengthHost,
                   data.GetShape().Cols()
                   , data.PaddedHostColSize, print);
+}
+
+
+template <typename T, std::size_t... Indices>
+auto VectorToTuple(const std::vector<T>& v,
+                   std::index_sequence<Indices...>)
+{
+    return std::make_tuple(v[Indices]...);
+}
+
+template <std::size_t N, typename T>
+auto VectorToTuple(const std::vector<T>& v)
+{
+    assert(v.size() >= N);
+    return VectorToTuple(v, std::make_index_sequence<N>());
+}
+
+template <typename T>
+auto SendTo(DeviceType device, T& tensors)
+{
+    if (device == DeviceType::Cuda)
+        tensors.ToCuda();
+    else
+        tensors.ToHost();
+    tensors.SetMode(device);
+}
+
+template <typename T, typename ...Ts>
+auto SendTo(DeviceType device, T tensor, Ts&& ... tensors)
+{
+    static_assert(std::is_same_v<TensorUtil::TensorData, T>);
+    if (device == DeviceType::Cuda)
+        tensor.ToCuda();
+    else
+        tensor.ToHost();
+    tensor.SetMode(device);
+    SendTo(std::forward<Ts>(tensors)...);
+}
+
+template <typename TFunc, typename ...TFuncParams>
+void TestOperation(CudaDevice cudaDevice, std::tuple<Shape> inputShapes,
+                   std::tuple<Shape> outputShapes,
+                   TFunc function,
+                   std::tuple<TFuncParams ...> funcParams)
+{
+    auto inputTensors = VectorToTuple(std::apply(
+        [&cudaDevice](auto&&... shape) {
+            std::vector<TensorUtil::TensorData> dataVector;
+            dataVector.reserve(sizeof...(TFuncParams));
+            (dataVector.emplace_back(
+                    TensorUtil::TensorData(shape, Type::Dense, cudaDevice)),
+                ...);
+            return dataVector;
+        },
+        inputShapes));
+
+    auto outputTensors = VectorToTuple(std::apply(
+        [&cudaDevice](auto&&... shape) {
+            std::vector<TensorUtil::TensorData> dataVector;
+            dataVector.reserve(sizeof...(TFuncParams));
+            (dataVector.emplace_back(
+                    TensorUtil::TensorData(shape, Type::Dense, cudaDevice)),
+                ...);
+            return dataVector;
+        },
+        outputShapes));
+
+    std::apply([](auto&& ...tensor) {
+                   ((Compute::Initialize::Normal(tensor, 0.0f, 1.0f)), ...);
+               },
+               inputTensors);
+
+    std::apply(
+        [](auto&&... tensor) {
+            ((Compute::Initialize::Zeros(tensor)), ...);
+        },
+        outputTensors);
+
+    auto tensors = std::tuple_cat(inputTensors, outputTensors);
+
+    std::apply(SendTo,
+               std::make_tuple(
+                   std::tuple_cat(std::make_tuple(DeviceType::Cuda),
+                                  inputTensors,
+                                  outputTensors))
+        );
+
+    auto params = std::tuple_cat(outputTensors, inputTensors, funcParams);
+    auto outputCuda = std::apply(function, params);
+
+
 }
 } // namespace Sapphire::Test
 

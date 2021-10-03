@@ -535,8 +535,8 @@ void HostConv2DTest(bool print)
                 !std::isnan(dFilter.GetMutableDenseHost()
                     [ii * dFilter.PaddedHostColSize + i]))
                 CHECK(std::abs(
-                dxTemp[ii * dx.Cols() + i] -
-                dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize +
+                dFilterTemp[ii * dFilter.Cols() + i] -
+                dFilter.GetMutableDenseHost()[ii * dFilter.PaddedHostColSize +
                     i]) < 0.01f);
             if (print)
                 std::cout << "host[" << ii * dFilter.Cols() + i

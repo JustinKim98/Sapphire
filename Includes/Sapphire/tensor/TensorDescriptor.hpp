@@ -50,12 +50,18 @@ public:
 
     //! Moves internal TensorData to cuda
     void ToCuda();
+
     //! Moves internal TensorData to host
     void ToHost();
 
-    DeviceType Mode() const;
+    //! Gets current mode of the descriptor
+    [[nodiscard]] DeviceType Mode() const;
 
+    //! Sets the mode of the descriptor
     void SetMode(DeviceType deviceType);
+
+    //! Initializes backward data to zero
+    void InitGradient();
 
     //! Add unit m_key if unit was used as output or flow-through type
     //! \param wrapper : BackPropWrapper for starting back propagation on this tensor

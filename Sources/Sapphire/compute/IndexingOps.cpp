@@ -8,7 +8,9 @@
 
 namespace Sapphire::Compute
 {
-void Reshape(TensorUtil::TensorData& tensorData, Shape newShape)
+using namespace TensorUtil;
+
+void Reshape(TensorData& tensorData, Shape newShape)
 {
     const Shape tensorShape = tensorData.GetShape();
 
@@ -42,5 +44,12 @@ void Reshape(TensorUtil::TensorData& tensorData, Shape newShape)
         }
 
     delete[] tempData;
+}
+
+void Flatten(TensorData& tensorData)
+{
+    const auto shape = tensorData.GetShape();
+    const Shape newShape({ 1, shape.Size() });
+    Reshape(tensorData, newShape);
 }
 }

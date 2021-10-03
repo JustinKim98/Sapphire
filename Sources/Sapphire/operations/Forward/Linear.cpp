@@ -67,7 +67,7 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
 
     auto backPropWrapper =
         Util::SharedPtr<BackProp::LinearBackProp>::Make(
-            dxData, dyData, weightData, biasData, xData.CreateCopy(),
+            dxData, dyData, weightData, biasData, xData,
             m_optimizer,
             xData.GetBatchSize(2));
     SaveHistory(backPropWrapper, std::make_tuple(&xDesc),

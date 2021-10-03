@@ -60,6 +60,24 @@ public:
     }
 };
 
+class Scalar : public Initializer
+{
+public:
+    Scalar(float value)
+        : Initializer(),
+          m_value(value)
+    {
+    }
+
+    void operator()(TensorData& tensorData) override
+    {
+        Compute::Initialize::Scalar(tensorData, m_value);
+    }
+
+private:
+    float m_value;
+};
+
 class Normal : public Initializer
 {
 public:

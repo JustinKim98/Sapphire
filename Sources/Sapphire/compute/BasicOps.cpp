@@ -372,9 +372,10 @@ void Inverse(TensorData& y, const TensorData& x)
 void Mean(TensorData& y, const TensorData& x, int dim)
 {
     assert(y.Mode() == x.Mode());
+    assert(y.GetShape().At(dim) == 1);
 
     int stride = 1;
-    for ( int i = dim; i < y.GetShape().Dim(); ++i)
+    for (int i = dim; i < y.GetShape().Dim(); ++i)
     {
         stride *= y.GetShape().At(i);
     }

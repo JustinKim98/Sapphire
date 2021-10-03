@@ -4,12 +4,12 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_TEST_TRANSPOSE_TEST_HPP
-#define SAPPHIRE_TEST_TRANSPOSE_TEST_HPP
+#ifndef SAPPHIRE_TEST_RESHAPRE_TEST_HPP
+#define SAPPHIRE_TEST_RESHAPRE_TEST_HPP
 
 namespace Sapphire::Test
 {
-void TransposeTest(bool printResult);
+void ReshapeTest(bool printResult);
 }
 
 #endif
