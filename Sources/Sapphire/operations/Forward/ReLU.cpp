@@ -23,7 +23,7 @@ Tensor ReLU(Tensor xTensor)
     auto& yDesc = model.GetDescriptor(yDescKey);
     yDesc.SetMode(xDesc.Mode());
 
-    auto x = xDesc.GetForwardData().CreateCopy();
+    auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();

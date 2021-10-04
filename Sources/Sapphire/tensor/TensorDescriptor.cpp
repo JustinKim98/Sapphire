@@ -5,9 +5,8 @@
 // property of any third parties.
 
 #include <Sapphire/tensor/TensorDescriptor.hpp>
+#include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <algorithm>
-
-#include "Sapphire/operations/Initializers/Initialize.hpp"
 
 namespace Sapphire::TensorUtil
 {

@@ -31,7 +31,10 @@ void Model::m_autoGrad(int tensorKey)
     {
         descriptor.PopIfOperandHistory();
         if (!descriptor.HasHistory())
+        {
+            m_removeDescriptor(tensorKey);
             return;
+        }
 
         const auto& [wrapper, location] =
             descriptor.GetBackPropWrapperFromLastHistory();
@@ -44,6 +47,8 @@ void Model::m_autoGrad(int tensorKey)
         //! Update the operands if successes
         const bool invoked = wrapper->InvokeBackPropIfReady(location);
         descriptor.PopOutputHistory(); //! Pop output history
+        if (!descriptor.HasHistory())
+            m_removeDescriptor(tensorKey);
 
         if (invoked)
         {
@@ -54,6 +59,11 @@ void Model::m_autoGrad(int tensorKey)
                 m_autoGrad(tensorData);
         }
     }
+}
+
+void Model::m_removeDescriptor(int descKey)
+{
+    m_tensorDescriptorPool.TensorDescMap.erase(descKey);
 }
 
 TensorUtil::TensorDescriptor& Model::GetDescriptor(int descKey)

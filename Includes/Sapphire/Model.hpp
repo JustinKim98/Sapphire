@@ -63,6 +63,9 @@ private:
         int Counter = 0;
     };
 
+    void m_removeDescriptor(int descKey);
+
+
     TensorDescriptorPool m_tensorDescriptorPool;
     std::string m_name;
 };

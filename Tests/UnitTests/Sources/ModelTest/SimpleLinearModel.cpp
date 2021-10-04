@@ -23,16 +23,8 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
 
     const CudaDevice gpu(0, "cuda0");
 
-    Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense);
-    Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense);
-
-    x.SetForwardData(xData);
-    label.SetForwardData(labelData);
     NN::Linear linear(inputSize, outputSize,
                       Util::SharedPtr<Optimizer::SGD>::Make(learningRate), gpu);
-    NN::Linear linear1(inputSize, outputSize,
-                       Util::SharedPtr<Optimizer::SGD>::Make(learningRate),
-                       gpu);
 
     Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense);
     Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense);
@@ -55,27 +47,25 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     // bias.ToHost();
     // bias1.ToHost();
 
-    x.ToCuda();
-    label.ToCuda();
-    weight.ToCuda();
-    weight1.ToCuda();
-    bias.ToCuda();
-    bias1.ToCuda();
-
     for (int i = 0; i < epochs; ++i)
     {
+        Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense);
+        Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense);
+
+        x.SetForwardData(xData);
+        label.SetForwardData(labelData);
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
+        y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
-        //ModelManager::GetCurrentModel().InitGradient();
-        ModelManager::GetCurrentModel().BackProp(loss);
-
+        ModelManager::GetCurrentModel().InitGradient();
         if (i % 1 == 0)
         {
             const auto lossData = loss.GetForwardDataCopy();
-            std::cout << "epoch: " << i << " loss : " << lossData[0] <<
-                std::endl;
+            std::cout << "epoch: " << i << " loss : " << lossData[0]
+                << std::endl;
         }
+        ModelManager::GetCurrentModel().BackProp(loss);
     }
     ModelManager::GetCurrentModel().Clear();
 }

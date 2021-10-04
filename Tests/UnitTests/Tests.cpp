@@ -189,19 +189,9 @@ TEST_CASE("Model Test")
         std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
         std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
 
-        // std::random_device rd;
-        // std::mt19937 gen(rd());
-        // std::uniform_real_distribution dist(-1.0f, 1.0f);
-
-        // for (int i = 0; i < xFeatures * batchSize; ++i)
-        // {
-        //     xFeatureVector[i] = dist(gen);
-        //     labelVector[i] = dist(gen);
-        // }
-
         SimpleLinearModel(xFeatureVector, labelVector, xFeatures,
                           yFeatures,
-                          0.00001f, batchSize, 1000);
+                          0.0000000005f, batchSize, 1000);
     }
 }
 
