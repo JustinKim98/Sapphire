@@ -40,11 +40,13 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     Tensor bias(Shape({ 1, outputSize }), gpu, Type::Dense);
     Tensor bias1(Shape({ 1, outputSize }), gpu, Type::Dense);
     Initialize::Initialize(weight,
-                           std::make_unique<Initialize::Scalar>(0.01f));
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
     Initialize::Initialize(weight1,
-                           std::make_unique<Initialize::Scalar>(0.01f));
-    Initialize::Initialize(bias, std::make_unique<Initialize::Scalar>(0.05f));
-    Initialize::Initialize(bias1, std::make_unique<Initialize::Scalar>(0.05f));
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(
+        bias, std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(
+        bias1, std::make_unique<Initialize::Normal>(0.0f, 0.01f));
 
     // x.ToHost();
     // label.ToHost();
@@ -64,13 +66,11 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     {
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
-        y = linear1(y, weight1, bias1);
-        y = NN::ReLU(y);
         const auto loss = NN::Loss::MSE(y, label);
         //ModelManager::GetCurrentModel().InitGradient();
         ModelManager::GetCurrentModel().BackProp(loss);
 
-        if (i % 10 == 0)
+        if (i % 1 == 0)
         {
             const auto lossData = loss.GetForwardDataCopy();
             std::cout << "epoch: " << i << " loss : " << lossData[0] <<

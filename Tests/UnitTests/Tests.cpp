@@ -31,14 +31,14 @@
 #include "doctest.h"
 
 //#define GraphTest
-// #define ModelTest
+#define ModelTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
 // #define GemmTest
 // #define GemmBroadcastTest
 // #define InitializeTest
-#define ConvolutionTest
+// #define ConvolutionTest
 // #define BasicGraphTest
 // #define SparseTest
 
@@ -183,13 +183,25 @@ TEST_CASE("Model Test")
 {
     SUBCASE("SimpleLinearModelTest")
     {
-        int xFeatures = 200;
-        int yFeatures = 200;
-        int batchSize = 10;
-        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.5f);
-        std::vector<float> yFeatureVector(yFeatures * batchSize, 1.0f);
-        SimpleLinearModel(xFeatureVector, yFeatureVector, xFeatures, yFeatures,
-                          0.000001f, batchSize, 1000);
+        int xFeatures = 300;
+        int yFeatures = 300;
+        int batchSize =100;
+        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+
+        // std::random_device rd;
+        // std::mt19937 gen(rd());
+        // std::uniform_real_distribution dist(-1.0f, 1.0f);
+
+        // for (int i = 0; i < xFeatures * batchSize; ++i)
+        // {
+        //     xFeatureVector[i] = dist(gen);
+        //     labelVector[i] = dist(gen);
+        // }
+
+        SimpleLinearModel(xFeatureVector, labelVector, xFeatures,
+                          yFeatures,
+                          0.00001f, batchSize, 1000);
     }
 }
 
@@ -362,7 +374,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear(false);
+        TestLinear(true);
     }
 
     SUBCASE("Conv2DTest")

@@ -191,6 +191,8 @@ void Shape::Shrink(int dim)
         else
             newShapeVector.at(0) *= m_shapeVector.at(i);
     }
+
+    m_shapeVector = newShapeVector;
 }
 
 int Shape::GetBatchSize(int requiredDim) const

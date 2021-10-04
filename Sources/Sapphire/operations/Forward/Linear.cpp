@@ -56,14 +56,24 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto transposedWeight = TensorUtil::TensorData(
         Shape({ m_outputs, m_inputs }), Type::Dense, weight.GetDevice());
     transposedWeight.SetMode(weight.Mode());
+    auto ones =
+        TensorUtil::TensorData(bias.GetShape().GetTranspose(), Type::Dense,
+                               bias.GetDevice());
+    ones.SetMode(bias.Mode());
 
     //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData);
 
+    auto expandedBias =
+        TensorUtil::TensorData(yData.GetShape(), Type::Dense, bias.GetDevice());
+    expandedBias.SetMode(bias.Mode());
+
+    Compute::Initialize::Ones(ones);
     Compute::Initialize::Zeros(yData);
+    Compute::Initialize::Zeros(expandedBias);
     Compute::Transpose(transposedWeight, weightData);
-    //! Bias is broadcasted internally
-    Compute::Gemm(yData, xData, transposedWeight, biasData);
+    Compute::Gemm(expandedBias, ones, biasData, expandedBias);
+    Compute::Gemm(yData, xData, transposedWeight, expandedBias);
 
     auto backPropWrapper =
         Util::SharedPtr<BackProp::LinearBackProp>::Make(

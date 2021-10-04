@@ -45,29 +45,29 @@ void* ResourceManager::GetMemoryCuda(size_t byteSize, int deviceId)
 {
     std::lock_guard lock(m_cudaPoolMtx);
     void* cudaPtr = nullptr;
-
+    //
     auto allocationSize = byteSize;
-    // (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
-    // ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
-
-    const auto itr =
-        m_cudaFreeMemoryPool.find(std::make_pair(deviceId, allocationSize));
-
-    if (itr != m_cudaFreeMemoryPool.end())
-    {
-        MemoryChunk targetChunk = itr->second;
-        cudaPtr = targetChunk.Data;
-        targetChunk.RefCount += 1;
-        m_cudaFreeMemoryPool.erase(itr);
-        m_cudaBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(cudaPtr),
-                                     targetChunk);
-
-        return cudaPtr;
-    }
+    // // (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
+    // // ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
+    //
+    // const auto itr =
+    //     m_cudaFreeMemoryPool.find(std::make_pair(deviceId, allocationSize));
+    //
+    // if (itr != m_cudaFreeMemoryPool.end())
+    // {
+    //     MemoryChunk targetChunk = itr->second;
+    //     cudaPtr = targetChunk.Data;
+    //     targetChunk.RefCount += 1;
+    //     m_cudaFreeMemoryPool.erase(itr);
+    //     m_cudaBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(cudaPtr),
+    //                                  targetChunk);
+    //
+    //     return cudaPtr;
+    // }
 
     Compute::Cuda::CudaSetDevice(deviceId);
     Compute::Cuda::CudaMalloc(&cudaPtr,
-                              static_cast<unsigned int>(allocationSize));
+                              static_cast<unsigned int>(byteSize));
 
     m_cudaBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(cudaPtr),
                                  MemoryChunk(allocationSize, cudaPtr, 1));
@@ -80,29 +80,29 @@ void* ResourceManager::GetMemoryHost(size_t byteSize)
     std::lock_guard lock(m_hostPoolMtx);
     void* dataPtr;
 
-    const auto allocationSize =
-        (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
-        ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
-
-    const auto itr = m_hostFreeMemoryPool.find(allocationSize);
-    if (itr != m_hostFreeMemoryPool.end())
-    {
-        MemoryChunk targetChunk = itr->second;
-        targetChunk.RefCount += 1;
-        dataPtr = targetChunk.Data;
-        m_hostFreeMemoryPool.erase(itr);
-        m_hostBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(dataPtr),
-                                     targetChunk);
-        return dataPtr;
-    }
+    const auto allocationSize = byteSize;
+    // (byteSize / m_allocationUnitByteSize) * m_allocationUnitByteSize +
+    // ((byteSize % m_allocationUnitByteSize) ? m_allocationUnitByteSize : 0);
+    //
+    // const auto itr = m_hostFreeMemoryPool.find(allocationSize);
+    // if (itr != m_hostFreeMemoryPool.end())
+    // {
+    //     MemoryChunk targetChunk = itr->second;
+    //     targetChunk.RefCount += 1;
+    //     dataPtr = targetChunk.Data;
+    //     m_hostFreeMemoryPool.erase(itr);
+    //     m_hostBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(dataPtr),
+    //                                  targetChunk);
+    //     return dataPtr;
+    // }
 
 #ifdef _MSC_VER
-    dataPtr = _aligned_malloc(allocationSize, 32);
+    dataPtr = _aligned_malloc(byteSize, 32);
 #else
     dataPtr = aligned_alloc(32, allocationSize);
 #endif
     m_hostBusyMemoryPool.emplace(reinterpret_cast<intptr_t>(dataPtr),
-                                 MemoryChunk(allocationSize, dataPtr, 1));
+                                 MemoryChunk(byteSize, dataPtr, 1));
     return dataPtr;
 }
 
@@ -204,8 +204,10 @@ void ResourceManager::DeReferenceCuda(void* ptr, int deviceId)
 
     if (chunk.RefCount == 0)
     {
-        m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId, chunk.ByteSize),
-                                     chunk);
+        Compute::Cuda::CudaFree(chunk.Data);
+        // m_cudaFreeMemoryPool.emplace(std::make_pair(deviceId,
+        // chunk.ByteSize),
+        //                              chunk);
         m_cudaBusyMemoryPool.erase(itr);
     }
 }
@@ -230,7 +232,12 @@ void ResourceManager::DeReferenceHost(void* ptr)
 
     if (chunk.RefCount == 0)
     {
-        m_hostFreeMemoryPool.emplace(chunk.ByteSize, chunk);
+        //m_hostFreeMemoryPool.emplace(chunk.ByteSize, chunk);
+#ifdef _MSC_VER
+        _aligned_free(chunk.Data);
+#else
+        free(memoryChunk.Data);
+#endif
         m_hostBusyMemoryPool.erase(itr);
     }
 }

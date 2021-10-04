@@ -18,7 +18,7 @@ namespace Sapphire::Test
 {
 void TestLinear(bool print)
 {
-    const int batchSize = 4;
+    const int batchSize = 2;
     const int inputs = 100;
     const int outputs = 100;
 

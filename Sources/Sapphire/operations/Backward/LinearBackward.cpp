@@ -62,8 +62,9 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     Compute::Transpose(xTranspose, x);
     Compute::Transpose(dyTranspose, dy);
     Compute::Initialize::Zeros(dw);
-    Compute::Gemm(dw, xTranspose, dy, dw);
+    Compute::Gemm(dw, dyTranspose, x, dw);
     Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
+
     m_optimizer->operator()(weight, dw);
 }
 
