@@ -65,7 +65,7 @@ void* ResourceManager::GetMemoryHost(size_t byteSize, bool preserve)
 #ifdef _MSC_VER
         dataPtr = _aligned_malloc(byteSize, 32);
 #else
-            dataPtr = aligned_alloc(32, allocationSize);
+            dataPtr = aligned_alloc(32, byteSize);
 #endif
         m_hostPreservedMemoryPool.emplace(
             reinterpret_cast<intptr_t>(dataPtr), dataPtr);

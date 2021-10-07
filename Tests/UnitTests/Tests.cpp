@@ -30,16 +30,16 @@
 #include <iostream>
 #include "doctest.h"
 
-//#define GraphTest
+#define GraphTest
 #define ModelTest
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
-// #define ConvolutionTest
-// #define BasicGraphTest
+//#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 // #define SparseTest
 
 namespace Sapphire::Test
@@ -185,7 +185,7 @@ TEST_CASE("Model Test")
     {
         int xFeatures = 300;
         int yFeatures = 300;
-        int batchSize =100;
+        int batchSize = 100;
         std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
         std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
 
@@ -293,13 +293,13 @@ TEST_CASE("Convolution")
     SUBCASE("Im2ColHost")
     {
         std::cout << "Im2Col && Col2Im" << std::endl;
-        HostIm2ColTest(true);
+        HostIm2ColTest(false);
     }
 
     SUBCASE("HostConv2D")
     {
         std::cout << "Host Conv2D" << std::endl;
-        HostConv2DTest(true);
+        HostConv2DTest(false);
     }
 
     SUBCASE("Conv2D")
