@@ -15,12 +15,12 @@ Tensor::Tensor()
 }
 
 Tensor::Tensor(const Shape& shape, const CudaDevice& device,
-               Type type)
+               Type type, bool preserve)
     : m_tensorDescKey(-1)
 {
     auto& model = ModelManager::GetCurrentModel();
     m_tensorDescKey = model.RegisterTensorDescriptor(
-        shape, type, device);
+        shape, type, device, preserve);
 }
 
 Tensor::Tensor(int descKey)

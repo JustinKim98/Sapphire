@@ -14,6 +14,7 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+//#include <Sapphire/operations/Backward/BackPropWrapperKey.hpp>
 
 namespace Sapphire::Util
 {
@@ -87,11 +88,13 @@ class ResourceManager
 public:
     //! Allocates memory on device
     //! \param byteSize : Allocation byteSize in bytes
-    static void* GetMemoryCuda(size_t byteSize, int deviceId);
+
+    static void* GetMemoryCuda(size_t byteSize,
+                               bool preserve = false);
 
     //! Allocates memory on host
     //! \param byteSize : Allocation size in bytes
-    static void* GetMemoryHost(size_t byteSize);
+    static void* GetMemoryHost(size_t byteSize, bool preserve = false);
 
     static Compute::Dense::Cuda::CudnnConv2DMetaData* GetCudnnConvMetaData(
         Compute::Dense::Cuda::ConvConfig convConfig);
@@ -153,6 +156,8 @@ public:
 
     static void ClearCudnnHandlePool();
 
+    static void ClearBusyMemoryPool();
+
     static void ClearAll();
 
     static size_t GetTotalByteSizeCuda();
@@ -179,11 +184,13 @@ private:
     static std::unordered_multimap<size_t, MemoryChunk>
     m_hostFreeMemoryPool;
     static std::unordered_map<intptr_t, MemoryChunk> m_hostBusyMemoryPool;
-    static std::unordered_multimap<std::pair<int, size_t>, MemoryChunk,
-                                   FreePoolHash>
+    static std::unordered_multimap<std::size_t, MemoryChunk>
     m_cudaFreeMemoryPool;
     static std::unordered_map<intptr_t, MemoryChunk, std::hash<intptr_t>>
     m_cudaBusyMemoryPool;
+
+    static std::unordered_map<intptr_t, void*> m_hostPreservedMemoryPool;
+    static std::unordered_map<intptr_t, void*> m_cudaPreservedMemoryPool;
 
     static std::unordered_map<Compute::Dense::Cuda::ConvConfig,
                               Compute::Dense::Cuda::CudnnConv2DMetaData*,

@@ -26,19 +26,19 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     NN::Linear linear(inputSize, outputSize,
                       Util::SharedPtr<Optimizer::SGD>::Make(learningRate), gpu);
 
-    Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense);
-    Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense);
+    Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense, true);
+    Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense, true);
 
-    Tensor bias(Shape({ 1, outputSize }), gpu, Type::Dense);
-    Tensor bias1(Shape({ 1, outputSize }), gpu, Type::Dense);
+    Tensor bias(Shape({ 1, outputSize }), gpu, Type::Dense, true);
+    Tensor bias1(Shape({ 1, outputSize }), gpu, Type::Dense, true);
     Initialize::Initialize(weight,
                            std::make_unique<Initialize::Normal>(0.0f, 0.01f));
     Initialize::Initialize(weight1,
                            std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(
-        bias, std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(
-        bias1, std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(bias,
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(bias1,
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
 
     // x.ToHost();
     // label.ToHost();
@@ -47,18 +47,18 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     // bias.ToHost();
     // bias1.ToHost();
 
+    Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense, true);
+    Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense, true);
+
+    x.SetForwardData(xData);
+    label.SetForwardData(labelData);
     for (int i = 0; i < epochs; ++i)
     {
-        Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense);
-        Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense);
-
-        x.SetForwardData(xData);
-        label.SetForwardData(labelData);
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
         y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
-        ModelManager::GetCurrentModel().InitGradient();
+        //ModelManager::GetCurrentModel().InitGradient();
         if (i % 1 == 0)
         {
             const auto lossData = loss.GetForwardDataCopy();
@@ -66,7 +66,10 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
                 << std::endl;
         }
         ModelManager::GetCurrentModel().BackProp(loss);
+
+        Util::ResourceManager::ClearBusyMemoryPool();
     }
     ModelManager::GetCurrentModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

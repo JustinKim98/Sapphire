@@ -12,9 +12,9 @@ namespace Sapphire::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
                                    const CudaDevice& device,
-                                   int key)
-    : m_forwardData(shape, type, device, key),
-      m_backwardData(shape, type, device, key),
+                                   int key, bool preserve)
+    : m_forwardData(shape, type, device, key, preserve),
+      m_backwardData(shape, type, device, key, preserve),
       m_key(key),
       m_trainable(false)
 {
@@ -117,9 +117,10 @@ void TensorDescriptor::InitGradient()
 }
 
 void TensorDescriptor::AppendOutputHistory(
-    Util::SharedPtr<BackProp::BackPropWrapper> wrapper, int location)
+    int backPropWrapperKey,
+    int location)
 {
-    m_history.emplace_back(History(std::move(wrapper), location));
+    m_history.emplace_back(History(backPropWrapperKey, location));
 }
 
 void TensorDescriptor::AppendOperandHistory(int tensorDescKey)

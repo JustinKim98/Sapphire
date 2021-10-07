@@ -18,7 +18,9 @@ class Tensor
 {
 public:
     Tensor();
-    Tensor(const Shape& shape, const CudaDevice& device, Type type);
+    Tensor(const Shape& shape, const CudaDevice& device, Type type,
+           bool preserve = false);
+
     Tensor(int descKey);
     ~Tensor() = default;
 

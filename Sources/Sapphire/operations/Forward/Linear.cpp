@@ -75,13 +75,13 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     Compute::Gemm(expandedBias, ones, biasData, expandedBias);
     Compute::Gemm(yData, xData, transposedWeight, expandedBias);
 
-    auto backPropWrapper =
-        Util::SharedPtr<BackProp::LinearBackProp>::Make(
+    auto* backPropWrapper =
+        new BackProp::LinearBackProp(
             dxData, dyData, weightData, biasData, xData,
             m_optimizer,
             xData.GetBatchSize(2));
-    SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
-                std::make_tuple(&yDesc));
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                      std::make_tuple(&yDesc));
     return Tensor(yKey);
 }
 

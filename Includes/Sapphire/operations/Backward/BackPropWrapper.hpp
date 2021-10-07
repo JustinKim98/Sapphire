@@ -15,7 +15,7 @@
 
 namespace Sapphire::BackProp
 {
-//! BackPropWrapper can be shared between objects
+//! BackPropWrapperKey can be shared between objects
 
 //! This class is responsible for
 //! 1. Storing the required data for back propagation
@@ -89,7 +89,7 @@ public:
         return tensorKeys;
     }
 
-    //! InvokeBackPropIfReady checks if BackPropWrapper is ready before invoking back propagation
+    //! InvokeBackPropIfReady checks if BackPropWrapperKey is ready before invoking back propagation
     //! \param location : The id of the parameter. Id always starts from 0 with the first parameter (from the left)
     bool InvokeBackPropIfReady(int location)
     {
@@ -106,7 +106,7 @@ protected:
     {
         if (m_receivedGradients.at(location))
             throw std::runtime_error(
-                "BackProp::BackPropWrapper::m_isReady - Received gradient two "
+                "BackProp::BackPropWrapperKey::m_isReady - Received gradient two "
                 "times from same location");
 
         m_receivedGradients.at(location) = true;

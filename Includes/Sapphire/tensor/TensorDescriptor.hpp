@@ -25,7 +25,7 @@ class TensorDescriptor
 public:
     TensorDescriptor() = default;
     TensorDescriptor(const Shape& shape, Type type, const CudaDevice& device,
-                     int key);
+                     int key, bool preserve = false);
 
     ~TensorDescriptor() = default;
 
@@ -64,11 +64,11 @@ public:
     void InitGradient();
 
     //! Add unit m_key if unit was used as output or flow-through type
-    //! \param wrapper : BackPropWrapper for starting back propagation on this tensor
+    //! \param backPropWrapperKey : backPropWrapper for starting back propagation on this tensor
     //! \param location : Forward output of this tensorDescriptor is preserved
     //! if true
-    void AppendOutputHistory(Util::SharedPtr<BackProp::BackPropWrapper> wrapper,
-                             int location);
+    void AppendOutputHistory(
+        int backPropWrapperKey, int location);
 
     //! Add unit key if unit was used as operand only
     //! \param tensorDescKey : m_key of the tensor that this tensor should receive
@@ -97,12 +97,11 @@ public:
     //! \return : true if ready false otherwise
     [[nodiscard]] bool IsBackPropReady() const;
 
-    std::pair<Util::SharedPtr<BackProp::BackPropWrapper>, int>
-    GetBackPropWrapperFromLastHistory()
+    std::pair<int, int>
+    GetBackPropWrapperKeyFromLastHistory()
     {
         const auto& history = m_history.back();
-        return std::make_pair(Util::SharedPtr(
-                                  history.BackPropWrapper), history.Location);
+        return std::make_pair(history.BackPropWrapperKey, history.Location);
     }
 
     bool HasHistory()
@@ -126,11 +125,11 @@ private:
     {
         //! This constructor creates output history, where tensor was newly created
         //! This kind of history will invoke backPropWrapper
-        explicit History(Util::SharedPtr<BackProp::BackPropWrapper> wrapper,
+        explicit History(int backPropWrapperKey,
                          int location)
             : IsOutput(true),
               Location(location),
-              BackPropWrapper(std::move(wrapper))
+              BackPropWrapperKey(backPropWrapperKey)
         {
         }
 
@@ -151,7 +150,7 @@ private:
                   std::move(history.GradientInputTensorKeyList))
         {
             if (IsOutput)
-                BackPropWrapper = std::move(history.BackPropWrapper);
+                BackPropWrapperKey = std::move(history.BackPropWrapperKey);
         }
 
         History(const History& history) = delete;
@@ -161,7 +160,7 @@ private:
             IsOutput = history.IsOutput;
             Location = history.Location;
             if (IsOutput)
-                BackPropWrapper = history.BackPropWrapper;
+                BackPropWrapperKey = history.BackPropWrapperKey;
             GradientInputTensorKeyList =
                 std::move(history.GradientInputTensorKeyList);
             return *this;
@@ -193,7 +192,7 @@ private:
         //! Location specifies which index that tensor was created
         int Location = 0;
 
-        Util::SharedPtr<BackProp::BackPropWrapper> BackPropWrapper;
+        int BackPropWrapperKey;
         //! List of the units that was as operand
         std::list<int> GradientInputTensorKeyList;
     };

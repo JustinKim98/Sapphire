@@ -126,18 +126,18 @@ Tensor Conv2D::operator()(Tensor& tensor)
             throw std::runtime_error(
                 "NN::Conv2D::operator() - bias and tensor device mismatch");
         Compute::Add(y, y, bias);
-        auto backPropWrapper = Util::SharedPtr<BackProp::Conv2DBackProp>::Make(
+        auto* backPropWrapper = new BackProp::Conv2DBackProp(
             dx, dy, kernel, bias, x, m_stride, m_dilation, m_padSize,
             m_optimizer);
-        SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
-                    std::make_tuple(&yDesc));
+        Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                          std::make_tuple(&yDesc));
     }
     else
     {
-        auto backPropWrapper = Util::SharedPtr<BackProp::Conv2DBackProp>::Make(
+        auto* backPropWrapper = new BackProp::Conv2DBackProp(
             dx, dy, kernel, x, m_stride, m_dilation, m_padSize, m_optimizer);
-        SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
-                    std::make_tuple(&yDesc));
+        Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                          std::make_tuple(&yDesc));
     }
     return Tensor(yKey);
 }

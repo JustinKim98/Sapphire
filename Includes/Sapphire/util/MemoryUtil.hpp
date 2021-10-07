@@ -189,7 +189,7 @@ class CudaAllocateManaged
     void operator()(T** ptr, std::size_t size, int deviceId) const
     {
         *ptr = static_cast<T*>(
-            ResourceManager::GetMemoryCuda(size * sizeof(T), deviceId));
+            ResourceManager::GetMemoryCuda(size * sizeof(T)));
     }
 };
 }

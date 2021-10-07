@@ -26,7 +26,7 @@ Tensor SoftMax(const Tensor& input)
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
-    auto wrapper = Util::SharedPtr<BackProp::SoftMaxBackward>::Make(dx, dy, x);
+    auto* wrapper = new BackProp::SoftMaxBackward(dx, dy, x);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 

@@ -14,15 +14,24 @@ Model::Model(std::string name)
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
-                                    const CudaDevice& device)
+                                    const CudaDevice& device, bool preserve)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
-    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey);
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey, preserve);
 
     m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
 
     return tensorDescKey;
 }
+
+int Model::RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper)
+{
+    const auto key = static_cast<int>(m_backPropWrapperPool.size());
+    m_backPropWrapperPool[key] =
+        backPropWrapper;
+    return key;
+}
+
 
 void Model::m_autoGrad(int tensorKey)
 {
@@ -32,26 +41,27 @@ void Model::m_autoGrad(int tensorKey)
         descriptor.PopIfOperandHistory();
         if (!descriptor.HasHistory())
         {
-            m_removeDescriptor(tensorKey);
             return;
         }
 
-        const auto& [wrapper, location] =
-            descriptor.GetBackPropWrapperFromLastHistory();
-        const auto outputGradientKeyVector = wrapper->
+        const auto& [backPropWrapperKey, location] =
+            descriptor.GetBackPropWrapperKeyFromLastHistory();
+        const auto outputGradientKeyVector =
+            m_backPropWrapperPool[backPropWrapperKey]->
             GetGradientOutputDescriptorKeys();
 
         auto data = descriptor.GetBackwardData();
 
         //! Checks if wrapper is ready to backprop. If it does, performs backprop
         //! Update the operands if successes
-        const bool invoked = wrapper->InvokeBackPropIfReady(location);
+        const bool invoked = m_backPropWrapperPool[backPropWrapperKey]->
+            InvokeBackPropIfReady(location);
+
         descriptor.PopOutputHistory(); //! Pop output history
-        if (!descriptor.HasHistory())
-            m_removeDescriptor(tensorKey);
 
         if (invoked)
         {
+            m_backPropWrapperPool.erase(backPropWrapperKey);
             for (auto& descKey : outputGradientKeyVector)
                 GetDescriptor(descKey).RemoveOperand(tensorKey);
 

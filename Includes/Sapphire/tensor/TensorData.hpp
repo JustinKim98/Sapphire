@@ -18,12 +18,12 @@ class TensorData
 public:
     TensorData() = default;
     //! TensorData is defined only in Host Mode
-    TensorData(Shape shape, Type type);
+    TensorData(Shape shape, Type type, bool preserve = false);
     //! TensorData is configured in both Host and Cuda Mode
-    TensorData(Shape shape, Type type, CudaDevice device);
+    TensorData(Shape shape, Type type, CudaDevice device, bool preserve = false);
 
     TensorData(Shape shape, Type type, CudaDevice device,
-               int parentDescKey);
+               int parentDescKey, bool preserve = false);
 
     //! Shallow copies the internal data
     TensorData(const TensorData& tensorData);
@@ -150,10 +150,10 @@ private:
     static void m_toHost(const TensorData& tensorData);
 
     //! Allocates data on the Host with given batchSize
-    void m_allocateHost();
+    void m_allocateHost(bool preserve);
 
     //! Allocates data on the GPU with given batchSize
-    void m_allocateCuda();
+    void m_allocateCuda(bool preserve);
 
     //! Free space allocated on Host memory
     void m_freeHost();

@@ -191,7 +191,7 @@ TEST_CASE("Model Test")
 
         SimpleLinearModel(xFeatureVector, labelVector, xFeatures,
                           yFeatures,
-                          0.0000000005f, batchSize, 1000);
+                          0.00000000005f, batchSize, 1000);
     }
 }
 

@@ -71,7 +71,7 @@ void cudaAllocationTest()
         size[i] = static_cast<unsigned int>(distrib(gen));
         totalSize += size[i];
         auto* data = static_cast<float*>(
-            Util::ResourceManager::GetMemoryCuda(size[i] * sizeof(float), 0));
+            Util::ResourceManager::GetMemoryCuda(size[i] * sizeof(float)));
 
         Util::ResourceManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
@@ -81,7 +81,7 @@ void cudaAllocationTest()
     for (int i = 0; i < 100; i++)
     {
         auto* data = static_cast<float*>(
-            Util::ResourceManager::GetMemoryCuda(size[i] * sizeof(float), 0));
+            Util::ResourceManager::GetMemoryCuda(size[i] * sizeof(float)));
         Util::ResourceManager::DeReferenceCuda(static_cast<void*>(data), 0);
     }
 

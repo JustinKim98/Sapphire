@@ -10,6 +10,7 @@
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
+#include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -29,10 +30,12 @@ public:
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const CudaDevice& device);
+                                 const CudaDevice& device, bool preserve = false);
 
-    //! Returns unitDataWrapper with given key
-    [[nodiscard]] UnitDataWrapper& GetUnitDataWrapper(int key);
+    //! Registers back propagation wrapper
+//! \param backPropWrapper :  back propagation wrapper to register
+//! \return : key of the back propagation wrapper
+    int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
 
     //! Returns descriptor using the descKey
     //! \param descKey : key of the descriptor
@@ -67,6 +70,7 @@ private:
 
 
     TensorDescriptorPool m_tensorDescriptorPool;
+    std::unordered_map<int, BackProp::BackPropWrapper*> m_backPropWrapperPool;
     std::string m_name;
 };
 

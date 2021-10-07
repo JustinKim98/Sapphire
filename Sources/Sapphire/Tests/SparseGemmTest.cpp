@@ -255,12 +255,12 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
             sizeof(float) * m * paddedN * numMatrices));
 
     auto* cudaDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-        sizeof(float) * m * k * numMatrices, 0));
+        sizeof(float) * m * k * numMatrices));
     auto* cudaDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-        sizeof(float) * k * n * numMatrices, 0));
+        sizeof(float) * k * n * numMatrices));
     auto* cudaDenseOut =
         static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-            sizeof(float) * m * n * numMatrices, 0));
+            sizeof(float) * m * n * numMatrices));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
     InitIntegerDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);
@@ -449,12 +449,12 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
             sizeof(float) * m * paddedN * numMatrices));
 
     auto* cudaDenseA = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-        sizeof(float) * m * k * numMatrices, 0));
+        sizeof(float) * m * k * numMatrices));
     auto* cudaDenseB = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-        sizeof(float) * k * n * numMatrices, 0));
+        sizeof(float) * k * n * numMatrices));
     auto* cudaDenseOut =
         static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-            sizeof(float) * m * n * numMatrices, 0));
+            sizeof(float) * m * n * numMatrices));
 
     InitIntegerDenseMatrix(hostDenseA, m, k, paddedK, numMatrices, sparsity);
     InitIntegerDenseMatrix(hostDenseB, k, n, paddedN, numMatrices, sparsity);

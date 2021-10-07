@@ -22,7 +22,6 @@ Tensor MSE(const Tensor& input, const Tensor& label)
 
     auto& xDesc = model.GetDescriptor(input.TensorDescriptorKey());
     auto& labelDesc = model.GetDescriptor(label.TensorDescriptorKey());
-    
 
     const auto yDescKey = model.RegisterTensorDescriptor(
         Shape({ 1 }), xDesc.GetType(),
@@ -32,15 +31,14 @@ Tensor MSE(const Tensor& input, const Tensor& label)
 
     TensorUtil::TensorData temp(
         input.GetShape(), xDesc.GetType(),
-        xDesc.GetCudaDevice(), xDesc.GetBatchSize());
+        xDesc.GetCudaDevice());
     temp.SetMode(mode);
 
     auto xData = xDesc.GetForwardData();
     auto labelData = labelDesc.GetForwardData();
     auto yData = yDesc.GetForwardData();
     auto dxData = xDesc.GetBackwardData();
-    auto wrapper =
-        Util::SharedPtr<BackProp::MSEBackward>::Make(dxData, xData, labelData);
+    auto* wrapper = new BackProp::MSEBackward(dxData, xData, labelData);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc, &labelDesc),
                       std::make_tuple(&yDesc));
 
