@@ -28,6 +28,8 @@ void TestMultiply(bool print)
 
     Tensor inputA(shapeA, gpu, Type::Dense);
     Tensor inputB(shapeB, gpu, Type::Dense);
+    inputA.SetMode(DeviceType::Host);
+    inputB.SetMode(DeviceType::Host);
 
     Initialize::Initialize(
         inputA, std::make_unique<Initialize::Normal>(0.0f, 10.0f));

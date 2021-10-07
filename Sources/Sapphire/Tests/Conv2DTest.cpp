@@ -391,6 +391,12 @@ void HostConv2DTest(bool print)
     TensorUtil::TensorData y(yShape, Type::Dense, device);
     TensorUtil::TensorData dFilter(filterShape, Type::Dense, device);
     TensorUtil::TensorData dy(yShape, Type::Dense, device);
+    x.SetMode(DeviceType::Host);
+    dx.SetMode(DeviceType::Host);
+    filter.SetMode(DeviceType::Host);
+    y.SetMode(DeviceType::Host);
+    dFilter.SetMode(DeviceType::Host);
+    dy.SetMode(DeviceType::Host);
 
     Compute::Initialize::Zeros(y);
 

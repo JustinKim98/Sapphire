@@ -65,6 +65,9 @@ void TestConv2D(bool print)
                           std::get<0>(kernelSize), std::get<1>(kernelSize) }),
                   gpu, Type::Dense);
     Tensor bias(Shape({ outputChannels }), gpu, Type::Dense);
+    input.SetMode(DeviceType::Host);
+    kernel.SetMode(DeviceType::Host);
+    bias.SetMode(DeviceType::Host);
 
     //! Initialize input, kernel and bias
     Initialize::Initialize(

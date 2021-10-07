@@ -32,7 +32,7 @@
 
 #define GraphTest
 #define ModelTest
-//#define TensorFunctionalityTest
+#define TensorFunctionalityTest
 #define BasicsTest
 #define ActivationTest
 #define GemmTest

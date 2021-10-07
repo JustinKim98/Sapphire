@@ -28,6 +28,8 @@ void SendDataBetweenHostDevice(bool print)
     const auto shape = CreateRandomShape(dim);
 
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
+    tensorData.ToHost();
+    tensorData.SetMode(DeviceType::Host);
 
     //! Randomly initialize data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
@@ -66,8 +68,9 @@ void TensorDataCopyOnCuda(bool print)
     const CudaDevice cuda(0, "cuda0");
 
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
-
+    tensorData.ToHost();
     tensorData.SetMode(DeviceType::Host);
+
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
 
@@ -117,6 +120,8 @@ void TensorDataCopyOnHost(bool print)
 
     CudaDevice cuda(0, "cuda0");
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
+    tensorData.ToHost();
+    tensorData.SetMode(DeviceType::Host);
 
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);

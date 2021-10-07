@@ -29,6 +29,7 @@ void TestMean(bool print)
     });
 
     Tensor x(xShape, gpu, Type::Dense);
+    x.SetMode(DeviceType::Host);
 
     Initialize::Initialize(
         x, std::make_unique<Initialize::Normal>(5.0f, 1.0f));

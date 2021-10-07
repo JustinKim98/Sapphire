@@ -29,6 +29,8 @@ void TestMSE(bool print)
 
     Tensor x(xShape, gpu, Type::Dense);
     Tensor label(xShape, gpu, Type::Dense);
+    x.ToHost();
+    label.ToHost();
 
     const std::vector backwardData = { 0.0f };
 

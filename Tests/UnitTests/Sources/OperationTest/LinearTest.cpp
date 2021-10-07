@@ -36,6 +36,9 @@ void TestLinear(bool print)
     Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense);
     Tensor weight(Shape({ inputs, outputs }), gpu, Type::Dense);
     Tensor bias(Shape({ 1, outputs }), gpu, Type::Dense);
+    input.SetMode(DeviceType::Host);
+    weight.SetMode(DeviceType::Host);
+    bias.SetMode(DeviceType::Host);
 
     Initialize::Initialize(input,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
