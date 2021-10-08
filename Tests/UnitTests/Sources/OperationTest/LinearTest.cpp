@@ -56,7 +56,7 @@ void TestLinear(bool print)
     auto gpuOutput = linear(input, weight, bias);
     const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
     gpuOutput.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(gpuOutput);
+    ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
 
     input.ToHost();
@@ -71,7 +71,7 @@ void TestLinear(bool print)
     const auto hostOutput = linearHost(input, weight, bias);
     const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
     hostOutput.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(hostOutput);
+    ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();
 
     if (print)
@@ -123,6 +123,6 @@ void TestLinear(bool print)
     for (int i = 0; i < input.GetShape().Size(); ++i)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 } // namespace Sapphire::Test

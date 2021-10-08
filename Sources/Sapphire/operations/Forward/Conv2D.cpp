@@ -75,7 +75,7 @@ Conv2D::Conv2D(std::pair<int, int> inputSize, std::pair<int, int> stride,
         1;
 
     const int kernelDescKey = kernel.TensorDescriptorKey();
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
     const auto& kernelDesc = model.GetDescriptor(kernelDescKey);
     m_trainableDataMap["kernel"] = kernelDesc.GetForwardData();
 
@@ -90,7 +90,7 @@ Conv2D::Conv2D(std::pair<int, int> inputSize, std::pair<int, int> stride,
 Tensor Conv2D::operator()(Tensor& tensor)
 {
     auto mode = tensor.Mode();
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto device = tensor.GetDevice();
     auto& xDesc = model.GetDescriptor(tensor.TensorDescriptorKey());
@@ -145,7 +145,7 @@ Tensor Conv2D::operator()(Tensor& tensor)
 int Conv2D::m_registerOutputTensor(
     const TensorUtil::TensorDescriptor& xDesc) const
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
     const auto x = xDesc.GetForwardData();
     const Shape xShape = xDesc.GetShape();
     Shape yShape = xShape;

@@ -18,7 +18,7 @@ Tensor::Tensor(const Shape& shape, const CudaDevice& device,
                Type type, bool preserve)
     : m_tensorDescKey(-1)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
     m_tensorDescKey = model.RegisterTensorDescriptor(
         shape, type, device, preserve);
 }
@@ -39,7 +39,7 @@ Tensor& Tensor::operator=(const Tensor& tensor)
 
 Shape Tensor::GetShape() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc =
         model.GetDescriptor(m_tensorDescKey);
     return desc.GetShape();
@@ -47,7 +47,7 @@ Shape Tensor::GetShape() const
 
 CudaDevice Tensor::GetDevice() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
     return desc.GetDevice();
@@ -60,7 +60,7 @@ int Tensor::TensorDescriptorKey() const
 
 void Tensor::ToCuda()
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
     desc.ToCuda();
@@ -69,7 +69,7 @@ void Tensor::ToCuda()
 
 void Tensor::ToHost()
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     desc.ToHost();
     desc.SetMode(DeviceType::Host);
@@ -77,21 +77,21 @@ void Tensor::ToHost()
 
 DeviceType Tensor::Mode() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     return desc.Mode();
 }
 
 void Tensor::SetMode(DeviceType mode) const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     desc.SetMode(mode);
 }
 
 std::unique_ptr<float[]> Tensor::GetForwardDataCopy() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     const TensorUtil::TensorData tensorData = desc.GetForwardData();
 
@@ -114,7 +114,7 @@ std::unique_ptr<float[]> Tensor::GetForwardDataCopy() const
 
 std::unique_ptr<float[]> Tensor::GetBackwardDataCopy() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     const TensorUtil::TensorData tensorData = desc.GetBackwardData();
 
@@ -145,7 +145,7 @@ void Tensor::SetForwardData(std::vector<float> data) const
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
 
@@ -174,7 +174,7 @@ void Tensor::SetBackwardData(const std::vector<float>& data) const
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
 
     TensorUtil::TensorData tensorData = desc.GetBackwardData();

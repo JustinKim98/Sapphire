@@ -31,6 +31,11 @@ public:
 
     Tensor operator()(Tensor& x, Tensor weight, Tensor bias);
 
+protected:
+    void m_addTensorData(std::string name, TensorUtil::TensorData tensorData);
+
+    std::unordered_map<std::string, TensorUtil::TensorData> m_tensorDataMap;
+
 private:
     [[nodiscard]] int m_registerOutputTensor(
         const TensorUtil::TensorDescriptor& xDesc) const;

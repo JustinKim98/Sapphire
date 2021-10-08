@@ -55,14 +55,14 @@ void TestMean(bool print)
     Initialize::InitializeBackwardData(yGpu,
                                        std::make_unique<Initialize::Normal>(
                                            0.0f, 10.0f));
-    ModelManager::GetCurrentModel().BackProp(yGpu);
+    ModelManager::CurModel().BackProp(yGpu);
     x.ToHost();
 
     const auto xBackwardGpu = x.GetBackwardDataCopy();
 
     Initialize::InitializeBackwardData(
         x, std::make_unique<Initialize::Zeros>());
-    ModelManager::GetCurrentModel().BackProp(yHost);
+    ModelManager::CurModel().BackProp(yHost);
     x.ToHost();
 
     const auto xBackwardHost = x.GetBackwardDataCopy();
@@ -91,6 +91,6 @@ void TestMean(bool print)
             std::cout << xBackwardHost[i] << " ";
     }
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

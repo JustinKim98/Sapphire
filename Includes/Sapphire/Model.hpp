@@ -84,7 +84,7 @@ public:
 
     //! Returns currently active model
     //! \return : current model
-    static Model& GetCurrentModel();
+    static Model& CurModel();
 
     //! Sets current model to the given modelName
     //! \param modelName : name of the model to be set

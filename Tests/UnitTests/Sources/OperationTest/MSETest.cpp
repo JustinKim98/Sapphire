@@ -44,7 +44,7 @@ void TestMSE(bool print)
     const auto lossShape = gpuLoss.GetShape();
     const auto gpuForwardPtr = gpuLoss.GetForwardDataCopy();
     gpuLoss.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(gpuLoss);
+    ModelManager::CurModel().BackProp(gpuLoss);
     const auto gpuBackwardPtr = x.GetBackwardDataCopy();
 
     x.ToHost();
@@ -52,7 +52,7 @@ void TestMSE(bool print)
     const auto hostLoss = NN::Loss::MSE(x, label);
     const auto hostForwardPtr = hostLoss.GetForwardDataCopy();
     hostLoss.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(hostLoss);
+    ModelManager::CurModel().BackProp(hostLoss);
     const auto hostBackwardPtr = x.GetBackwardDataCopy();
 
     CHECK(gpuLoss.GetShape().Cols() == 1);
@@ -99,6 +99,6 @@ void TestMSE(bool print)
     for (int i = 0; i < x.GetShape().Size(); ++i)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

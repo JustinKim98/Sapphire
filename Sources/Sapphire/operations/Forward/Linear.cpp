@@ -35,7 +35,7 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto mode = x.Mode();
     if (!Util::CheckModeEquality(mode, weight, bias))
         throw std::invalid_argument("NN::Linear - Device mode inequality");
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc =
         model.GetDescriptor(x.TensorDescriptorKey());
@@ -54,19 +54,24 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto dyData = yDesc.GetBackwardData();
 
     auto transposedWeight = TensorUtil::TensorData(
-        Shape({ m_outputs, m_inputs }), Type::Dense, weight.GetDevice());
+        Shape({ m_outputs, m_inputs }), Type::Dense, weight.GetDevice(), true);
     transposedWeight.SetMode(weight.Mode());
     auto ones =
         TensorUtil::TensorData(bias.GetShape().GetTranspose(), Type::Dense,
-                               bias.GetDevice());
+                               bias.GetDevice(), true);
     ones.SetMode(bias.Mode());
+
+    auto expandedBias =
+        TensorUtil::TensorData(yData.GetShape(), Type::Dense, bias.GetDevice(),
+                               true);
+    expandedBias.SetMode(bias.Mode());
+
+    m_tensorDataMap["transposedWeight"] = transposedWeight;
+    m_tensorDataMap["ones"] = ones;
+    m_tensorDataMap["expandedBias"] = expandedBias;
 
     //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData);
-
-    auto expandedBias =
-        TensorUtil::TensorData(yData.GetShape(), Type::Dense, bias.GetDevice());
-    expandedBias.SetMode(bias.Mode());
 
     Compute::Initialize::Ones(ones);
     Compute::Initialize::Zeros(yData);
@@ -88,7 +93,7 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
 int Linear::m_registerOutputTensor(
     const TensorUtil::TensorDescriptor& xDesc) const
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
     const auto x = xDesc.GetForwardData();
     const Shape xShape = xDesc.GetShape();
     Shape yShape = xShape;

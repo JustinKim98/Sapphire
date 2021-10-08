@@ -351,7 +351,7 @@ void TensorData::m_allocateCuda(bool preserve)
         throw std::runtime_error("m_allocate - Sparse not implemented");
     }
 
-    cudaSetDevice(m_device.GetID());
+    //cudaSetDevice(m_device.GetID());
     const unsigned long totalSize = TensorShape.Size();
 
     if (preserve)

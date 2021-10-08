@@ -11,57 +11,13 @@
 #include <Sapphire/compute/dense/cuda/Convolution.cuh>
 #include <Sapphire/compute/dense/cuda/Pool.cuh>
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
+#include <Sapphire/util/HashFunctions.hpp>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
-//#include <Sapphire/operations/Backward/BackPropWrapperKey.hpp>
 
 namespace Sapphire::Util
 {
-struct FreePoolHash
-{
-    std::size_t operator()(const std::pair<int, size_t>& key) const
-    {
-        return std::hash<int>()(key.first) ^ std::hash<size_t>()(key.second);
-    }
-};
-
-struct DeviceIdTidHash
-{
-    std::size_t operator()(
-        const std::pair<int, std::thread::id>& key) const
-    {
-        return std::hash<int>()(key.first) ^
-               std::hash<std::thread::id>()(key.second);
-    }
-};
-
-struct ConvMetaDataHash
-{
-    std::size_t operator()(const Compute::Dense::Cuda::ConvConfig& key) const
-    {
-        const auto inputShape = key.InputShape;
-        const auto filterShape = key.FilterShape;
-        return std::hash<int>()(inputShape.Channels + inputShape.Height +
-                                inputShape.Width) ^
-               std::hash<int>()(filterShape.Channels + filterShape.Height +
-                                filterShape.Width);
-    }
-};
-
-struct PoolMetaDataHash
-{
-    std::size_t operator()(const Compute::Dense::Cuda::PoolConfig& key) const
-    {
-        const auto inputShape = key.InputShape;
-        return std::hash<int>()(inputShape.Channels + inputShape.Height +
-                                inputShape.Width) ^ std::hash<int>()(
-                   key.WindowHeight + key.WindowWidth +
-                   key.StrideRow + key.StrideCol + key.RowPadding + key.
-                   ColumnPadding);
-    }
-};
-
 struct MemoryChunk
 {
     MemoryChunk(size_t byteSize, void* data, int refCount)
@@ -89,8 +45,7 @@ public:
     //! Allocates memory on device
     //! \param byteSize : Allocation byteSize in bytes
 
-    static void* GetMemoryCuda(size_t byteSize,
-                               bool preserve = false);
+    static void* GetMemoryCuda(size_t byteSize, bool preserve = false);
 
     //! Allocates memory on host
     //! \param byteSize : Allocation size in bytes
@@ -118,7 +73,6 @@ public:
     {
         auto* metaData = new Compute::Dense::Cuda::CudnnConv2DMetaData();
         Compute::Dense::Cuda::CreateCudnnConv2DMetaData(metaData, args...);
-        std::lock_guard lock(m_cudnnConv2DMetaDataPoolMtx);
         m_cudnnConv2DMetaDataPool[convConfig] = metaData;
     }
 
@@ -128,7 +82,6 @@ public:
     {
         auto* metaData = new Compute::Dense::Cuda::CudnnPool2DMetaData();
         Compute::Dense::Cuda::CreateCudnnPool2DMetaData(metaData, args...);
-        std::lock_guard lock(m_cudnnPool2DMetaDataPoolMtx);
         m_cudnnPool2DMetaDataPool[poolConfig] = metaData;
     }
 
@@ -140,14 +93,6 @@ public:
 
     static void DeReferenceHost(void* ptr);
 
-    static void ClearFreeCudaMemoryPool();
-
-    static void ClearFreeHostMemoryPool();
-
-    static void ClearCudaMemoryPool();
-
-    static void ClearHostMemoryPool();
-
     static void ClearCudnnConv2DMetaDataPool();
 
     static void ClearCudnnPool2DMetaDataPool();
@@ -156,21 +101,17 @@ public:
 
     static void ClearCudnnHandlePool();
 
-    static void ClearBusyMemoryPool();
+    static void Clean();
+
+    static void ClearFreeMemoryPool();
+
+    static void ClearPreservedMemoryPool();
 
     static void ClearAll();
 
-    static size_t GetTotalByteSizeCuda();
+    static std::size_t GetTotalByteSizeCuda();
 
-    static size_t GetTotalByteSizeHost();
-
-    static size_t GetAllocatedByteSizeCuda();
-
-    static size_t GetAllocatedByteSizeHost();
-
-    static size_t GetFreeByteSizeCuda();
-
-    static size_t GetFreeByteSizeHost();
+    static std::size_t GetTotalByteSizeHost();
 
     static bool HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig);
 
@@ -181,6 +122,7 @@ public:
     static bool HasCudnnHandle(int deviceId, std::thread::id tid);
 
 private:
+    //! Memory resources
     static std::unordered_multimap<size_t, MemoryChunk>
     m_hostFreeMemoryPool;
     static std::unordered_map<intptr_t, MemoryChunk> m_hostBusyMemoryPool;
@@ -202,6 +144,7 @@ private:
                               PoolMetaDataHash>
     m_cudnnPool2DMetaDataPool;
 
+
     //! Map for cublas and cudnn handles
     //! Key represents deviceId
     static std::unordered_map<std::pair<int, std::thread::id>, cublasHandle_t*,
@@ -210,14 +153,6 @@ private:
     static std::unordered_map<std::pair<int, std::thread::id>, cudnnHandle_t*,
                               DeviceIdTidHash>
     m_cudnnHandlePool;
-
-
-    static std::mutex m_hostPoolMtx;
-    static std::mutex m_cudaPoolMtx;
-    static std::mutex m_cudnnConv2DMetaDataPoolMtx;
-    static std::mutex m_cudnnPool2DMetaDataPoolMtx;
-    static std::mutex m_cublasHandlePoolMtx;
-    static std::mutex m_cudnnHandlePoolMtx;
 
     static unsigned int m_allocationUnitByteSize;
 };

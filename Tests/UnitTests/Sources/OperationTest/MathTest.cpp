@@ -48,7 +48,7 @@ void TestMultiply(bool print)
     Initialize::InitializeBackwardData(
         y, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
     y.ToCuda();
-    ModelManager::GetCurrentModel().BackProp(y);
+    ModelManager::CurModel().BackProp(y);
 
     inputA.ToHost();
     inputB.ToHost();
@@ -91,7 +91,7 @@ void TestMultiply(bool print)
         }
     }
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 
 void TestAdd(bool print)
@@ -125,7 +125,7 @@ void TestAdd(bool print)
     Initialize::InitializeBackwardData(
         y, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     y.ToCuda();
-    ModelManager::GetCurrentModel().BackProp(y);
+    ModelManager::CurModel().BackProp(y);
 
     inputA.ToHost();
     inputB.ToHost();
@@ -167,6 +167,6 @@ void TestAdd(bool print)
             std::cout << std::endl;
         }
     }
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

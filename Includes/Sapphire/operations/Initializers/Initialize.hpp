@@ -117,7 +117,7 @@ private:
 
 inline void Initialize(Tensor& tensor, std::unique_ptr<Initializer> initializer)
 {
-    auto& desc = ModelManager::GetCurrentModel().GetDescriptor(
+    auto& desc = ModelManager::CurModel().GetDescriptor(
         tensor.TensorDescriptorKey());
     auto forwardData = desc.GetForwardData();
     initializer->operator()(forwardData);
@@ -126,7 +126,7 @@ inline void Initialize(Tensor& tensor, std::unique_ptr<Initializer> initializer)
 inline void InitializeBackwardData(Tensor& tensor,
                                    std::unique_ptr<Initializer> initializer)
 {
-    auto& desc = ModelManager::GetCurrentModel().GetDescriptor(
+    auto& desc = ModelManager::CurModel().GetDescriptor(
         tensor.TensorDescriptorKey());
     auto backwardData = desc.GetBackwardData();
     initializer->operator()(backwardData);

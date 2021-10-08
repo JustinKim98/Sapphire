@@ -14,7 +14,7 @@ namespace Sapphire::NN
 {
 Tensor SoftMax(const Tensor& input)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(input.TensorDescriptorKey());
     const auto numFeatures = xDesc.GetShape().Cols();
     const auto yDescKey = model.RegisterTensorDescriptor(

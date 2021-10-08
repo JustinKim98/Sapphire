@@ -90,7 +90,7 @@ void TestConv2D(bool print)
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
     gpuOutput.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(gpuOutput);
+    ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
 
     //! Move tensors to host
@@ -112,7 +112,7 @@ void TestConv2D(bool print)
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
     hostOutput.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(hostOutput);
+    ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();
 
     if (print)
@@ -225,6 +225,6 @@ void TestConv2D(bool print)
          idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
         CHECK(TestEquality(hostBackwardPtr[idx], gpuBackwardPtr[idx]));
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

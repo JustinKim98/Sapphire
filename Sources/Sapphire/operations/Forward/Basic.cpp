@@ -14,7 +14,7 @@ namespace Sapphire::NN
 {
 Tensor Basic::operator()(Tensor& xTensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto x = xDesc.GetForwardData();
@@ -37,7 +37,7 @@ Tensor Basic::operator()(Tensor& xTensor)
 
 Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& x1Desc = model.GetDescriptor(x1Tensor.TensorDescriptorKey());
     auto& x2Desc = model.GetDescriptor(x2Tensor.TensorDescriptorKey());
@@ -63,7 +63,7 @@ Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
 
 std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto x = xDesc.GetForwardData();
@@ -91,7 +91,7 @@ std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
 
 void InplaceOp::operator()(Tensor& xTensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto x = xDesc.GetForwardData();

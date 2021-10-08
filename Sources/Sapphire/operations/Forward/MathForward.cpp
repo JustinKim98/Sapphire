@@ -15,7 +15,7 @@ namespace Sapphire::NN::Functional
 {
 Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     if (inputA.Mode() != inputB.Mode())
         throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
@@ -74,7 +74,7 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 
 Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     if (inputA.Mode() != inputB.Mode())
         throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
@@ -126,7 +126,7 @@ Tensor MeanOp(const Tensor& input, int dim)
     if (dim < 0 || dim >= input.GetShape().Dim())
         throw std::invalid_argument("NN::Functional::MeanOp - Invalid dim");
 
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     auto mode = input.Mode();
 

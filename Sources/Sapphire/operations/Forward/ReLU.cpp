@@ -16,7 +16,7 @@ namespace Sapphire::NN
 {
 Tensor ReLU(Tensor xTensor)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     const auto yDescKey = model.RegisterTensorDescriptor(
         xDesc.GetShape(), xDesc.GetType(), xDesc.GetDevice());

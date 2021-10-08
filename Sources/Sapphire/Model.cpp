@@ -97,16 +97,12 @@ void Model::InitGradient()
         tensorDesc.InitGradient();
 }
 
-std::string ModelManager::m_currentModel;
-
-std::unordered_map<std::string, Model> ModelManager::m_modelMap;
-
 Model& ModelManager::GetModel(const std::string& modelName)
 {
     return m_modelMap.at(modelName);
 }
 
-Model& ModelManager::GetCurrentModel()
+Model& ModelManager::CurModel()
 {
     return m_modelMap.at(m_currentModel);
 }
@@ -124,4 +120,8 @@ void ModelManager::AddModel(const std::string& modelName)
 {
     m_modelMap.emplace(modelName, Model(modelName));
 }
+
+std::string ModelManager::m_currentModel;
+
+std::unordered_map<std::string, Model> ModelManager::m_modelMap;
 } // namespace Sapphire

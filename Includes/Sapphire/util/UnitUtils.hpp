@@ -71,7 +71,7 @@ void SaveHistory(BackProp::BackPropWrapper* wrapper,
 {
     if constexpr (inputIdx == sizeof...(InputTs))
     {
-        const auto backPropWrapperKey = ModelManager::GetCurrentModel().
+        const auto backPropWrapperKey = ModelManager::CurModel().
             RegisterBackPropWrapper(wrapper);
         AddOutputHistory(backPropWrapperKey, outputs);
     }

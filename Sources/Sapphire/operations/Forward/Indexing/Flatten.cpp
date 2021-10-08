@@ -15,7 +15,7 @@ namespace Sapphire::NN
 {
 void Flatten(const Tensor& xTensor)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto& yDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
 

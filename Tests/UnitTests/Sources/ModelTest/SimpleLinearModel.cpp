@@ -56,20 +56,19 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     {
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
-        y = NN::ReLU(linear(y, weight1, bias1));
+       // y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
-        //ModelManager::GetCurrentModel().InitGradient();
-        if (i % 10 == 0)
+        if (i % 100 == 0)
         {
             const auto lossData = loss.GetForwardDataCopy();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;
         }
-        ModelManager::GetCurrentModel().BackProp(loss);
-
-        Util::ResourceManager::ClearBusyMemoryPool();
+        ModelManager::CurModel().BackProp(loss);
+        if (i % 10 == 0)
+            Util::ResourceManager::Clean();
+        
     }
-    ModelManager::GetCurrentModel().Clear();
     Util::ResourceManager::ClearAll();
 }
 }

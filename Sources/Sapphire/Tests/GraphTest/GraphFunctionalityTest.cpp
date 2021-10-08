@@ -37,7 +37,7 @@ void GraphFunctionalityTest()
     inplace1(x31);
     auto y = output(x31);
 
-    ModelManager::GetCurrentModel().BackProp(y);
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().BackProp(y);
+    ModelManager::CurModel().Clear();
 }
 }

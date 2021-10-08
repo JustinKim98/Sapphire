@@ -281,9 +281,6 @@ void SparseMemoryAllocationDevice()
     DeepFreeSparseHost(hostSparseDst, numMatrices);
     DeepFreeSparseCuda(deviceSparse, numMatrices, 0);
 
-    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeCuda(), 0);
-    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeHost(), 0);
-
     Util::ResourceManager::ClearAll();
 }
 
@@ -356,9 +353,6 @@ void SparseMemoryCopyDeviceToDevice()
     DeepFreeSparseHost(hostSparseDst, numMatrices);
     DeepFreeSparseCuda(deviceSparseSrc, numMatrices, 0);
     DeepFreeSparseCuda(deviceSparseDst, numMatrices, 0);
-
-    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeCuda(), 0);
-    CHECK_EQ(Util::ResourceManager::GetAllocatedByteSizeHost(), 0);
 
     Util::ResourceManager::ClearAll();
 }

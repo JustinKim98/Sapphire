@@ -18,7 +18,7 @@ Tensor MSE(const Tensor& input, const Tensor& label)
     auto mode = input.Mode();
     if (!Util::CheckModeEquality(mode, label))
         throw std::invalid_argument("NN::Loss::MSE - Device mode inequality");
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(input.TensorDescriptorKey());
     auto& labelDesc = model.GetDescriptor(label.TensorDescriptorKey());

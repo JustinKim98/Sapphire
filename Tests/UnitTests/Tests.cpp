@@ -30,16 +30,16 @@
 #include <iostream>
 #include "doctest.h"
 
-#define GraphTest
+// #define GraphTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
+// #define ConvolutionTest
+// #define BasicGraphTest
 #define ModelTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
-#define ConvolutionTest
-#define BasicGraphTest
 // #define SparseTest
 
 namespace Sapphire::Test
@@ -176,27 +176,6 @@ TEST_CASE("Basics")
     }
 }
 #endif
-
-#ifdef ModelTest
-
-TEST_CASE("Model Test")
-{
-    SUBCASE("SimpleLinearModelTest")
-    {
-        int xFeatures = 300;
-        int yFeatures = 300;
-        int batchSize = 100;
-        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
-        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
-
-        SimpleLinearModel(xFeatureVector, labelVector, xFeatures,
-                          yFeatures,
-                          0.00000000005f, batchSize, 1000);
-    }
-}
-
-#endif
-
 
 #ifdef ActivationTest
 TEST_CASE("ActivationTest")
@@ -374,6 +353,26 @@ TEST_CASE("BasicGraphTest")
     }
 }
 #endif
+
+#ifdef ModelTest
+
+TEST_CASE("Model Test")
+{
+    SUBCASE("SimpleLinearModelTest")
+    {
+        int xFeatures = 300;
+        int yFeatures = 300;
+        int batchSize = 100;
+        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+
+        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
+                          0.0000000005f, batchSize, 10000);
+    }
+}
+
+#endif
+
 
 #ifdef SparseTest
 
