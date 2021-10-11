@@ -62,9 +62,9 @@ void Gemm1(bool print)
     Compute::Gemm(Out, A, B, C);
 
     //! Copy the result to temporary buffer
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
     std::memcpy(cpuGemmResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros
     Compute::Initialize::Zeros(Out);
@@ -88,7 +88,7 @@ void Gemm1(bool print)
 
     //! Check equality between host and cuda
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, 2.0f);
+                          Out.HostTotalSize, print, 2.0f);
 
     delete[] cpuGemmResult;
 }

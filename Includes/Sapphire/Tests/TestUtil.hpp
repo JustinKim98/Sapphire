@@ -78,9 +78,9 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
     function(Out, A, B);
 
     //! Copy the host result to temporary buffer
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
     std::memcpy(cpuGemmResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -101,7 +101,7 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
 
     //! Check the equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, equalThreshold);
+                          Out.HostTotalSize, print, equalThreshold);
 
     delete[] cpuGemmResult;
 }
@@ -129,9 +129,9 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
     function(Out, In);
 
     //! Copy the host result to temporary buffer
-    auto* cpuResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuResult = new float[Out.HostTotalSize];
     std::memcpy(cpuResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -151,7 +151,7 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
 
     //! Check the equality
     CheckNoneZeroEquality(cpuResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, equalThreshold);
+                          Out.HostTotalSize, print, equalThreshold);
 
     delete[] cpuResult;
 }
@@ -178,9 +178,9 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
     function(Out, In);
 
     //! Copy the host result to temporary buffer
-    auto* cpuResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuResult = new float[Out.HostTotalSize];
     std::memcpy(cpuResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -200,7 +200,7 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
 
     //! Check the equality
     CheckNoneZeroEquality(cpuResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, equalThreshold);
+                          Out.HostTotalSize, print, equalThreshold);
 
     delete[] cpuResult;
 }
@@ -217,9 +217,9 @@ void EqualInitializeTest(Func function, bool print)
     function(data);
 
     //! Copy the host result to temporary memory
-    auto* cpuResult = new float[data.DenseTotalLengthHost];
+    auto* cpuResult = new float[data.HostTotalSize];
     std::memcpy(cpuResult, data.HostRawPtr(),
-                data.DenseTotalLengthHost * sizeof(float));
+                data.HostTotalSize * sizeof(float));
 
     //! Initialize host with zeros
     Compute::Initialize::Zeros(data);
@@ -232,7 +232,7 @@ void EqualInitializeTest(Func function, bool print)
     data.SetMode(DeviceType::Host);
 
     CheckNoneZeroEquality(cpuResult, data.HostRawPtr(),
-                          data.DenseTotalLengthHost, print);
+                          data.HostTotalSize, print);
 }
 
 template <typename Func, typename ...Ts>
@@ -247,7 +247,7 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
     function(data, params...);
 
     CheckNoneZero(data.HostRawPtr(),
-                  data.DenseTotalLengthHost, data.GetShape().Cols()
+                  data.HostTotalSize, data.GetShape().Cols()
                   , data.PaddedHostColSize, print);
 
     //! Initialize host with zeros
@@ -262,7 +262,7 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
     data.SetMode(DeviceType::Host);
 
     CheckNoneZero(data.HostRawPtr(),
-                  data.DenseTotalLengthHost,
+                  data.HostTotalSize,
                   data.GetShape().Cols()
                   , data.PaddedHostColSize, print);
 }

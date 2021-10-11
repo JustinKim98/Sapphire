@@ -30,7 +30,8 @@ public:
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const CudaDevice& device, bool preserve = false);
+                                 const CudaDevice& device,
+                                 bool preserve = false);
 
     //! Registers back propagation wrapper
 //! \param backPropWrapper :  back propagation wrapper to register
@@ -70,6 +71,7 @@ private:
 
 
     TensorDescriptorPool m_tensorDescriptorPool;
+    TensorDescriptorPool m_preservedDescriptorPool;
     std::unordered_map<int, BackProp::BackPropWrapper*> m_backPropWrapperPool;
     std::string m_name;
 };

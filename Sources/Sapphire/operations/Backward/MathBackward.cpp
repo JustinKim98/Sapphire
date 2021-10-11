@@ -45,10 +45,6 @@ void MulBackProp::m_runBackProp()
     Compute::Transpose(transposedA, a);
     Compute::Transpose(transposedB, b);
 
-    dy.ToHost();
-    b.ToHost();
-    transposedB.ToHost();
-
     Compute::Gemm(da, dy, transposedB, da);
     Compute::Gemm(db, transposedA, dy, db);
 }

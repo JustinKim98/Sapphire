@@ -275,20 +275,10 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
     rFilter.Reshape(rFilterShape);
     rY.Reshape(rYShape);
 
-    auto dataPtr = std::unique_ptr<float[]>(new float[rX.GetShape().Size()]);
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < rFilter.DenseTotalLengthHost;
-         ii += rFilter.PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + rFilter.GetShape().Cols(); ++i)
-        {
-            dataPtr[idx] = rFilter.HostRawPtr()[i];
-            idx++;
-        }
-
     Gemm(rY, rFilter, rX, rY);
 
-    rFilter.Reshape(rFilterShape);
-    rY.Reshape(rYShape);
+    rFilter.Reshape(filterShape);
+    rY.Reshape(yShape);
 }
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,

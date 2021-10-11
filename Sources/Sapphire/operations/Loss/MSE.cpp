@@ -42,7 +42,6 @@ Tensor MSE(const Tensor& input, const Tensor& label)
                       std::make_tuple(&yDesc));
 
     Util::ChangeTensorDataDimension(1, xData, labelData, yData, dxData, temp);
-
     Compute::Sub(temp, labelData, xData);
     Compute::Pow(temp, temp, 2.0f);
     Compute::Mean(yData, temp, 0);

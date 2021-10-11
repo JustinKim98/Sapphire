@@ -29,16 +29,16 @@
 #include <Sapphire/Tests/Basics/ReshapeTest.hpp>
 #include <iostream>
 #include "doctest.h"
-
-#define GraphTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
-#define ConvolutionTest
-#define BasicGraphTest
+//
+// #define GraphTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
+// #define ConvolutionTest
+// #define BasicGraphTest
 #define ModelTest
 // #define SparseTest
 
@@ -103,13 +103,13 @@ TEST_CASE("Basics")
         Util::ResourceManager::ClearAll();
     }
 
-    SUBCASE("Reshape")
-    {
-        std::cout << "Reshape" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            ReshapeTest(true);
-        Util::ResourceManager::ClearAll();
-    }
+    // SUBCASE("Reshape")
+    // {
+    //     std::cout << "Reshape" << std::endl;
+    //     for (int i = 0; i < testLoops; ++i)
+    //         ReshapeTest(true);
+    //     Util::ResourceManager::ClearAll();
+    // }
 
     SUBCASE("Add")
     {
@@ -360,14 +360,14 @@ TEST_CASE("Model Test")
 {
     SUBCASE("SimpleLinearModelTest")
     {
-        int xFeatures = 3000;
-        int yFeatures = 3000;
-        int batchSize = 100;
+        int xFeatures = 4000;
+        int yFeatures = 4000;
+        int batchSize = 10;
         std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
         std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
 
         SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
-                          0.0000000005f, batchSize, 10000);
+                          0.00000001f, batchSize, 10000);
     }
 }
 

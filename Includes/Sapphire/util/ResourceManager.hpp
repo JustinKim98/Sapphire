@@ -106,15 +106,13 @@ public:
 
     static void Clean();
 
-    static void ClearFreeMemoryPool();
+    static void ClearPreservedPool();
 
-    static void ClearPreservedMemoryPool();
+    static void ClearVolatilePool();
+
+    static void ClearFreePool();
 
     static void ClearAll();
-
-    static std::size_t GetTotalByteSizeCuda();
-
-    static std::size_t GetTotalByteSizeHost();
 
     static bool HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig);
 
@@ -126,18 +124,17 @@ public:
 
 private:
     //! Memory resources
-    static std::unordered_multimap<std::size_t, MemoryChunk>
-    m_hostFreeMemoryPool;
-    static std::unordered_map<std::intptr_t, MemoryChunk> m_hostBusyMemoryPool;
-    static std::unordered_multimap<std::size_t, MemoryChunk>
-    m_cudaFreeMemoryPool;
-    static std::unordered_map<std::intptr_t, MemoryChunk>
-    m_cudaBusyMemoryPool;
 
     static std::unordered_map<std::intptr_t, MemoryChunk>
-    m_hostPreservedMemoryPool;
+    m_hostVolatilePool;
     static std::unordered_map<std::intptr_t, MemoryChunk>
-    m_cudaPreservedMemoryPool;
+    m_cudaVolatilePool;
+    static std::unordered_multimap<std::size_t, MemoryChunk> m_hostFreePool;
+    static std::unordered_multimap<std::size_t, MemoryChunk> m_cudaFreePool;
+    static std::unordered_map<std::intptr_t, MemoryChunk>
+    m_hostPreservedPool;
+    static std::unordered_map<std::intptr_t, MemoryChunk>
+    m_cudaPreservedPool;
 
     static std::unordered_map<Compute::Dense::Cuda::ConvConfig,
                               Compute::Dense::Cuda::CudnnConv2DMetaData*,

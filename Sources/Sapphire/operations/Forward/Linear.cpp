@@ -18,7 +18,8 @@ namespace Sapphire::NN
 Linear::Linear(int inputFeatureSize, int outputFeatureSize,
                Optimizer::Optimizer* optimizer,
                CudaDevice device, bool isSparse)
-    : Unit(optimizer), m_inputs(inputFeatureSize),
+    : Unit(optimizer),
+      m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
       m_device(std::move(device)),
       m_isSparse(isSparse)
@@ -51,43 +52,30 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto yData = yDesc.GetForwardData();
     auto dyData = yDesc.GetBackwardData();
 
-    if (!m_exists("transposedWeight"))
-    {
-        auto transposedWeight =
-            TensorUtil::TensorData(Shape({ m_outputs, m_inputs }), Type::Dense,
-                                   weight.GetDevice(), true);
-        transposedWeight.SetMode(weight.Mode());
-        m_addTensorData("transposedWeight", transposedWeight);
-    }
+    auto transposedWeight =
+        TensorUtil::TensorData(Shape({ m_outputs, m_inputs }), Type::Dense,
+                               weight.GetDevice());
+    transposedWeight.SetMode(weight.Mode());
 
-    if (!m_exists("ones"))
-    {
-        auto ones = TensorUtil::TensorData(bias.GetShape().GetTranspose(),
-                                           Type::Dense,
-                                           bias.GetDevice(), true);
-        ones.SetMode(bias.Mode());
-        Compute::Initialize::Ones(ones);
-        m_addTensorData("ones", ones);
-    }
+    auto ones = TensorUtil::TensorData(bias.GetShape().GetTranspose(),
+                                       Type::Dense,
+                                       bias.GetDevice());
+    ones.SetMode(bias.Mode());
+    Compute::Initialize::Ones(ones);
 
     //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData);
 
-    if (!m_exists("expandedBias"))
-    {
-        auto expandedBias = TensorUtil::TensorData(
-            yData.GetShape(), Type::Dense, bias.GetDevice(), true);
-        expandedBias.SetMode(bias.Mode());
-        m_addTensorData("expandedBias", expandedBias);
-    }
+    auto expandedBias = TensorUtil::TensorData(
+        yData.GetShape(), Type::Dense, bias.GetDevice());
+    expandedBias.SetMode(bias.Mode());
 
     Compute::Initialize::Zeros(yData);
-    Compute::Initialize::Zeros(m_getTensorData("expandedBias"));
-    Compute::Transpose(m_getTensorData("transposedWeight"), weightData);
-    Compute::Gemm(m_getTensorData("expandedBias"), m_getTensorData("ones"),
-                  biasData, m_getTensorData("expandedBias"));
-    Compute::Gemm(yData, xData, m_getTensorData("transposedWeight"),
-                  m_getTensorData("expandedBias"));
+    Compute::Initialize::Zeros(expandedBias);
+    Compute::Transpose(transposedWeight, weightData);
+    Compute::Gemm(expandedBias, ones,
+                  biasData, expandedBias);
+    Compute::Gemm(yData, xData, transposedWeight, expandedBias);
 
     auto* backPropWrapper =
         new BackProp::LinearBackProp(

@@ -59,9 +59,9 @@ void BroadcastWithOneDimension(bool print)
     Compute::Gemm(Out, A, B, C);
 
     //! Set temporary buffer and copy the result
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
     std::memcpy(cpuGemmResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output with zeros
     Compute::Initialize::Zeros(Out);
@@ -85,7 +85,7 @@ void BroadcastWithOneDimension(bool print)
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, 1.5f);
+                          Out.HostTotalSize, print, 1.5f);
 
     delete[] cpuGemmResult;
 }
@@ -132,9 +132,9 @@ void BroadcastWithMissingDimension(bool print)
     Compute::Gemm(Out, A, B, C);
 
     //! Set temporary buffer and copy the result
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
     std::memcpy(cpuGemmResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
     //! Initialize output with zeros
     Compute::Initialize::Zeros(Out);
 
@@ -156,7 +156,7 @@ void BroadcastWithMissingDimension(bool print)
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, 1.5f);
+                          Out.HostTotalSize, print, 1.5f);
 
     delete[] cpuGemmResult;
 }
@@ -203,9 +203,9 @@ void BroadcastMixed(bool print)
     Compute::Gemm(Out, A, B, C);
 
     //! Set temporary buffer and copy the result
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
     std::memcpy(cpuGemmResult, Out.HostRawPtr(),
-                Out.DenseTotalLengthHost * sizeof(float));
+                Out.HostTotalSize * sizeof(float));
     //! Initialize output with zeros
     Compute::Initialize::Zeros(Out);
 
@@ -228,7 +228,7 @@ void BroadcastMixed(bool print)
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
-                          Out.DenseTotalLengthHost, print, 1.5f);
+                          Out.HostTotalSize, print, 1.5f);
 
     delete[] cpuGemmResult;
 }

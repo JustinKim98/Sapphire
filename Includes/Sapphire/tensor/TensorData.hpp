@@ -34,7 +34,7 @@ public:
     TensorData& operator=(TensorData&& tensorData) noexcept;
     ~TensorData() = default;
 
-    unsigned long DenseTotalLengthHost = 0;
+    unsigned long HostTotalSize = 0;
     unsigned long DenseTotalLengthCuda = 0;
     unsigned long SparseTotalLength = 0;
     unsigned long PaddedHostColSize = 0;
@@ -139,22 +139,22 @@ public:
     //!Getters for raw pointers
     [[nodiscard]] const float* HostRawPtr() const
     {
-        return m_denseMatHost;
+        return m_denseHost;
     }
 
     [[nodiscard]] const float* CudaRawPtr() const
     {
-        return m_denseMatCuda;
+        return m_denseCuda;
     }
 
     [[nodiscard]] float* HostMutableRawPtr() const
     {
-        return m_denseMatHost;
+        return m_denseHost;
     }
 
     [[nodiscard]] float* CudaMutableRawPtr() const
     {
-        return m_denseMatCuda;
+        return m_denseCuda;
     }
 
 
@@ -177,8 +177,8 @@ private:
     void m_allocateCuda();
 
     Shape m_shape;
-    float* m_denseMatHost = nullptr;
-    float* m_denseMatCuda = nullptr;
+    float* m_denseHost = nullptr;
+    float* m_denseCuda = nullptr;
     int m_parentDescKey = -1;
 
     Type m_type = Type::Dense;

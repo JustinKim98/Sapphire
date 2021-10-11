@@ -17,9 +17,20 @@ int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const CudaDevice& device, bool preserve)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
-    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey, preserve);
 
-    m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
+    if (preserve)
+    {
+        TensorUtil::TensorDescriptor tensorDesc(shape, type, device,
+                                                tensorDescKey, preserve);
+        m_preservedDescriptorPool.TensorDescMap[tensorDescKey] =
+            std::move(tensorDesc);
+        return tensorDescKey;
+    }
+
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, device,
+                                            tensorDescKey, preserve);
+    m_tensorDescriptorPool.TensorDescMap[tensorDescKey] =
+        std::move(tensorDesc);
 
     return tensorDescKey;
 }
@@ -61,6 +72,7 @@ void Model::m_autoGrad(int tensorKey)
 
         if (invoked)
         {
+            delete m_backPropWrapperPool[backPropWrapperKey];
             m_backPropWrapperPool.erase(backPropWrapperKey);
             for (auto& descKey : outputGradientKeyVector)
                 GetDescriptor(descKey).RemoveOperand(tensorKey);
@@ -73,17 +85,26 @@ void Model::m_autoGrad(int tensorKey)
 
 void Model::m_removeDescriptor(int descKey)
 {
-    m_tensorDescriptorPool.TensorDescMap.erase(descKey);
+    if (m_tensorDescriptorPool.TensorDescMap.find(descKey) !=
+        m_tensorDescriptorPool.TensorDescMap.end())
+        m_tensorDescriptorPool.TensorDescMap.erase(descKey);
+    m_preservedDescriptorPool.TensorDescMap.erase(descKey);
 }
 
 TensorUtil::TensorDescriptor& Model::GetDescriptor(int descKey)
 {
-    return m_tensorDescriptorPool.TensorDescMap.at(descKey);
+    if (m_tensorDescriptorPool.TensorDescMap.find(descKey) !=
+        m_tensorDescriptorPool.TensorDescMap.end())
+        return m_tensorDescriptorPool.TensorDescMap.at(descKey);
+    return m_preservedDescriptorPool.TensorDescMap.at(descKey);
 }
 
 void Model::BackProp(Tensor tensor)
 {
     m_autoGrad(tensor.TensorDescriptorKey());
+    // for (auto& [key, wrapper] : m_backPropWrapperPool)
+    //     delete wrapper;
+    // m_backPropWrapperPool.clear();
 }
 
 void Model::Clear()

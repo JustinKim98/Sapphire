@@ -66,6 +66,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
                 << std::endl;
         }
         ModelManager::CurModel().BackProp(loss);
+        ModelManager::CurModel().Clear();
         if (i % 10 == 0)
             Util::ResourceManager::Clean();
     }
