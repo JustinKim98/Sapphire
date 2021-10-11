@@ -16,10 +16,10 @@ MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
                          TensorUtil::TensorData db, TensorUtil::TensorData dy)
     : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) },
                       { a, b },
-                      { TensorUtil::TensorData(a.TensorShape.GetTranspose(),
+                      { TensorUtil::TensorData(a.GetShape().GetTranspose(),
                                                a.GetType(),
                                                a.GetDevice()),
-                        TensorUtil::TensorData(b.TensorShape.GetTranspose(),
+                        TensorUtil::TensorData(b.GetShape().GetTranspose(),
                                                b.GetType(),
                                                b.GetDevice()) })
 {

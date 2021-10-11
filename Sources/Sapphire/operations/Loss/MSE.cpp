@@ -9,7 +9,6 @@
 #include <Sapphire/operations/Backward/MSEBackward.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 
 namespace Sapphire::NN::Loss
 {

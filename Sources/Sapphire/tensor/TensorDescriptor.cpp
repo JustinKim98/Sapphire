@@ -59,7 +59,7 @@ unsigned int TensorDescriptor::GetBatchSize() const
 
 Shape TensorDescriptor::GetShape() const
 {
-    return m_forwardData.TensorShape;
+    return m_forwardData.GetShape();
 }
 
 CudaDevice TensorDescriptor::GetDevice() const
@@ -79,10 +79,10 @@ Type TensorDescriptor::GetType() const
     return m_forwardData.GetType();
 }
 
-void TensorDescriptor::SetShape(Shape shape)
+void TensorDescriptor::Reshape(Shape shape)
 {
-    m_forwardData.TensorShape = shape;
-    m_backwardData.TensorShape = shape;
+    m_forwardData.Reshape(shape);
+    m_backwardData.Reshape(shape);
 }
 
 void TensorDescriptor::ToCuda()

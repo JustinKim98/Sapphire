@@ -83,7 +83,7 @@ void TestConv2D(bool print)
 
     //! Test Conv2D on gpu
     NN::Conv2D conv2D(inputSize, stride, padSize, dilation,
-                      Util::SharedPtr<Optimizer::SGD>::Make(0.0f), kernel,
+                      new Optimizer::SGD(0.0f), kernel,
                       bias);
     auto gpuOutput = conv2D(input);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
@@ -104,7 +104,7 @@ void TestConv2D(bool print)
 
     //! Test Conv2D on host
     NN::Conv2D conv2DHost(inputSize, stride, padSize, dilation,
-                          Util::SharedPtr<Optimizer::SGD>::Make(0.0f),
+                          new Optimizer::SGD(0.0f),
                           kernel,
                           bias);
     auto hostOutput = conv2DHost(input);
@@ -202,9 +202,9 @@ void TestConv2D(bool print)
                     {
                         std::cout
                             << gpuBackwardPtr[batchIdx * outputRows *
-                                                  outputCols * outputChannels +
+                                              outputCols * outputChannels +
                                               channelIdx * outputRows *
-                                                  outputCols +
+                                              outputCols +
                                               i * inputCols + j]
                             << " ";
                     }

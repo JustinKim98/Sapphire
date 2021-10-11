@@ -29,6 +29,6 @@ void Flatten(const Tensor& xTensor)
         new BackProp::FlattenBackward(dxData, dxData, shape);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&xDesc));
-    xDesc.SetShape(shape);
+    xDesc.Reshape(shape);
 }
 }

@@ -98,23 +98,6 @@ Shape ShuffleShape(int dim, Shape shape)
 }
 
 
-void CheckNoneZeroEquality(
-    const float* ptrA, const float* ptrB, unsigned size, bool print,
-    float equalThreshold)
-{
-    bool isAllZero = true;
-    for (unsigned int i = 0; i < size; ++i)
-    {
-        if (print)
-            std::cout << "ptrA : " << ptrA[i] << " ptrB : " << ptrB[i] <<
-                std::endl;
-        if (!std::isnan(ptrA[i]) && !std::isnan(ptrB[i]))
-            CHECK(std::abs(ptrA[i] - ptrB[i]) <= equalThreshold);
-        if (ptrA[i] > 0.0f || ptrA[i] < 0.0f)
-            isAllZero = false;
-    }
-    CHECK(!isAllZero);
-}
 
 void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
                    unsigned padSize, bool print)

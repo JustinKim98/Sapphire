@@ -15,17 +15,17 @@ void Cos(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::Cos(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
+        Dense::Cuda::Cos(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
     {
-        Dense::Naive::cos(y.GetMutableDenseHost(), x.GetDenseHost(),
+        Dense::Naive::cos(y.HostMutableRawPtr(), x.HostRawPtr(),
                           totalSizeWithPadding, N, paddedN);
     }
 }
@@ -35,17 +35,17 @@ void Sin(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::Sin(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
+        Dense::Cuda::Sin(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
     {
-        Dense::Naive::sin(y.GetMutableDenseHost(), x.GetDenseHost(),
+        Dense::Naive::sin(y.HostMutableRawPtr(), x.HostRawPtr(),
                           totalSizeWithPadding, N, paddedN);
     }
 }
@@ -55,17 +55,17 @@ void Tan(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::Tan(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
+        Dense::Cuda::Tan(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
     {
-        Dense::Naive::tan(y.GetMutableDenseHost(), x.GetDenseHost(),
+        Dense::Naive::tan(y.HostMutableRawPtr(), x.HostRawPtr(),
                           totalSizeWithPadding, N, paddedN);
     }
 }
@@ -75,17 +75,17 @@ void Cosh(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::Cosh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
+        Dense::Cuda::Cosh(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
     {
-        Dense::Naive::cosh(y.GetMutableDenseHost(), x.GetDenseHost(),
+        Dense::Naive::cosh(y.HostMutableRawPtr(), x.HostRawPtr(),
                            totalSizeWithPadding, N, paddedN);
     }
 }
@@ -95,17 +95,17 @@ void Sinh(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::Sinh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
+        Dense::Cuda::Sinh(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
     {
-        Dense::Naive::sinh(y.GetMutableDenseHost(), x.GetDenseHost(),
+        Dense::Naive::sinh(y.HostMutableRawPtr(), x.HostRawPtr(),
                            totalSizeWithPadding, N, paddedN);
     }
 }
@@ -115,17 +115,17 @@ void Tanh(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto N = y.Cols();
     const auto paddedN = y.PaddedHostColSize;
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::Tanh(y.GetMutableDenseCuda(), x.GetDenseCuda(), totalSize);
+        Dense::Cuda::Tanh(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
     {
-        Dense::Naive::tanh(y.GetMutableDenseHost(), x.GetDenseHost(),
+        Dense::Naive::tanh(y.HostMutableRawPtr(), x.HostRawPtr(),
                            totalSizeWithPadding, N, paddedN);
     }
 }
@@ -133,12 +133,12 @@ void Tanh(TensorData& y, const TensorData& x)
 void ArcCos(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcCos(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+        Dense::Cuda::ArcCos(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                             totalSize);
     }
     else
@@ -150,12 +150,12 @@ void ArcCos(TensorData& y, const TensorData& x)
 void Arcsin(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcSin(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+        Dense::Cuda::ArcSin(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                             totalSize);
     }
     else
@@ -168,12 +168,12 @@ void Arcsin(TensorData& y, const TensorData& x)
 void ArcTan(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcTan(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+        Dense::Cuda::ArcTan(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                             totalSize);
     }
     else
@@ -185,11 +185,11 @@ void ArcTan(TensorData& y, const TensorData& x)
 void ArcCosh(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcCosh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+        Dense::Cuda::ArcCosh(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize);
     }
     else
@@ -201,12 +201,12 @@ void ArcCosh(TensorData& y, const TensorData& x)
 void ArcSinh(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcSinh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+        Dense::Cuda::ArcSinh(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize);
     }
     else
@@ -218,12 +218,12 @@ void ArcSinh(TensorData& y, const TensorData& x)
 void ArcTanh(TensorData& y, const TensorData& x)
 {
     const auto device = y.GetDevice();
-    const auto totalSize = y.TensorShape.Size();
+    const auto totalSize = y.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcTanh(y.GetMutableDenseCuda(), x.GetDenseCuda(),
+        Dense::Cuda::ArcTanh(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize);
     }
     else
@@ -235,13 +235,13 @@ void ArcTanh(TensorData& y, const TensorData& x)
 void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::CosBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                 x.GetDenseCuda(), totalSize);
+        Dense::Cuda::CosBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                 x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -252,13 +252,13 @@ void CosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::SinBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                 x.GetDenseCuda(), totalSize);
+        Dense::Cuda::SinBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                 x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -269,13 +269,13 @@ void SinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::TanBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                 x.GetDenseCuda(), totalSize);
+        Dense::Cuda::TanBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                 x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -286,13 +286,13 @@ void TanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::CoshBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                  x.GetDenseCuda(), totalSize);
+        Dense::Cuda::CoshBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                  x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -304,13 +304,13 @@ void CoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::SinhBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                  x.GetDenseCuda(), totalSize);
+        Dense::Cuda::SinhBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                  x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -322,13 +322,13 @@ void SinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::TanhBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                  x.GetDenseCuda(), totalSize);
+        Dense::Cuda::TanhBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                  x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -340,13 +340,13 @@ void TanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcCosBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                    x.GetDenseCuda(), totalSize);
+        Dense::Cuda::ArcCosBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                    x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -358,13 +358,13 @@ void ArcCosBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcSinBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                    x.GetDenseCuda(), totalSize);
+        Dense::Cuda::ArcSinBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                    x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -376,13 +376,13 @@ void ArcSinBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcTanBackward(dx.GetMutableDenseCuda(), dy.GetDenseCuda(),
-                                    x.GetDenseCuda(), totalSize);
+        Dense::Cuda::ArcTanBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                    x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -394,14 +394,14 @@ void ArcTanBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcCoshBackward(dx.GetMutableDenseCuda(),
-                                     dy.GetDenseCuda(),
-                                     x.GetDenseCuda(), totalSize);
+        Dense::Cuda::ArcCoshBackward(dx.CudaMutableRawPtr(),
+                                     dy.CudaRawPtr(),
+                                     x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -413,14 +413,14 @@ void ArcCoshBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcSinhBackward(dx.GetMutableDenseCuda(),
-                                     dy.GetDenseCuda(),
-                                     x.GetDenseCuda(), totalSize);
+        Dense::Cuda::ArcSinhBackward(dx.CudaMutableRawPtr(),
+                                     dy.CudaRawPtr(),
+                                     x.CudaRawPtr(), totalSize);
     }
     else
     {
@@ -432,14 +432,14 @@ void ArcSinhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void ArcTanhBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     const auto device = dx.GetDevice();
-    const auto totalSize = dx.TensorShape.Size();
+    const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
     {
         cudaSetDevice(device.GetID());
-        Dense::Cuda::ArcTanhBackward(dx.GetMutableDenseCuda(),
-                                     dy.GetDenseCuda(),
-                                     x.GetDenseCuda(), totalSize);
+        Dense::Cuda::ArcTanhBackward(dx.CudaMutableRawPtr(),
+                                     dy.CudaRawPtr(),
+                                     x.CudaRawPtr(), totalSize);
     }
     else
     {

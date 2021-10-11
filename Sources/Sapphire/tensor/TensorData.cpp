@@ -6,7 +6,6 @@
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/dense/cuda/Initialize.cuh>
-#include <Sapphire/compute/sparse/Sparse.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <algorithm>
@@ -16,66 +15,45 @@
 namespace Sapphire::TensorUtil
 {
 TensorData::TensorData(Shape shape, Type type, bool preserve)
-    : TensorShape(std::move(shape)),
-      m_type(type)
+    : m_shape(std::move(shape)),
+      m_type(type),
+      m_preserve(preserve)
 {
-    m_allocateHost(preserve);
+    m_allocateHost();
 }
 
 TensorData::TensorData(Shape shape, Type type, CudaDevice device, bool preserve)
-    : TensorShape(std::move(shape)),
+    : m_shape(std::move(shape)),
       m_type(type),
-      m_device(std::move(device))
+      m_device(std::move(device)),
+      m_preserve(preserve)
 {
     if (device.GetID() >= 0)
     {
-        m_allocateCuda(preserve);
         m_mode = DeviceType::Cuda;
+        m_allocateCuda();
     }
-    m_allocateHost(preserve);
+    else
+        m_allocateHost();
 }
 
 TensorData::TensorData(Shape shape, Type type, CudaDevice device,
                        int parentDescKey, bool preserve)
-    : TensorShape(std::move(shape)),
+    : m_shape(std::move(shape)),
       m_parentDescKey(parentDescKey),
       m_type(type),
-      m_device(std::move(device))
+      m_device(std::move(device)),
+      m_preserve(preserve)
 {
     if (device.GetID() >= 0)
     {
-        m_allocateCuda(preserve);
+        m_allocateCuda();
         m_mode = DeviceType::Cuda;
     }
-    m_allocateHost(preserve);
+    else
+        m_allocateHost();
 }
 
-TensorData::TensorData(const TensorData& tensorData)
-    : DenseTotalLengthHost(tensorData.DenseTotalLengthHost),
-      DenseTotalLengthCuda(tensorData.DenseTotalLengthCuda),
-      SparseTotalLength(tensorData.SparseTotalLength),
-      PaddedHostColSize(tensorData.PaddedHostColSize),
-      SparseMatHost(tensorData.SparseMatHost),
-      SparseMatCuda(tensorData.SparseMatCuda),
-      TensorShape(tensorData.TensorShape),
-      DenseMatHost(tensorData.DenseMatHost),
-      DenseMatCuda(tensorData.DenseMatCuda),
-      m_parentDescKey(tensorData.m_parentDescKey),
-      m_type(tensorData.m_type),
-      m_mode(tensorData.m_mode),
-      m_device(tensorData.m_device)
-{
-    // if (DenseMatHost)
-    // {
-    //     Util::ResourceManager::AddReferenceHost(
-    //         static_cast<void*>(DenseMatHost));
-    // }
-    // if (DenseMatCuda)
-    // {
-    //     Util::ResourceManager::AddReferenceCuda(
-    //         static_cast<void*>(DenseMatCuda));
-    // }
-}
 
 TensorData::TensorData(TensorData&& tensorData) noexcept
     : DenseTotalLengthHost(tensorData.DenseTotalLengthHost),
@@ -84,53 +62,21 @@ TensorData::TensorData(TensorData&& tensorData) noexcept
       PaddedHostColSize(tensorData.PaddedHostColSize),
       SparseMatHost(tensorData.SparseMatHost),
       SparseMatCuda(tensorData.SparseMatCuda),
-      TensorShape(std::move(tensorData.TensorShape)),
-      DenseMatHost(tensorData.DenseMatHost),
-      DenseMatCuda(tensorData.DenseMatCuda),
+      m_shape(std::move(tensorData.m_shape)),
+      m_denseMatHost(tensorData.m_denseMatHost),
+      m_denseMatCuda(tensorData.m_denseMatCuda),
       m_parentDescKey(tensorData.m_parentDescKey),
       m_type(tensorData.m_type),
       m_mode(tensorData.m_mode),
-      m_device(std::move(tensorData.m_device))
+      m_device(std::move(tensorData.m_device)),
+      m_preserve(tensorData.m_preserve)
 {
     tensorData.DenseTotalLengthHost = 0;
     tensorData.SparseTotalLength = 0;
-    tensorData.DenseMatHost = nullptr;
-    tensorData.DenseMatCuda = nullptr;
+    tensorData.m_denseMatHost = nullptr;
+    tensorData.m_denseMatCuda = nullptr;
     tensorData.SparseMatHost = nullptr;
     tensorData.SparseMatCuda = nullptr;
-}
-
-TensorData& TensorData::operator=(const TensorData& tensorData)
-{
-    if (this == &tensorData)
-        return *this;
-
-    DenseTotalLengthHost = tensorData.DenseTotalLengthHost;
-    DenseTotalLengthCuda = tensorData.DenseTotalLengthCuda;
-    SparseTotalLength = tensorData.SparseTotalLength;
-    PaddedHostColSize = tensorData.PaddedHostColSize;
-    DenseMatHost = tensorData.DenseMatHost;
-    DenseMatCuda = tensorData.DenseMatCuda;
-    SparseMatHost = tensorData.SparseMatHost;
-    SparseMatCuda = tensorData.SparseMatCuda;
-    TensorShape = tensorData.TensorShape;
-    m_parentDescKey = tensorData.m_parentDescKey;
-    m_type = tensorData.m_type;
-    m_mode = tensorData.m_mode;
-    m_device = tensorData.m_device;
-
-    // if (DenseMatHost)
-    // {
-    //     Util::ResourceManager::AddReferenceHost(
-    //         static_cast<void*>(DenseMatHost));
-    // }
-    // if (DenseMatCuda)
-    // {
-    //     Util::ResourceManager::AddReferenceCuda(
-    //         static_cast<void*>(DenseMatCuda));
-    // }
-
-    return *this;
 }
 
 TensorData& TensorData::operator=(TensorData&& tensorData) noexcept
@@ -138,44 +84,112 @@ TensorData& TensorData::operator=(TensorData&& tensorData) noexcept
     DenseTotalLengthHost = tensorData.DenseTotalLengthHost;
     SparseTotalLength = tensorData.SparseTotalLength;
     PaddedHostColSize = tensorData.PaddedHostColSize;
-    // m_freeCuda();
-    // m_freeHost();
-    DenseMatHost = tensorData.DenseMatHost;
-    DenseMatCuda = tensorData.DenseMatCuda;
+    m_denseMatHost = tensorData.m_denseMatHost;
+    m_denseMatCuda = tensorData.m_denseMatCuda;
     SparseMatHost = tensorData.SparseMatHost;
     SparseMatCuda = tensorData.SparseMatCuda;
-    TensorShape = std::move(tensorData.TensorShape);
+    m_shape = std::move(tensorData.m_shape);
     m_parentDescKey = tensorData.m_parentDescKey;
     m_type = tensorData.m_type;
     m_mode = tensorData.m_mode;
     m_device = std::move(tensorData.m_device);
+    m_preserve = tensorData.m_preserve;
 
     tensorData.DenseTotalLengthHost = 0;
     tensorData.SparseTotalLength = 0;
-    tensorData.DenseMatHost = nullptr;
-    tensorData.DenseMatCuda = nullptr;
+    tensorData.m_denseMatHost = nullptr;
+    tensorData.m_denseMatCuda = nullptr;
     tensorData.SparseMatHost = nullptr;
     tensorData.SparseMatCuda = nullptr;
 
     return *this;
 }
 
-TensorData::~TensorData()
+void TensorData::Reshape(const Shape& shape)
 {
-    // if (DenseMatHost != nullptr)
-    //     m_freeHost();
-    // if (DenseMatCuda != nullptr)
-    //     m_freeCuda();
+    if (shape.Size() != m_shape.Size())
+    {
+        throw std::runtime_error(
+            "TensorData::Reshape - Attempt to change shape having different "
+            "size");
+    }
+
+    if (m_mode == DeviceType::Cuda)
+    {
+        m_shape = shape;
+    }
+
+    if (m_mode == DeviceType::Host)
+    {
+        const auto data = GetDataCopy();
+        m_shape = shape;
+        if (m_preserve)
+        {
+            Util::ResourceManager::FreePreservedHost(m_denseMatHost);
+            m_allocateHost();
+        }
+        SetData(data);
+    }
+}
+
+std::vector<float> TensorData::GetDataCopy()
+{
+    if (m_mode == DeviceType::Cuda)
+        ToHost();
+
+    auto dataPtr = std::vector<float>(m_shape.Size());
+    std::size_t idx = 0;
+    for (std::size_t ii = 0; ii < DenseTotalLengthHost; ii += PaddedHostColSize)
+        for (std::size_t i = ii; i < ii + m_shape.Cols(); ++i)
+        {
+            dataPtr[idx] = m_denseMatHost[i];
+            idx++;
+        }
+
+    return dataPtr;
+}
+
+void TensorData::SetData(std::vector<float> data)
+{
+    const auto shape = GetShape();
+    if (static_cast<int>(data.size()) != shape.Size())
+    {
+        throw std::invalid_argument(
+            "Tensor::SetForwardData - data size mismatch Given size : (" +
+            std::to_string(data.size()) + ") expected size : (" +
+            std::to_string(shape.Size()) + ")");
+    }
+
+    if (m_mode == DeviceType::Cuda)
+    {
+        Compute::Cuda::CopyHostToDevice(m_denseMatCuda, &data.front(),
+                                        sizeof(float) * shape.Size());
+    }
+
+    if (m_mode == DeviceType::Host)
+    {
+        std::size_t idx = 0;
+        for (std::size_t ii = 0; ii < DenseTotalLengthHost;
+             ii += PaddedHostColSize)
+            for (std::size_t i = ii; i < ii + m_shape.Cols(); ++i)
+            {
+                m_denseMatHost[i] = data.at(idx);
+                idx++;
+            }
+    }
+
+    if (m_mode == DeviceType::Cuda)
+        ToCuda();
 }
 
 int TensorData::GetBatchSize(int requiredDim) const
 {
-    return TensorShape.GetBatchSize(requiredDim);
+    return m_shape.GetBatchSize(requiredDim);
 }
 
 TensorData TensorData::CreateCopy() const
 {
-    TensorData tensorData(TensorShape, GetType(), GetDevice(), m_parentDescKey);
+    TensorData tensorData(m_shape, GetType(), GetDevice(), m_parentDescKey);
     tensorData.SetMode(m_mode);
 
     DeepCopy(tensorData, *this);
@@ -185,16 +199,20 @@ TensorData TensorData::CreateCopy() const
 void TensorData::SetMode(DeviceType type)
 {
     m_mode = type;
+    if (m_mode == DeviceType::Host && m_denseMatHost == nullptr)
+        m_allocateHost();
+    if (m_mode == DeviceType::Cuda && m_denseMatCuda == nullptr)
+        m_allocateCuda();
 }
 
-void TensorData::ToCuda() const
+void TensorData::ToCuda()
 {
-    m_toCuda(*this);
+    m_toCuda();
 }
 
-void TensorData::ToHost() const
+void TensorData::ToHost()
 {
-    m_toHost(*this);
+    m_toHost();
 }
 
 void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
@@ -212,60 +230,68 @@ void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
     if (mode == DeviceType::Cuda && matrixType == Type::Dense)
     {
         Compute::Cuda::CopyDeviceToDevice(
-            dst.DenseMatCuda, src.DenseMatCuda,
+            dst.m_denseMatCuda, src.m_denseMatCuda,
             dst.DenseTotalLengthCuda * sizeof(float));
-        std::memcpy(dst.DenseMatHost, src.DenseMatHost,
+        std::memcpy(dst.m_denseMatHost, src.m_denseMatHost,
                     dst.DenseTotalLengthHost * sizeof(float));
     }
     else if (mode == DeviceType::Host && matrixType == Type::Dense)
-        std::memcpy(dst.DenseMatHost, src.DenseMatHost,
+        std::memcpy(dst.m_denseMatHost, src.m_denseMatHost,
                     dst.DenseTotalLengthHost * sizeof(float));
-        //! TODO : implement Sparse copy and allocation for TensorData
     else if (mode == DeviceType::Cuda && matrixType == Type::Sparse)
         throw std::runtime_error("DeepCopy - Sparse Not implemented");
     else if (mode == DeviceType::Host && matrixType == Type::Sparse)
-        throw std::runtime_error("DeepCopy - Not implemented");
+        throw std::runtime_error("DeepCopy - Sparse Not implemented");
 }
 
-void TensorData::m_toCuda(const TensorData& tensorData)
+void TensorData::m_toCuda()
 {
-    if (tensorData.GetType() == Type::Sparse)
+    if (m_type == Type::Sparse)
     {
         throw std::runtime_error(
             "TensorData::m_toCuda - Sparse matrix not implemented");
     }
 
-    Compute::Cuda::CudaSetDevice(tensorData.m_device.GetID());
+    if (m_denseMatCuda == nullptr)
+        m_allocateCuda();
 
-    const auto colSize = tensorData.Cols();
-    const auto totalSize = tensorData.TensorShape.Size();
+    Compute::Cuda::CudaSetDevice(m_device.GetID());
+
+    const auto colSize = Cols();
+    const auto totalSize = Size();
 
     for (int rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
     {
-        float* cudaPtr = tensorData.DenseMatCuda + rowIdx * colSize;
-        float* hostPtr =
-            tensorData.DenseMatHost + rowIdx * tensorData.PaddedHostColSize;
-        const unsigned int bytesToCopy = colSize * sizeof(float);
+        auto* cudaPtr = m_denseMatCuda + static_cast<std::size_t>(rowIdx) *
+                        colSize;
+        auto* hostPtr =
+            m_denseMatHost + static_cast<std::size_t>(rowIdx) *
+            PaddedHostColSize;
 
-        Compute::Cuda::CopyHostToDevice(cudaPtr, hostPtr, bytesToCopy);
+        Compute::Cuda::CopyHostToDevice(cudaPtr, hostPtr,
+                                        colSize * sizeof(float));
     }
 }
 
-void TensorData::m_toHost(const TensorData& tensorData)
+void TensorData::m_toHost()
 {
-    if (tensorData.GetType() == Type::Sparse)
+    if (m_type == Type::Sparse)
     {
         throw std::runtime_error(
             "TensorData::m_toHost - Sparse matrix not implemented");
     }
 
-    const auto colSize = tensorData.Cols();
-    const auto totalSize = tensorData.TensorShape.Size();
+    if (m_denseMatHost == nullptr)
+        m_allocateHost();
+
+    const auto colSize = Cols();
+    const auto totalSize = m_shape.Size();
     for (int rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
     {
-        float* cudaPtr = tensorData.DenseMatCuda + rowIdx * colSize;
-        float* hostPtr =
-            tensorData.DenseMatHost + rowIdx * tensorData.PaddedHostColSize;
+        auto* cudaPtr = m_denseMatCuda + rowIdx * colSize;
+        auto* hostPtr =
+            m_denseMatHost + static_cast<std::size_t>(rowIdx) *
+            PaddedHostColSize;
         const size_t bytesToCopy = colSize * sizeof(float);
 
         Compute::Cuda::CopyDeviceToHost(hostPtr, cudaPtr,
@@ -273,38 +299,7 @@ void TensorData::m_toHost(const TensorData& tensorData)
     }
 }
 
-void TensorData::m_freeHost()
-{
-    if (m_type == Type::Sparse && SparseMatHost)
-    {
-        delete[] SparseMatHost;
-    }
-    else if (DenseMatHost)
-    {
-        Util::ResourceManager::DeReferenceHost(
-            static_cast<void*>(DenseMatHost));
-        DenseTotalLengthHost = 0;
-    }
-}
-
-void TensorData::m_freeCuda()
-{
-    if (m_device.GetID() >= 0)
-        Compute::Cuda::CudaSetDevice(m_device.GetID());
-
-    if (m_type == Type::Sparse && SparseMatCuda)
-    {
-        Compute::Cuda::CudaFree(static_cast<void*>(SparseMatCuda));
-    }
-    else if (DenseMatCuda)
-    {
-        Util::ResourceManager::DeReferenceCuda(static_cast<void*>(DenseMatCuda),
-                                               m_device.GetID());
-        DenseTotalLengthCuda = 0;
-    }
-}
-
-void TensorData::m_allocateHost(bool preserve)
+void TensorData::m_allocateHost()
 {
     const auto colSize = Cols();
 
@@ -322,49 +317,51 @@ void TensorData::m_allocateHost(bool preserve)
 
     unsigned long totalSize = paddedColumnSize;
 
-    if (TensorShape.Dim() > 1)
+    if (m_shape.Dim() > 1)
     {
-        for (auto i = 0; i < static_cast<int>(TensorShape.Dim()) - 1; ++i)
-            totalSize *= TensorShape.At(i);
+        for (auto i = 0; i < static_cast<int>(m_shape.Dim()) - 1; ++i)
+            totalSize *= m_shape.At(i);
     }
 
     PaddedHostColSize = paddedColumnSize;
     DenseTotalLengthHost = totalSize;
 
-    if (preserve)
+    if (m_preserve)
     {
-        DenseMatHost = static_cast<float*>(
+        m_denseMatHost = static_cast<float*>(
             Util::ResourceManager::GetMemoryHost(
                 totalSize * sizeof(float), true));
     }
     else
-        DenseMatHost = static_cast<float*>(
+        m_denseMatHost = static_cast<float*>(
             Util::ResourceManager::GetMemoryHost(totalSize * sizeof(float)));
 
-    std::memset(DenseMatHost, 0, totalSize * sizeof(float));
+    //if (m_mode == DeviceType::Host)
+    std::memset(m_denseMatHost, 0, totalSize * sizeof(float));
 }
 
-void TensorData::m_allocateCuda(bool preserve)
+void TensorData::m_allocateCuda()
 {
     if (m_type == Type::Sparse)
     {
         throw std::runtime_error("m_allocate - Sparse not implemented");
     }
 
-    //cudaSetDevice(m_device.GetID());
-    const unsigned long totalSize = TensorShape.Size();
+    const unsigned long totalSize = m_shape.Size();
 
-    if (preserve)
+    if (m_preserve)
     {
-        DenseMatCuda = static_cast<float*>(
+        m_denseMatCuda = static_cast<float*>(
             Util::ResourceManager::GetMemoryCuda(
                 totalSize * sizeof(float), true));
     }
     else
-        DenseMatCuda = static_cast<float*>(Util::ResourceManager::GetMemoryCuda(
-            totalSize * sizeof(float)));
+        m_denseMatCuda = static_cast<float*>(
+            Util::ResourceManager::GetMemoryCuda(
+                totalSize * sizeof(float)));
     DenseTotalLengthCuda = totalSize;
 
-    Compute::Dense::Cuda::Scalar(DenseMatCuda, 0.0f, DenseTotalLengthCuda);
+    // if (m_mode == DeviceType::Cuda)
+    Compute::Dense::Cuda::Scalar(m_denseMatCuda, 0.0f, DenseTotalLengthCuda);
 }
 } // namespace Sapphire::TensorUtil

@@ -39,10 +39,10 @@ public:
         m_tensorDescKey = key;
     }
 
-    [[nodiscard]] std::unique_ptr<float[]> GetForwardDataCopy() const;
-    [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
+    [[nodiscard]] std::vector<float> GetForwardDataCopy() const;
+    [[nodiscard]] std::vector<float> GetBackwardDataCopy() const;
 
-    void SetForwardData(std::vector<float> data) const;
+    void SetForwardData(const std::vector<float>& data) const;
     void SetBackwardData(const std::vector<float>& data) const;
 
     void ToCuda();

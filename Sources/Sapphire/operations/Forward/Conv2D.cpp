@@ -15,9 +15,9 @@ namespace Sapphire::NN
 {
 Conv2D::Conv2D(std::pair<int, int> inputSize, std::pair<int, int> stride,
                std::pair<int, int> padSize, std::pair<int, int> dilation,
-               Util::SharedPtr<Optimizer::Optimizer> optimizer,
-               Tensor kernel,
-               Tensor bias)
+               Optimizer::Optimizer* optimizer,
+               Tensor kernel, Tensor bias)
+    : Unit(optimizer)
 {
     const auto kernelShape = kernel.GetShape();
     const auto device = kernel.GetDevice();

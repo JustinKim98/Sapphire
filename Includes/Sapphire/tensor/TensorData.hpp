@@ -7,6 +7,7 @@
 #ifndef SAPPHIRE_TENSORUTIL_TENSOR_DATA_HPP
 #define SAPPHIRE_TENSORUTIL_TENSOR_DATA_HPP
 
+#include <memory>
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
@@ -20,42 +21,29 @@ public:
     //! TensorData is defined only in Host Mode
     TensorData(Shape shape, Type type, bool preserve = false);
     //! TensorData is configured in both Host and Cuda Mode
-    TensorData(Shape shape, Type type, CudaDevice device, bool preserve = false);
+    TensorData(Shape shape, Type type, CudaDevice device,
+               bool preserve = false);
 
     TensorData(Shape shape, Type type, CudaDevice device,
                int parentDescKey, bool preserve = false);
 
     //! Shallow copies the internal data
-    TensorData(const TensorData& tensorData);
+    TensorData(const TensorData& tensorData) = default;
     TensorData(TensorData&& tensorData) noexcept;
-    TensorData& operator=(const TensorData& tensorData);
+    TensorData& operator=(const TensorData& tensorData) = default;
     TensorData& operator=(TensorData&& tensorData) noexcept;
-    ~TensorData();
+    ~TensorData() = default;
 
     unsigned long DenseTotalLengthHost = 0;
     unsigned long DenseTotalLengthCuda = 0;
     unsigned long SparseTotalLength = 0;
     unsigned long PaddedHostColSize = 0;
 
-    [[nodiscard]] const float* GetDenseHost() const
-    {
-        return DenseMatHost;
-    }
+    [[nodiscard]] std::vector<float> GetDataCopy();
 
-    [[nodiscard]] const float* GetDenseCuda() const
-    {
-        return DenseMatCuda;
-    }
+    void SetData(std::vector<float> data);
 
-    [[nodiscard]] float* GetMutableDenseHost()
-    {
-        return DenseMatHost;
-    }
-
-    [[nodiscard]] float* GetMutableDenseCuda()
-    {
-        return DenseMatCuda;
-    }
+    void Reshape(const Shape& shape);
 
     [[nodiscard]] int GetDescriptorKey() const
     {
@@ -64,18 +52,25 @@ public:
 
     [[nodiscard]] int GetBatchSize(int requiredDim) const;
 
-    SparseMatrix* SparseMatHost = nullptr;
-    SparseMatrix* SparseMatCuda = nullptr;
-    Shape TensorShape;
+    [[nodiscard]] Shape GetShape()
+    {
+        return m_shape;
+    }
+
 
     [[nodiscard]] int Rows() const
     {
-        return TensorShape.Rows();
+        return m_shape.Rows();
     }
 
     [[nodiscard]] int Cols() const
     {
-        return TensorShape.Cols();
+        return m_shape.Cols();
+    }
+
+    [[nodiscard]] int Size() const
+    {
+        return m_shape.Size();
     }
 
     //! Gets device descriptor (Sparse or Dense)
@@ -96,18 +91,18 @@ public:
 
     [[nodiscard]] Shape GetShape() const
     {
-        return TensorShape;
+        return m_shape;
     }
 
     [[nodiscard]] std::size_t GetHostElementSize() const
     {
-        return static_cast<std::size_t>(TensorShape.Size() / TensorShape.Cols())
+        return static_cast<std::size_t>(m_shape.Size() / m_shape.Cols())
                * PaddedHostColSize;
     }
 
     [[nodiscard]] std::size_t GetCudaElementSize() const
     {
-        return TensorShape.Size();
+        return m_shape.Size();
     }
 
 
@@ -127,11 +122,11 @@ public:
     //! Transfers data to target cuda device from current device
     //! immediately returns false if change device is requested to same device
     //! This operation is available only on Cuda type tensorData
-    void ToCuda() const;
+    void ToCuda();
 
     //! Sends data to host
     //! This operation is available only on Cuda type tensorData
-    void ToHost() const;
+    void ToHost();
 
     //! Helper static functions
     //! These helper functions are used to control the tensorData from the
@@ -140,36 +135,57 @@ public:
     //! Deep copies tensor data from src to dst
     static void DeepCopy(TensorData& dst, const TensorData& src);
 
+
+    //!Getters for raw pointers
+    [[nodiscard]] const float* HostRawPtr() const
+    {
+        return m_denseMatHost;
+    }
+
+    [[nodiscard]] const float* CudaRawPtr() const
+    {
+        return m_denseMatCuda;
+    }
+
+    [[nodiscard]] float* HostMutableRawPtr() const
+    {
+        return m_denseMatHost;
+    }
+
+    [[nodiscard]] float* CudaMutableRawPtr() const
+    {
+        return m_denseMatCuda;
+    }
+
+
+    SparseMatrix* SparseMatHost = nullptr;
+    SparseMatrix* SparseMatCuda = nullptr;
+
 private:
     //! Copies data on the Host to Gpu
     //! Only available for Cuda tensors
-    static void m_toCuda(const TensorData& tensorData);
+    void m_toCuda();
 
     //! Copies data on the Host to Gpu
     //! Only available for Cuda tensors
-    static void m_toHost(const TensorData& tensorData);
+    void m_toHost();
 
     //! Allocates data on the Host with given batchSize
-    void m_allocateHost(bool preserve);
+    void m_allocateHost();
 
     //! Allocates data on the GPU with given batchSize
-    void m_allocateCuda(bool preserve);
+    void m_allocateCuda();
 
-    //! Free space allocated on Host memory
-    void m_freeHost();
-
-    //! Free space allocated on GPU memory
-    void m_freeCuda();
-
-    float* DenseMatHost = nullptr;
-    float* DenseMatCuda = nullptr;
-
+    Shape m_shape;
+    float* m_denseMatHost = nullptr;
+    float* m_denseMatCuda = nullptr;
     int m_parentDescKey = -1;
 
     Type m_type = Type::Dense;
     DeviceType m_mode = DeviceType::Host;
 
     CudaDevice m_device;
+    bool m_preserve;
 };
 } // namespace Sapphire::TensorUtil
 

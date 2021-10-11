@@ -30,15 +30,15 @@
 #include <iostream>
 #include "doctest.h"
 
-// #define GraphTest
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
-// #define ConvolutionTest
-// #define BasicGraphTest
+#define GraphTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 #define ModelTest
 // #define SparseTest
 
@@ -107,7 +107,7 @@ TEST_CASE("Basics")
     {
         std::cout << "Reshape" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            ReshapeTest(false);
+            ReshapeTest(true);
         Util::ResourceManager::ClearAll();
     }
 
@@ -360,8 +360,8 @@ TEST_CASE("Model Test")
 {
     SUBCASE("SimpleLinearModelTest")
     {
-        int xFeatures = 300;
-        int yFeatures = 300;
+        int xFeatures = 3000;
+        int yFeatures = 3000;
         int batchSize = 100;
         std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
         std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
@@ -371,132 +371,5 @@ TEST_CASE("Model Test")
     }
 }
 
-#endif
-
-
-#ifdef SparseTest
-
-TEST_CASE("SparseMemory function Test")
-{
-    SUBCASE("SparseMemoryAllocationHost")
-    {
-        std::cout << "Testing Sparse Memory Allocation for Host ...";
-        SparseMemoryAllocationHost();
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("LoadDistMemoryAllocationHost")
-    {
-        std::cout << "Testing Load Distribution Memory Allocation forHost...";
-        LoadDistMemoryAllocationHost();
-        std::cout << " Done\n  " << std::endl;
-    }
-
-    SUBCASE("SparseMemoryDevice")
-    {
-        std::cout << "Testing Sparse Memory Allocation For Device ...";
-        SparseMemoryAllocationDevice();
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("SparseMemoryCopy Device To Device")
-    {
-        std::cout << "Testing Sparse Memory Copy between device ...";
-        SparseMemoryCopyDeviceToDevice();
-        std::cout << " Done" << std::endl;
-    }
-}
-
-TEST_CASE("Device Sparse Gemm Test")
-{
-    SUBCASE("Sparse Multiplication Test (complex)")
-    {
-        std::cout << "Testing Sparse Multiplication (complex) ..." << std::endl;
-        const auto elapsedTime =
-            SparseGemmTestComplex(50, 50, 50, 1, false, false);
-        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-            << "\n"
-            << std::endl;
-    }
-
-    SUBCASE("Sparse Multiplication Test (simple)")
-    {
-        std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
-        const auto elapsedTime = SparseGemmTestSimple(5, 5, 5, 5, false, false);
-        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-            << "\n"
-            << std::endl;
-    }
-}
-
-
-TEST_CASE("Sparse Performance Test")
-{
-    SUBCASE("Matrix conversion test")
-    {
-        std::cout << "Testing conversion ..." << std::endl;
-        SparseMatrixConversionTest(100, 100, 10, 0.1f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("Correctness test (Cuda)")
-    {
-        std::cout << "Testing correctness (Cuda) ..." << std::endl;
-        SparseTestCorrectnessCuda(1000, 1000, 50, 3, 0.5f, false);
-        SparseTestCorrectnessCuda(40, 50, 500, 3, 0.5f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("Correctness test (Host)")
-    {
-        std::cout << "Testing correctness (Host) ..." << std::endl;
-        SparseTestCorrectnessHost(5, 5, 50, 3, 0.9f, false);
-        SparseTestCorrectnessHost(500, 500, 500, 3, 0.5f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("General Performance Test")
-    {
-        const std::filesystem::path workDir = "/home/jwkim98/Desktop";
-        const bool printResults = true;
-        const bool writeResults = false;
-        const size_t iterations = 10;
-
-        std::cout << "Testing performance ..." << std::endl;
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<uint32_t> uniform(100, 300);
-
-        std::vector<PerformanceData> performanceData(10 * iterations);
-        size_t count = 0;
-        for (size_t i = 0; i < iterations; ++i)
-        {
-            float sparsity = 0.0f;
-            while (sparsity < 1.0f)
-            {
-                performanceData[count] = PerformanceTest(
-                    uniform(gen), uniform(gen), uniform(gen), 10, sparsity);
-                if (printResults)
-                    performanceData[count].PrintData();
-                sparsity += 0.1f;
-                count += 1;
-            }
-        }
-        std::cout << " Done" << std::endl;
-
-        if (writeResults)
-        {
-            std::filesystem::current_path(workDir);
-            std::ofstream file;
-            file.open("performance.csv", std::ios::out | std::ios::app);
-            PerformanceData::WriteCsvHeader(file);
-            for (const auto& data : performanceData)
-            {
-                data.WriteCsv(file);
-            }
-            file.close();
-        }
-    }
-}
 #endif
 } // namespace Sapphire::Test

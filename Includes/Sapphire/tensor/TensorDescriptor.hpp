@@ -9,7 +9,6 @@
 
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -46,7 +45,7 @@ public:
     [[nodiscard]] CudaDevice GetCudaDevice() const;
     [[nodiscard]] Type GetType() const;
 
-    void SetShape(Shape shape);
+    void Reshape(Shape shape);
 
     //! Moves internal TensorData to cuda
     void ToCuda();

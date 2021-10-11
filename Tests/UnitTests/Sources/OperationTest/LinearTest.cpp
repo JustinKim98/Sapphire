@@ -50,7 +50,7 @@ void TestLinear(bool print)
     bias.ToCuda();
 
     NN::Linear linear(inputs, outputs,
-                      Util::SharedPtr<Optimizer::SGD>::Make(0.0f),
+                      new Optimizer::SGD(0.0f),
                       gpu);
 
     auto gpuOutput = linear(input, weight, bias);
@@ -67,7 +67,7 @@ void TestLinear(bool print)
                                        std::make_unique<Initialize::Zeros>());
 
     NN::Linear linearHost(inputs, outputs,
-                          Util::SharedPtr<Optimizer::SGD>::Make(0.0f), gpu);
+                          new Optimizer::SGD(0.0f), gpu);
     const auto hostOutput = linearHost(input, weight, bias);
     const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
     hostOutput.SetBackwardData(backwardData);

@@ -46,7 +46,7 @@ void TransposeTest(bool printResult)
     Compute::Transpose(transposedTensor, inputTensor);
     //! Use the buffer to store the host result temporarily
     auto* cpuResult = new float[transposedTensor.DenseTotalLengthHost];
-    std::memcpy(cpuResult, transposedTensor.GetDenseHost(),
+    std::memcpy(cpuResult, transposedTensor.HostRawPtr(),
                 transposedTensor.DenseTotalLengthHost * sizeof(float));
 
     //! Re-initialize the transoised tensor with zeros
@@ -67,7 +67,7 @@ void TransposeTest(bool printResult)
     transposedTensor.SetMode(DeviceType::Host);
 
     //! Compare the results
-    const float* cudaResult = transposedTensor.GetDenseHost();
+    const float* cudaResult = transposedTensor.HostRawPtr();
     CheckNoneZeroEquality(cpuResult, cudaResult,
                           transposedTensor.DenseTotalLengthHost, printResult);
 

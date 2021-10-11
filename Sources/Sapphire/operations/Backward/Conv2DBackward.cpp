@@ -21,14 +21,14 @@ Conv2DBackProp::Conv2DBackProp(
     TensorUtil::TensorData x,
     std::pair<int, int> stride, std::pair<int, int> dilation,
     std::pair<int, int> padding,
-    Util::SharedPtr<Optimizer::Optimizer> optimizer)
+    Optimizer::Optimizer* optimizer)
     : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
                       { std::move(filter), std::move(bias) }, { std::move(x) },
                       {},
-                      std::move(optimizer)),
-      m_stride(stride),
-      m_dilation(dilation),
-      m_padding(padding),
+                      optimizer),
+      m_stride(std::move(stride)),
+      m_dilation(std::move(dilation)),
+      m_padding(std::move(padding)),
       m_hasBias(true)
 {
 }
@@ -39,13 +39,13 @@ Conv2DBackProp::Conv2DBackProp(
     TensorUtil::TensorData x,
     std::pair<int, int> stride,
     std::pair<int, int> dilation, std::pair<int, int> padding,
-    Util::SharedPtr<Optimizer::Optimizer> optimizer)
+    Optimizer::Optimizer* optimizer)
     : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
                       { std::move(filter) }, { std::move(x) },
-                      {}, std::move(optimizer)),
-      m_stride(stride),
-      m_dilation(dilation),
-      m_padding(padding),
+                      {}, optimizer),
+      m_stride(std::move(stride)),
+      m_dilation(std::move(dilation)),
+      m_padding(std::move(padding)),
       m_hasBias(false)
 {
 }

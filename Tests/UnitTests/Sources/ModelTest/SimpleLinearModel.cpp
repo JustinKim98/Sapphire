@@ -10,6 +10,7 @@
 #include <Sapphire/operations/Forward/ReLU.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -24,7 +25,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     const CudaDevice gpu(0, "cuda0");
 
     NN::Linear linear(inputSize, outputSize,
-                      Util::SharedPtr<Optimizer::SGD>::Make(learningRate), gpu);
+                      new Optimizer::SGD(learningRate), gpu);
 
     Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense, true);
     Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense, true);
@@ -56,7 +57,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     {
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
-       // y = NN::ReLU(linear(y, weight1, bias1));
+        // y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
         if (i % 100 == 0)
         {
@@ -67,7 +68,6 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
         ModelManager::CurModel().BackProp(loss);
         if (i % 10 == 0)
             Util::ResourceManager::Clean();
-        
     }
     Util::ResourceManager::ClearAll();
 }

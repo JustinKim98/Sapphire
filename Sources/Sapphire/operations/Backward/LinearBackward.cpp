@@ -15,7 +15,7 @@ LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
                                TensorUtil::TensorData weight,
                                TensorUtil::TensorData bias,
                                TensorUtil::TensorData x,
-                               Util::SharedPtr<Optimizer::Optimizer> optimizer,
+                               Optimizer::Optimizer* optimizer,
                               int batchSize)
     : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
                       { std::move(weight), std::move(bias) },

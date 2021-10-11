@@ -9,7 +9,6 @@
 
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <utility>
@@ -22,7 +21,7 @@ public:
     Conv2D(std::pair<int, int> inputSize,
            std::pair<int, int> stride,
            std::pair<int, int> padSize, std::pair<int, int> dilation,
-           Util::SharedPtr<Optimizer::Optimizer> optimizer,
+           Optimizer::Optimizer* optimizer,
            Tensor kernel, Tensor bias = Tensor());
 
     ~Conv2D() override = default;
@@ -50,7 +49,6 @@ private:
     bool m_isSparse;
     int m_yRows, m_yCols;
 
-    Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
 };
 };
 

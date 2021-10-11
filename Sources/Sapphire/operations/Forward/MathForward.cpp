@@ -8,7 +8,6 @@
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MathBackward.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 
 namespace Sapphire::NN::Functional

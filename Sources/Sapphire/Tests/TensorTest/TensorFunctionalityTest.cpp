@@ -36,7 +36,7 @@ void SendDataBetweenHostDevice(bool print)
 
     //! Save the original data on the separate memory
     auto* originalData = new float[tensorData.DenseTotalLengthHost];
-    std::memcpy(originalData, tensorData.GetMutableDenseHost(),
+    std::memcpy(originalData, tensorData.HostMutableRawPtr(),
                 tensorData.DenseTotalLengthHost * sizeof(float));
 
     //! Random data should be copied to cuda
@@ -44,13 +44,13 @@ void SendDataBetweenHostDevice(bool print)
 
     //! Re-Initialize data on host with zero
     for (unsigned long i = 0; i < tensorData.DenseTotalLengthHost; ++i)
-        tensorData.GetMutableDenseHost()[i] = 0.0f;
+        tensorData.HostMutableRawPtr()[i] = 0.0f;
 
     //! Zeros on the host memory should be overwritten by copied data on cuda
     tensorData.ToHost();
 
     //! Checks whether data has been succesfully copied to host 
-    CheckNoneZeroEquality(tensorData.GetDenseHost(), originalData,
+    CheckNoneZeroEquality(tensorData.HostRawPtr(), originalData,
                           tensorData.DenseTotalLengthHost, print, 0.1f);
 
     //! Clear the Resourcemanager
@@ -76,7 +76,7 @@ void TensorDataCopyOnCuda(bool print)
 
     //! Save the original data on the separate memory
     auto* originalData = new float[tensorData.DenseTotalLengthHost];
-    std::memcpy(originalData, tensorData.GetMutableDenseHost(),
+    std::memcpy(originalData, tensorData.HostMutableRawPtr(),
                 tensorData.DenseTotalLengthHost * sizeof(float));
 
     //! Copy data to cuda
@@ -85,7 +85,7 @@ void TensorDataCopyOnCuda(bool print)
 
     //! Re-Initialize data on host with zero
     for (unsigned long i = 0; i < tensorData.DenseTotalLengthHost; ++i)
-        tensorData.GetMutableDenseHost()[i] = 0.0f;
+        tensorData.HostMutableRawPtr()[i] = 0.0f;
 
     //! Create deep copy of the original tensorData
     TensorUtil::TensorData copiedTensorData = tensorData.CreateCopy();
@@ -95,15 +95,15 @@ void TensorDataCopyOnCuda(bool print)
     copiedTensorData.SetMode(DeviceType::Host);
 
     //! Checks whether data has been succesfully copied to host
-    CheckNoneZeroEquality(copiedTensorData.GetDenseHost(), originalData,
+    CheckNoneZeroEquality(copiedTensorData.HostRawPtr(), originalData,
                           copiedTensorData.DenseTotalLengthHost, print);
 
     //! Check equality of pointers
-    CHECK((std::uintptr_t)(tensorData.GetDenseHost()) !=
-        (std::uintptr_t)(copiedTensorData.GetDenseHost()));
+    CHECK((std::uintptr_t)(tensorData.HostRawPtr()) !=
+        (std::uintptr_t)(copiedTensorData.HostRawPtr()));
 
-    CHECK((std::uintptr_t)(tensorData.GetDenseCuda()) !=
-        (std::uintptr_t)(copiedTensorData.GetDenseCuda()));
+    CHECK((std::uintptr_t)(tensorData.CudaRawPtr()) !=
+        (std::uintptr_t)(copiedTensorData.CudaRawPtr()));
 
     TensorUtil::TensorData copyConstructedTensorData = tensorData;
     delete[] originalData;
@@ -130,13 +130,13 @@ void TensorDataCopyOnHost(bool print)
     TensorUtil::TensorData copiedTensorData = tensorData.CreateCopy();
 
     //! Checks whether data has been succesfully copied to host
-    CheckNoneZeroEquality(copiedTensorData.GetDenseHost(),
-                          tensorData.GetDenseHost(),
+    CheckNoneZeroEquality(copiedTensorData.HostRawPtr(),
+                          tensorData.HostRawPtr(),
                           copiedTensorData.DenseTotalLengthHost, print);
 
     //! Check equality of pointers
-    CHECK((std::uintptr_t)(tensorData.GetDenseHost()) !=
-        (std::uintptr_t)(copiedTensorData.GetDenseHost()));
+    CHECK((std::uintptr_t)(tensorData.HostRawPtr()) !=
+        (std::uintptr_t)(copiedTensorData.HostRawPtr()));
 
     TensorUtil::TensorData copyConstructedTensorData = tensorData;
 }

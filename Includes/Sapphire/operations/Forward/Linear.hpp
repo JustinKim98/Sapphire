@@ -9,7 +9,6 @@
 
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 
@@ -19,7 +18,7 @@ class Linear : public Unit
 {
 public:
     Linear(int inputFeatureSize, int outputFeatureSize,
-           Util::SharedPtr<Optimizer::Optimizer> optimizer,
+           Optimizer::Optimizer* optimizer,
            CudaDevice device = CudaDevice(),
            bool isSparse = false);
     ~Linear() override = default;
@@ -32,7 +31,22 @@ public:
     Tensor operator()(Tensor& x, Tensor weight, Tensor bias);
 
 protected:
-    void m_addTensorData(std::string name, TensorUtil::TensorData tensorData);
+    void m_addTensorData(std::string name, TensorUtil::TensorData tensorData)
+    {
+        m_tensorDataMap[name] = tensorData;
+    }
+
+    [[nodiscard]] bool m_exists(std::string name) const
+    {
+        if (m_tensorDataMap.find(name) == m_tensorDataMap.end())
+            return false;
+        return true;
+    }
+
+    TensorUtil::TensorData& m_getTensorData(std::string name)
+    {
+        return m_tensorDataMap.at(name);
+    }
 
     std::unordered_map<std::string, TensorUtil::TensorData> m_tensorDataMap;
 
@@ -45,7 +59,6 @@ private:
 
     int m_inputs;
     int m_outputs;
-    Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
     CudaDevice m_device;
     bool m_isSparse;
 };

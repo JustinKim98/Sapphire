@@ -26,7 +26,7 @@ public:
                             TensorUtil::TensorData weight,
                             TensorUtil::TensorData bias,
                             TensorUtil::TensorData x,
-                            Util::SharedPtr<Optimizer::Optimizer> optimizer,
+                            Optimizer::Optimizer* optimizer,
                             int batchSize);
 
 private:
