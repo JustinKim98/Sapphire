@@ -25,8 +25,7 @@ void Normal(TensorUtil::TensorData& data, float mean, float sd)
     else
     {
         Dense::Naive::Normal(data.HostMutableRawPtr(), mean, sd,
-                             data.GetShape(),
-                             data.PaddedHostColSize);
+                             data.GetShape());
     }
 }
 
@@ -43,8 +42,7 @@ void Uniform(TensorUtil::TensorData& data, float min, float max)
     else
     {
         Dense::Naive::Uniform(data.HostMutableRawPtr(), min, max,
-                              data.GetShape(),
-                              data.PaddedHostColSize);
+                              data.GetShape());
     }
 }
 
@@ -59,8 +57,7 @@ void Ones(TensorUtil::TensorData& data)
     }
     else
     {
-        Dense::Naive::Scalar(data.HostMutableRawPtr(), 1.0f, data.GetShape(),
-                             data.PaddedHostColSize);
+        Dense::Naive::Scalar(data.HostMutableRawPtr(), 1.0f, data.GetShape());
     }
 }
 
@@ -75,8 +72,7 @@ void Zeros(TensorUtil::TensorData& data)
     }
     else
     {
-        Dense::Naive::Scalar(data.HostMutableRawPtr(), 0.0f, data.GetShape(),
-                             data.PaddedHostColSize);
+        Dense::Naive::Scalar(data.HostMutableRawPtr(), 0.0f, data.GetShape());
     }
 }
 
@@ -91,8 +87,7 @@ void Scalar(TensorUtil::TensorData& data, float value)
     }
     else
     {
-        Dense::Naive::Scalar(data.HostMutableRawPtr(), value, data.GetShape(),
-                             data.PaddedHostColSize);
+        Dense::Naive::Scalar(data.HostMutableRawPtr(), value, data.GetShape());
     }
 }
 
@@ -111,7 +106,7 @@ void HeNormal(TensorUtil::TensorData& data, int fanIn)
     {
         Dense::Naive::Normal(data.HostMutableRawPtr(), 0.0,
                              2.0f / std::sqrt(static_cast<float>(fanIn)),
-                             data.GetShape(), data.PaddedHostColSize);
+                             data.GetShape());
     }
 }
 
@@ -131,7 +126,7 @@ void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
         Dense::Naive::Normal(data.HostMutableRawPtr(), 0.0,
                              1.0f / std::sqrt(
                                  static_cast<float>(fanIn + fanOut)),
-                             data.GetShape(), data.PaddedHostColSize);
+                             data.GetShape());
     }
 }
 } // namespace Sapphire::Compute::Initialize

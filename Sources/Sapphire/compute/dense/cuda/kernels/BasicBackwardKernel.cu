@@ -44,7 +44,7 @@ __global__ void PowBackwardKernel(float* dx, const float* dy, const float* x,
     }
 }
 
-__global__ void MeanBackwardKernel(float* dx, const float* x, const float* dy,
+__global__ void MeanBackwardKernel(float* dx,  const float* dy,
     unsigned int yTotalSize,
                                    unsigned int unitSize, unsigned int stride)
 {

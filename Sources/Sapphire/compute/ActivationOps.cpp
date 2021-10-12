@@ -16,11 +16,8 @@ void SoftMax(TensorData& y, const TensorData& x)
     assert(y.Mode() == x.Mode());
     assert(y.GetDevice() == x.GetDevice());
     const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
     const auto unitSize = y.Cols();
     const auto totalSize = y.Size();
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -32,7 +29,7 @@ void SoftMax(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::Softmax(y.HostMutableRawPtr(), x.HostRawPtr(),
-                              totalSizeWithPadding, unitSize, paddedN);
+                              totalSize, unitSize);
     }
 }
 
@@ -41,10 +38,7 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
     assert(y.Mode() == x.Mode());
     assert(y.GetDevice() == x.GetDevice());
     const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.Size();
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -55,7 +49,7 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
     else
     {
         Dense::Naive::LeakyReLU(y.HostMutableRawPtr(), x.HostRawPtr(), a,
-                                totalSizeWithPadding, N, paddedN);
+                                totalSize);
     }
 }
 
@@ -64,10 +58,7 @@ void ReLU(TensorData& y, const TensorData& x)
     assert(y.Mode() == x.Mode());
     assert(y.GetDevice() == x.GetDevice());
     const auto device = y.GetDevice();
-    const auto N = y.Cols();
-    const auto paddedN = y.PaddedHostColSize;
     const auto totalSize = y.Size();
-    const auto totalSizeWithPadding = (totalSize / N) * paddedN;
 
     if (y.Mode() == DeviceType::Cuda)
     {
@@ -77,7 +68,7 @@ void ReLU(TensorData& y, const TensorData& x)
     else
     {
         Dense::Naive::ReLU(y.HostMutableRawPtr(), x.HostRawPtr(),
-                           totalSizeWithPadding, N, paddedN);
+                           totalSize);
     }
 }
 
@@ -87,7 +78,6 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
     assert(dx.GetDevice() == dy.GetDevice() &&
         dx.GetDevice() == x.GetDevice());
     const auto device = dx.GetDevice();
-    const auto paddedColSize = dx.PaddedHostColSize;
     const auto totalSize = dx.Size();
 
     if (dx.Mode() == DeviceType::Cuda)
@@ -99,8 +89,7 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
     else
     {
         Dense::Naive::ReLUBackward(dx.HostMutableRawPtr(), dy.HostRawPtr(),
-                                   x.HostRawPtr(), totalSize, dx.Cols(),
-                                   paddedColSize);
+                                   x.HostRawPtr(), totalSize);
     }
 }
 

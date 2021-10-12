@@ -77,6 +77,6 @@ void MeanBackProp::m_runBackProp()
     auto& dx = m_dxVector[0];
     const auto& dy = m_dyVector[0];
     const auto& x = m_constants[0];
-    Compute::MeanBackward(dx, dy, x, m_dim);
+    Compute::MeanBackward(dx, dy, m_dim);
 }
 } // namespace Sapphire::BackProp

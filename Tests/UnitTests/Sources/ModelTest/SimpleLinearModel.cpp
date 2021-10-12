@@ -59,7 +59,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
         y = NN::ReLU(y);
         // y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
-        if (i % 100 == 0)
+        if (i % 1 == 0)
         {
             const auto lossData = loss.GetForwardDataCopy();
             std::cout << "epoch: " << i << " loss : " << lossData[0]

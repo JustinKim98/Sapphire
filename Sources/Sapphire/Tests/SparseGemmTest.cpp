@@ -361,9 +361,9 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
     Compute::CreateSparseMatrixWithDenseMatrix(&hostSparseB, hostDenseB, k, n,
                                                paddedN, numMatrices);
 
-    Compute::Dense::Naive::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
+    Compute::Dense::Naive::Gemm(m * paddedN * numMatrices, hostDenseOut,
                                      hostDenseA, hostDenseB, hostDenseOut, m, n,
-                                     paddedN, k, paddedK);
+                                     k);
 
     Compute::Sparse::Naive::Gemm(&hostSparseOut, hostSparseA, hostSparseB, m, n,
                                  numMatrices);
@@ -488,9 +488,9 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
     Compute::DeepCopyHostToDevice(cudaSparseB, hostSparseB, numMatrices, 0);
 
     const auto naiveDenseBegin = std::chrono::system_clock::now();
-    Compute::Dense::Naive::NaiveGemm(m * paddedN * numMatrices, hostDenseOut,
+    Compute::Dense::Naive::Gemm(m * paddedN * numMatrices, hostDenseOut,
                                      hostDenseA, hostDenseB, hostDenseOut, m, n,
-                                     paddedN, k, paddedK);
+                                     k);
     const auto naiveDenseEnd = std::chrono::system_clock::now();
     const auto naiveDenseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(naiveDenseEnd -

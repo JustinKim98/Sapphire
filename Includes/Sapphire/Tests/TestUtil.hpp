@@ -50,8 +50,8 @@ void CheckNoneZeroEquality(const TPtrA ptrA, const TPtrB ptrB, unsigned size,
     CHECK(!isAllZero);
 }
 
-void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
-                   unsigned padSize, bool print);
+void CheckNoneZero(const float* ptr, unsigned size,
+                   bool print);
 
 template <typename Func>
 void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
@@ -247,8 +247,8 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
     function(data, params...);
 
     CheckNoneZero(data.HostRawPtr(),
-                  data.HostTotalSize, data.GetShape().Cols()
-                  , data.PaddedHostColSize, print);
+                  data.HostTotalSize, print
+        );
 
     //! Initialize host with zeros
     Compute::Initialize::Zeros(data);
@@ -263,8 +263,8 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
 
     CheckNoneZero(data.HostRawPtr(),
                   data.HostTotalSize,
-                  data.GetShape().Cols()
-                  , data.PaddedHostColSize, print);
+                  print
+        );
 }
 
 

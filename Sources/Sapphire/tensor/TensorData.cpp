@@ -59,7 +59,6 @@ TensorData::TensorData(TensorData&& tensorData) noexcept
     : HostTotalSize(tensorData.HostTotalSize),
       DenseTotalLengthCuda(tensorData.DenseTotalLengthCuda),
       SparseTotalLength(tensorData.SparseTotalLength),
-      PaddedHostColSize(tensorData.PaddedHostColSize),
       SparseMatHost(tensorData.SparseMatHost),
       SparseMatCuda(tensorData.SparseMatCuda),
       m_shape(std::move(tensorData.m_shape)),
@@ -83,7 +82,6 @@ TensorData& TensorData::operator=(TensorData&& tensorData) noexcept
 {
     HostTotalSize = tensorData.HostTotalSize;
     SparseTotalLength = tensorData.SparseTotalLength;
-    PaddedHostColSize = tensorData.PaddedHostColSize;
     m_denseHost = tensorData.m_denseHost;
     m_denseCuda = tensorData.m_denseCuda;
     SparseMatHost = tensorData.SparseMatHost;
@@ -138,7 +136,6 @@ void TensorData::Reshape(const Shape& shape)
             for (auto i = 0; i < static_cast<int>(m_shape.Dim()) - 1; ++i)
                 totalSize *= m_shape.At(i);
         }
-        PaddedHostColSize = paddedColumnSize;
         HostTotalSize = totalSize;
 
         if (m_preserve)
@@ -156,13 +153,9 @@ std::vector<float> TensorData::GetDataCopy()
         m_toHost();
 
     auto dataPtr = std::vector<float>(m_shape.Size());
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < HostTotalSize; ii += PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + m_shape.Cols(); ++i)
-        {
-            dataPtr[idx] = m_denseHost[i];
-            idx++;
-        }
+
+    for (std::size_t i = 0; i < HostTotalSize; ++i)
+        dataPtr[i] = m_denseHost[i];
 
     return dataPtr;
 }
@@ -187,13 +180,9 @@ void TensorData::SetData(std::vector<float> data)
     if (m_mode == DeviceType::Host)
     {
         std::size_t idx = 0;
-        for (std::size_t ii = 0; ii < HostTotalSize;
-             ii += PaddedHostColSize)
-            for (std::size_t i = ii; i < ii + m_shape.Cols(); ++i)
-            {
-                m_denseHost[i] = data.at(idx);
-                idx++;
-            }
+
+        for (std::size_t i = 0; i < HostTotalSize; ++i)
+            m_denseHost[i] = data.at(idx);
     }
 }
 
@@ -280,22 +269,8 @@ void TensorData::m_toCuda()
     if (m_denseCuda == nullptr)
         m_allocateCuda();
 
-    Compute::Cuda::CudaSetDevice(m_device.GetID());
-
-    const auto colSize = Cols();
-    const auto totalSize = Size();
-
-    for (int rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
-    {
-        auto* cudaPtr = m_denseCuda + static_cast<std::size_t>(rowIdx) *
-                        colSize;
-        auto* hostPtr =
-            m_denseHost + static_cast<std::size_t>(rowIdx) *
-            PaddedHostColSize;
-
-        Compute::Cuda::CopyHostToDevice(cudaPtr, hostPtr,
-                                        colSize * sizeof(float));
-    }
+    Compute::Cuda::CopyHostToDevice(m_denseCuda, m_denseHost,
+                                    HostTotalSize * sizeof(float));
 }
 
 void TensorData::m_toHost()
@@ -309,56 +284,27 @@ void TensorData::m_toHost()
     if (m_denseHost == nullptr)
         m_allocateHost();
 
-    const auto colSize = Cols();
-    const auto totalSize = m_shape.Size();
-    for (int rowIdx = 0; rowIdx < totalSize / colSize; rowIdx++)
-    {
-        auto* cudaPtr = m_denseCuda + rowIdx * colSize;
-        auto* hostPtr =
-            m_denseHost + static_cast<std::size_t>(rowIdx) *
-            PaddedHostColSize;
-        const size_t bytesToCopy = colSize * sizeof(float);
-
-        Compute::Cuda::CopyDeviceToHost(hostPtr, cudaPtr,
-                                        static_cast<unsigned int>(bytesToCopy));
-    }
+    Compute::Cuda::CopyDeviceToHost(m_denseHost, m_denseCuda,
+                                    HostTotalSize * sizeof(float));
 }
 
 void TensorData::m_allocateHost()
 {
     if (m_type == Type::Sparse)
-    {
         throw std::runtime_error("m_allocate - Sparse not implemented");
-    }
-    const auto colSize = Cols();
-    constexpr auto padUnitSize = static_cast<unsigned long>(32 / sizeof(float));
-    const auto paddedColumnSize =
-        colSize % padUnitSize == 0
-            ? colSize
-            : colSize / padUnitSize * padUnitSize + padUnitSize;
-    unsigned long totalSize = paddedColumnSize;
 
-    if (m_shape.Dim() > 1)
-    {
-        for (auto i = 0; i < static_cast<int>(m_shape.Dim()) - 1; ++i)
-            totalSize *= m_shape.At(i);
-    }
-
-    PaddedHostColSize = paddedColumnSize;
-    HostTotalSize = totalSize;
+    HostTotalSize = m_shape.Size();
 
     if (m_preserve)
-    {
         m_denseHost = static_cast<float*>(
             Util::ResourceManager::GetMemoryHost(
-                totalSize * sizeof(float), true));
-    }
+                HostTotalSize * sizeof(float), true));
     else
         m_denseHost = static_cast<float*>(
-            Util::ResourceManager::GetMemoryHost(totalSize * sizeof(float)));
+            Util::ResourceManager::GetMemoryHost(
+                HostTotalSize * sizeof(float)));
 
-    //if (m_mode == DeviceType::Host)
-    std::memset(m_denseHost, 0, totalSize * sizeof(float));
+    std::memset(m_denseHost, 0, HostTotalSize * sizeof(float));
 }
 
 void TensorData::m_allocateCuda()
@@ -382,7 +328,6 @@ void TensorData::m_allocateCuda()
                 totalSize * sizeof(float)));
     DenseTotalLengthCuda = totalSize;
 
-    //if (m_mode == DeviceType::Cuda)
     Compute::Dense::Cuda::Scalar(m_denseCuda, 0.0f, DenseTotalLengthCuda);
 }
 } // namespace Sapphire::TensorUtil

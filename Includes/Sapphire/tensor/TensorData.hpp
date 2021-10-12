@@ -37,7 +37,6 @@ public:
     unsigned long HostTotalSize = 0;
     unsigned long DenseTotalLengthCuda = 0;
     unsigned long SparseTotalLength = 0;
-    unsigned long PaddedHostColSize = 0;
 
     [[nodiscard]] std::vector<float> GetDataCopy();
 
@@ -96,8 +95,7 @@ public:
 
     [[nodiscard]] std::size_t GetHostElementSize() const
     {
-        return static_cast<std::size_t>(m_shape.Size() / m_shape.Cols())
-               * PaddedHostColSize;
+        return m_shape.Size();
     }
 
     [[nodiscard]] std::size_t GetCudaElementSize() const

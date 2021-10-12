@@ -8,9 +8,6 @@
 #include <memory>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
-#include <Sapphire/compute/IndexingOps.hpp>
-
-#include "Sapphire/compute/Initialize.hpp"
 
 namespace Sapphire::Compute::Dense::Naive
 {
@@ -48,18 +45,13 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
         inputMatrixShape.Rows() * inputMatrixShape.Cols();
 
     //! Padded total size of input and inputMatrix per batch
-    const auto paddedInputTotalSize =
-        (InputSizePerBatch / input.Cols()) * input.PaddedHostColSize;
-    const auto paddedInputMatrixTotalSize =
-        (InputMatrixSizePerBatch / inputMatrix.Cols()) *
-        inputMatrix.PaddedHostColSize;
 
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
         const auto* inputDataHost =
-            input.HostRawPtr() + paddedInputTotalSize * nIdx;
+            input.HostRawPtr() + InputSizePerBatch * nIdx;
         auto* inputMatrixDataHost =
-            inputMatrix.HostMutableRawPtr() + paddedInputMatrixTotalSize *
+            inputMatrix.HostMutableRawPtr() + InputMatrixSizePerBatch *
             nIdx;
         for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
@@ -107,14 +99,12 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
 
                             auto* inputMatrixDataPtr =
                                 inputMatrixDataHost +
-                                (combinedInputMatrixIdx / inputMatrix.Cols()) *
-                                inputMatrix.PaddedHostColSize +
+                                combinedInputMatrixIdx +
                                 combinedInputMatrixIdx % inputMatrix.Cols();
 
                             const auto* inputDataPtr =
                                 inputDataHost +
-                                (combinedInputIdx / input.Cols()) *
-                                input.PaddedHostColSize +
+                                combinedInputIdx +
                                 combinedInputIdx % input.Cols();
 
                             if (inputRowIdx >= 0 &&
@@ -156,24 +146,19 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
         strideCol +
         1;
 
-    const auto InputSizePerBatch =
+    const auto inputSizePerBatch =
         numChannels * inputShape.Rows() * inputShape.Cols();
-    const auto InputMatrixSizePerBatch =
+    const auto inputMatrixSizePerBatch =
         inputMatrixShape.Rows() * inputMatrixShape.Cols();
 
     //! Padded total size of input and inputMatrix per batch
-    const auto paddedInputTotalSize =
-        (InputSizePerBatch / input.Cols()) * input.PaddedHostColSize;
-    const auto paddedInputMatrixTotalSize =
-        (InputMatrixSizePerBatch / inputMatrix.Cols()) *
-        inputMatrix.PaddedHostColSize;
 
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
         auto* inputDataHost =
-            input.HostMutableRawPtr() + paddedInputTotalSize * nIdx;
+            input.HostMutableRawPtr() + inputSizePerBatch * nIdx;
         const auto* inputMatrixDataHost =
-            inputMatrix.HostRawPtr() + paddedInputMatrixTotalSize * nIdx;
+            inputMatrix.HostRawPtr() + inputMatrixSizePerBatch * nIdx;
         for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
         {
@@ -220,14 +205,12 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
 
                             const auto* inputMatrixDataPtr =
                                 inputMatrixDataHost +
-                                (combinedInputMatrixIdx / inputMatrix.Cols()) *
-                                inputMatrix.PaddedHostColSize +
+                                combinedInputMatrixIdx +
                                 combinedInputMatrixIdx % inputMatrix.Cols();
 
                             auto* inputDataPtr =
                                 inputDataHost +
-                                (combinedInputIdx / input.Cols()) *
-                                input.PaddedHostColSize +
+                                combinedInputIdx +
                                 combinedInputIdx % input.Cols();
 
                             if (inputRowIdx >= 0 &&
@@ -241,7 +224,6 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
         }
     }
 }
-
 
 void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
