@@ -62,7 +62,7 @@ void log10Backward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
 void InverseBackward(TensorData& dx, const TensorData& dy, const TensorData& x);
 
-void MeanBackward(TensorData& dx, const TensorData& dy, const TensorData& x,
+void MeanBackward(TensorData& dx, const TensorData& dy,
                   int dim);
 } // namespace Sapphire::Compute
 

@@ -37,9 +37,8 @@ set_target_properties(${target}
         )
 
 # Compile options
-target_compile_options(${target}
-        PRIVATE
 
+target_compile_options(${target}
         PUBLIC
         ${DEFAULT_COMPILE_OPTIONS}
 

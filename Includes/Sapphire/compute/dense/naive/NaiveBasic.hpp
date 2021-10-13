@@ -22,7 +22,7 @@ void Dot(unsigned int totalSize, float* output, const float* inputA,
          bool broadcastInputB);
 
 void Scale(float* output, const float* input, float scaleFactor,
-           unsigned int totalSize, unsigned colSize, unsigned padSize);
+           unsigned int totalSize);
 
 void Transpose(float* output, const float* input, unsigned int inputRows,
                unsigned int inputCols,
@@ -32,19 +32,17 @@ void Transpose(float* output, const float* input, unsigned int inputRows,
 void Pow(float* output, const float* input, float exponent,
          unsigned int totalSize);
 
-void cos(float* output, const float* input, unsigned int totalSize);
+void Cos(float* output, const float* input, unsigned int totalSize);
 
-void sin(float* output, const float* input, unsigned int totalSize);
+void Sin(float* output, const float* input, unsigned int totalSize);
 
-void tan(float* output, const float* input, unsigned int totalSize);
+void Tan(float* output, const float* input, unsigned int totalSize);
 
-void cosh(float* output, const float* input, unsigned int totalSize,
-          unsigned colSize, unsigned
-          padSize);
+void Cosh(float* output, const float* input, unsigned int totalSize);
 
-void sinh(float* output, const float* input, unsigned int totalSize);
+void Sinh(float* output, const float* input, unsigned int totalSize);
 
-void tanh(float* output, const float* input, unsigned int totalSize);
+void Tanh(float* output, const float* input, unsigned int totalSize);
 
 void log(float* output, const float* input, unsigned int totalSize);
 
