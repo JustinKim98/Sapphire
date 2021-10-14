@@ -9,11 +9,11 @@
 
 namespace Sapphire::BackProp
 {
-const int dxIdx = 0;
-const int dyIdx = 0;
-const int kernelIdx = 0;
-const int biasIdx = 1;
-const int xIdx = 0;
+constexpr int dxIdx = 0;
+constexpr int dyIdx = 0;
+constexpr int kernelIdx = 0;
+constexpr int biasIdx = 1;
+constexpr int xIdx = 0;
 
 Conv2DBackProp::Conv2DBackProp(
     TensorUtil::TensorData dx, TensorUtil::TensorData dy,

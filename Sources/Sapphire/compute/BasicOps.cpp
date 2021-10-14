@@ -12,6 +12,7 @@
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
 #include <algorithm>
+#include <cassert>
 
 namespace Sapphire::Compute
 {
@@ -39,7 +40,6 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0,
@@ -79,7 +79,6 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0, 1, Dense::Cuda::Sub, 0, false,
@@ -119,7 +118,6 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0, 1, Dense::Cuda::Dot, 0, false,
@@ -162,7 +160,6 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
 
     if (dy.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         BroadcastBackwardWith2Inputs(
             shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB, dy.CudaRawPtr(),
             da.CudaMutableRawPtr(), db.CudaMutableRawPtr(), a.CudaRawPtr(),
@@ -207,7 +204,6 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
 
         if (y.Mode() == DeviceType::Cuda)
         {
-            cudaSetDevice(device.GetID());
             Dense::Cuda::GemmMatrixWiseBroadcast(
                 y.CudaMutableRawPtr(), a.CudaRawPtr(), b.CudaRawPtr(),
                 c.CudaRawPtr(),
@@ -234,7 +230,6 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
                              sizeB, sizeC, y.CudaMutableRawPtr(),
                              a.CudaRawPtr(),
@@ -248,7 +243,7 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
                              y.HostMutableRawPtr(), a.HostRawPtr(),
                              b.HostRawPtr(),
                              c.HostRawPtr(), 0, 2, Dense::Naive::Gemm, M,
-                             N, K, K);
+                             N, K);
     }
 }
 
@@ -260,7 +255,6 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::Scale(y.CudaMutableRawPtr(), x.CudaRawPtr(), factor,
                            totalSize);
     }
@@ -283,7 +277,6 @@ void Transpose(TensorData& y, const TensorData& x)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::Transpose(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                                inputM, inputN,
                                chunkSize, broadcast);
@@ -305,7 +298,6 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::Pow(y.CudaMutableRawPtr(), x.CudaRawPtr(), factor,
                          totalSize);
     }
@@ -324,7 +316,6 @@ void log(TensorData& y, const TensorData& x)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::log(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
@@ -342,7 +333,6 @@ void log10(TensorData& y, const TensorData& x)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::log10(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                            totalSize);
     }
@@ -361,7 +351,6 @@ void Inverse(TensorData& y, const TensorData& x)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::Inverse(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize);
     }
@@ -389,7 +378,6 @@ void Mean(TensorData& y, const TensorData& x, int dim)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::Mean(y.CudaMutableRawPtr(), x.CudaRawPtr(), ySize,
                           unitSize, stride);
     }
@@ -419,7 +407,6 @@ void MeanBackward(TensorData& dx, const TensorData& dy,
 
     if (dy.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::MeanBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                   yShape.Size(), xShape.At(dim), stride);
     }

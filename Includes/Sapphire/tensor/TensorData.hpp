@@ -8,6 +8,7 @@
 #define SAPPHIRE_TENSORUTIL_TENSOR_DATA_HPP
 
 #include <memory>
+#include <vector>
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/CudaDevice.hpp>

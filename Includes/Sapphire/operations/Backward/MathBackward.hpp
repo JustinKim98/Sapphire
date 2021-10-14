@@ -39,7 +39,7 @@ class MeanBackProp : public BackPropWrapper
 {
 public:
     explicit MeanBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData x,
-                          TensorUtil::TensorData dy, unsigned int dim);
+                          TensorUtil::TensorData dy, int dim);
 
 private:
     void m_runBackProp() override;

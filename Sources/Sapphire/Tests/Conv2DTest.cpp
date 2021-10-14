@@ -11,6 +11,7 @@
 #include <Sapphire/util/Shape.hpp>
 #include <iostream>
 #include <random>
+#include <vector>
 
 #include "doctest.h"
 
@@ -45,18 +46,15 @@ void Conv2DTest(bool printForward, bool printBackward)
         strideCol +
         1;
 
-    Shape xShape({ (N),
-                   (inputChannels),
-                   (inputHeight),
-                   (inputWidth) });
-    Shape filterShape({ (numFilters),
-                        (inputChannels),
-                        (filterHeight),
-                        (filterWidth) });
-    Shape yShape({ (N),
-                   (outputChannels),
-                   (outputHeight),
-                   (outputWidth) });
+    Shape xShape({ N, inputChannels, inputHeight, inputWidth });
+    Shape filterShape({ numFilters,
+                        inputChannels,
+                        filterHeight,
+                        filterWidth });
+    Shape yShape({ N,
+                   outputChannels,
+                   outputHeight,
+                   outputWidth });
 
     TensorUtil::TensorData x(xShape, Type::Dense, cuda);
     TensorUtil::TensorData dx(xShape, Type::Dense, cuda);
@@ -285,10 +283,6 @@ void HostIm2ColTest(bool print)
         strideCol +
         1;
 
-    const Shape outputShape({ N, numFilters,
-                              (outputRows),
-                              (outputCols) });
-
     const auto inputMatrixRows =
         filterShape.At(filterShape.Dim() - 3) * filterShape.Rows() * filterShape
         .
@@ -312,23 +306,18 @@ void HostIm2ColTest(bool print)
     reConvertedInputData.SetMode(DeviceType::Host);
 
     int count = 0;
-    for (int ii = 0; ii < inputData.GetBatchSize(1); ++ii)
-        for (int i = 0; i < inputData.Cols(); ++i)
-            inputData
-                .HostMutableRawPtr()[ii * inputData.PaddedHostColSize + i] =
-                static_cast<float>((count++) % 9);
+    for (int i = 0; i < inputData.Size(); ++i)
+        inputData.HostMutableRawPtr()[i] = static_cast<float>((count++) % 9);
 
     Compute::Dense::Naive::Im2Col(inputMatrixData, filterData, inputData,
                                   strideRow, strideCol, rowPadding,
                                   colPadding, dilationRow, dilationCol, 0);
 
     if (print)
-        for (int ii = 0; ii < inputMatrixData.GetBatchSize(1); ++ii)
-            for (int i = 0; i < inputMatrixData.Cols(); ++i)
-                std::cout << "Im2Col[" << ii * inputMatrixData.Cols() + i
-                    << "]: " << inputMatrixData.HostRawPtr()[
-                        ii * inputMatrixData.PaddedHostColSize + i]
-                    << std::endl;
+        for (int i = 0; i < inputMatrixData.Size(); ++i)
+            std::cout << "Im2Col[" << i << "]: "
+                << inputMatrixData.HostRawPtr()[i]
+                << std::endl;
 
     Compute::Initialize::Zeros(inputData);
 
@@ -341,13 +330,10 @@ void HostIm2ColTest(bool print)
     filterData.Reshape(newFilterShape);
 
     if (print)
-        for (int ii = 0; ii < inputData.GetBatchSize(1); ++ii)
-            for (int i = 0; i < inputData.Cols(); ++i)
-                std::cout << "Col2Im[" << ii * inputData.Cols() + i
-                    << "] = " <<
-                    inputData.HostMutableRawPtr()
-                    [ii * inputData.PaddedHostColSize + i]
-                    << std::endl;
+        for (int i = 0; i < inputData.Size(); ++i)
+            std::cout << "Col2Im[" << i << "] = "
+                << inputData.HostMutableRawPtr()[i]
+                << std::endl;
 }
 
 void HostConv2DTest(bool print)

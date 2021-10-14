@@ -65,7 +65,7 @@ void AddBackProp::m_runBackProp()
 }
 
 MeanBackProp::MeanBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData x,
-                           TensorUtil::TensorData dy, unsigned int dim)
+                           TensorUtil::TensorData dy, int dim)
     : BackPropWrapper({ std::move(dx) }, { std::move(dy) }, { std::move(x) },
                       {}),
       m_dim(dim)
@@ -76,7 +76,6 @@ void MeanBackProp::m_runBackProp()
 {
     auto& dx = m_dxVector[0];
     const auto& dy = m_dyVector[0];
-    const auto& x = m_constants[0];
     Compute::MeanBackward(dx, dy, m_dim);
 }
 } // namespace Sapphire::BackProp

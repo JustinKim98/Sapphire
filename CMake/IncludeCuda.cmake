@@ -1,3 +1,4 @@
+# Helper script for adding required cuda related libraries for the project
 
 file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
 

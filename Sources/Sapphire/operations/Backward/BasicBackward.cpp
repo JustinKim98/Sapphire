@@ -4,9 +4,11 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <algorithm>
 #include <iostream>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Backward/BasicBackward.hpp>
+#include <iostream>
 
 namespace Sapphire::BackProp
 {

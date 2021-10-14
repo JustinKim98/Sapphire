@@ -5,6 +5,9 @@
 // property of any third parties.
 
 #include <Sapphire/util/Shape.hpp>
+#include <string>
+#include <vector>
+#include <stdexcept>
 
 namespace Sapphire
 {
