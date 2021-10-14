@@ -155,10 +155,8 @@ void TensorData::SetData(std::vector<float> data)
 
     if (m_mode == DeviceType::Host)
     {
-        std::size_t idx = 0;
-
         for (std::size_t i = 0; i < HostTotalSize; ++i)
-            m_denseHost[i] = data.at(idx);
+            m_denseHost[i] = data.at(i);
     }
 }
 

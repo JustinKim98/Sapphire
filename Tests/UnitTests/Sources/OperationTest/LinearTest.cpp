@@ -44,6 +44,8 @@ void TestLinear(bool print)
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(weight,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    Initialize::Initialize(bias,
+                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
 
     input.ToCuda();
     weight.ToCuda();

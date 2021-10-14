@@ -30,7 +30,7 @@
 #include <iostream>
 #include "doctest.h"
 
-// #define GraphTest
+#define GraphTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
@@ -38,7 +38,7 @@
 // #define GemmBroadcastTest
 // #define InitializeTest
 #define ConvolutionTest
-// #define BasicGraphTest
+#define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test

@@ -77,18 +77,22 @@ void TestMean(bool print)
         std::cout << "YForward (GPU)" << std::endl;
         for (int i = 0; i < yShape.Size(); ++i)
             std::cout << yForwardGpu[i] << " ";
+        std::cout << std::endl;
 
         std::cout << "YForward (Host)" << std::endl;
         for (int i = 0; i < yShape.Size(); ++i)
             std::cout << yForwardHost[i] << " ";
+        std::cout << std::endl;
 
         std::cout << "XBackward (GPU)" << std::endl;
         for (int i = 0; i < xShape.Size(); ++i)
             std::cout << xBackwardGpu[i] << " ";
+        std::cout << std::endl;
 
         std::cout << "XBackward (Host)" << std::endl;
         for (int i = 0; i < xShape.Size(); ++i)
             std::cout << xBackwardHost[i] << " ";
+        std::cout << std::endl;
     }
 
     ModelManager::CurModel().Clear();
