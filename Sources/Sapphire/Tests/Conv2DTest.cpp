@@ -439,6 +439,7 @@ void HostConv2DTest(bool print)
     dy.ToHost();
     x.ToHost();
     filter.ToHost();
+    Compute::Initialize::Normal(dy, 0.0f, 1.0f);
     Compute::Initialize::Zeros(dx);
     Compute::Initialize::Zeros(dFilter);
 

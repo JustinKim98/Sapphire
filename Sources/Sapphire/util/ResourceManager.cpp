@@ -6,7 +6,9 @@
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <cassert>
+#include <thread>
 #include <utility>
 
 namespace Sapphire::Util
@@ -216,7 +218,10 @@ void ResourceManager::AddCublasHandle(int deviceId, std::thread::id threadId)
 void ResourceManager::AddCudnnHandle(int deviceId, std::thread::id threadId)
 {
     auto* handle = new cudnnHandle_t();
-    cudnnCreate(handle);
+    auto error = cudnnCreate(handle);
+    if (error != CUDNN_STATUS_SUCCESS)
+        throw std::runtime_error(
+            "ResourceManager::AddCudnnHandle - Cudnn Create failed");
     m_cudnnHandlePool[std::make_pair(deviceId, threadId)] = handle;
 }
 

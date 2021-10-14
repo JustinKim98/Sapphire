@@ -44,8 +44,6 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
     const auto InputMatrixSizePerBatch =
         inputMatrixShape.Rows() * inputMatrixShape.Cols();
 
-    //! Padded total size of input and inputMatrix per batch
-
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
         const auto* inputDataHost =
@@ -53,7 +51,7 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
         auto* inputMatrixDataHost =
             inputMatrix.HostMutableRawPtr() + InputMatrixSizePerBatch *
             nIdx;
-        for (int channelIdx = 0; channelIdx < (numChannels);
+        for (int channelIdx = 0; channelIdx < numChannels;
              ++channelIdx)
         {
             for (int outputRowIdx = 0; outputRowIdx < outputRows;
@@ -98,14 +96,10 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
                                 inputRowIdx * inputShape.Cols() + inputColIdx;
 
                             auto* inputMatrixDataPtr =
-                                inputMatrixDataHost +
-                                combinedInputMatrixIdx +
-                                combinedInputMatrixIdx % inputMatrix.Cols();
+                                inputMatrixDataHost + combinedInputMatrixIdx;
 
                             const auto* inputDataPtr =
-                                inputDataHost +
-                                combinedInputIdx +
-                                combinedInputIdx % input.Cols();
+                                inputDataHost + combinedInputIdx;
 
                             if (inputRowIdx >= 0 &&
                                 inputRowIdx <
@@ -204,14 +198,10 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
                                 inputRowIdx * inputShape.Cols() + inputColIdx;
 
                             const auto* inputMatrixDataPtr =
-                                inputMatrixDataHost +
-                                combinedInputMatrixIdx +
-                                combinedInputMatrixIdx % inputMatrix.Cols();
+                                inputMatrixDataHost + combinedInputMatrixIdx;
 
                             auto* inputDataPtr =
-                                inputDataHost +
-                                combinedInputIdx +
-                                combinedInputIdx % input.Cols();
+                                inputDataHost + combinedInputIdx;
 
                             if (inputRowIdx >= 0 &&
                                 inputRowIdx <

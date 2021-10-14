@@ -119,31 +119,7 @@ void TensorData::Reshape(const Shape& shape)
 
     if (m_mode == DeviceType::Host)
     {
-        const auto data = GetDataCopy();
         m_shape = shape;
-
-        const auto colSize = Cols();
-        constexpr auto padUnitSize =
-            static_cast<unsigned long>(32 / sizeof(float));
-        const auto paddedColumnSize =
-            colSize % padUnitSize == 0
-                ? colSize
-                : colSize / padUnitSize * padUnitSize + padUnitSize;
-        unsigned long totalSize = paddedColumnSize;
-
-        if (m_shape.Dim() > 1)
-        {
-            for (auto i = 0; i < static_cast<int>(m_shape.Dim()) - 1; ++i)
-                totalSize *= m_shape.At(i);
-        }
-        HostTotalSize = totalSize;
-
-        if (m_preserve)
-        {
-            Util::ResourceManager::FreePreservedHost(m_denseHost);
-            m_allocateHost();
-        }
-        SetData(data);
     }
 }
 

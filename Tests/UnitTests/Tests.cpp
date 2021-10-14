@@ -29,18 +29,17 @@
 #include <Sapphire/Tests/Basics/ReshapeTest.hpp>
 #include <iostream>
 #include "doctest.h"
-//
-#define GraphTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
+
+// #define GraphTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
 #define ConvolutionTest
-#define BasicGraphTest
+// #define BasicGraphTest
 #define ModelTest
-// #define SparseTest
 
 namespace Sapphire::Test
 {
@@ -273,12 +272,14 @@ TEST_CASE("Convolution")
     {
         std::cout << "Im2Col && Col2Im" << std::endl;
         HostIm2ColTest(false);
+        Util::ResourceManager::ClearAll();
     }
-
+    
     SUBCASE("HostConv2D")
     {
         std::cout << "Host Conv2D" << std::endl;
         HostConv2DTest(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("Conv2D")

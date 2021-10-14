@@ -7,7 +7,6 @@
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/dense/cuda/Trigonometric.cuh>
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
-#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
 namespace Sapphire::Compute
 {
