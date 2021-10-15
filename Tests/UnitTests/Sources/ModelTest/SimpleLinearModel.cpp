@@ -17,7 +17,7 @@ namespace Sapphire::Test
 {
 void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
                        int inputSize, int outputSize, float learningRate,
-                       int batchSize, int epochs)
+                       int batchSize, int epochs, bool hostMode)
 {
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
@@ -41,15 +41,22 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     Initialize::Initialize(bias1,
                            std::make_unique<Initialize::Normal>(0.0f, 0.01f));
 
-    // x.ToHost();
-    // label.ToHost();
-    // weight.ToHost();
-    // weight1.ToHost();
-    // bias.ToHost();
-    // bias1.ToHost();
+    if (hostMode)
+    {
+        weight.ToHost();
+        weight1.ToHost();
+        bias.ToHost();
+        bias1.ToHost();
+    }
 
     Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense, true);
     Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense, true);
+
+    if (hostMode)
+    {
+        x.ToHost();
+        label.ToHost();
+    }
 
     x.SetForwardData(xData);
     label.SetForwardData(labelData);
@@ -57,14 +64,15 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     {
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
-        // y = NN::ReLU(linear(y, weight1, bias1));
+        y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
-        if (i % 1 == 0)
+        if (i % 20 == 0)
         {
             const auto lossData = loss.GetForwardDataCopy();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;
         }
+        //ModelManager::CurModel().InitGradient();
         ModelManager::CurModel().BackProp(loss);
         ModelManager::CurModel().Clear();
         if (i % 10 == 0)

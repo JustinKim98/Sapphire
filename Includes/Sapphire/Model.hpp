@@ -7,6 +7,7 @@
 #ifndef SAPPHIRE_MODEL_HPP
 #define SAPPHIRE_MODEL_HPP
 
+#include <cmath>
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
@@ -16,6 +17,16 @@
 
 namespace Sapphire
 {
+inline void HasInvalidNumberHost(TensorUtil::TensorData tensorData)
+{
+    for (unsigned int i = 0; i < tensorData.HostTotalSize; ++i)
+    {
+        const auto data = tensorData.HostRawPtr()[i];
+        if (std::isnan(data) || std::isinf(data))
+            throw std::runtime_error("NAN or INF detected");
+    }
+}
+
 class Model
 {
 public:

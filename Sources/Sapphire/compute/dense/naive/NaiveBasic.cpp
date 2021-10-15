@@ -6,6 +6,7 @@
 
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <cmath>
+#include <stdexcept>
 
 namespace Sapphire::Compute::Dense::Naive
 {
