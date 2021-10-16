@@ -31,7 +31,6 @@ void BroadcastWithOneDimension(bool print)
     //! Set shape so they can be broadcasted
     const Shape shapeA({ batchSize, 1, M, K });
     const Shape shapeB({ batchSize, M, K, N });
-    const Shape shapeC({ batchSize, 1, M, N });
     const Shape shapeOut({ batchSize, M, M, N });
 
     std::cout << "M : " << M << " N: " << N << " K: " << K
@@ -41,22 +40,18 @@ void BroadcastWithOneDimension(bool print)
     //! Initialize tensors with cuda mode
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
-    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
     A.SetMode(DeviceType::Host);
     B.SetMode(DeviceType::Host);
-    C.SetMode(DeviceType::Host);
     Out.SetMode(DeviceType::Host);
 
     //! Initialize input tensors with normal distribution and output tensors as zeros
     Compute::Initialize::Normal(A, 10, 5);
     Compute::Initialize::Normal(B, 10, 5);
-    Compute::Initialize::Normal(C, 10, 5);
-    Compute::Initialize::Zeros(C);
     Compute::Initialize::Zeros(Out);
 
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Set temporary buffer and copy the result
     auto* cpuGemmResult = new float[Out.HostTotalSize];
@@ -69,19 +64,13 @@ void BroadcastWithOneDimension(bool print)
     //! Send data to cuda
     A.ToCuda();
     B.ToCuda();
-    C.ToCuda();
     Out.ToCuda();
-    A.SetMode(DeviceType::Cuda);
-    B.SetMode(DeviceType::Cuda);
-    C.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
 
     //! Perform Gemm on cuda
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Send output data to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
@@ -103,7 +92,6 @@ void BroadcastWithMissingDimension(bool print)
     //! Set shape so they can be broadcasted
     const Shape shapeA({ M, K });
     const Shape shapeB({ M, K, N });
-    const Shape shapeC({ M, N });
     const Shape shapeOut({ M, M, N });
 
     std::cout << "M : " << M << " N: " << N << " K: " << K << std::endl;
@@ -112,24 +100,20 @@ void BroadcastWithMissingDimension(bool print)
     //! Initialize tensors with cuda mode
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
-    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
     A.SetMode(DeviceType::Host);
     B.SetMode(DeviceType::Host);
-    C.SetMode(DeviceType::Host);
     Out.SetMode(DeviceType::Host);
 
     //! Initialize input tensors with normal distribution and output tensors as
     //! zeros
     Compute::Initialize::Normal(A, 10, 5);
     Compute::Initialize::Normal(B, 10, 5);
-    Compute::Initialize::Normal(C, 10, 5);
-    Compute::Initialize::Zeros(C);
     Compute::Initialize::Zeros(Out);
 
     //! Perform Gemm on host
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Set temporary buffer and copy the result
     auto* cpuGemmResult = new float[Out.HostTotalSize];
@@ -141,18 +125,13 @@ void BroadcastWithMissingDimension(bool print)
     //! Send data to cuda
     A.ToCuda();
     B.ToCuda();
-    C.ToCuda();
     Out.ToCuda();
-    A.SetMode(DeviceType::Cuda);
-    B.SetMode(DeviceType::Cuda);
-    C.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
+
     //! Perform Gemm on cuda
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Send output data to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
@@ -174,8 +153,7 @@ void BroadcastMixed(bool print)
     //! Set shape so they can be broadcasted
     const Shape shapeA({ M, K });
     const Shape shapeB({ N, M, K, N });
-    const Shape shapeC({ N, 1, M, N });
-    const Shape shapeOut({ M, K, 1, 1, M, M, N });
+    const Shape shapeOut({ N, M, M, N });
 
     std::cout << "M : " << M << " N: " << N << " K: " << K << std::endl;
     const CudaDevice cuda(0, "device0");
@@ -183,24 +161,20 @@ void BroadcastMixed(bool print)
     //! Initialize tensors with cuda mode
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
-    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
     A.SetMode(DeviceType::Host);
     B.SetMode(DeviceType::Host);
-    C.SetMode(DeviceType::Host);
     Out.SetMode(DeviceType::Host);
 
     //! Initialize input tensors with normal distribution and output tensors
     //! as zeros
     Compute::Initialize::Normal(A, 10, 5);
     Compute::Initialize::Normal(B, 10, 5);
-    Compute::Initialize::Normal(C, 10, 5);
-    Compute::Initialize::Zeros(C);
     Compute::Initialize::Zeros(Out);
 
     //! Perform Gemm on host
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Set temporary buffer and copy the result
     auto* cpuGemmResult = new float[Out.HostTotalSize];
@@ -212,19 +186,13 @@ void BroadcastMixed(bool print)
     //! Send data to cuda
     A.ToCuda();
     B.ToCuda();
-    C.ToCuda();
     Out.ToCuda();
-    A.SetMode(DeviceType::Cuda);
-    B.SetMode(DeviceType::Cuda);
-    C.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
 
     //! Perform Gemm on cuda
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Send output data to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
 
     //! Check for non zero equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),

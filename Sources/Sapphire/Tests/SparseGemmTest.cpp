@@ -293,11 +293,8 @@ void SparseTestCorrectnessCuda(size_t m, size_t n, size_t k, size_t numMatrices,
     Compute::DeepCopyHostToDevice(cudaSparseA, hostSparseA, numMatrices, 0);
     Compute::DeepCopyHostToDevice(cudaSparseB, hostSparseB, numMatrices, 0);
 
-    cublasHandle_t handle;
-    cublasCreate(&handle);
     Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
-                               cudaDenseB, cudaDenseOut, m, n, k, 0);
-    cublasDestroy(handle);
+                               cudaDenseB, m, n, k, 0);
 
     Compute::Sparse::Cuda::Gemm(&hostSparseOut, &cudaSparseOut, cudaSparseA,
                                 cudaSparseB, m, n, numMatrices, 0, true);
@@ -362,8 +359,8 @@ void SparseTestCorrectnessHost(size_t m, size_t n, size_t k, size_t numMatrices,
                                                paddedN, numMatrices);
 
     Compute::Dense::Naive::Gemm(m * paddedN * numMatrices, hostDenseOut,
-                                     hostDenseA, hostDenseB, hostDenseOut, m, n,
-                                     k);
+                                hostDenseA, hostDenseB, m, n,
+                                k);
 
     Compute::Sparse::Naive::Gemm(&hostSparseOut, hostSparseA, hostSparseB, m, n,
                                  numMatrices);
@@ -489,8 +486,8 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
 
     const auto naiveDenseBegin = std::chrono::system_clock::now();
     Compute::Dense::Naive::Gemm(m * paddedN * numMatrices, hostDenseOut,
-                                     hostDenseA, hostDenseB, hostDenseOut, m, n,
-                                     k);
+                                hostDenseA, hostDenseB, m, n,
+                                k);
     const auto naiveDenseEnd = std::chrono::system_clock::now();
     const auto naiveDenseElapsedTime =
         std::chrono::duration_cast<std::chrono::microseconds>(naiveDenseEnd -
@@ -498,11 +495,9 @@ PerformanceData PerformanceTest(size_t m, size_t n, size_t k,
         .count();
 
     const auto cudaDenseBegin = std::chrono::system_clock::now();
-    cublasHandle_t handle;
-    cublasCreate(&handle);
+
     Compute::Dense::Cuda::Gemm(m * n * numMatrices, cudaDenseOut, cudaDenseA,
-                               cudaDenseB, cudaDenseOut, m, n, k, 0);
-    cublasDestroy(handle);
+                               cudaDenseB, m, n, k, 0);
     const auto cudaDenseEnd = std::chrono::system_clock::now();
 
     const auto naiveSparseBegin = std::chrono::system_clock::now();

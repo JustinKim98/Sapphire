@@ -9,11 +9,9 @@
 
 namespace Sapphire::Compute::Dense::Naive
 {
-void Gemm(unsigned int totalSize, float* out, const float* A, const float* B, const
-               float* C,
-               unsigned int M, unsigned int N,
-               unsigned int K);
-
-}  // namespace Sapphire::Compute::Naive::Dense
+void Gemm(unsigned int totalSize, float* out, const float* A, const float* B,
+          unsigned int M, unsigned int N,
+          unsigned int K);
+} // namespace Sapphire::Compute::Naive::Dense
 
 #endif

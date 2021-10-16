@@ -247,7 +247,7 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
     rFilter.Reshape(rFilterShape);
     rY.Reshape(rYShape);
 
-    Gemm(rY, rFilter, rX, rY);
+    Gemm(rY, rFilter, rX);
 
     rFilter.Reshape(filterShape);
     rY.Reshape(yShape);
@@ -305,9 +305,9 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     drY.Reshape(drYShape);
 
     Transpose(rFilterT, rFilter);
-    Gemm(drX, rFilterT, drY, drX);
+    Gemm(drX, rFilterT, drY);
     Transpose(rXT, rX);
-    Gemm(drFilter, drY, rXT, drFilter);
+    Gemm(drFilter, drY, rXT);
 
     rFilter.Reshape(dFilterShape);
     drFilter.Reshape(dFilterShape);

@@ -45,8 +45,8 @@ void MulBackProp::m_runBackProp()
     Compute::Transpose(transposedA, a);
     Compute::Transpose(transposedB, b);
 
-    Compute::Gemm(da, dy, transposedB, da);
-    Compute::Gemm(db, transposedA, dy, db);
+    Compute::Gemm(da, dy, transposedB);
+    Compute::Gemm(db, transposedA, dy);
 }
 
 AddBackProp::AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,

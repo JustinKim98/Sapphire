@@ -70,14 +70,12 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
         yData.GetShape(), Type::Dense, bias.GetDevice());
     expandedBias.SetMode(bias.Mode());
 
-    Compute::Initialize::Zeros(yData);
     Compute::Initialize::Zeros(expandedBias);
     Compute::Transpose(transposedWeight, weightData);
-
     Compute::Gemm(expandedBias, ones,
-                  biasData, expandedBias);
-
-    Compute::Gemm(yData, xData, transposedWeight, expandedBias);
+                  biasData);
+    TensorUtil::TensorData::DeepCopy(yData, expandedBias);
+    Compute::Gemm(yData, xData, transposedWeight);
 
     auto* backPropWrapper =
         new BackProp::LinearBackProp(

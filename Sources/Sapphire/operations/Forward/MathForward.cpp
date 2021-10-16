@@ -62,7 +62,7 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    Compute::Gemm(y, a, b, y);
+    Compute::Gemm(y, a, b);
 
     auto* backPropWrapper = new BackProp::MulBackProp(a, da, b, db, y);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),

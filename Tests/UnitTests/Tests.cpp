@@ -102,13 +102,13 @@ TEST_CASE("Basics")
         Util::ResourceManager::ClearAll();
     }
 
-    // SUBCASE("Reshape")
-    // {
-    //     std::cout << "Reshape" << std::endl;
-    //     for (int i = 0; i < testLoops; ++i)
-    //         ReshapeTest(true);
-    //     Util::ResourceManager::ClearAll();
-    // }
+    SUBCASE("Reshape")
+    {
+        std::cout << "Reshape" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            ReshapeTest(true);
+        Util::ResourceManager::ClearAll();
+    }
 
     SUBCASE("Add")
     {

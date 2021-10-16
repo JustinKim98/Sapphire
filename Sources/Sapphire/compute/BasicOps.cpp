@@ -171,23 +171,19 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
     }
 }
 
-void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
-          const TensorData& c)
+void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
 {
     assert(y.Mode() == a.Mode());
     assert(y.Mode() == b.Mode());
-    assert(y.Mode() == c.Mode());
 
     auto shapeOut = y.GetShape();
     auto shapeA = a.GetShape();
     auto shapeB = b.GetShape();
-    auto shapeC = c.GetShape();
 
     //! treat Make inputs, outputs to have at least 2 dimension
     shapeOut.Expand(2);
     shapeA.Expand(2);
     shapeB.Expand(2);
-    shapeC.Expand(2);
 
     const auto device = y.GetDevice();
     const auto M = shapeOut.Rows();
@@ -197,7 +193,7 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
     //! Faster broadcast multiply for Cuda if all tensor dimensions are fixed to
     //! 2
     if (y.GetShape().Dim() == 2 && a.GetShape().Dim() == 2 &&
-        b.GetShape().Dim() == 2 && c.GetShape().Dim() == 2 && y.
+        b.GetShape().Dim() == 2 && y.
         GetBatchSize(2) > 1)
     {
         const auto batchSize = y.GetBatchSize(2);
@@ -206,43 +202,38 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
         {
             Dense::Cuda::GemmMatrixWiseBroadcast(
                 y.CudaMutableRawPtr(), a.CudaRawPtr(), b.CudaRawPtr(),
-                c.CudaRawPtr(),
                 M, N, K, batchSize, a.GetBatchSize(2) == 1,
-                b.GetBatchSize(2) == 1,
-                c.GetBatchSize(2) == 1, 0);
+                b.GetBatchSize(2) == 1, 0);
             return;
         }
     }
 
     const auto maxDim = std::max({ y.GetShape().Dim(), a.GetShape().Dim(),
-                                   b.GetShape().Dim(), c.GetShape().Dim() });
+                                   b.GetShape().Dim() });
 
     //! Treat batch size as part of tensor shape
     shapeOut.Expand(maxDim);
     shapeA.Expand(maxDim);
     shapeB.Expand(maxDim);
-    shapeC.Expand(maxDim);
 
     const auto sizeOut = shapeOut.Size();
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
-    const auto sizeC = shapeC.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, sizeOut, sizeA,
-                             sizeB, sizeC, y.CudaMutableRawPtr(),
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA,
+                             sizeB, y.CudaMutableRawPtr(),
                              a.CudaRawPtr(),
-                             b.CudaRawPtr(), c.CudaRawPtr(), 0, 2,
-                             Dense::Cuda::Gemm, M, N, K, 0);
+                             b.CudaRawPtr(), 0, 2, Dense::Cuda::Gemm, M, N, K,
+                             y.GetDevice().GetID());
     }
     else
     {
-        BroadcastWith3Inputs(shapeOut, shapeA, shapeB, shapeC, shapeOut.Size(),
-                             shapeA.Size(), shapeB.Size(), shapeC.Size(),
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
                              y.HostMutableRawPtr(), a.HostRawPtr(),
-                             b.HostRawPtr(),
-                             c.HostRawPtr(), 0, 2, Dense::Naive::Gemm, M,
+                             b.HostRawPtr(), 0, 2, Dense::Naive::Gemm, M,
                              N, K);
     }
 }

@@ -28,8 +28,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b);
 void Dot(TensorData& y, const TensorData& a, const TensorData& b);
 
 //! Performs GEMM (y = a*b + c)
-void Gemm(TensorData& y, const TensorData& a, const TensorData& b,
-          const TensorData& c);
+void Gemm(TensorData& y, const TensorData& a, const TensorData& b);
 
 //! Performs y = x*factor
 void Scale(TensorData& y, const TensorData& x, float factor);
