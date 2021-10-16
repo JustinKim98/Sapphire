@@ -106,7 +106,7 @@ TEST_CASE("Basics")
     {
         std::cout << "Reshape" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            ReshapeTest(true);
+            ReshapeTest(false);
         Util::ResourceManager::ClearAll();
     }
 
@@ -326,7 +326,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("MeanTest")
     {
         std::cout << "Mean" << std::endl;
-        TestMean(true);
+        TestMean(false);
     }
 
     SUBCASE("MSETest")
@@ -344,13 +344,13 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear(true);
+        TestLinear(false);
     }
 
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        TestConv2D(false);
+        TestConv2D(true);
     }
 }
 #endif

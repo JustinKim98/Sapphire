@@ -4,8 +4,10 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <cassert>
 #include <Sapphire/operations/Backward/Conv2DBackward.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 
 namespace Sapphire::BackProp
 {
@@ -72,7 +74,24 @@ void Conv2DBackProp::m_runBackProp()
     if (m_hasBias)
     {
         auto bias = m_trainableData[biasIdx];
-        m_optimizer->operator()(bias, dy);
+        auto mean0Shape = dy.GetShape();
+        mean0Shape.SetCol(1);
+        auto mean1Shape = mean0Shape;
+        mean1Shape.SetRow(1);
+        auto mean2Shape = mean1Shape;
+        mean2Shape.Set(0, 1);
+        assert(bias.GetShape() == mean2Shape);
+        TensorUtil::TensorData mean0(mean0Shape, dy.GetType(), dy.GetDevice());
+        TensorUtil::TensorData mean1(mean1Shape, dy.GetType(), dy.GetDevice());
+        TensorUtil::TensorData mean2(mean2Shape, dy.GetType(), dy.GetDevice());
+        mean0.SetMode(dy.Mode());
+        mean1.SetMode(dy.Mode());
+        mean2.SetMode(dy.Mode());
+        Compute::Mean(mean0, dy, mean0Shape.Dim() - 1);
+        Compute::Mean(mean1, mean0, mean0Shape.Dim() - 2);
+        Compute::Mean(mean2, mean1, 0);
+
+        m_optimizer->operator()(bias, mean1);
     }
 }
 }

@@ -31,13 +31,13 @@ Conv2D::Conv2D(std::pair<int, int> inputSize, std::pair<int, int> stride,
     if (bias.TensorDescriptorKey() > 0)
     {
         const auto biasShape = bias.GetShape();
-        if (biasShape.Dim() != 1)
+        if (biasShape.Dim() > 2)
             throw std::invalid_argument(
-                "NN::Conv2D - Bias should be in 1 dimension");
-        if (biasShape.At(0) != kernelShape.At(0))
+                "NN::Conv2D - Bias should be no more than 2 dimension");
+        if (biasShape.Rows() == 1 && biasShape.Cols() != kernelShape.At(0))
         {
             throw std::invalid_argument(
-                "NN::Conv2D - Bias should have same size with output channels");
+                "NN::Conv2D - Bias should have shape of {1 , yChannels} with output channels");
         }
 
         if (bias.GetDevice() != device)
@@ -125,6 +125,7 @@ Tensor Conv2D::operator()(Tensor& tensor)
         if (device != bias.GetDevice())
             throw std::runtime_error(
                 "NN::Conv2D::operator() - bias and tensor device mismatch");
+        bias.Reshape(Shape({ 1, m_yChannels, 1, 1 }));
         Compute::Add(y, y, bias);
         auto* backPropWrapper = new BackProp::Conv2DBackProp(
             dx, dy, kernel, bias, x, m_stride, m_dilation, m_padSize,
@@ -162,9 +163,9 @@ void Conv2D::m_checkArguments(
 {
     const auto xDescPtr = arguments.at(0);
     const auto xShape = xDescPtr->GetShape();
-    if (xShape.Dim() < 3)
+    if (xShape.Dim() < 4)
         throw std::invalid_argument(
-            "NN::Conv2D - input shape must have at least 3 dimension");
+            "NN::Conv2D - input shape must have at least 4 dimension (N, C, H, W)");
     if (xShape.At(xShape.Dim() - 3) != m_xChannels)
         throw std::invalid_argument(
             "NN::Conv2D - Number of channels does not match ");

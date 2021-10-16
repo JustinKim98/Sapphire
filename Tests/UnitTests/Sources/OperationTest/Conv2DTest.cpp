@@ -74,7 +74,8 @@ void TestConv2D(bool print)
         input, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(
         kernel, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-    Initialize::Initialize(bias, std::make_unique<Initialize::Zeros>());
+    Initialize::Initialize(
+        bias, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
 
     //! Move tensors to gpu
     input.ToCuda();
