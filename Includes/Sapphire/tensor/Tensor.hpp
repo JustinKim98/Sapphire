@@ -3,41 +3,56 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_TENSOR_DECL_HPP
-#define Sapphire_TENSOR_DECL_HPP
+#ifndef SAPPHIRE_TENSOR_DECL_HPP
+#define SAPPHIRE_TENSOR_DECL_HPP
 
-#include <Sapphire/tensor/Shape.hpp>
-#include <Sapphire/util/Device.hpp>
+#include <Sapphire/util/Shape.hpp>
+#include <Sapphire/util/CudaDevice.hpp>
+#include <memory>
 
 namespace Sapphire
 {
-
-
 //! TensorDescriptor class contains data vector for processing
 //! with attributes describing it
 class Tensor
 {
- public:
-    Tensor(Shape shape, unsigned int descKey);
+public:
+    Tensor();
+    Tensor(const Shape& shape, const CudaDevice& device, Type type,
+           bool preserve = false);
+
+    Tensor(int descKey);
     ~Tensor() = default;
 
     Tensor(const Tensor& tensor) = default;
-    Tensor(Tensor&& tensor) noexcept = delete;
+    Tensor(Tensor&& tensor) = default;
     /// move assignment operator
     Tensor& operator=(const Tensor& tensor);
-    Tensor& operator=(Tensor&& tensor) noexcept = delete;
+    Tensor& operator=(Tensor&& tensor) = default;
 
     [[nodiscard]] Shape GetShape() const;
-    [[nodiscard]] Device GetDevice() const;
+    [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
-    //! Set Tensor device
-    void SendTo(const Device& device) const;
+    void SetDescriptorKey(int key)
+    {
+        m_tensorDescKey = key;
+    }
 
- private:
-    Shape m_shape;
-    int m_tensorDescriptorKey;
+    [[nodiscard]] std::vector<float> GetDataCopy() const;
+    [[nodiscard]] std::vector<float> GetBackwardDataCopy() const;
+
+    void LoadData(const std::vector<float>& data) const;
+    void SetBackwardData(const std::vector<float>& data) const;
+
+    void ToCuda();
+    void ToHost();
+    [[nodiscard]] DeviceType Mode() const;
+    void SetMode(DeviceType mode) const;
+
+private:
+    int m_tensorDescKey;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

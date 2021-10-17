@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
+#include <list>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -164,8 +165,7 @@ void SparseMemoryAllocationHost()
 
     DeepFreeSparseHost(sparse, numMatrices);
 
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
     delete[] nnz;
 }
 
@@ -213,8 +213,7 @@ void LoadDistMemoryAllocationHost()
 
     DeepFreeSparseHost(sparse, numMatrices);
     DeepFreeLoadDistHost(loadDist, numMatrices);
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();;
 }
 
 void SparseMemoryAllocationDevice()
@@ -282,11 +281,7 @@ void SparseMemoryAllocationDevice()
     DeepFreeSparseHost(hostSparseDst, numMatrices);
     DeepFreeSparseCuda(deviceSparse, numMatrices, 0);
 
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeCuda(), 0);
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeHost(), 0);
-
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 void SparseMemoryCopyDeviceToDevice()
@@ -359,11 +354,7 @@ void SparseMemoryCopyDeviceToDevice()
     DeepFreeSparseCuda(deviceSparseSrc, numMatrices, 0);
     DeepFreeSparseCuda(deviceSparseDst, numMatrices, 0);
 
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeCuda(), 0);
-    CHECK_EQ(Util::MemoryManager::GetAllocatedByteSizeHost(), 0);
-
-    Util::MemoryManager::ClearCudaMemoryPool();
-    Util::MemoryManager::ClearHostMemoryPool();
+    Util::ResourceManager::ClearAll();
 }
 
 }  // namespace Sapphire::Test

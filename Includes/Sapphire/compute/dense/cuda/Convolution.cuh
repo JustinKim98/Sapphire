@@ -4,73 +4,35 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_COMPUTE_CUDA_CONVOLUTION_CUH
-#define Sapphire_COMPUTE_CUDA_CONVOLUTION_CUH
+#ifndef SAPPHIRE_COMPUTE_DENSE_CUDA_CONVOLUTION_CUH
+#define SAPPHIRE_COMPUTE_DENSE_CUDA_CONVOLUTION_CUH
 
-#include <cudnn.h>
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
-#include <cassert>
+#include <Sapphire/compute/dense/cuda/CudnnStruct.cuh>
+
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-struct Shape4D
-{
-    int N;         // N
-    int Channels;  // C
-    int Height;    // H
-    int Width;     // W
-};
+__host__ void CreateCudnnConv2DMetaData(CudnnConv2DMetaData* metaData,
+                                        Shape4D xShape, Shape4D filterShape,
+                                        int strideRow, int strideCol,
+                                        int dilationRow, int dilationCol,
+                                        int rowPadding, int columnPadding,
+                                        int deviceId);
 
-struct CudnnMetaData
-{
-    cudnnHandle_t Handle;
+__host__ void Conv2DForward(float* y, const float* x,
+                            const float* filter, Shape4D inputShape,
+                            Shape4D filterShape,
+                            int strideRow, int strideCol, int dilationRow,
+                            int dilationCol, int rowPadding, int columnPadding,
+                            int deviceId);
 
-    cudnnConvolutionDescriptor_t ConvDesc;
-    cudnnTensorDescriptor_t InputDesc;
-    cudnnFilterDescriptor_t FilterDesc;
-    cudnnTensorDescriptor_t OutputDesc;
-
-    void* ForwardWorkSpace;
-    size_t ForwardWorkSpaceBytes;
-    void* BackwardDataWorkSpace;
-    size_t BackwardDataWorkSpaceBytes;
-    void* BackwardFilterWorkSpace;
-    size_t BackwardFilterWorkSpaceBytes;
-
-    cudnnConvolutionFwdAlgo_t ForwardAlgo;
-    cudnnConvolutionBwdDataAlgo_t BackwardDataAlgo;
-    cudnnConvolutionBwdFilterAlgo_t BackwardFilterAlgo;
-};
-
-__host__ void checkCuDNN(cudnnStatus_t status)
-{
-    assert(status == CUDNN_STATUS_SUCCESS);
-}
-
-__host__ void checkCuda(cudaError_t status)
-{
-    assert(status == cudaSuccess);
-}
-
-__host__ void CreateConvDescriptors(CudnnMetaData* metadata, Shape4D inputShape,
-                                    Shape4D filterShape, int strideRow,
-                                    int strideCol, int dilationRow,
-                                    int dilationCol, int paddingRow,
-                                    int paddingCol);
-
-__host__ void ConvolutionForward2D(CudnnMetaData* metadata, float* output,
-                                   float* input, float* filter,
-                                   Shape4D inputShape, Shape4D filterShape,
-                                   int strideRow, int strideCol,
-                                   int dilationRow, int dilationCol,
-                                   int paddingRow, int paddingCol);
-
-__host__ void ConvolutionBackward2D(
-    CudnnMetaData* descriptors, float* dataGradientOut, float* filter,
-    float* filterGradientOut, float* input, float* gradientInput,
-    Shape4D inputShape, Shape4D filterShape, int strideRow, int strideCol,
-    int dilationRow, int dilationCol, int paddingRow, int paddingCol);
-
-}  // namespace Sapphire::Compute::Cuda
+__host__ void Conv2DBackward(float* dx, const float* filter,
+                             float* dFilter, const float* x,
+                             const float* dy, Shape4D inputShape,
+                             Shape4D filterShape, int strideRow, int strideCol,
+                             int dilationRow, int dilationCol, int rowPadding,
+                             int columnPadding, int deviceId);
+} // namespace Sapphire::Compute::Cuda
 
 #endif  // Sapphire_CONVOLUTION_CUH

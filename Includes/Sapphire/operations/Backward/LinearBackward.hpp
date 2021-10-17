@@ -4,34 +4,42 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_LINEARBACKWARD_HPP
-#define Sapphire_LINEARBACKWARD_HPP
+#ifndef SAPPHIRE_BACKPROP_LINEARBACKWARD_HPP
+#define SAPPHIRE_BACKPROP_LINEARBACKWARD_HPP
 
-#include <Sapphire/Model.hpp>
-#include <Sapphire/compute/Compute.hpp>
-#include <Sapphire/compute/Initialize.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 
 namespace Sapphire::BackProp
 {
+constexpr static int dxIdx = 0;
+constexpr static int dyIdx = 0;
+constexpr static int weightIdx = 0;
+constexpr static int biasIdx = 1;
+constexpr static int xIdx = 0;
+
 class LinearBackProp : public BackPropWrapper
 {
- public:
-    explicit LinearBackProp(const TensorUtil::TensorData& x, TensorUtil::TensorData dx,
-                            TensorUtil::TensorData dy, int unitKey);
+public:
+    explicit LinearBackProp(TensorUtil::TensorData dx,
+                            TensorUtil::TensorData dy,
+                            TensorUtil::TensorData weight,
+                            TensorUtil::TensorData bias,
+                            TensorUtil::TensorData x,
+                            Optimizer::Optimizer* optimizer,
+                            int batchSize);
 
-    bool InvokeBackProp(const TensorUtil::TensorData& input) override;
+private:
+    void m_runBackProp() override;
 
- private:
-    void m_backProp(const TensorUtil::TensorData& weight);
+    void m_backProp(TensorUtil::TensorData& weight);
 
-    void m_updateWeight(TensorUtil::TensorData& weight);
+    void m_updateWeight(TensorUtil::TensorData& weight) const;
 
-    void m_updateBias(TensorUtil::TensorData& bias);
+    void m_updateBias(TensorUtil::TensorData& bias) const;
 
-    unsigned int m_batchSize;
+    int m_batchSize;
 };
-
-}  // namespace Sapphire::BackProp
+} // namespace Sapphire::BackProp
 
 #endif  // Sapphire_LINEARBACKWARD_HPP

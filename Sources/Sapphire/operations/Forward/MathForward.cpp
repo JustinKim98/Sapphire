@@ -5,108 +5,154 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MathBackward.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
-#include <vector>
+#include <Sapphire/util/UnitUtils.hpp>
 
 namespace Sapphire::NN::Functional
 {
-static Tensor Mul(const Tensor& a, const Tensor& b)
+Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
-    TensorUtil::TensorDescriptor& aDesc =
-        model.GetDescriptor(a.TensorDescriptorKey());
-    TensorUtil::TensorDescriptor& bDesc =
-        model.GetDescriptor(b.TensorDescriptorKey());
+    if (inputA.Mode() != inputB.Mode())
+        throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
 
-    Shape shapeA = aDesc.ForwardData.TensorShape;
-    Shape shapeB = bDesc.ForwardData.TensorShape;
+    if (inputA.GetDevice() != inputB.GetDevice())
+        throw std::invalid_argument("NN::Functional::MulOp - Device mismatch");
 
-    const auto batchSize = aDesc.ForwardData.BatchSize;
-    Type type = aDesc.ForwardData.GetType();
-    Device device = aDesc.ForwardData.GetDevice();
+    auto mode = inputA.Mode();
 
-    const Shape outputShape({ shapeA.At(0), shapeB.At(1) });
+    auto& aDesc =
+        model.GetDescriptor(inputA.TensorDescriptorKey());
+    auto& bDesc =
+        model.GetDescriptor(inputB.TensorDescriptorKey());
 
+    const auto aShape = aDesc.GetShape();
+    const auto bShape = bDesc.GetShape();
+
+    if (aShape.Cols() != bShape.Rows())
+        throw std::invalid_argument("NN::Functional::MulOp - Shape mismatch");
+
+    const auto yShapeOption =
+        Util::GetBroadcastedShape(aDesc.GetShape(), bDesc.GetShape(), 2);
+    if (!yShapeOption)
+    {
+        throw std::invalid_argument(
+            "NN::Functional::MulOp - Broadcast failed");
+    }
+
+    auto yShape = yShapeOption.value();
+    yShape.SetRow(inputA.GetShape().Rows());
+    yShape.SetCol(inputB.GetShape().Cols());
+
+    const Type type = aDesc.GetType();
+    const CudaDevice device = aDesc.GetDevice();
     const int outputKey = model.RegisterTensorDescriptor(
-        outputShape, type, device, batchSize, true);
+        yShape, type, device);
 
     auto& yDesc = model.GetDescriptor(outputKey);
+    yDesc.SetMode(mode);
 
-    Compute::Gemm(yDesc.ForwardData, aDesc.ForwardData, bDesc.ForwardData,
-                  yDesc.ForwardData);
+    auto a = aDesc.GetForwardData();
+    auto da = aDesc.GetBackwardData();
+    auto b = bDesc.GetForwardData();
+    auto db = bDesc.GetBackwardData();
+    auto y = yDesc.GetForwardData();
+    auto dy = yDesc.GetBackwardData();
 
-    auto backPropWrapper = std::make_unique<BackProp::MulBackProp>(
-        aDesc.ForwardData, aDesc.BackwardData, bDesc.ForwardData,
-        bDesc.BackwardData, yDesc.BackwardData);
+    Compute::Gemm(y, a, b);
 
-    //! Append operand history to the descriptors of A and B
-    aDesc.AppendOperandHistory(yDesc.GetKey());
-    bDesc.AppendOperandHistory(yDesc.GetKey());
-    //! Append output history to the descriptor A and associated backPropWrapper
-    yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
+    auto* backPropWrapper = new BackProp::MulBackProp(a, da, b, db, y);
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
+                      std::make_tuple(&yDesc));
 
-    return Tensor(outputShape, outputKey);
+    return Tensor(outputKey);
 }
 
-static Tensor AddOp(const Tensor& a, const Tensor& b)
+Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
+
+    if (inputA.Mode() != inputB.Mode())
+        throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
+
+    if (inputA.GetDevice() != inputB.GetDevice())
+        throw std::invalid_argument("NN::Functional::MulOp - Device mismatch");
+
+    auto mode = inputA.Mode();
 
     //! Get descriptors
-    TensorUtil::TensorDescriptor& descA =
-        model.GetDescriptor(a.TensorDescriptorKey());
-    TensorUtil::TensorDescriptor& descB =
-        model.GetDescriptor(b.TensorDescriptorKey());
+    TensorUtil::TensorDescriptor& aDesc =
+        model.GetDescriptor(inputA.TensorDescriptorKey());
+    TensorUtil::TensorDescriptor& bDesc =
+        model.GetDescriptor(inputB.TensorDescriptorKey());
 
-    auto shapeA = descA.ForwardData.TensorShape;
-    auto shapeB = descB.ForwardData.TensorShape;
+    const auto shapeA = aDesc.GetShape();
+    const auto shapeB = bDesc.GetShape();
 
-    const auto batchSize = descA.ForwardData.BatchSize;
-    Type type = descA.ForwardData.GetType();
-    Device device = descA.ForwardData.GetDevice();
+    const auto outputShape = Util::GetBroadcastedShape(shapeA, shapeB, 0);
+    if (!outputShape)
+        throw std::invalid_argument("NN::Functional::AddOp - Broadcast failed");
 
-    const auto outputShape = Shape({ shapeA.At(0), shapeA.At(1) });
+    const Type type = aDesc.GetType();
+    const CudaDevice device = aDesc.GetDevice();
 
-    const auto outKey = model.RegisterTensorDescriptor(outputShape, type,
-                                                       device, batchSize, true);
-    auto& descOut = model.GetDescriptor(outKey);
+    const auto outKey = model.RegisterTensorDescriptor(
+        outputShape.value(), type,
+        device);
+    auto& yDesc = model.GetDescriptor(outKey);
+    yDesc.SetMode(mode);
 
-    Compute::Add(descOut.ForwardData, descA.ForwardData, descB.ForwardData);
+    auto a = aDesc.GetForwardData();
+    auto da = aDesc.GetBackwardData();
+    auto b = bDesc.GetForwardData();
+    auto db = bDesc.GetBackwardData();
+    auto y = yDesc.GetForwardData();
+    auto dy = yDesc.GetBackwardData();
 
-    auto backPropWrapper = std::make_unique<BackProp::AddBackProp>(
-        descA.BackwardData, descB.BackwardData, descOut.BackwardData);
+    auto* backPropWrapper = new BackProp::AddBackProp(da, db, dy);
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
+                      std::make_tuple(&yDesc));
 
-    descA.AppendOperandHistory(descOut.GetKey());
-    descB.AppendOperandHistory(descOut.GetKey());
-    descOut.AppendOutputHistory(std::move(backPropWrapper), false);
-
-    return Tensor(outputShape, descOut.GetKey());
+    Compute::Add(y, a, b);
+    return Tensor(yDesc.GetKey());
 }
 
-// static void AddOpInplace(const Tensor& out, Tensor& a)
-//{
-//    Model& model = ModelManager::GetCurrentModel();
-//
-//    //! Get descriptors
-//    TensorUtil::TensorDescriptor& descA =
-//        model.GetDescriptor(a.TensorDescriptorKey());
-//    TensorUtil::TensorDescriptor& descOut =
-//        model.GetDescriptor(out.TensorDescriptorKey());
-//
-//    //! Derive output shape
-//    auto shapeA = descA.ForwardData.TensorShape;
-//    const auto outputShape = descOut.ForwardData.TensorShape;
-//
-//    Compute::Add(descOut.ForwardData, descA.ForwardData);
-//
-//    auto backPropWrapper =
-//        std::make_unique<BackProp::AddBackPropInplace>(descA.m_key);
-//
-//    descA.AppendOperandHistory(descOut.m_key);
-//    descOut.AppendOperandHistory(descOut.m_key);
-//    descOut.AppendOutputHistory(std::move(backPropWrapper), false);
-//}
-}  // namespace Sapphire::NN::Functional
+Tensor MeanOp(const Tensor& input, int dim)
+{
+    if (dim < 0 || dim >= input.GetShape().Dim())
+        throw std::invalid_argument("NN::Functional::MeanOp - Invalid dim");
+
+    Model& model = ModelManager::CurModel();
+
+    auto mode = input.Mode();
+
+    TensorUtil::TensorDescriptor& xDesc =
+        model.GetDescriptor(input.TensorDescriptorKey());
+
+    const auto shape = xDesc.GetShape();
+    auto yShape = shape;
+    yShape[dim] = 1;
+
+    const auto type = xDesc.GetType();
+    const auto device = xDesc.GetDevice();
+
+    const auto yKey = model.RegisterTensorDescriptor(yShape, type, device);
+    auto& yDesc = model.GetDescriptor(yKey);
+    yDesc.SetMode(mode);
+
+    auto x = xDesc.GetForwardData();
+    auto dx = xDesc.GetBackwardData();
+    auto y = yDesc.GetForwardData();
+    auto dy = yDesc.GetBackwardData();
+
+    auto* backPropWrapper = new BackProp::MeanBackProp(dx, x, dy, dim);
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                      std::make_tuple(&yDesc));
+
+    Compute::Mean(y, x, dim);
+    return Tensor(yDesc.GetKey());
+}
+} // namespace Sapphire::NN::Functional

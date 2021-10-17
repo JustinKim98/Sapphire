@@ -13,7 +13,7 @@
 #define MAX_THREAD_DIM_Y 1024
 #define MAX_THREAD_DIM_Z 64
 #define MAX_GRID_DIM 65535
-
+#define NUM_LOOPS  8
 #define DEFAULT_DIM_X 64
 #include <cublas_v2.h>
 #include <cuda.h>
@@ -45,6 +45,15 @@
             printf("CUSPARSE API failed at line %d with error: %s (%d)\n", \
                    __LINE__, cusparseGetErrorString(status), status);      \
             throw std::runtime_error("CUSPARSE failed");                   \
+        }                                                                  \
+    }
+
+#define CHECK_CUBLAS(func)                                               \
+    {                                                                      \
+        cublasStatus_t status = (func);                                  \
+        if (status != CUBLAS_STATUS_SUCCESS)                             \
+        {                                                                  \
+            throw std::runtime_error("CUBLAS failed");                   \
         }                                                                  \
     }
 

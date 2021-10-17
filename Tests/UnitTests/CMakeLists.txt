@@ -3,14 +3,16 @@ set(target UnitTests)
 
 # Includes
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Includes)
 
+set (CMAKE_CXX_STANDARD 17)
 # Sources
 file(GLOB_RECURSE sources
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # Build executable
 add_executable(${target}
-        ${sources})
+        ${sources} "Sources/OperationTest/MathTest.cpp")
 
 # Project options
 set_target_properties(${target}

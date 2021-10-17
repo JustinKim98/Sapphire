@@ -8,7 +8,6 @@
 #define Sapphire_COMPUTE_CUDA_DENSE_INITIALIZE_CUH
 
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
-#include <Sapphire/compute/dense/cuda/InitializeKernel.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {

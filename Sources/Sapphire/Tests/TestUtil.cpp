@@ -5,7 +5,11 @@
 // property of any third parties.
 
 #include <Sapphire/Tests/TestUtil.hpp>
+#include <Sapphire/util/Shape.hpp>
 #include <random>
+#include <doctest.h>
+#include <iostream>
+#include <algorithm>
 
 namespace Sapphire::Test
 {
@@ -54,5 +58,55 @@ void InitRandomDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
                     matrixPtr[matrixIdx * m * paddedN + rowIdx * paddedN +
                               colIdx] = 0.0f;
             }
+}
+
+Shape CreateRandomShape(int dim, int maxDim)
+{
+    if (dim <= 0)
+        throw std::invalid_argument("Dimension must be greater than zero");
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, maxDim);
+    std::vector<int> shapeVector(dim);
+    for (int i = 0; i < dim; ++i)
+    {
+        shapeVector.at(i) = distrib(gen) % maxDim + 1;
+    }
+    return Shape(shapeVector);
+}
+
+Shape ShuffleShape(int dim, Shape shape)
+{
+    if (dim <= 0)
+        throw std::invalid_argument("Dimension must be greater than zero");
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(1, shape.Dim());
+    const std::size_t newDim = dist(gen);
+
+    std::vector<int> shapeVector = shape.GetShapeVector();
+    std::shuffle(shapeVector.begin(), shapeVector.end(), rd);
+    while (shapeVector.size() != newDim)
+    {
+        std::shuffle(shapeVector.begin(), shapeVector.end(), rd);
+        shapeVector.front() = shapeVector.back() * shapeVector.front();
+        shapeVector.pop_back();
+    }
+    return Shape(shapeVector);
+}
+
+
+void CheckNoneZero(const float* ptr, unsigned size,
+                   bool print)
+{
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        if (print)
+            std::cout << "ptrA: " << ptr[i] << std::endl;
+        auto pass = ptr[i] > 0 || ptr[i] < 0;
+        CHECK(pass);
+    }
 }
 } // namespace Sapphire::Test

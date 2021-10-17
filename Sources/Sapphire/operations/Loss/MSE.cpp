@@ -5,43 +5,46 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
-#include <Sapphire/compute/Compute.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MSEBackward.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
-#include <memory>
-#include <vector>
+#include <Sapphire/util/UnitUtils.hpp>
 
 namespace Sapphire::NN::Loss
 {
-static Tensor MSE(const Tensor& x, const Tensor& label)
+Tensor MSE(const Tensor& input, const Tensor& label)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    auto mode = input.Mode();
+    if (!Util::CheckModeEquality(mode, label))
+        throw std::invalid_argument("NN::Loss::MSE - Device mode inequality");
+    Model& model = ModelManager::CurModel();
 
-    auto& xDesc = model.GetDescriptor(x.TensorDescriptorKey());
+    auto& xDesc = model.GetDescriptor(input.TensorDescriptorKey());
     auto& labelDesc = model.GetDescriptor(label.TensorDescriptorKey());
+
     const auto yDescKey = model.RegisterTensorDescriptor(
-        Shape({ 1 }), xDesc.ForwardData.GetType(),
-        xDesc.ForwardData.GetDevice(), xDesc.GetBatchSize(), true);
-
+        Shape({ 1 }), xDesc.GetType(),
+        xDesc.GetCudaDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
+    yDesc.SetMode(mode);
 
-    TensorUtil::TensorData temp(x.GetShape(), xDesc.ForwardData.GetType(),
-                                xDesc.ForwardData.GetDevice(),
-                                xDesc.GetBatchSize());
+    TensorUtil::TensorData diff(
+        input.GetShape(), xDesc.GetType(),
+        xDesc.GetCudaDevice());
+    diff.SetMode(mode);
 
-    Compute::Sub(temp, labelDesc.ForwardData, xDesc.ForwardData);
-    Compute::Pow(temp, temp, 2.0f);
+    auto xData = xDesc.GetForwardData();
+    auto labelData = labelDesc.GetForwardData();
+    auto yData = yDesc.GetForwardData();
+    auto dxData = xDesc.GetBackwardData();
+    auto* wrapper = new BackProp::MSEBackward(dxData, xData, labelData);
+    Util::SaveHistory(wrapper, std::make_tuple(&xDesc, &labelDesc),
+                      std::make_tuple(&yDesc));
 
-    Compute::Mean(yDesc.ForwardData, temp);
-
-    auto backPropWrapper = std::make_unique<BackProp::MSEBackward>(
-        xDesc.ForwardData, xDesc.BackwardData, labelDesc.ForwardData,
-        yDesc.BackwardData);
-
-    xDesc.AppendOperandHistory(yDesc.GetKey());
-    labelDesc.AppendOperandHistory(yDesc.GetKey());
-    yDesc.AppendOutputHistory(std::move(backPropWrapper), false);
-
-    return Tensor(Shape({ 1 }), yDescKey);
+    Util::ChangeTensorDataDimension(1, xData, labelData, yData, dxData, diff);
+    Compute::Sub(diff, labelData, xData);
+    Compute::Pow(diff, diff, 2.0f);
+    Compute::Mean(yData, diff, 0);
+    return Tensor(yDescKey);
 }
-}  // namespace Sapphire::NN::Loss
+} // namespace Sapphire::NN::Loss

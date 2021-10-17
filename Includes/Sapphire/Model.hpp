@@ -4,20 +4,32 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_MODEL_HPP
-#define Sapphire_MODEL_HPP
+#ifndef SAPPHIRE_MODEL_HPP
+#define SAPPHIRE_MODEL_HPP
 
+#include <cmath>
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
+#include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <string>
 #include <unordered_map>
 
 namespace Sapphire
 {
+inline void HasInvalidNumberHost(TensorUtil::TensorData tensorData)
+{
+    for (unsigned int i = 0; i < tensorData.HostTotalSize; ++i)
+    {
+        const auto data = tensorData.HostRawPtr()[i];
+        if (std::isnan(data) || std::isinf(data))
+            throw std::runtime_error("NAN or INF detected");
+    }
+}
+
 class Model
 {
- public:
+public:
     explicit Model(std::string name);
     ~Model() = default;
 
@@ -26,37 +38,34 @@ class Model
     Model& operator=(const Model& model) = delete;
     Model& operator=(Model&& model) noexcept = default;
 
-    //! Registers unitDataWrapper to the unit
-    //! Assigns new key to the given unitDataWrapper
-    //! \param unitDataWrapper : unitDataWrapper to register
-    //! \return : Assigned key
-    int RegisterUnitDataWrapper(UnitDataWrapper& unitDataWrapper);
-
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const Device& device, unsigned int batchSize,
-                                 bool createBackwardData);
+                                 const CudaDevice& device,
+                                 bool preserve = false);
 
-    //! Initializes gradients before training every epoch
-    void ZeroGrad();
+    //! Registers back propagation wrapper
+//! \param backPropWrapper :  back propagation wrapper to register
+//! \return : key of the back propagation wrapper
+    int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
 
-    //! Returns unitDataWrapper with given key
-    UnitDataWrapper GetUnitDataWrapper(int key) const;
-
-    //! Converts tensor into vector in 1 dimensional format
-    //! \param tensor : tensor to extract data from
-    [[nodiscard]] const std::vector<float>& GetData(Tensor tensor);
-
-    //! Sets data directly to the tensor
-    void SetData(const std::vector<float>& data);
-
-    //! Returns descriptor from the key
-    //! \param key : key of the descriptor
+    //! Returns descriptor using the descKey
+    //! \param descKey : key of the descriptor
     //! \return : tensor descriptor of given key
-    TensorUtil::TensorDescriptor& GetDescriptor(int key);
+    [[nodiscard]] TensorUtil::TensorDescriptor& GetDescriptor(int descKey);
 
- private:
+    //! Starts back propagation from the given tensor
+    //! \param tensor : tensor to start back propagation
+    void BackProp(Tensor tensor);
+
+    //! Clears the model
+    //! including forward and back prop data
+    void Clear();
+
+    //! Initializes gradients to zero
+    void InitGradient();
+
+private:
     //! Automatically calculates gradient
     //! \param tensorKey : tensor key to the descriptor to start back
     //! propagation
@@ -64,39 +73,44 @@ class Model
 
     class TensorDescriptorPool
     {
-     public:
+    public:
         std::unordered_map<int, TensorUtil::TensorDescriptor> TensorDescMap;
         int Counter = 0;
     };
 
-    class UnitPool
-    {
-     public:
-        std::unordered_map<int, UnitDataWrapper> UnitWrapperMap;
-        int Counter = 0;
-    };
+    void m_removeDescriptor(int descKey);
+
 
     TensorDescriptorPool m_tensorDescriptorPool;
-    UnitPool m_unitPool;
+    TensorDescriptorPool m_preservedDescriptorPool;
+    std::unordered_map<int, BackProp::BackPropWrapper*> m_backPropWrapperPool;
     std::string m_name;
 };
 
 //! Singleton class for model management
 class ModelManager
 {
- public:
-    static Model& GetModel(const std::string& name);
+public:
+    //! Gets the model with given modelName
+    //! \param modelName : name of the model to get
+    static Model& GetModel(const std::string& modelName);
 
-    static Model& GetCurrentModel();
+    //! Returns currently active model
+    //! \return : current model
+    static Model& CurModel();
 
-    static void SetCurrentModel(const std::string& name);
+    //! Sets current model to the given modelName
+    //! \param modelName : name of the model to be set
+    static void SetCurrentModel(const std::string& modelName);
 
-    static void AddModel(const std::string& name);
+    //! Adds a new model to the ModelManager
+    //! \param modelName : name of the model
+    static void AddModel(const std::string& modelName);
 
- private:
+private:
     static std::string m_currentModel;
     static std::unordered_map<std::string, Model> m_modelMap;
 };
-}  // namespace Sapphire
+} // namespace Sapphire
 
 #endif

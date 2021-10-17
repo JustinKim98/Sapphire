@@ -4,14 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_SOFTMAX_HPP
-#define Sapphire_SOFTMAX_HPP
+#ifndef SAPPHIRE_SOFTMAX_HPP
+#define SAPPHIRE_SOFTMAX_HPP
 
 #include <Sapphire/tensor/Tensor.hpp>
 
 namespace Sapphire::NN
 {
-//static Tensor SoftMax(Tensor input);
+[[maybe_unused]] static Tensor SoftMax(const Tensor& input);
 }
 
 #endif  // Sapphire_SOFTMAX_HPP

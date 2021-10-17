@@ -10,6 +10,8 @@ project(sapphire)
 option(USE_CUDA "USE_CUDA" ON)
 option(USE_AVX2 "USE_AVX2" ON)
 option(USE_AVX512 "USE_AVX512" OFF)
+option(IGNORE_WARNINGS OFF)
+option(TEST_MODE OFF)
 
 # Set output directories
 set(DEFAULT_CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -20,6 +22,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 # Set enable output of compile commands during generation
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
+set_target_properties(${sapphire} PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
 
 # Includes
 include_directories(Includes)

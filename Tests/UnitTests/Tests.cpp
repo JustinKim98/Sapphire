@@ -6,21 +6,44 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Sapphire/Tests/BasicComputationTest.hpp>
 #include <Sapphire/Tests/BroadcastTest.hpp>
-#include <Sapphire/Tests/ComputationTest.hpp>
+#include <Sapphire/Tests/GemmTest.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
 #include <Sapphire/Tests/SparseGemmTest.hpp>
 #include <Sapphire/Tests/SparseMemoryTest.hpp>
 #include <Sapphire/Tests/Test.hpp>
+#include <OperationTest/MathTest.hpp>
+#include <OperationTest/MeanTest.hpp>
+#include <OperationTest/MSETest.hpp>
+#include <OperationTest/LinearTest.hpp>
+#include <OperationTest/Conv2DTest.hpp>
+#include <ModelTest/Conv2DModel.hpp>
+#include <ModelTest/SimpleLinearModel.hpp>
+#include <Sapphire/Tests/Basics/TransposeTest.hpp>
+#include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
+#include <Sapphire/Tests/TestUtil.hpp>
+#include <Sapphire/Tests/Conv2DTest.hpp>
+#include <Sapphire/compute/TrigonometricOps.hpp>
+#include <Sapphire/compute/BasicOps.hpp>
+#include <Sapphire/compute/ActivationOps.hpp>
+#include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
+#include <Sapphire/Tests/Basics/ReshapeTest.hpp>
 #include <iostream>
 #include "doctest.h"
-#define EnableAllTest
+
+#define GraphTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
+#define ModelTest
 
 namespace Sapphire::Test
 {
-#ifdef EnableAllTest
-
 TEST_CASE("Simple test")
 {
     CHECK(Add(2, 3) == 5);
@@ -45,6 +68,138 @@ TEST_CASE("Check cuda")
 #endif
 }
 
+#ifdef TensorFunctionalityTest
+TEST_CASE("TensorFunctionalityTest")
+{
+    SUBCASE("TensorDataCopy")
+    {
+        for (int i = 0; i < 5; ++i)
+            SendDataBetweenHostDevice(false);
+    }
+
+    SUBCASE("TensorDataCopyOnCuda")
+    {
+        for (int i = 0; i < 5; ++i)
+            TensorDataCopyOnCuda(false);
+    }
+
+    SUBCASE("TensorDataCopyOnHost")
+    {
+        for (int i = 0; i < 5; ++i)
+            TensorDataCopyOnHost(false);
+    }
+}
+#endif
+
+#ifdef BasicsTest
+TEST_CASE("Basics")
+{
+    const int testLoops = 3;
+    SUBCASE("Transpose")
+    {
+        std::cout << "Transpose" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TransposeTest(false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Reshape")
+    {
+        std::cout << "Reshape" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            ReshapeTest(false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Add")
+    {
+        std::cout << "Add Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Add);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Sub")
+    {
+        std::cout << "Sub Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Sub);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Dot")
+    {
+        std::cout << "Dot Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithTwoArgumentsWithSameShape(false, 1.0f, Compute::Dot);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("log")
+    {
+        std::cout << "Log Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::log);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Inverse")
+    {
+        std::cout << "Inverse Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Inverse);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Sin")
+    {
+        std::cout << "SinTest" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Sin);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Cos")
+    {
+        std::cout << "Cos Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Cos);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Tan")
+    {
+        std::cout << "Tan Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Tan);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+#ifdef ActivationTest
+TEST_CASE("ActivationTest")
+{
+    const int testLoops = 3;
+    SUBCASE("ReLU")
+    {
+        std::cout << "ReLU Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentNormal(false, 1.0f, Compute::ReLU, 0, 0.1f);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("SoftMax")
+    {
+        std::cout << "SoftMax Test" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            TestWithOneArgumentNormal(false, 1.0f, Compute::SoftMax, 0, 1.0f);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+#ifdef GemmTest
 TEST_CASE("Gemm Test")
 {
     const int testLoops = 3;
@@ -52,226 +207,215 @@ TEST_CASE("Gemm Test")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
-            std::cout << "Gemm test 1 : " << loopIdx << std::endl;
-            Gemm1();
+            std::cout << "Gemm test : " << loopIdx << std::endl;
+            Gemm1(false);
         }
-    }
-
-    SUBCASE("Initialize test With Cuda")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test 2 : " << loopIdx << std::endl;
-            Gemm2();
-        }
+        Util::ResourceManager::ClearAll();
     }
 }
+#endif
 
+#ifdef GemmBroadcastTest
 TEST_CASE("Gemm Broadcast Test")
 {
     const int testLoops = 3;
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastWithOneDimension();
+            BroadcastWithOneDimension(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("Broadcast test with Missing dimension")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastWithMissingDimension();
+            BroadcastWithMissingDimension(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("Broadcast test mixed")
     {
         for (int i = 0; i < testLoops; i++)
-            BroadcastMixed();
-    }
-
-    SUBCASE("Gemm Broadcast")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast : " << loopIdx << std::endl;
-            GemmBroadcast();
-        }
-    }
-
-    SUBCASE("Gemm Broadcast on output")
-    {
-        for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
-        {
-            std::cout << "Gemm test Broadcast on Output: " << loopIdx
-                      << std::endl;
-            GemmBroadcastOnOutput();
-        }
-    }
-}
-
-TEST_CASE("Basic computation test")
-{
-    const int testLoops = 5;
-    SUBCASE("Transpose")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "Transpose : " << i << std::endl;
-            TestTranspose(false);
-        }
-    }
-
-    SUBCASE("General1")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "General1 : " << i << std::endl;
-            TestBasics1();
-        }
-    }
-
-    SUBCASE("General2")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "General2 : " << i << std::endl;
-            TestBasics2();
-        }
-    }
-
-    SUBCASE("AddWithBroadcast1")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "AddWithBroadcast1 : " << i << std::endl;
-            TestAddBroadcast1();
-        }
-    }
-
-    SUBCASE("AddWithBroadcast2")
-    {
-        for (int i = 0; i < testLoops; i++)
-        {
-            std::cout << "AddWithBroadcast2 : " << i << std::endl;
-            TestAddBroadcast2();
-        }
-    }
-}
-
-TEST_CASE("SparseMemory function Test")
-{
-    SUBCASE("SparseMemoryAllocationHost")
-    {
-        std::cout << "Testing Sparse Memory Allocation for Host ...";
-        SparseMemoryAllocationHost();
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("LoadDistMemoryAllocationHost")
-    {
-        std::cout << "Testing Load Distribution Memory Allocation forHost...";
-        LoadDistMemoryAllocationHost();
-        std::cout << " Done\n  " << std::endl;
-    }
-
-    SUBCASE("SparseMemoryDevice")
-    {
-        std::cout << "Testing Sparse Memory Allocation For Device ...";
-        SparseMemoryAllocationDevice();
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("SparseMemoryCopy Device To Device")
-    {
-        std::cout << "Testing Sparse Memory Copy between device ...";
-        SparseMemoryCopyDeviceToDevice();
-        std::cout << " Done" << std::endl;
-    }
-}
-
-TEST_CASE("Device Sparse Gemm Test")
-{
-    SUBCASE("Sparse Multiplication Test (complex)")
-    {
-        std::cout << "Testing Sparse Multiplication (complex) ..." << std::endl;
-        const auto elapsedTime =
-            SparseGemmTestComplex(50, 50, 50, 1, false, false);
-        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-                  << "\n"
-                  << std::endl;
-    }
-
-    SUBCASE("Sparse Multiplication Test (simple)")
-    {
-        std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
-        const auto elapsedTime = SparseGemmTestSimple(5, 5, 5, 5, false, false);
-        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-                  << "\n"
-                  << std::endl;
+            BroadcastMixed(false);
+        Util::ResourceManager::ClearAll();
     }
 }
 #endif
-TEST_CASE("Sparse Performance Test")
+
+#ifdef InitializeTest
+TEST_CASE("InitializeTest")
 {
-    SUBCASE("Matrix conversion test")
+    const int testLoops = 3;
+    SUBCASE("Initialize Ones")
     {
-        std::cout << "Testing conversion ..." << std::endl;
-        SparseMatrixConversionTest(100, 100, 10, 0.1f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("Correctness test (Cuda)")
-    {
-        std::cout << "Testing correctness (Cuda) ..." << std::endl;
-        SparseTestCorrectnessCuda(1000, 1000, 50, 3, 0.5f, false);
-        SparseTestCorrectnessCuda(40, 50, 500, 3, 0.5f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("Correctness test (Host)")
-    {
-        std::cout << "Testing correctness (Host) ..." << std::endl;
-        SparseTestCorrectnessHost(5, 5, 50, 3, 0.9f, false);
-        SparseTestCorrectnessHost(500, 500, 500, 3, 0.5f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("General Performance Test")
-    {
-        const std::filesystem::path workDir = "/home/jwkim98/Desktop";
-        const bool printResults = true;
-        const size_t iterations = 300;
-
-        std::cout << "Testing performance ..." << std::endl;
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<uint32_t> uniform(100, 300);
-
-        std::vector<PerformanceData> performanceData(10 * iterations);
-        size_t count = 0;
-        for (size_t i = 0; i < iterations; ++i)
+        std::cout << "Initialize Ones" << std::endl;
+        for (int i = 0; i < testLoops; i++)
         {
-            float sparsity = 0.0f;
-            while (sparsity < 1.0f)
-            {
-                performanceData[count] = PerformanceTest(
-                    uniform(gen), uniform(gen), uniform(gen), 10, sparsity);
-                if (printResults)
-                    performanceData[count].PrintData();
-                sparsity += 0.1f;
-                count += 1;
-            }
+            EqualInitializeTest(Compute::Initialize::Ones, false);
         }
-        std::cout << " Done" << std::endl;
-
-        std::filesystem::current_path(workDir);
-        std::ofstream file;
-        file.open("performance.csv", std::ios::out | std::ios::app);
-        PerformanceData::WriteCsvHeader(file);
-        for (const auto& data : performanceData)
+    }
+    SUBCASE("Initialize Normal")
+    {
+        std::cout << "Initialize Normal" << std::endl;
+        for (int i = 0; i < testLoops; i++)
         {
-            data.WriteCsv(file);
+            NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
         }
-        file.close();
     }
 }
-}  // namespace Sapphire::Test
+#endif
+
+#ifdef ConvolutionTest
+TEST_CASE("Convolution")
+{
+    const int testLoops = 3;
+    SUBCASE("Im2ColHost")
+    {
+        std::cout << "Im2Col && Col2Im" << std::endl;
+        HostIm2ColTest(false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("HostConv2D")
+    {
+        std::cout << "Host Conv2D" << std::endl;
+        HostConv2DTest(false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("Conv2D")
+    {
+        std::cout << "Conv2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            Conv2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("MaxPool2D")
+    {
+        std::cout << "MaxPool2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            MaxPool2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+
+    SUBCASE("AvgPool2D")
+    {
+        std::cout << "AvgPool2D" << std::endl;
+        for (int i = 0; i < testLoops; ++i)
+            AvgPool2DTest(false, false);
+        Util::ResourceManager::ClearAll();
+    }
+}
+#endif
+
+#ifdef GraphTest
+TEST_CASE("BasicGraphTest")
+{
+    SUBCASE("BasicGraph")
+    {
+        std::cout << "Basic graph test" << std::endl;
+        GraphFunctionalityTest();
+    }
+
+    SUBCASE("MultiplyTest")
+    {
+        std::cout << "Multiply" << std::endl;
+        TestMultiply(false);
+    }
+
+    SUBCASE("MeanTest")
+    {
+        std::cout << "Mean" << std::endl;
+        TestMean(false);
+    }
+
+    SUBCASE("MSETest")
+    {
+        std::cout << "MSE" << std::endl;
+        TestMSE(false);
+    }
+
+    SUBCASE("AddTest")
+    {
+        std::cout << "Add" << std::endl;
+        TestAdd(false);
+    }
+
+    SUBCASE("Linear Test")
+    {
+        std::cout << "Linear" << std::endl;
+        TestLinear(false);
+    }
+
+    SUBCASE("Conv2DTest")
+    {
+        std::cout << "Conv2D" << std::endl;
+        for (int i = 0; i < 3; ++i)
+            TestConv2D(false);
+    }
+}
+#endif
+
+#ifdef ModelTest
+
+TEST_CASE("Model Test")
+{
+    SUBCASE("SimpleLinearModelTest")
+    {
+        int xFeatures = 300;
+        int yFeatures = 300;
+        int batchSize = 10;
+        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+    
+        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
+                          0.0001f, batchSize, 1000, false);
+    }
+
+    SUBCASE("Conv2DModelTest")
+    {
+        const auto xChannels = 3;
+        const auto yChannels = 3;
+        const auto batchSize = 1;
+        const auto xSize = std::make_pair(5, 5);
+        const auto filterSize = std::make_pair(3, 3);
+        const auto stride = std::make_pair(2, 2);
+        const auto padSize = std::make_pair(2, 2);
+        const auto dilation = std::make_pair(1, 1);
+        const auto learningRate = 0.001f;
+        const auto hostMode = false;
+        const auto epochs = 1000;
+
+        const auto [xRows, xCols] = xSize;
+        const auto [filterRows, filterCols] = filterSize;
+        const auto [strideRows, strideCols] = stride;
+        const auto [padRows, padCols] = padSize;
+        const auto [dilationRows, dilationCols] = dilation;
+
+        const auto yRows =
+            (xRows + 2 * padRows - dilationRows * (filterRows - 1) - 1) /
+            strideRows +
+            1;
+        const auto yCols =
+            (xCols + 2 * padCols - dilationCols * (filterCols - 1) - 1) /
+            strideCols +
+            1;
+
+        std::vector<float> xFeatureVector(
+            batchSize * xChannels * xRows * xCols,
+            0.1f);
+        std::vector<float> labelVector(
+            batchSize * yChannels * yRows * yCols
+            , 10.0f);
+
+        Conv2DModel(xFeatureVector, labelVector, batchSize, yChannels,
+                    xChannels, xSize,
+                    std::make_pair(yRows, yCols),
+                    filterSize, stride, padSize, dilation, learningRate,
+                    hostMode, epochs);
+    }
+}
+
+#endif
+} // namespace Sapphire::Test

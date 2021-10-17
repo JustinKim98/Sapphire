@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/compute/dense/cuda/Initialize.cuh>
+#include <Sapphire/compute/dense/cuda/kernels/InitializeKernel.cuh>
 
 namespace Sapphire::Compute::Dense::Cuda
 {
@@ -23,8 +24,6 @@ __host__ void Normal(float* data, float mean, float sd, unsigned int size,
     if (size > firstLaunchSize)
         NormalKernel<<<1, size - firstLaunchSize>>>(
             data + firstLaunchSize, mean, sd, size - firstLaunchSize, seed);
-
-    cudaDeviceSynchronize();
 }
 
 __host__ void Uniform(float* data, float min, float max, unsigned int size,
@@ -42,8 +41,6 @@ __host__ void Uniform(float* data, float min, float max, unsigned int size,
     if (size > firstLaunchSize)
         UniformKernel<<<1, size - firstLaunchSize>>>(
             data + firstLaunchSize, min, max, size - firstLaunchSize, seed);
-
-    cudaDeviceSynchronize();
 }
 
 __host__ void Scalar(float* data, float value, unsigned int size)
@@ -59,7 +56,5 @@ __host__ void Scalar(float* data, float value, unsigned int size)
     if (size > firstLaunchSize)
         ScalarKernel<<<1, size - firstLaunchSize>>>(
             data + firstLaunchSize, value, size - firstLaunchSize);
-
-    cudaDeviceSynchronize();
 }
 }  // namespace Sapphire::Compute::Cuda::Dense
