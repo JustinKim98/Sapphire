@@ -22,7 +22,7 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
       m_xChannels(xChannels),
       m_useBias(useBias)
 {
-    const auto [kernelRows, kernelCols] = filterSize;
+    const auto [filterRows, filterCols] = filterSize;
     const auto [dilationRows, dilationCols] = dilation;
     const auto [inputRows, inputCols] = inputSize;
     const auto [rowPadding, colPadding] = padSize;
@@ -31,7 +31,7 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
     m_xChannels = xChannels;
     m_yChannels = yChannels;
     m_inputSize = inputSize;
-    m_filterSize = std::make_pair(kernelRows, kernelCols);
+    m_filterSize = std::make_pair(filterRows, filterCols);
     m_stride = stride;
     m_dilation = dilation;
     m_isSparse = false;
@@ -39,12 +39,12 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
     m_padSize = padSize;
 
     m_yRows =
-        (inputRows + 2 * rowPadding - dilationRows * (kernelRows - 1) - 1) /
-            strideRows +
+        (inputRows + 2 * rowPadding - dilationRows * (filterRows - 1) - 1) /
+        strideRows +
         1;
     m_yCols =
-        (inputCols + 2 * colPadding - dilationCols * (kernelCols - 1) - 1) /
-            strideCols +
+        (inputCols + 2 * colPadding - dilationCols * (filterCols - 1) - 1) /
+        strideCols +
         1;
 
     if (m_yRows <= 0 || m_yCols <= 0)
@@ -220,4 +220,4 @@ void Conv2D::m_checkArguments(
                 "x");
     }
 }
-}  // namespace Sapphire::NN
+} // namespace Sapphire::NN

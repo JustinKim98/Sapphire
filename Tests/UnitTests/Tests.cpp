@@ -17,7 +17,8 @@
 #include <OperationTest/MSETest.hpp>
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
-#include<ModelTest/SimpleLinearModel.hpp>
+#include <ModelTest/Conv2DModel.hpp>
+#include <ModelTest/SimpleLinearModel.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
@@ -360,16 +361,59 @@ TEST_CASE("BasicGraphTest")
 
 TEST_CASE("Model Test")
 {
-    SUBCASE("SimpleLinearModelTest")
-    {
-        int xFeatures = 300;
-        int yFeatures = 300;
-        int batchSize = 10;
-        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
-        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+    // SUBCASE("SimpleLinearModelTest")
+    // {
+    //     int xFeatures = 300;
+    //     int yFeatures = 300;
+    //     int batchSize = 10;
+    //     std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+    //     std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+    //
+    //     SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
+    //                       0.0001f, batchSize, 20000, false);
+    // }
 
-        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
-                          0.0001f, batchSize, 20000, false);
+    SUBCASE("Conv2DModelTest")
+    {
+        const auto xChannels = 3;
+        const auto yChannels = 3;
+        const auto batchSize = 1;
+        const auto xSize = std::make_pair(5, 5);
+        const auto filterSize = std::make_pair(3, 3);
+        const auto stride = std::make_pair(2, 2);
+        const auto padSize = std::make_pair(2, 2);
+        const auto dilation = std::make_pair(1, 1);
+        const auto learningRate = 0.001f;
+        const auto hostMode = false;
+        const auto epochs = 1000;
+
+        const auto [xRows, xCols] = xSize;
+        const auto [filterRows, filterCols] = filterSize;
+        const auto [strideRows, strideCols] = stride;
+        const auto [padRows, padCols] = padSize;
+        const auto [dilationRows, dilationCols] = dilation;
+
+        const auto yRows =
+            (xRows + 2 * padRows - dilationRows * (filterRows - 1) - 1) /
+            strideRows +
+            1;
+        const auto yCols =
+            (xCols + 2 * padCols - dilationCols * (filterCols - 1) - 1) /
+            strideCols +
+            1;
+
+        std::vector<float> xFeatureVector(
+            batchSize * xChannels * xRows * xCols,
+            0.1f);
+        std::vector<float> labelVector(
+            batchSize * yChannels * yRows * yCols
+            , 10.0f);
+
+        Conv2DModel(xFeatureVector, labelVector, batchSize, yChannels,
+                    xChannels, xSize,
+                    std::make_pair(yRows, yCols),
+                    filterSize, stride, padSize, dilation, learningRate,
+                    hostMode, epochs);
     }
 }
 
