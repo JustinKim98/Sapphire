@@ -43,14 +43,14 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0,
-                             1, Dense::Cuda::Add, 0, false, false);
+                             0, Dense::Cuda::Add, 0, false, false);
     }
     else
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
                              shapeA.Size(), shapeB.Size(),
                              y.HostMutableRawPtr(),
-                             a.HostRawPtr(), b.HostRawPtr(), 0, 1,
+                             a.HostRawPtr(), b.HostRawPtr(), 0, 0,
                              Dense::Naive::Add, 0, false, false);
     }
 }
@@ -81,7 +81,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
-                             b.CudaRawPtr(), 0, 1, Dense::Cuda::Sub, 0, false,
+                             b.CudaRawPtr(), 0, 0, Dense::Cuda::Sub, 0, false,
                              false);
     }
     else
@@ -89,7 +89,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
                              shapeA.Size(), shapeB.Size(),
                              y.HostMutableRawPtr(),
-                             a.HostRawPtr(), b.HostRawPtr(), 0, 1,
+                             a.HostRawPtr(), b.HostRawPtr(), 0, 0,
                              Dense::Naive::Sub, 0, false, false);
     }
 }
@@ -120,7 +120,7 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
-                             b.CudaRawPtr(), 0, 1, Dense::Cuda::Dot, 0, false,
+                             b.CudaRawPtr(), 0, 0, Dense::Cuda::Dot, 0, false,
                              false);
     }
     else
@@ -128,7 +128,7 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
                              shapeA.Size(), shapeB.Size(),
                              y.HostMutableRawPtr(),
-                             a.HostRawPtr(), b.HostRawPtr(), 0, 1,
+                             a.HostRawPtr(), b.HostRawPtr(), 0, 0,
                              Dense::Naive::Dot, 0, false, false);
     }
 }

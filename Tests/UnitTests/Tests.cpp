@@ -31,14 +31,14 @@
 #include "doctest.h"
 
 #define GraphTest
- #define TensorFunctionalityTest
- #define BasicsTest
- #define ActivationTest
- #define GemmTest
- #define GemmBroadcastTest
- #define InitializeTest
- #define ConvolutionTest
- #define BasicGraphTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test
@@ -274,7 +274,7 @@ TEST_CASE("Convolution")
         HostIm2ColTest(false);
         Util::ResourceManager::ClearAll();
     }
-    
+
     SUBCASE("HostConv2D")
     {
         std::cout << "Host Conv2D" << std::endl;
@@ -350,7 +350,8 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        TestConv2D(true);
+        for (int i = 0; i < 3; ++i)
+            TestConv2D(false);
     }
 }
 #endif
