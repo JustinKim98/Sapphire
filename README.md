@@ -17,6 +17,10 @@ Sapphire is a Flexible and efficient Deep learning framework built for research 
 * Supports flexible modeling and custom operations
 * Intuitive and easy to use interface with C++17 support
 
+## Documents
+Refer to this notion page
+https://witty-print-3f0.notion.site/Supported-Layers-97317b7921664aabb25a2d231674990e
+
 ## Contact
 
 You can contact me via e-mail (jwkimrhkgkr@gmail.com or jwkim98@kaist.ac.kr).
