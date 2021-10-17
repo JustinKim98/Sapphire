@@ -56,7 +56,7 @@ void TestLinear(bool print)
                       gpu);
 
     auto gpuOutput = linear(input, weight, bias);
-    const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
+    const auto gpuForwardPtr = gpuOutput.GetDataCopy();
     gpuOutput.SetBackwardData(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
@@ -71,7 +71,7 @@ void TestLinear(bool print)
     NN::Linear linearHost(inputs, outputs,
                           new Optimizer::SGD(0.0f), gpu);
     const auto hostOutput = linearHost(input, weight, bias);
-    const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
+    const auto hostForwardPtr = hostOutput.GetDataCopy();
     hostOutput.SetBackwardData(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();

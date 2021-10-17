@@ -89,7 +89,7 @@ void TestConv2D(bool print)
     auto gpuOutput = conv2D(input, filter, bias);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
-    const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
+    const auto gpuForwardPtr = gpuOutput.GetDataCopy();
     gpuOutput.SetBackwardData(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
@@ -104,7 +104,7 @@ void TestConv2D(bool print)
                                        std::make_unique<Initialize::Zeros>());
 
     auto hostOutput = conv2D(input, filter, bias);
-    const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
+    const auto hostForwardPtr = hostOutput.GetDataCopy();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
     hostOutput.SetBackwardData(backwardData);

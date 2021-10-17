@@ -28,61 +28,71 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
 
-    const CudaDevice gpu(0, "cuda0");
-
     const auto [filterRows, filterCols] = filterSize;
     const auto [xRows, xCols] = xSize;
     const auto [yRows, yCols] = ySize;
 
+    const CudaDevice gpu(0, "cuda0");
+
+    //! Declare conv2d Layer
     NN::Conv2D conv2d(yChannels, xChannels, xSize, filterSize, stride,
                       padSize, dilation,
                       new Optimizer::SGD(learningRate), true);
 
+    //! Declare input tensors
     Tensor filter(Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
                   Type::Dense, true);
 
     Tensor bias(Shape({ yChannels }), gpu, Type::Dense, true);
-    Initialize::Initialize(filter,
-                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(bias,
-                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-
-    if (hostMode)
-    {
-        filter.ToHost();
-        bias.ToHost();
-    }
 
     Tensor x(Shape({ batchSize, xChannels, xRows, xCols }), gpu, Type::Dense,
              true);
     Tensor label(Shape({ batchSize, yChannels, yRows, yCols }), gpu,
                  Type::Dense, true);
 
+    //! Initialize weights to arbitrary values
+    Initialize::Initialize(filter,
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(bias,
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+
+    //! Configure data to be on host if needed
     if (hostMode)
     {
+        filter.ToHost();
+        bias.ToHost();
         x.ToHost();
         label.ToHost();
     }
 
-    x.SetForwardData(xData);
-    label.SetForwardData(labelData);
+    //! Load the data to model
+    x.LoadData(xData);
+    label.LoadData(labelData);
+
     for (int i = 0; i < epochs; ++i)
     {
         auto y = conv2d(x, filter, bias);
         y = NN::ReLU(y);
         const auto loss = NN::Loss::MSE(y, label);
-        if (i % 1 == 0)
+
+        //! Print loss every 10 epochs
+        if (i % 10 == 0)
         {
-            const auto lossData = loss.GetForwardDataCopy();
+            const auto lossData = loss.GetDataCopy();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;
         }
-        // ModelManager::CurModel().InitGradient();
+
+        //! Start back propagation and update weights
         ModelManager::CurModel().BackProp(loss);
+        //! Clear the gradients for next back propagation
         ModelManager::CurModel().Clear();
+
+        //! Clear resources for every 10 epochs
         if (i % 10 == 0)
             Util::ResourceManager::Clean();
     }
+
     Util::ResourceManager::ClearAll();
 }
 } // namespace Sapphire::Test

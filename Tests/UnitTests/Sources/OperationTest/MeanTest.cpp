@@ -42,8 +42,8 @@ void TestMean(bool print)
     x.ToHost();
     const auto yHost = NN::Functional::MeanOp(x, dim);
 
-    const auto yForwardGpu = yGpu.GetForwardDataCopy();
-    const auto yForwardHost = yHost.GetForwardDataCopy();
+    const auto yForwardGpu = yGpu.GetDataCopy();
+    const auto yForwardHost = yHost.GetDataCopy();
     const auto yShape = yGpu.GetShape();
 
     for (int i = 0; i < yShape.Size(); ++i)

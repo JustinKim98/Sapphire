@@ -361,17 +361,17 @@ TEST_CASE("BasicGraphTest")
 
 TEST_CASE("Model Test")
 {
-    // SUBCASE("SimpleLinearModelTest")
-    // {
-    //     int xFeatures = 300;
-    //     int yFeatures = 300;
-    //     int batchSize = 10;
-    //     std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
-    //     std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
-    //
-    //     SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
-    //                       0.0001f, batchSize, 20000, false);
-    // }
+    SUBCASE("SimpleLinearModelTest")
+    {
+        int xFeatures = 300;
+        int yFeatures = 300;
+        int batchSize = 10;
+        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+    
+        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
+                          0.0001f, batchSize, 1000, false);
+    }
 
     SUBCASE("Conv2DModelTest")
     {

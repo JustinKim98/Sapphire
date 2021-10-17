@@ -41,7 +41,7 @@ void TestMultiply(bool print)
     auto y = NN::Functional::MulOp(inputA, inputB);
 
     y.ToHost();
-    const auto forwardDataPtr = y.GetForwardDataCopy();
+    const auto forwardDataPtr = y.GetDataCopy();
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 
@@ -118,7 +118,7 @@ void TestAdd(bool print)
     auto y = NN::Functional::AddOp(inputA, inputB);
 
     y.ToHost();
-    const auto forwardDataPtr = y.GetForwardDataCopy();
+    const auto forwardDataPtr = y.GetDataCopy();
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 

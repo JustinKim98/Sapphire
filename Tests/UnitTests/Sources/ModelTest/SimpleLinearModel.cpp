@@ -58,8 +58,8 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
         label.ToHost();
     }
 
-    x.SetForwardData(xData);
-    label.SetForwardData(labelData);
+    x.LoadData(xData);
+    label.LoadData(labelData);
     for (int i = 0; i < epochs; ++i)
     {
         auto y = linear(x, weight, bias);
@@ -68,7 +68,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
         const auto loss = NN::Loss::MSE(y, label);
         if (i % 20 == 0)
         {
-            const auto lossData = loss.GetForwardDataCopy();
+            const auto lossData = loss.GetDataCopy();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;
         }

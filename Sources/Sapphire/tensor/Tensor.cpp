@@ -89,7 +89,7 @@ void Tensor::SetMode(DeviceType mode) const
     desc.SetMode(mode);
 }
 
-std::vector<float> Tensor::GetForwardDataCopy() const
+std::vector<float> Tensor::GetDataCopy() const
 {
     Model& model = ModelManager::CurModel();
     const TensorUtil::TensorDescriptor& desc =
@@ -109,13 +109,13 @@ std::vector<float> Tensor::GetBackwardDataCopy() const
     return tensorData.GetDataCopy();
 }
 
-void Tensor::SetForwardData(const std::vector<float>& data) const
+void Tensor::LoadData(const std::vector<float>& data) const
 {
     const auto shape = GetShape();
     if (static_cast<int>(data.size()) != shape.Size())
     {
         throw std::invalid_argument(
-            "Tensor::SetForwardData - data size mismatch Given size : (" +
+            "Tensor::LoadData - data size mismatch Given size : (" +
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }
@@ -133,7 +133,7 @@ void Tensor::SetBackwardData(const std::vector<float>& data) const
     if (static_cast<int>(data.size()) != shape.Size())
     {
         throw std::invalid_argument(
-            "Tensor::SetForwardData - data size mismatch Given size : (" +
+            "Tensor::SetBackwardData - data size mismatch Given size : (" +
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }

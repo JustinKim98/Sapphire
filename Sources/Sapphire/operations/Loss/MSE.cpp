@@ -28,10 +28,10 @@ Tensor MSE(const Tensor& input, const Tensor& label)
     auto& yDesc = model.GetDescriptor(yDescKey);
     yDesc.SetMode(mode);
 
-    TensorUtil::TensorData temp(
+    TensorUtil::TensorData diff(
         input.GetShape(), xDesc.GetType(),
         xDesc.GetCudaDevice());
-    temp.SetMode(mode);
+    diff.SetMode(mode);
 
     auto xData = xDesc.GetForwardData();
     auto labelData = labelDesc.GetForwardData();
@@ -41,10 +41,10 @@ Tensor MSE(const Tensor& input, const Tensor& label)
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc, &labelDesc),
                       std::make_tuple(&yDesc));
 
-    Util::ChangeTensorDataDimension(1, xData, labelData, yData, dxData, temp);
-    Compute::Sub(temp, labelData, xData);
-    Compute::Pow(temp, temp, 2.0f);
-    Compute::Mean(yData, temp, 0);
+    Util::ChangeTensorDataDimension(1, xData, labelData, yData, dxData, diff);
+    Compute::Sub(diff, labelData, xData);
+    Compute::Pow(diff, diff, 2.0f);
+    Compute::Mean(yData, diff, 0);
     return Tensor(yDescKey);
 }
 } // namespace Sapphire::NN::Loss
