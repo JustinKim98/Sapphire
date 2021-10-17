@@ -21,7 +21,6 @@ file(GLOB_RECURSE headers
 file(GLOB_RECURSE sources
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-file(GLOB_RECURSE cuda_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cu)
  add_library(${target} ${sources})
 
 if (USE_CUDA)
@@ -37,9 +36,8 @@ set_target_properties(${target}
         )
 
 # Compile options
-target_compile_options(${target}
-        PRIVATE
 
+target_compile_options(${target}
         PUBLIC
         ${DEFAULT_COMPILE_OPTIONS}
 

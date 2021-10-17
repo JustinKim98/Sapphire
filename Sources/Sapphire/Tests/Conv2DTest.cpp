@@ -11,6 +11,7 @@
 #include <Sapphire/util/Shape.hpp>
 #include <iostream>
 #include <random>
+#include <vector>
 
 #include "doctest.h"
 
@@ -45,18 +46,15 @@ void Conv2DTest(bool printForward, bool printBackward)
         strideCol +
         1;
 
-    Shape xShape({ (N),
-                   (inputChannels),
-                   (inputHeight),
-                   (inputWidth) });
-    Shape filterShape({ (numFilters),
-                        (inputChannels),
-                        (filterHeight),
-                        (filterWidth) });
-    Shape yShape({ (N),
-                   (outputChannels),
-                   (outputHeight),
-                   (outputWidth) });
+    Shape xShape({ N, inputChannels, inputHeight, inputWidth });
+    Shape filterShape({ numFilters,
+                        inputChannels,
+                        filterHeight,
+                        filterWidth });
+    Shape yShape({ N,
+                   outputChannels,
+                   outputHeight,
+                   outputWidth });
 
     TensorUtil::TensorData x(xShape, Type::Dense, cuda);
     TensorUtil::TensorData dx(xShape, Type::Dense, cuda);
@@ -85,8 +83,8 @@ void Conv2DTest(bool printForward, bool printBackward)
     y.ToHost();
     y.SetMode(DeviceType::Host);
 
-    const auto* forwardOutput = y.GetDenseHost();
-    for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
+    const auto* forwardOutput = y.HostRawPtr();
+    for (unsigned i = 0; i < y.HostTotalSize; ++i)
         if (printForward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i] <<
                 std::endl;
@@ -98,8 +96,8 @@ void Conv2DTest(bool printForward, bool printBackward)
 
     dx.ToHost();
 
-    const auto* backwardOutput = dx.GetDenseHost();
-    for (unsigned i = 0; i < dy.DenseTotalLengthHost; ++i)
+    const auto* backwardOutput = dx.HostRawPtr();
+    for (unsigned i = 0; i < dy.HostTotalSize; ++i)
         if (printBackward)
             std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
                 << std::endl;
@@ -162,8 +160,8 @@ void MaxPool2DTest(bool printForward, bool printBackward)
     y.ToHost();
     y.SetMode(DeviceType::Host);
 
-    const auto* forwardOutput = y.GetDenseHost();
-    for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
+    const auto* forwardOutput = y.HostRawPtr();
+    for (unsigned i = 0; i < y.HostTotalSize; ++i)
         if (printForward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i]
                 << std::endl;
@@ -175,8 +173,8 @@ void MaxPool2DTest(bool printForward, bool printBackward)
 
     dx.ToHost();
 
-    const auto* backwardOutput = dx.GetDenseHost();
-    for (unsigned i = 0; i < dy.DenseTotalLengthHost; ++i)
+    const auto* backwardOutput = dx.HostRawPtr();
+    for (unsigned i = 0; i < dy.HostTotalSize; ++i)
         if (printBackward)
             std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
                 << std::endl;
@@ -234,8 +232,8 @@ void AvgPool2DTest(bool printForward, bool printBackward)
     y.ToHost();
     y.SetMode(DeviceType::Host);
 
-    const auto* forwardOutput = y.GetDenseHost();
-    for (unsigned i = 0; i < y.DenseTotalLengthHost; ++i)
+    const auto* forwardOutput = y.HostRawPtr();
+    for (unsigned i = 0; i < y.HostTotalSize; ++i)
         if (printForward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i]
                 << std::endl;
@@ -247,8 +245,8 @@ void AvgPool2DTest(bool printForward, bool printBackward)
 
     dx.ToHost();
 
-    const auto* backwardOutput = dx.GetDenseHost();
-    for (unsigned i = 0; i < dy.DenseTotalLengthHost; ++i)
+    const auto* backwardOutput = dx.HostRawPtr();
+    for (unsigned i = 0; i < dy.HostTotalSize; ++i)
         if (printBackward)
             std::cout << "backwardData[" << i << "]: " << backwardOutput[i]
                 << std::endl;
@@ -285,10 +283,6 @@ void HostIm2ColTest(bool print)
         strideCol +
         1;
 
-    const Shape outputShape({ N, numFilters,
-                              (outputRows),
-                              (outputCols) });
-
     const auto inputMatrixRows =
         filterShape.At(filterShape.Dim() - 3) * filterShape.Rows() * filterShape
         .
@@ -303,28 +297,27 @@ void HostIm2ColTest(bool print)
     TensorUtil::TensorData filterData(filterShape, Type::Dense, device);
     TensorUtil::TensorData inputMatrixData(inputMatrixShape, Type::Dense,
                                            device);
-
     TensorUtil::TensorData
         reConvertedInputData(inputShape, Type::Dense, device);
 
+    inputData.SetMode(DeviceType::Host);
+    filterData.SetMode(DeviceType::Host);
+    inputMatrixData.SetMode(DeviceType::Host);
+    reConvertedInputData.SetMode(DeviceType::Host);
+
     int count = 0;
-    for (int ii = 0; ii < inputData.GetBatchSize(1); ++ii)
-        for (int i = 0; i < inputData.Cols(); ++i)
-            inputData
-                .GetMutableDenseHost()[ii * inputData.PaddedHostColSize + i] =
-                static_cast<float>((count++) % 9);
+    for (int i = 0; i < inputData.Size(); ++i)
+        inputData.HostMutableRawPtr()[i] = static_cast<float>((count++) % 9);
 
     Compute::Dense::Naive::Im2Col(inputMatrixData, filterData, inputData,
                                   strideRow, strideCol, rowPadding,
                                   colPadding, dilationRow, dilationCol, 0);
 
     if (print)
-        for (int ii = 0; ii < inputMatrixData.GetBatchSize(1); ++ii)
-            for (int i = 0; i < inputMatrixData.Cols(); ++i)
-                std::cout << "Im2Col[" << ii * inputMatrixData.Cols() + i
-                    << "]: " << inputMatrixData.GetDenseHost()[
-                        ii * inputMatrixData.PaddedHostColSize + i]
-                    << std::endl;
+        for (int i = 0; i < inputMatrixData.Size(); ++i)
+            std::cout << "Im2Col[" << i << "]: "
+                << inputMatrixData.HostRawPtr()[i]
+                << std::endl;
 
     Compute::Initialize::Zeros(inputData);
 
@@ -334,23 +327,20 @@ void HostIm2ColTest(bool print)
 
     const Shape newFilterShape(
         { filterShape.Rows(), filterShape.Size() / filterShape.Rows() });
-    filterData.TensorShape = newFilterShape;
+    filterData.Reshape(newFilterShape);
 
     if (print)
-        for (int ii = 0; ii < inputData.GetBatchSize(1); ++ii)
-            for (int i = 0; i < inputData.Cols(); ++i)
-                std::cout << "Col2Im[" << ii * inputData.Cols() + i
-                    << "] = " <<
-                    inputData.GetMutableDenseHost()
-                    [ii * inputData.PaddedHostColSize + i]
-                    << std::endl;
+        for (int i = 0; i < inputData.Size(); ++i)
+            std::cout << "Col2Im[" << i << "] = "
+                << inputData.HostMutableRawPtr()[i]
+                << std::endl;
 }
 
 void HostConv2DTest(bool print)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(-10, 10);
+    std::uniform_real_distribution dist(-10.0f, 10.0f);
 
     const int N = 2;
     const int numFilters = 5;
@@ -391,101 +381,74 @@ void HostConv2DTest(bool print)
     TensorUtil::TensorData y(yShape, Type::Dense, device);
     TensorUtil::TensorData dFilter(filterShape, Type::Dense, device);
     TensorUtil::TensorData dy(yShape, Type::Dense, device);
+    x.SetMode(DeviceType::Host);
+    dx.SetMode(DeviceType::Host);
+    filter.SetMode(DeviceType::Host);
+    y.SetMode(DeviceType::Host);
+    dFilter.SetMode(DeviceType::Host);
+    dy.SetMode(DeviceType::Host);
 
     Compute::Initialize::Zeros(y);
 
-    for (int ii = 0; ii < x.GetBatchSize(1); ++ii)
-        for (int i = 0; i < x.Cols(); ++i)
-            x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] = static_cast<
-                float>(distrib(gen));
+    std::vector<float> filterData(filter.Size());
+    std::vector<float> xData(x.Size());
 
-    for (int ii = 0; ii < filter.GetBatchSize(1); ++ii)
-        for (int i = 0; i < filter.Cols(); ++i)
-            filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
-                static_cast<float>(distrib(gen));
+    for (auto& data : filterData)
+        data = dist(gen);
+    for (auto& data : xData)
+        data = dist(gen);
+
+    x.SetData(xData);
+    filter.SetData(filterData);
 
     Compute::Dense::Naive::Conv2D(y, x, filter, strideRow, strideCol,
                                   rowPadding, colPadding, dilationRow,
                                   dilationCol, device);
 
-    auto* hostTemp = new float[y.GetShape().Size()];
-
-    for (int ii = 0; ii < y.GetBatchSize(1); ++ii)
-        for (int i = 0; i < y.Cols(); ++i)
-            hostTemp[ii * y.Cols() + i] =
-                y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i];
+    auto yDataHost = y.GetDataCopy();
 
     x.ToCuda();
+    y.ToCuda();
     filter.ToCuda();
-    x.SetMode(DeviceType::Cuda);
-    filter.SetMode(DeviceType::Cuda);
-    y.SetMode(DeviceType::Cuda);
 
     Compute::Conv2DForward(y, x, filter, strideRow, strideCol, dilationRow,
                            dilationCol,
                            rowPadding, colPadding);
 
-    y.ToHost();
+    auto yDataCuda = y.GetDataCopy();
 
-    for (int ii = 0; ii < y.GetBatchSize(1); ++ii)
-        for (int i = 0; i < y.Cols(); ++i)
-        {
-            if (!std::isnan(hostTemp[ii * y.Cols() + i]) &&
-                !std::isnan(
-                    y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]))
-                CHECK(std::abs(
-                    hostTemp[ii * y.Cols() + i] -
-                    y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]) <
-                0.01f);
-            if (print)
-                std::cout
-                    << "host[" << ii * y.Cols() + i
-                    << "] = " << hostTemp[ii * y.Cols() + i] << "  cuda["
-                    << ii * y.Cols() + i << "] = "
-                    << y.GetMutableDenseHost()[ii * y.PaddedHostColSize + i]
-                    << std::endl;
-        }
+    for (int i = 0; i < y.Size(); ++i)
+    {
+        if (!std::isnan(yDataHost[i]) &&
+            !std::isnan(yDataCuda[i]))
+            CHECK(std::abs(
+            yDataHost[i] - yDataCuda[i]) < 0.01f);
+        if (print)
+            std::cout
+                << "host[" << i << "] = " << yDataHost[i]
+                << "  cuda[" << i << "] = " << yDataCuda[i]
+                << std::endl;
+    }
 
-    for (int ii = 0; ii < x.GetBatchSize(1); ++ii)
-        for (int i = 0; i < x.Cols(); ++i)
-            x.GetMutableDenseHost()[ii * x.PaddedHostColSize + i] =
-                static_cast<float>(distrib(gen));
+    std::vector<float> dyData(y.Size());
+    for (auto& data : dyData)
+        data = dist(gen);
 
-    for (int ii = 0; ii < filter.GetBatchSize(1); ++ii)
-        for (int i = 0; i < filter.Cols(); ++i)
-            filter.GetMutableDenseHost()[ii * filter.PaddedHostColSize + i] =
-                static_cast<float>(distrib(gen));
-
-    for (int ii = 0; ii < dy.GetBatchSize(1); ++ii)
-        for (int i = 0; i < dy.Cols(); ++i)
-            dy.GetMutableDenseHost()[ii * dy.PaddedHostColSize + i] =
-                static_cast<float>(distrib(gen));
-
+    dx.ToHost();
+    dFilter.ToHost();
+    dy.ToHost();
+    x.ToHost();
+    filter.ToHost();
+    Compute::Initialize::Normal(dy, 0.0f, 1.0f);
     Compute::Initialize::Zeros(dx);
     Compute::Initialize::Zeros(dFilter);
-
-    dx.SetMode(DeviceType::Host);
-    dFilter.SetMode(DeviceType::Host);
-    dy.SetMode(DeviceType::Host);
-    x.SetMode(DeviceType::Host);
-    filter.SetMode(DeviceType::Host);
 
     Compute::Dense::Naive::Conv2DBackward(dx, dFilter, dy, x, filter, strideRow,
                                           strideCol, rowPadding, colPadding,
                                           dilationRow, dilationCol, device);
 
-    auto* dxTemp = new float[dx.GetShape().Size()];
-    for (int ii = 0; ii < dx.GetBatchSize(1); ++ii)
-        for (int i = 0; i < dx.Cols(); ++i)
-            dxTemp[ii * dx.Cols() + i] =
-                dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize + i];
-
-    auto* dFilterTemp = new float[dFilter.GetShape().Size()];
-    for (int ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
-        for (int i = 0; i < dFilter.Cols(); ++i)
-            dFilterTemp[ii * dFilter.Cols() + i] =
-                dFilter
-                .GetMutableDenseHost()[ii * dFilter.PaddedHostColSize + i];
+    auto dxDataHost = dx.GetDataCopy();
+    auto dFilterDataHost = dFilter.GetDataCopy();
 
     Compute::Initialize::Zeros(dx);
     Compute::Initialize::Zeros(dFilter);
@@ -496,59 +459,33 @@ void HostConv2DTest(bool print)
     dFilter.ToCuda();
     dy.ToCuda();
 
-    x.SetMode(DeviceType::Cuda);
-    dx.SetMode(DeviceType::Cuda);
-    filter.SetMode(DeviceType::Cuda);
-    dFilter.SetMode(DeviceType::Cuda);
-    dy.SetMode(DeviceType::Cuda);
-
     Compute::Conv2DBackward(dx, dFilter, dy, x, filter, strideRow, strideCol,
                             rowPadding, colPadding, dilationRow, dilationCol);
 
-    dx.ToHost();
-    dFilter.ToHost();
+    auto dxDataCuda = dx.GetDataCopy();
+    auto dFilterDataCuda = dFilter.GetDataCopy();
 
-    for (int ii = 0; ii < dx.GetBatchSize(1); ++ii)
-        for (int i = 0; i < dx.Cols(); ++i)
-        {
-            if (!std::isnan(dxTemp[ii * dx.Cols() + i]) &&
-                !std::isnan(
-                    dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize + i]))
-                CHECK(std::abs(
-                dxTemp[ii * dx.Cols() + i] -
-                dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize +
-                    i]) < 0.01f);
-            if (print)
-                std::cout
-                    << "host[" << ii * dx.Cols() + i
-                    << "] = " << dxTemp[ii * dx.Cols() + i] << "  cuda["
-                    << ii * dx.Cols() + i << "] = "
-                    << dx.GetMutableDenseHost()[ii * dx.PaddedHostColSize + i]
-                    << std::endl;
-        }
+    for (int i = 0; i < dx.Size(); ++i)
+    {
+        if (!std::isnan(dxDataHost[i]) && !std::isnan(dxDataCuda[i]))
+            CHECK(std::abs(dxDataHost[i] - dxDataCuda[i]) < 0.01f);
+        if (print)
+            std::cout
+                << "host[" << i
+                << "] = " << dxDataHost[i] << "  cuda["
+                << i << "] = " << dxDataCuda[i] << std::endl;
+    }
 
     std::cout << "Filter" << std::endl;
-    for (int ii = 0; ii < dFilter.GetBatchSize(1); ++ii)
-        for (int i = 0; i < dFilter.Cols(); ++i)
-        {
-            if (!std::isnan(dFilterTemp[ii * dFilter.Cols() + i]) &&
-                !std::isnan(dFilter.GetMutableDenseHost()
-                    [ii * dFilter.PaddedHostColSize + i]))
-                CHECK(std::abs(
-                dFilterTemp[ii * dFilter.Cols() + i] -
-                dFilter.GetMutableDenseHost()[ii * dFilter.PaddedHostColSize +
-                    i]) < 0.01f);
-            if (print)
-                std::cout << "host[" << ii * dFilter.Cols() + i
-                    << "] = " << dFilterTemp[ii * dFilter.Cols() + i]
-                    << "  cuda[" << ii * dFilter.Cols() + i << "] = "
-                    << dFilter.GetMutableDenseHost()
-                    [ii * dFilter.PaddedHostColSize + i]
-                    << std::endl;
-        }
-
-    delete[] hostTemp;
-    delete[] dxTemp;
-    delete[] dFilterTemp;
+    for (int i = 0; i < filter.Size(); ++i)
+    {
+        if (!std::isnan(dFilterDataHost[i]) && !std::isnan(dFilterDataCuda[i]))
+            CHECK(std::abs(dFilterDataHost[i] - dFilterDataCuda[i]) < 0.01f);
+        if (print)
+            std::cout << "host[" << i
+                << "] = " << dFilterDataHost[i]
+                << "  cuda[" << i << "] = " << dFilterDataCuda[i]
+                << std::endl;
+    }
 }
 }

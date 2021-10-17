@@ -98,34 +98,15 @@ Shape ShuffleShape(int dim, Shape shape)
 }
 
 
-void CheckNoneZeroEquality(
-    const float* ptrA, const float* ptrB, unsigned size, bool print,
-    float equalThreshold)
+void CheckNoneZero(const float* ptr, unsigned size,
+                   bool print)
 {
-    bool isAllZero = true;
     for (unsigned int i = 0; i < size; ++i)
     {
         if (print)
-            std::cout << "ptrA : " << ptrA[i] << " ptrB : " << ptrB[i] <<
-                std::endl;
-        if (!std::isnan(ptrA[i]) && !std::isnan(ptrB[i]))
-            CHECK(std::abs(ptrA[i] - ptrB[i]) <= equalThreshold);
-        if (ptrA[i] > 0.0f || ptrA[i] < 0.0f)
-            isAllZero = false;
+            std::cout << "ptrA: " << ptr[i] << std::endl;
+        auto pass = ptr[i] > 0 || ptr[i] < 0;
+        CHECK(pass);
     }
-    CHECK(!isAllZero);
-}
-
-void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
-                   unsigned padSize, bool print)
-{
-    for (unsigned int ii = 0; ii < size; ii += padSize)
-        for (unsigned int i = ii; i < ii + colSize; ++i)
-        {
-            if (print)
-                std::cout << "ptrA: " << ptr[i] << std::endl;
-            auto pass = ptr[i] > 0 || ptr[i] < 0;
-            CHECK(pass);
-        }
 }
 } // namespace Sapphire::Test

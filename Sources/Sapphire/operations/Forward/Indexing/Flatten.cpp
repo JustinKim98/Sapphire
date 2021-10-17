@@ -15,7 +15,7 @@ namespace Sapphire::NN
 {
 void Flatten(const Tensor& xTensor)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto& yDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
 
@@ -25,11 +25,10 @@ void Flatten(const Tensor& xTensor)
     auto dxData = xDesc.GetBackwardData();
     auto yData = yDesc.GetForwardData();
     auto dyData = yDesc.GetBackwardData();
-    auto wrapper =
-        Util::SharedPtr<
-            BackProp::FlattenBackward>::Make(dxData, dxData, shape);
-    Util::SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
+    auto* wrapper =
+        new BackProp::FlattenBackward(dxData, dxData, shape);
+    Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&xDesc));
-    xDesc.SetShape(shape);
+    xDesc.Reshape(shape);
 }
 }

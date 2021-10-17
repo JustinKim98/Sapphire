@@ -15,12 +15,12 @@ Tensor::Tensor()
 }
 
 Tensor::Tensor(const Shape& shape, const CudaDevice& device,
-               Type type)
+               Type type, bool preserve)
     : m_tensorDescKey(-1)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
     m_tensorDescKey = model.RegisterTensorDescriptor(
-        shape, type, device);
+        shape, type, device, preserve);
 }
 
 Tensor::Tensor(int descKey)
@@ -39,7 +39,7 @@ Tensor& Tensor::operator=(const Tensor& tensor)
 
 Shape Tensor::GetShape() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc =
         model.GetDescriptor(m_tensorDescKey);
     return desc.GetShape();
@@ -47,7 +47,7 @@ Shape Tensor::GetShape() const
 
 CudaDevice Tensor::GetDevice() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
     return desc.GetDevice();
@@ -60,7 +60,7 @@ int Tensor::TensorDescriptorKey() const
 
 void Tensor::ToCuda()
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
     desc.ToCuda();
@@ -69,7 +69,7 @@ void Tensor::ToCuda()
 
 void Tensor::ToHost()
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     desc.ToHost();
     desc.SetMode(DeviceType::Host);
@@ -77,91 +77,54 @@ void Tensor::ToHost()
 
 DeviceType Tensor::Mode() const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     return desc.Mode();
 }
 
 void Tensor::SetMode(DeviceType mode) const
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     desc.SetMode(mode);
 }
 
-std::unique_ptr<float[]> Tensor::GetForwardDataCopy() const
+std::vector<float> Tensor::GetDataCopy() const
 {
-    Model& model = ModelManager::GetCurrentModel();
-    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
-    const TensorUtil::TensorData tensorData = desc.GetForwardData();
+    Model& model = ModelManager::CurModel();
+    const TensorUtil::TensorDescriptor& desc =
+        model.GetDescriptor(m_tensorDescKey);
+    TensorUtil::TensorData tensorData = desc.GetForwardData();
 
-    if (desc.Mode() == DeviceType::Cuda)
-        desc.ToHost();
-
-    auto dataPtr = std::unique_ptr<float[]>(
-        new float[tensorData.GetShape().Size()]);
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < tensorData.DenseTotalLengthHost;
-         ii += tensorData.PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + tensorData.GetShape().Cols(); ++i)
-        {
-            dataPtr[idx] = tensorData.GetDenseHost()[i];
-            idx++;
-        }
-
-    return dataPtr;
+    return tensorData.GetDataCopy();
 }
 
-std::unique_ptr<float[]> Tensor::GetBackwardDataCopy() const
+std::vector<float> Tensor::GetBackwardDataCopy() const
 {
-    Model& model = ModelManager::GetCurrentModel();
-    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
-    const TensorUtil::TensorData tensorData = desc.GetBackwardData();
+    Model& model = ModelManager::CurModel();
+    const TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
+        m_tensorDescKey);
+    TensorUtil::TensorData tensorData = desc.GetBackwardData();
 
-    if (desc.Mode() == DeviceType::Cuda)
-        desc.ToHost();
-
-    auto dataPtr =
-        std::unique_ptr<float[]>(new float[tensorData.GetShape().Size()]);
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < tensorData.DenseTotalLengthHost;
-         ii += tensorData.PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + tensorData.GetShape().Cols(); ++i)
-        {
-            dataPtr[idx] = tensorData.GetDenseHost()[i];
-            idx++;
-        }
-
-    return dataPtr;
+    return tensorData.GetDataCopy();
 }
 
-void Tensor::SetForwardData(std::vector<float> data) const
+void Tensor::LoadData(const std::vector<float>& data) const
 {
     const auto shape = GetShape();
     if (static_cast<int>(data.size()) != shape.Size())
     {
         throw std::invalid_argument(
-            "Tensor::SetForwardData - data size mismatch Given size : (" +
+            "Tensor::LoadData - data size mismatch Given size : (" +
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
 
     TensorUtil::TensorData tensorData = desc.GetForwardData();
-
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < tensorData.DenseTotalLengthHost;
-         ii += tensorData.PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + tensorData.GetShape().Cols(); ++i)
-        {
-            tensorData.GetMutableDenseHost()[i] = data.at(idx);
-            idx++;
-        }
-
-    if (desc.Mode() == DeviceType::Cuda)
-        desc.ToCuda();
+    tensorData.SetData(data);
 }
 
 void Tensor::SetBackwardData(const std::vector<float>& data) const
@@ -170,25 +133,15 @@ void Tensor::SetBackwardData(const std::vector<float>& data) const
     if (static_cast<int>(data.size()) != shape.Size())
     {
         throw std::invalid_argument(
-            "Tensor::SetForwardData - data size mismatch Given size : (" +
+            "Tensor::SetBackwardData - data size mismatch Given size : (" +
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
 
     TensorUtil::TensorData tensorData = desc.GetBackwardData();
 
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < tensorData.DenseTotalLengthHost;
-         ii += tensorData.PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + tensorData.GetShape().Cols(); ++i)
-        {
-            tensorData.GetMutableDenseHost()[i] = data.at(idx);
-            idx++;
-        }
-
-    if (desc.Mode() == DeviceType::Cuda)
-        desc.ToCuda();
+    tensorData.SetData(data);
 }
 } // namespace Sapphire

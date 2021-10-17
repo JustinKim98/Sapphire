@@ -12,26 +12,17 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
-__host__ void Gemm(unsigned int totalSize, float* out, const float* A, const float* B,
-                   const float* C, unsigned int M, unsigned int N, unsigned int K,
+__host__ void Gemm(unsigned int totalSize,
+                   float* out, const float* A, const float* B,
+                   unsigned int M, unsigned int N, unsigned int K,
                    int deviceId);
 
-__host__ void GemmMatrixWiseBroadcast(float* out, const float* A, const float* B, const float* C,
+__host__ void GemmMatrixWiseBroadcast(float* out, const float* A,
+                                      const float* B,
                                       unsigned int M, unsigned int N,
                                       unsigned int K, unsigned int batchSize,
-                                      bool broadcastA, bool broadcastB,
-                                      bool broadcastC, int deviceId);
-
-__host__ void GemmTensor(float* out, float* A, float* B, float* C,
-                         unsigned int paddedM, unsigned int paddedN,
-                         unsigned int paddedK, unsigned int batchSize,
-                         bool broadcastA, bool broadcastB, bool broadcastC);
-
-__host__ void GemmNormal(float* out, float* A, float* B, float* C,
-                         unsigned int paddedM, unsigned int paddedN,
-                         unsigned int paddedK, unsigned int batchSize,
-                         bool broadcastA, bool broadcastB, bool broadcastC);
-
-}  // namespace Sapphire::Compute::Cuda::Dense
+                                      bool broadcastA,
+                                      bool broadcastB, int deviceId);
+} // namespace Sapphire::Compute::Cuda::Dense
 
 #endif

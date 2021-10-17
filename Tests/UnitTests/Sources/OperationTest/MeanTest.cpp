@@ -29,6 +29,7 @@ void TestMean(bool print)
     });
 
     Tensor x(xShape, gpu, Type::Dense);
+    x.SetMode(DeviceType::Host);
 
     Initialize::Initialize(
         x, std::make_unique<Initialize::Normal>(5.0f, 1.0f));
@@ -41,8 +42,8 @@ void TestMean(bool print)
     x.ToHost();
     const auto yHost = NN::Functional::MeanOp(x, dim);
 
-    const auto yForwardGpu = yGpu.GetForwardDataCopy();
-    const auto yForwardHost = yHost.GetForwardDataCopy();
+    const auto yForwardGpu = yGpu.GetDataCopy();
+    const auto yForwardHost = yHost.GetDataCopy();
     const auto yShape = yGpu.GetShape();
 
     for (int i = 0; i < yShape.Size(); ++i)
@@ -54,14 +55,14 @@ void TestMean(bool print)
     Initialize::InitializeBackwardData(yGpu,
                                        std::make_unique<Initialize::Normal>(
                                            0.0f, 10.0f));
-    ModelManager::GetCurrentModel().BackProp(yGpu);
+    ModelManager::CurModel().BackProp(yGpu);
     x.ToHost();
 
     const auto xBackwardGpu = x.GetBackwardDataCopy();
 
     Initialize::InitializeBackwardData(
         x, std::make_unique<Initialize::Zeros>());
-    ModelManager::GetCurrentModel().BackProp(yHost);
+    ModelManager::CurModel().BackProp(yHost);
     x.ToHost();
 
     const auto xBackwardHost = x.GetBackwardDataCopy();
@@ -76,20 +77,24 @@ void TestMean(bool print)
         std::cout << "YForward (GPU)" << std::endl;
         for (int i = 0; i < yShape.Size(); ++i)
             std::cout << yForwardGpu[i] << " ";
+        std::cout << std::endl;
 
         std::cout << "YForward (Host)" << std::endl;
         for (int i = 0; i < yShape.Size(); ++i)
             std::cout << yForwardHost[i] << " ";
+        std::cout << std::endl;
 
         std::cout << "XBackward (GPU)" << std::endl;
         for (int i = 0; i < xShape.Size(); ++i)
             std::cout << xBackwardGpu[i] << " ";
+        std::cout << std::endl;
 
         std::cout << "XBackward (Host)" << std::endl;
         for (int i = 0; i < xShape.Size(); ++i)
             std::cout << xBackwardHost[i] << " ";
+        std::cout << std::endl;
     }
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

@@ -31,7 +31,6 @@ void Gemm1(bool print)
     //! Randomly create with dimension size 3 with batchsize intergrated in the shape
     const Shape shapeA({ batchSize, M, K });
     const Shape shapeB({ batchSize, K, N });
-    const Shape shapeC({ batchSize, M, N });
     const Shape shapeOut({ batchSize, M, N });
 
     std::cout << "M : " << M << " N: " << N << " K: " << K
@@ -43,28 +42,25 @@ void Gemm1(bool print)
     //! Create tensors with cuda available
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
-    TensorUtil::TensorData C(shapeC, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
     //! Set tensor mode as host
     A.SetMode(DeviceType::Host);
     B.SetMode(DeviceType::Host);
-    C.SetMode(DeviceType::Host);
     Out.SetMode(DeviceType::Host);
 
     //! Initialize with normal distribution
     Compute::Initialize::Normal(A, 10, 5);
     Compute::Initialize::Normal(B, 10, 5);
-    Compute::Initialize::Normal(C, 10, 5);
     Compute::Initialize::Zeros(Out);
 
     //! Perform Gemm on host
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Copy the result to temporary buffer
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
-                Out.DenseTotalLengthHost * sizeof(float));
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
+    std::memcpy(cpuGemmResult, Out.HostRawPtr(),
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros
     Compute::Initialize::Zeros(Out);
@@ -72,23 +68,17 @@ void Gemm1(bool print)
     //! Move All data to Cuda and change to cuda mode
     A.ToCuda();
     B.ToCuda();
-    C.ToCuda();
     Out.ToCuda();
-    A.SetMode(DeviceType::Cuda);
-    B.SetMode(DeviceType::Cuda);
-    C.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
 
     //! Compute Gemm on Output
-    Compute::Gemm(Out, A, B, C);
+    Compute::Gemm(Out, A, B);
 
     //! Send output data to host and set to host mode
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
 
     //! Check equality between host and cuda
-    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
-                          Out.DenseTotalLengthHost, print, 2.0f);
+    CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
+                          Out.HostTotalSize, print, 2.0f);
 
     delete[] cpuGemmResult;
 }

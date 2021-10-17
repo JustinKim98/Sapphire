@@ -19,13 +19,13 @@ public:
                    TensorUtil::TensorData x,
                    std::pair<int, int> stride, std::pair<int, int> dilation,
                    std::pair<int, int> padding,
-                   Util::SharedPtr<Optimizer::Optimizer> optimizer);
+                   Optimizer::Optimizer* optimizer);
 
     Conv2DBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
                    TensorUtil::TensorData filter, TensorUtil::TensorData x,
                    std::pair<int, int> stride, std::pair<int, int> dilation,
                    std::pair<int, int> padding,
-                   Util::SharedPtr<Optimizer::Optimizer> optimizer);
+                   Optimizer::Optimizer* optimizer);
 
     ~Conv2DBackProp() override = default;
 

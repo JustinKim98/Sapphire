@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <optional>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
+#include <Sapphire/Model.hpp>
 
 
 namespace Sapphire::Util
@@ -17,33 +18,36 @@ template <typename T>
 void ChangeTensorDataDimension(int dimension, T& tensorData)
 {
     static_assert(std::is_same_v<TensorUtil::TensorData, T>);
-    tensorData.TensorShape.Expand(dimension);
-    tensorData.TensorShape.Shrink(dimension);
+    auto newShape = tensorData.GetShape();
+    newShape.Expand(dimension);
+    newShape.Shrink(dimension);
+    tensorData.Reshape(newShape);
 }
 
 template <typename T, typename... Ts>
 void ChangeTensorDataDimension(int dimension, T& tensorData, Ts&... params)
 {
     static_assert(std::is_same_v<TensorUtil::TensorData, T>);
-    tensorData.TensorShape.Expand(dimension);
-    tensorData.TensorShape.Shrink(dimension);
-
+    auto newShape = tensorData.GetShape();
+    newShape.Expand(dimension);
+    newShape.Shrink(dimension);
+    tensorData.Reshape(newShape);
     ChangeTensorDataDimension(dimension, params...);
 }
 
 template <std::size_t I = 0, typename... Tp>
-inline void AddOutputHistory(SharedPtr<BackProp::BackPropWrapper> wrapper,
-                             std::tuple<Tp...> t)
+void AddOutputHistory(int backPropWrapperKey,
+                      std::tuple<Tp...> t)
 {
     if constexpr (I < sizeof...(Tp))
     {
-        std::get<I>(t)->AppendOutputHistory(wrapper, I);
-        AddOutputHistory<I + 1, Tp...>(wrapper, t);
+        std::get<I>(t)->AppendOutputHistory(backPropWrapperKey, I);
+        AddOutputHistory<I + 1, Tp...>(backPropWrapperKey, t);
     }
 }
 
 template <std::size_t I = 0, typename... Tp>
-inline void AddOperandHistory(
+void AddOperandHistory(
     TensorUtil::TensorDescriptor* input, std::tuple<Tp...> t)
 {
     if constexpr (I < sizeof...(Tp))
@@ -64,13 +68,15 @@ inline void AddOperandHistory(
 //! \param inputs : Tuple of pointers of TensorUtil::TensorDescriptor* of inputs
 //! \param outputs : Tuple of pointers of TensorUtil::TensorDescriptor* of outputs
 template <std::size_t inputIdx = 0, typename... InputTs, typename... OutputTs>
-inline void SaveHistory(
-    SharedPtr<BackProp::BackPropWrapper> wrapper, std::tuple<InputTs...> inputs,
-    std::tuple<OutputTs...> outputs)
+void SaveHistory(BackProp::BackPropWrapper* wrapper,
+                 std::tuple<InputTs...> inputs,
+                 std::tuple<OutputTs...> outputs)
 {
     if constexpr (inputIdx == sizeof...(InputTs))
     {
-        AddOutputHistory(wrapper, outputs);
+        const auto backPropWrapperKey = ModelManager::CurModel().
+            RegisterBackPropWrapper(wrapper);
+        AddOutputHistory(backPropWrapperKey, outputs);
     }
     else
     {
@@ -80,7 +86,7 @@ inline void SaveHistory(
 }
 
 template <typename T, typename... Ts>
-inline bool CheckDeviceEquality(const T& paramA, const T& paramB)
+bool CheckDeviceEquality(const T& paramA, const T& paramB)
 {
     if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
         return false;
@@ -93,8 +99,8 @@ inline bool CheckDeviceEquality(const T& paramA, const T& paramB)
 }
 
 template <typename T, typename... Ts>
-inline bool CheckDeviceEquality(const T& paramA, const T& paramB,
-                                const Ts&... params)
+bool CheckDeviceEquality(const T& paramA, const T& paramB,
+                         const Ts&... params)
 {
     if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
         return false;

@@ -14,15 +14,35 @@ Model::Model(std::string name)
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
-                                    const CudaDevice& device)
+                                    const CudaDevice& device, bool preserve)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
-    TensorUtil::TensorDescriptor tensorDesc(shape, type, device, tensorDescKey);
 
-    m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
+    if (preserve)
+    {
+        TensorUtil::TensorDescriptor tensorDesc(shape, type, device,
+                                                tensorDescKey, preserve);
+        m_preservedDescriptorPool.TensorDescMap[tensorDescKey] =
+            std::move(tensorDesc);
+        return tensorDescKey;
+    }
+
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, device,
+                                            tensorDescKey, preserve);
+    m_tensorDescriptorPool.TensorDescMap[tensorDescKey] =
+        std::move(tensorDesc);
 
     return tensorDescKey;
 }
+
+int Model::RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper)
+{
+    const auto key = static_cast<int>(m_backPropWrapperPool.size());
+    m_backPropWrapperPool[key] =
+        backPropWrapper;
+    return key;
+}
+
 
 void Model::m_autoGrad(int tensorKey)
 {
@@ -31,22 +51,29 @@ void Model::m_autoGrad(int tensorKey)
     {
         descriptor.PopIfOperandHistory();
         if (!descriptor.HasHistory())
+        {
             return;
+        }
 
-        const auto& [wrapper, location] =
-            descriptor.GetBackPropWrapperFromLastHistory();
-        const auto outputGradientKeyVector = wrapper->
+        const auto& [backPropWrapperKey, location] =
+            descriptor.GetBackPropWrapperKeyFromLastHistory();
+        const auto outputGradientKeyVector =
+            m_backPropWrapperPool[backPropWrapperKey]->
             GetGradientOutputDescriptorKeys();
 
         auto data = descriptor.GetBackwardData();
 
         //! Checks if wrapper is ready to backprop. If it does, performs backprop
         //! Update the operands if successes
-        const bool invoked = wrapper->InvokeBackPropIfReady(location);
+        const bool invoked = m_backPropWrapperPool[backPropWrapperKey]->
+            InvokeBackPropIfReady(location);
+
         descriptor.PopOutputHistory(); //! Pop output history
 
         if (invoked)
         {
+            delete m_backPropWrapperPool[backPropWrapperKey];
+            m_backPropWrapperPool.erase(backPropWrapperKey);
             for (auto& descKey : outputGradientKeyVector)
                 GetDescriptor(descKey).RemoveOperand(tensorKey);
 
@@ -56,14 +83,28 @@ void Model::m_autoGrad(int tensorKey)
     }
 }
 
+void Model::m_removeDescriptor(int descKey)
+{
+    if (m_tensorDescriptorPool.TensorDescMap.find(descKey) !=
+        m_tensorDescriptorPool.TensorDescMap.end())
+        m_tensorDescriptorPool.TensorDescMap.erase(descKey);
+    m_preservedDescriptorPool.TensorDescMap.erase(descKey);
+}
+
 TensorUtil::TensorDescriptor& Model::GetDescriptor(int descKey)
 {
-    return m_tensorDescriptorPool.TensorDescMap.at(descKey);
+    if (m_tensorDescriptorPool.TensorDescMap.find(descKey) !=
+        m_tensorDescriptorPool.TensorDescMap.end())
+        return m_tensorDescriptorPool.TensorDescMap.at(descKey);
+    return m_preservedDescriptorPool.TensorDescMap.at(descKey);
 }
 
 void Model::BackProp(Tensor tensor)
 {
     m_autoGrad(tensor.TensorDescriptorKey());
+    // for (auto& [key, wrapper] : m_backPropWrapperPool)
+    //     delete wrapper;
+    // m_backPropWrapperPool.clear();
 }
 
 void Model::Clear()
@@ -77,16 +118,12 @@ void Model::InitGradient()
         tensorDesc.InitGradient();
 }
 
-std::string ModelManager::m_currentModel;
-
-std::unordered_map<std::string, Model> ModelManager::m_modelMap;
-
 Model& ModelManager::GetModel(const std::string& modelName)
 {
     return m_modelMap.at(modelName);
 }
 
-Model& ModelManager::GetCurrentModel()
+Model& ModelManager::CurModel()
 {
     return m_modelMap.at(m_currentModel);
 }
@@ -104,4 +141,8 @@ void ModelManager::AddModel(const std::string& modelName)
 {
     m_modelMap.emplace(modelName, Model(modelName));
 }
+
+std::string ModelManager::m_currentModel;
+
+std::unordered_map<std::string, Model> ModelManager::m_modelMap;
 } // namespace Sapphire

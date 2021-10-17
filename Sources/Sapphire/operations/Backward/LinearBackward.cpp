@@ -4,6 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#include <cmath>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Backward/LinearBackward.hpp>
 #include <Sapphire/compute/Initialize.hpp>
@@ -15,8 +16,8 @@ LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
                                TensorUtil::TensorData weight,
                                TensorUtil::TensorData bias,
                                TensorUtil::TensorData x,
-                               Util::SharedPtr<Optimizer::Optimizer> optimizer,
-                              int batchSize)
+                               Optimizer::Optimizer* optimizer,
+                               int batchSize)
     : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
                       { std::move(weight), std::move(bias) },
                       { std::move(x) },
@@ -40,7 +41,7 @@ void LinearBackProp::m_backProp(TensorUtil::TensorData& weight)
     TensorUtil::TensorData& dx = m_dxVector[dxIdx];
     TensorUtil::TensorData& dy = m_dyVector[dyIdx];
 
-    Compute::Gemm(dx, dy, weight, dx);
+    Compute::Gemm(dx, dy, weight);
 }
 
 void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
@@ -62,7 +63,7 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     Compute::Transpose(xTranspose, x);
     Compute::Transpose(dyTranspose, dy);
     Compute::Initialize::Zeros(dw);
-    Compute::Gemm(dw, dyTranspose, x, dw);
+    Compute::Gemm(dw, dyTranspose, x);
     Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
 
     m_optimizer->operator()(weight, dw);
@@ -71,18 +72,19 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
 void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
 {
     const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
-    TensorUtil::TensorData ones(Shape({ m_batchSize }),
+    TensorUtil::TensorData ones(Shape({ 1, m_batchSize }),
                                 dy.GetType(),
-                                dy.GetDevice(), 1);
+                                dy.GetDevice());
     TensorUtil::TensorData dB(bias.GetShape(), bias.GetType(),
-                              bias.GetDevice(), 1);
+                              bias.GetDevice());
 
     dB.SetMode(bias.Mode());
     ones.SetMode(bias.Mode());
 
     Compute::Initialize::Ones(ones);
     Compute::Initialize::Zeros(dB);
-    Compute::Gemm(dB, ones, dy, dB);
+    Compute::Gemm(dB, ones, dy);
+
     Compute::Scale(dB, dB, 1.0f / static_cast<float>(m_batchSize));
     m_optimizer->operator()(bias, dB);
 }

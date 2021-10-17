@@ -19,6 +19,6 @@ void FlattenBackward::m_runBackProp()
 {
     auto dx = m_dxVector[0];
     auto dy = m_dyVector[0];
-    Compute::Reshape(m_dxVector[0], m_shape);
+    m_dxVector[0].Reshape(m_shape);
 }
 }

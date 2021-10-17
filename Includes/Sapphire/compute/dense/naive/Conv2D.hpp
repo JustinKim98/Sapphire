@@ -27,8 +27,10 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int dilationRow, int dilationCol, CudaDevice device);
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
-                    const TensorData& x, const TensorData& filter, int strideRow,
-                    int strideCol, int rowPadding, int colPadding, int dilationRow, int dilationCol, CudaDevice device);
+                    const TensorData& x, const TensorData& filter,
+                    int strideRow,
+                    int strideCol, int rowPadding, int colPadding,
+                    int dilationRow, int dilationCol, CudaDevice device);
 }
 
 #endif

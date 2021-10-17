@@ -36,10 +36,15 @@ void TestLinear(bool print)
     Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense);
     Tensor weight(Shape({ inputs, outputs }), gpu, Type::Dense);
     Tensor bias(Shape({ 1, outputs }), gpu, Type::Dense);
+    input.SetMode(DeviceType::Host);
+    weight.SetMode(DeviceType::Host);
+    bias.SetMode(DeviceType::Host);
 
     Initialize::Initialize(input,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(weight,
+                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    Initialize::Initialize(bias,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
 
     input.ToCuda();
@@ -47,13 +52,13 @@ void TestLinear(bool print)
     bias.ToCuda();
 
     NN::Linear linear(inputs, outputs,
-                      Util::SharedPtr<Optimizer::SGD>::Make(0.0f),
+                      new Optimizer::SGD(0.0f),
                       gpu);
 
     auto gpuOutput = linear(input, weight, bias);
-    const auto gpuForwardPtr = gpuOutput.GetForwardDataCopy();
+    const auto gpuForwardPtr = gpuOutput.GetDataCopy();
     gpuOutput.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(gpuOutput);
+    ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetBackwardDataCopy();
 
     input.ToHost();
@@ -64,11 +69,11 @@ void TestLinear(bool print)
                                        std::make_unique<Initialize::Zeros>());
 
     NN::Linear linearHost(inputs, outputs,
-                          Util::SharedPtr<Optimizer::SGD>::Make(0.0f), gpu);
+                          new Optimizer::SGD(0.0f), gpu);
     const auto hostOutput = linearHost(input, weight, bias);
-    const auto hostForwardPtr = hostOutput.GetForwardDataCopy();
+    const auto hostForwardPtr = hostOutput.GetDataCopy();
     hostOutput.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(hostOutput);
+    ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardPtr = input.GetBackwardDataCopy();
 
     if (print)
@@ -120,6 +125,6 @@ void TestLinear(bool print)
     for (int i = 0; i < input.GetShape().Size(); ++i)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 } // namespace Sapphire::Test

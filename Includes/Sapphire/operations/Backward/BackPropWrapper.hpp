@@ -10,12 +10,11 @@
 #include <algorithm>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <functional>
 
 namespace Sapphire::BackProp
 {
-//! BackPropWrapper can be shared between objects
+//! BackPropWrapperKey can be shared between objects
 
 //! This class is responsible for
 //! 1. Storing the required data for back propagation
@@ -34,13 +33,13 @@ public:
         std::vector<TensorUtil::TensorData> trainableData,
         std::vector<TensorUtil::TensorData> constants,
         std::vector<TensorUtil::TensorData> mutables,
-        Util::SharedPtr<Optimizer::Optimizer> optimizer)
+        Optimizer::Optimizer* optimizer)
         : m_dxVector(std::move(dxVector)),
           m_dyVector(std::move(dyVector)),
           m_trainableData(std::move(trainableData)),
           m_constants(std::move(constants)),
           m_mutables(std::move(mutables)),
-          m_optimizer(std::move(optimizer)),
+          m_optimizer(optimizer),
           m_receivedGradients(dyVector.size(), false)
     {
         m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
@@ -89,7 +88,7 @@ public:
         return tensorKeys;
     }
 
-    //! InvokeBackPropIfReady checks if BackPropWrapper is ready before invoking back propagation
+    //! InvokeBackPropIfReady checks if BackPropWrapperKey is ready before invoking back propagation
     //! \param location : The id of the parameter. Id always starts from 0 with the first parameter (from the left)
     bool InvokeBackPropIfReady(int location)
     {
@@ -106,7 +105,7 @@ protected:
     {
         if (m_receivedGradients.at(location))
             throw std::runtime_error(
-                "BackProp::BackPropWrapper::m_isReady - Received gradient two "
+                "BackProp::BackPropWrapperKey::m_isReady - Received gradient two "
                 "times from same location");
 
         m_receivedGradients.at(location) = true;
@@ -121,9 +120,9 @@ protected:
     std::vector<TensorUtil::TensorData> m_dxVector;
     std::vector<TensorUtil::TensorData> m_dyVector; // const
     std::vector<TensorUtil::TensorData> m_trainableData;
-    const std::vector<TensorUtil::TensorData> m_constants;
+    std::vector<TensorUtil::TensorData> m_constants;
     std::vector<TensorUtil::TensorData> m_mutables;
-    Util::SharedPtr<Optimizer::Optimizer> m_optimizer;
+    Optimizer::Optimizer* m_optimizer;
     std::vector<bool> m_receivedGradients;
     //! Data saved in m_constants should not be modified
 };

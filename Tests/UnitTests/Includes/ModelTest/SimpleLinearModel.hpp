@@ -11,6 +11,6 @@
 namespace Sapphire::Test
 {
 void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData, int inputSize,
-                       int outputSize, float learningRate, int batchSize, int epochs);
+                       int outputSize, float learningRate, int batchSize, int epochs, bool hostMode);
 }
 #endif

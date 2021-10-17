@@ -29,7 +29,7 @@ void ReshapeTest(bool printResult)
     const int dim = dist(gen) % 1 + 2;
 
     const auto shapeInput = CreateRandomShape(dim, 30);
-    const auto newShape = shapeInput;
+    const auto newShape = shapeInput.GetTranspose();
 
     const CudaDevice cuda(0, "device0");
 
@@ -40,16 +40,14 @@ void ReshapeTest(bool printResult)
     //! Initialize input Tensor with normal distribution
     Compute::Initialize::Normal(inputTensor, 10, 5);
     //! Initialize output Tensor with zeros
-    auto transposedTensor = inputTensor.CreateCopy();
+    TensorUtil::TensorData transposedTensor = inputTensor.CreateCopy();
 
     //! Perform reshape on host
-    Compute::Reshape(transposedTensor, newShape);
+    transposedTensor.Reshape(newShape);
     CHECK(transposedTensor.GetShape() == newShape);
 
     //! Use the buffer to store the host result temporarily
-    auto* cpuResult = new float[transposedTensor.DenseTotalLengthHost];
-    std::memcpy(cpuResult, transposedTensor.GetDenseHost(),
-                transposedTensor.DenseTotalLengthHost * sizeof(float));
+    auto cpuResult = transposedTensor.GetDataCopy();
 
     //! Send the input tensor to cuda
     inputTensor.ToCuda();
@@ -57,7 +55,7 @@ void ReshapeTest(bool printResult)
     transposedTensor = inputTensor.CreateCopy();
 
     //! Perform reshape on cuda
-    Compute::Reshape(transposedTensor, newShape);
+    transposedTensor.Reshape(newShape);
     CHECK(transposedTensor.GetShape() == newShape);
 
     //! Send the transposed result to host
@@ -66,10 +64,8 @@ void ReshapeTest(bool printResult)
     transposedTensor.SetMode(DeviceType::Host);
 
     //! Compare the results
-    const float* cudaResult = transposedTensor.GetDenseHost();
-    CheckNoneZeroEquality(cpuResult, cudaResult,
-                          transposedTensor.DenseTotalLengthHost, printResult);
-
-    delete[] cpuResult;
+    auto cudaResult = transposedTensor.GetDataCopy();
+    CheckNoneZeroEquality(std::move(cpuResult), std::move(cudaResult),
+                          transposedTensor.Size(), printResult);
 }
 }

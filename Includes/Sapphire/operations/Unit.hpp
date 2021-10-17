@@ -18,7 +18,16 @@ class Unit
 {
 public:
     Unit() = default;
-    virtual ~Unit() = default;
+
+    Unit(Optimizer::Optimizer* optimizer)
+        : m_optimizer(optimizer)
+    {
+    }
+
+    virtual ~Unit()
+    {
+        delete m_optimizer;
+    }
 
     Unit(const Unit& unit) = default;
     Unit(Unit&& unit) noexcept = default;
@@ -30,6 +39,7 @@ protected:
         std::vector<TensorUtil::TensorDescriptor*> arguments) const = 0;
     std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
     std::unordered_map<std::string, TensorUtil::TensorData> m_mutableDataMap;
+    Optimizer::Optimizer* m_optimizer = nullptr;
 };
 
 //! UnitDataWrapper

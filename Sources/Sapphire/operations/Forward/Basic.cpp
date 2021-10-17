@@ -14,7 +14,7 @@ namespace Sapphire::NN
 {
 Tensor Basic::operator()(Tensor& xTensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto x = xDesc.GetForwardData();
@@ -28,17 +28,16 @@ Tensor Basic::operator()(Tensor& xTensor)
 
     std::cout << "Basic Forward called" << std::endl;
 
-    auto wrapper =
-        Util::SharedPtr<BackProp::BasicBackward>::Make(dx, dy);
-    SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
-                std::make_tuple(&yDesc));
+    auto* wrapper = new BackProp::BasicBackward(dx, dy);
+    Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
+                      std::make_tuple(&yDesc));
 
     return Tensor(yKey);
 }
 
 Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& x1Desc = model.GetDescriptor(x1Tensor.TensorDescriptorKey());
     auto& x2Desc = model.GetDescriptor(x2Tensor.TensorDescriptorKey());
@@ -55,17 +54,16 @@ Tensor TwoInputs::operator()(Tensor& x1Tensor, Tensor& x2Tensor)
 
     std::cout << "TwoInputs Forward called" << std::endl;
 
-    auto wrapper =
-        Util::SharedPtr<BackProp::BackwardTwoInputs>::Make(dx1, dx2, dy);
-    SaveHistory(std::move(wrapper), std::make_tuple(&x1Desc, &x2Desc),
-                std::make_tuple(&yDesc));
+    auto* wrapper = new BackProp::BackwardTwoInputs(dx1, dx2, dy);
+    Util::SaveHistory(wrapper, std::make_tuple(&x1Desc, &x2Desc),
+                      std::make_tuple(&yDesc));
 
     return Tensor(yKey);
 }
 
 std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto x = xDesc.GetForwardData();
@@ -84,17 +82,16 @@ std::pair<Tensor, Tensor> TwoOutputs::operator()(Tensor& xTensor)
 
     std::cout << "TwoOutputs Forward called" << std::endl;
 
-    auto wrapper =
-        Util::SharedPtr<BackProp::BackwardTwoOutputs>::Make(dx, dy1, dy2);
-    SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
-                std::make_tuple(&y1Desc, &y2Desc));
+    auto* wrapper = new BackProp::BackwardTwoOutputs(dx, dy1, dy2);
+    Util::SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
+                      std::make_tuple(&y1Desc, &y2Desc));
 
     return std::make_pair(Tensor(y1Key), Tensor(y2Key));
 }
 
 void InplaceOp::operator()(Tensor& xTensor)
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     auto x = xDesc.GetForwardData();
@@ -103,8 +100,7 @@ void InplaceOp::operator()(Tensor& xTensor)
 
     std::cout << "In-place Forward called " << std::endl;
 
-    auto wrapper =
-        Util::SharedPtr<BackProp::BackwardInplace>::Make(dx, dx);
+    auto* wrapper = new BackProp::BackwardInplace(dx, dx);
     Util::SaveHistory(std::move(wrapper), std::make_tuple(&xDesc),
                       std::make_tuple(&xDesc));
 }

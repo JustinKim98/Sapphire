@@ -5,17 +5,16 @@
 // property of any third parties.
 
 #include <Sapphire/tensor/TensorDescriptor.hpp>
+#include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <algorithm>
-
-#include "Sapphire/operations/Initializers/Initialize.hpp"
 
 namespace Sapphire::TensorUtil
 {
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
                                    const CudaDevice& device,
-                                   int key)
-    : m_forwardData(shape, type, device, key),
-      m_backwardData(shape, type, device, key),
+                                   int key, bool preserve)
+    : m_forwardData(shape, type, device, key, preserve),
+      m_backwardData(shape, type, device, key, preserve),
       m_key(key),
       m_trainable(false)
 {
@@ -60,7 +59,7 @@ unsigned int TensorDescriptor::GetBatchSize() const
 
 Shape TensorDescriptor::GetShape() const
 {
-    return m_forwardData.TensorShape;
+    return m_forwardData.GetShape();
 }
 
 CudaDevice TensorDescriptor::GetDevice() const
@@ -80,10 +79,10 @@ Type TensorDescriptor::GetType() const
     return m_forwardData.GetType();
 }
 
-void TensorDescriptor::SetShape(Shape shape)
+void TensorDescriptor::Reshape(Shape shape)
 {
-    m_forwardData.TensorShape = shape;
-    m_backwardData.TensorShape = shape;
+    m_forwardData.Reshape(shape);
+    m_backwardData.Reshape(shape);
 }
 
 void TensorDescriptor::ToCuda()
@@ -118,9 +117,10 @@ void TensorDescriptor::InitGradient()
 }
 
 void TensorDescriptor::AppendOutputHistory(
-    Util::SharedPtr<BackProp::BackPropWrapper> wrapper, int location)
+    int backPropWrapperKey,
+    int location)
 {
-    m_history.emplace_back(History(std::move(wrapper), location));
+    m_history.emplace_back(History(backPropWrapperKey, location));
 }
 
 void TensorDescriptor::AppendOperandHistory(int tensorDescKey)

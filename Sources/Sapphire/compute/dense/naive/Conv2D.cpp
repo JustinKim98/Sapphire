@@ -8,9 +8,6 @@
 #include <memory>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
-#include <Sapphire/compute/IndexingOps.hpp>
-
-#include "Sapphire/compute/Initialize.hpp"
 
 namespace Sapphire::Compute::Dense::Naive
 {
@@ -47,21 +44,14 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
     const auto InputMatrixSizePerBatch =
         inputMatrixShape.Rows() * inputMatrixShape.Cols();
 
-    //! Padded total size of input and inputMatrix per batch
-    const auto paddedInputTotalSize =
-        (InputSizePerBatch / input.Cols()) * input.PaddedHostColSize;
-    const auto paddedInputMatrixTotalSize =
-        (InputMatrixSizePerBatch / inputMatrix.Cols()) *
-        inputMatrix.PaddedHostColSize;
-
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
         const auto* inputDataHost =
-            input.GetDenseHost() + paddedInputTotalSize * nIdx;
+            input.HostRawPtr() + InputSizePerBatch * nIdx;
         auto* inputMatrixDataHost =
-            inputMatrix.GetMutableDenseHost() + paddedInputMatrixTotalSize *
+            inputMatrix.HostMutableRawPtr() + InputMatrixSizePerBatch *
             nIdx;
-        for (int channelIdx = 0; channelIdx < (numChannels);
+        for (int channelIdx = 0; channelIdx < numChannels;
              ++channelIdx)
         {
             for (int outputRowIdx = 0; outputRowIdx < outputRows;
@@ -106,16 +96,10 @@ void Im2Col(TensorData& inputMatrix, const TensorData& filter,
                                 inputRowIdx * inputShape.Cols() + inputColIdx;
 
                             auto* inputMatrixDataPtr =
-                                inputMatrixDataHost +
-                                (combinedInputMatrixIdx / inputMatrix.Cols()) *
-                                inputMatrix.PaddedHostColSize +
-                                combinedInputMatrixIdx % inputMatrix.Cols();
+                                inputMatrixDataHost + combinedInputMatrixIdx;
 
                             const auto* inputDataPtr =
-                                inputDataHost +
-                                (combinedInputIdx / input.Cols()) *
-                                input.PaddedHostColSize +
-                                combinedInputIdx % input.Cols();
+                                inputDataHost + combinedInputIdx;
 
                             if (inputRowIdx >= 0 &&
                                 inputRowIdx <
@@ -156,24 +140,19 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
         strideCol +
         1;
 
-    const auto InputSizePerBatch =
+    const auto inputSizePerBatch =
         numChannels * inputShape.Rows() * inputShape.Cols();
-    const auto InputMatrixSizePerBatch =
+    const auto inputMatrixSizePerBatch =
         inputMatrixShape.Rows() * inputMatrixShape.Cols();
 
     //! Padded total size of input and inputMatrix per batch
-    const auto paddedInputTotalSize =
-        (InputSizePerBatch / input.Cols()) * input.PaddedHostColSize;
-    const auto paddedInputMatrixTotalSize =
-        (InputMatrixSizePerBatch / inputMatrix.Cols()) *
-        inputMatrix.PaddedHostColSize;
 
     for (int nIdx = 0; nIdx < N; ++nIdx)
     {
         auto* inputDataHost =
-            input.GetMutableDenseHost() + paddedInputTotalSize * nIdx;
+            input.HostMutableRawPtr() + inputSizePerBatch * nIdx;
         const auto* inputMatrixDataHost =
-            inputMatrix.GetDenseHost() + paddedInputMatrixTotalSize * nIdx;
+            inputMatrix.HostRawPtr() + inputMatrixSizePerBatch * nIdx;
         for (int channelIdx = 0; channelIdx < (numChannels);
              ++channelIdx)
         {
@@ -219,16 +198,10 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
                                 inputRowIdx * inputShape.Cols() + inputColIdx;
 
                             const auto* inputMatrixDataPtr =
-                                inputMatrixDataHost +
-                                (combinedInputMatrixIdx / inputMatrix.Cols()) *
-                                inputMatrix.PaddedHostColSize +
-                                combinedInputMatrixIdx % inputMatrix.Cols();
+                                inputMatrixDataHost + combinedInputMatrixIdx;
 
                             auto* inputDataPtr =
-                                inputDataHost +
-                                (combinedInputIdx / input.Cols()) *
-                                input.PaddedHostColSize +
-                                combinedInputIdx % input.Cols();
+                                inputDataHost + combinedInputIdx;
 
                             if (inputRowIdx >= 0 &&
                                 inputRowIdx <
@@ -241,7 +214,6 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
         }
     }
 }
-
 
 void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
@@ -266,28 +238,19 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
     const Shape rYShape({ N, yChannels, yRows * yCols });
 
     TensorData rX(rXShape, Type::Dense, device);
+    rX.SetMode(x.Mode());
     TensorData rFilter = filter;
     TensorData rY = y;
 
     Im2Col(rX, filter, x, strideRow, strideCol, rowPadding, colPadding,
            dilationRow, dilationCol, 0);
-    Reshape(rFilter, rFilterShape);
-    Reshape(rY, rYShape);
+    rFilter.Reshape(rFilterShape);
+    rY.Reshape(rYShape);
 
-    auto dataPtr = std::unique_ptr<float[]>(new float[rX.GetShape().Size()]);
-    std::size_t idx = 0;
-    for (std::size_t ii = 0; ii < rFilter.DenseTotalLengthHost;
-         ii += rFilter.PaddedHostColSize)
-        for (std::size_t i = ii; i < ii + rFilter.GetShape().Cols(); ++i)
-        {
-            dataPtr[idx] = rFilter.GetDenseHost()[i];
-            idx++;
-        }
+    Gemm(rY, rFilter, rX);
 
-    Gemm(rY, rFilter, rX, rY);
-
-    Reshape(rFilter, filterShape);
-    Reshape(rY, yShape);
+    rFilter.Reshape(filterShape);
+    rY.Reshape(yShape);
 }
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
@@ -337,18 +300,18 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
 
     Im2Col(rX, filter, x, strideRow, strideCol, rowPadding, colPadding,
            dilationRow, dilationCol, 0);
-    Reshape(rFilter, rFilterShape);
-    Reshape(drFilter, rFilterShape);
-    Reshape(drY, drYShape);
+    rFilter.Reshape(rFilterShape);
+    drFilter.Reshape(rFilterShape);
+    drY.Reshape(drYShape);
 
     Transpose(rFilterT, rFilter);
-    Gemm(drX, rFilterT, drY, drX);
+    Gemm(drX, rFilterT, drY);
     Transpose(rXT, rX);
-    Gemm(drFilter, drY, rXT, drFilter);
+    Gemm(drFilter, drY, rXT);
 
-    Reshape(rFilter, dFilterShape);
-    Reshape(drFilter, dFilterShape);
-    Reshape(drY, dYShape);
+    rFilter.Reshape(dFilterShape);
+    drFilter.Reshape(dFilterShape);
+    drY.Reshape(drYShape);
     Col2Im(dx, drX, dFilter, strideCol, strideRow, rowPadding, colPadding,
            dilationRow, dilationCol);
 }

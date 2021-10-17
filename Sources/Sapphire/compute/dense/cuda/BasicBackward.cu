@@ -58,7 +58,7 @@ __host__ void PowBackward(float* dx, const float* dy, const float* x,
     }
 }
 
-__host__ void MeanBackward(float* dx, const float* x, const float* dy,
+__host__ void MeanBackward(float* dx, const float* dy,
                          unsigned int yTotalSize, unsigned int unitSize,
                          unsigned int stride)
 {
@@ -66,7 +66,7 @@ __host__ void MeanBackward(float* dx, const float* x, const float* dy,
     const auto blockDim = yTotalSize%threadDim == 0 ? 
         yTotalSize/threadDim : yTotalSize / threadDim + 1;
 
-    MeanBackwardKernel<<<blockDim, threadDim>>>(dx, x, dy, yTotalSize,
+    MeanBackwardKernel<<<blockDim, threadDim>>>(dx, dy, yTotalSize,
                                                  unitSize, stride);
 }
 }

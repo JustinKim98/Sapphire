@@ -5,6 +5,7 @@ set(target UnitTests)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Includes)
 
+set (CMAKE_CXX_STANDARD 17)
 # Sources
 file(GLOB_RECURSE sources
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)

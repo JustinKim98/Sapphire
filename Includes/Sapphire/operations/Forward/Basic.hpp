@@ -10,7 +10,6 @@
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/operations/optimizers/Optimizer.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 
 

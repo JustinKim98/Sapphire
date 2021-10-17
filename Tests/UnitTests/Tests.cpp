@@ -17,7 +17,8 @@
 #include <OperationTest/MSETest.hpp>
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
-#include<ModelTest/SimpleLinearModel.hpp>
+#include <ModelTest/Conv2DModel.hpp>
+#include <ModelTest/SimpleLinearModel.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
 #include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
 #include <Sapphire/Tests/TestUtil.hpp>
@@ -30,17 +31,16 @@
 #include <iostream>
 #include "doctest.h"
 
-//#define GraphTest
+#define GraphTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 #define ModelTest
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
-// #define ConvolutionTest
-// #define BasicGraphTest
-// #define SparseTest
 
 namespace Sapphire::Test
 {
@@ -177,37 +177,6 @@ TEST_CASE("Basics")
 }
 #endif
 
-#ifdef ModelTest
-
-TEST_CASE("Model Test")
-{
-    SUBCASE("SimpleLinearModelTest")
-    {
-        int xFeatures = 300;
-        int yFeatures = 300;
-        int batchSize =100;
-        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
-        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
-
-        // std::random_device rd;
-        // std::mt19937 gen(rd());
-        // std::uniform_real_distribution dist(-1.0f, 1.0f);
-
-        // for (int i = 0; i < xFeatures * batchSize; ++i)
-        // {
-        //     xFeatureVector[i] = dist(gen);
-        //     labelVector[i] = dist(gen);
-        // }
-
-        SimpleLinearModel(xFeatureVector, labelVector, xFeatures,
-                          yFeatures,
-                          0.00001f, batchSize, 1000);
-    }
-}
-
-#endif
-
-
 #ifdef ActivationTest
 TEST_CASE("ActivationTest")
 {
@@ -303,13 +272,15 @@ TEST_CASE("Convolution")
     SUBCASE("Im2ColHost")
     {
         std::cout << "Im2Col && Col2Im" << std::endl;
-        HostIm2ColTest(true);
+        HostIm2ColTest(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("HostConv2D")
     {
         std::cout << "Host Conv2D" << std::endl;
-        HostConv2DTest(true);
+        HostConv2DTest(false);
+        Util::ResourceManager::ClearAll();
     }
 
     SUBCASE("Conv2D")
@@ -356,7 +327,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("MeanTest")
     {
         std::cout << "Mean" << std::endl;
-        TestMean(true);
+        TestMean(false);
     }
 
     SUBCASE("MSETest")
@@ -374,140 +345,77 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear(true);
+        TestLinear(false);
     }
 
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        TestConv2D(false);
+        for (int i = 0; i < 3; ++i)
+            TestConv2D(false);
     }
 }
 #endif
 
-#ifdef SparseTest
+#ifdef ModelTest
 
-TEST_CASE("SparseMemory function Test")
+TEST_CASE("Model Test")
 {
-    SUBCASE("SparseMemoryAllocationHost")
+    SUBCASE("SimpleLinearModelTest")
     {
-        std::cout << "Testing Sparse Memory Allocation for Host ...";
-        SparseMemoryAllocationHost();
-        std::cout << " Done" << std::endl;
+        int xFeatures = 300;
+        int yFeatures = 300;
+        int batchSize = 10;
+        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+    
+        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
+                          0.0001f, batchSize, 1000, false);
     }
 
-    SUBCASE("LoadDistMemoryAllocationHost")
+    SUBCASE("Conv2DModelTest")
     {
-        std::cout << "Testing Load Distribution Memory Allocation forHost...";
-        LoadDistMemoryAllocationHost();
-        std::cout << " Done\n  " << std::endl;
-    }
+        const auto xChannels = 3;
+        const auto yChannels = 3;
+        const auto batchSize = 1;
+        const auto xSize = std::make_pair(5, 5);
+        const auto filterSize = std::make_pair(3, 3);
+        const auto stride = std::make_pair(2, 2);
+        const auto padSize = std::make_pair(2, 2);
+        const auto dilation = std::make_pair(1, 1);
+        const auto learningRate = 0.001f;
+        const auto hostMode = false;
+        const auto epochs = 1000;
 
-    SUBCASE("SparseMemoryDevice")
-    {
-        std::cout << "Testing Sparse Memory Allocation For Device ...";
-        SparseMemoryAllocationDevice();
-        std::cout << " Done" << std::endl;
-    }
+        const auto [xRows, xCols] = xSize;
+        const auto [filterRows, filterCols] = filterSize;
+        const auto [strideRows, strideCols] = stride;
+        const auto [padRows, padCols] = padSize;
+        const auto [dilationRows, dilationCols] = dilation;
 
-    SUBCASE("SparseMemoryCopy Device To Device")
-    {
-        std::cout << "Testing Sparse Memory Copy between device ...";
-        SparseMemoryCopyDeviceToDevice();
-        std::cout << " Done" << std::endl;
+        const auto yRows =
+            (xRows + 2 * padRows - dilationRows * (filterRows - 1) - 1) /
+            strideRows +
+            1;
+        const auto yCols =
+            (xCols + 2 * padCols - dilationCols * (filterCols - 1) - 1) /
+            strideCols +
+            1;
+
+        std::vector<float> xFeatureVector(
+            batchSize * xChannels * xRows * xCols,
+            0.1f);
+        std::vector<float> labelVector(
+            batchSize * yChannels * yRows * yCols
+            , 10.0f);
+
+        Conv2DModel(xFeatureVector, labelVector, batchSize, yChannels,
+                    xChannels, xSize,
+                    std::make_pair(yRows, yCols),
+                    filterSize, stride, padSize, dilation, learningRate,
+                    hostMode, epochs);
     }
 }
 
-TEST_CASE("Device Sparse Gemm Test")
-{
-    SUBCASE("Sparse Multiplication Test (complex)")
-    {
-        std::cout << "Testing Sparse Multiplication (complex) ..." << std::endl;
-        const auto elapsedTime =
-            SparseGemmTestComplex(50, 50, 50, 1, false, false);
-        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-            << "\n"
-            << std::endl;
-    }
-
-    SUBCASE("Sparse Multiplication Test (simple)")
-    {
-        std::cout << "Testing Sparse Multiplication (simple) ..." << std::endl;
-        const auto elapsedTime = SparseGemmTestSimple(5, 5, 5, 5, false, false);
-        std::cout << " Done ... elapsed time (microSeconds) : " << elapsedTime
-            << "\n"
-            << std::endl;
-    }
-}
-
-
-TEST_CASE("Sparse Performance Test")
-{
-    SUBCASE("Matrix conversion test")
-    {
-        std::cout << "Testing conversion ..." << std::endl;
-        SparseMatrixConversionTest(100, 100, 10, 0.1f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("Correctness test (Cuda)")
-    {
-        std::cout << "Testing correctness (Cuda) ..." << std::endl;
-        SparseTestCorrectnessCuda(1000, 1000, 50, 3, 0.5f, false);
-        SparseTestCorrectnessCuda(40, 50, 500, 3, 0.5f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("Correctness test (Host)")
-    {
-        std::cout << "Testing correctness (Host) ..." << std::endl;
-        SparseTestCorrectnessHost(5, 5, 50, 3, 0.9f, false);
-        SparseTestCorrectnessHost(500, 500, 500, 3, 0.5f, false);
-        std::cout << " Done" << std::endl;
-    }
-
-    SUBCASE("General Performance Test")
-    {
-        const std::filesystem::path workDir = "/home/jwkim98/Desktop";
-        const bool printResults = true;
-        const bool writeResults = false;
-        const size_t iterations = 10;
-
-        std::cout << "Testing performance ..." << std::endl;
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<uint32_t> uniform(100, 300);
-
-        std::vector<PerformanceData> performanceData(10 * iterations);
-        size_t count = 0;
-        for (size_t i = 0; i < iterations; ++i)
-        {
-            float sparsity = 0.0f;
-            while (sparsity < 1.0f)
-            {
-                performanceData[count] = PerformanceTest(
-                    uniform(gen), uniform(gen), uniform(gen), 10, sparsity);
-                if (printResults)
-                    performanceData[count].PrintData();
-                sparsity += 0.1f;
-                count += 1;
-            }
-        }
-        std::cout << " Done" << std::endl;
-
-        if (writeResults)
-        {
-            std::filesystem::current_path(workDir);
-            std::ofstream file;
-            file.open("performance.csv", std::ios::out | std::ios::app);
-            PerformanceData::WriteCsvHeader(file);
-            for (const auto& data : performanceData)
-            {
-                data.WriteCsv(file);
-            }
-            file.close();
-        }
-    }
-}
 #endif
 } // namespace Sapphire::Test

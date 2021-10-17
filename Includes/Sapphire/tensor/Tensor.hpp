@@ -18,7 +18,9 @@ class Tensor
 {
 public:
     Tensor();
-    Tensor(const Shape& shape, const CudaDevice& device, Type type);
+    Tensor(const Shape& shape, const CudaDevice& device, Type type,
+           bool preserve = false);
+
     Tensor(int descKey);
     ~Tensor() = default;
 
@@ -37,10 +39,10 @@ public:
         m_tensorDescKey = key;
     }
 
-    [[nodiscard]] std::unique_ptr<float[]> GetForwardDataCopy() const;
-    [[nodiscard]] std::unique_ptr<float[]> GetBackwardDataCopy() const;
+    [[nodiscard]] std::vector<float> GetDataCopy() const;
+    [[nodiscard]] std::vector<float> GetBackwardDataCopy() const;
 
-    void SetForwardData(std::vector<float> data) const;
+    void LoadData(const std::vector<float>& data) const;
     void SetBackwardData(const std::vector<float>& data) const;
 
     void ToCuda();

@@ -29,6 +29,8 @@ void TestMSE(bool print)
 
     Tensor x(xShape, gpu, Type::Dense);
     Tensor label(xShape, gpu, Type::Dense);
+    x.ToHost();
+    label.ToHost();
 
     const std::vector backwardData = { 0.0f };
 
@@ -40,17 +42,17 @@ void TestMSE(bool print)
 
     const auto gpuLoss = NN::Loss::MSE(x, label);
     const auto lossShape = gpuLoss.GetShape();
-    const auto gpuForwardPtr = gpuLoss.GetForwardDataCopy();
+    const auto gpuForwardPtr = gpuLoss.GetDataCopy();
     gpuLoss.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(gpuLoss);
+    ModelManager::CurModel().BackProp(gpuLoss);
     const auto gpuBackwardPtr = x.GetBackwardDataCopy();
 
     x.ToHost();
     label.ToHost();
     const auto hostLoss = NN::Loss::MSE(x, label);
-    const auto hostForwardPtr = hostLoss.GetForwardDataCopy();
+    const auto hostForwardPtr = hostLoss.GetDataCopy();
     hostLoss.SetBackwardData(backwardData);
-    ModelManager::GetCurrentModel().BackProp(hostLoss);
+    ModelManager::CurModel().BackProp(hostLoss);
     const auto hostBackwardPtr = x.GetBackwardDataCopy();
 
     CHECK(gpuLoss.GetShape().Cols() == 1);
@@ -97,6 +99,6 @@ void TestMSE(bool print)
     for (int i = 0; i < x.GetShape().Size(); ++i)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

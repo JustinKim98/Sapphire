@@ -12,16 +12,15 @@
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 
 namespace Sapphire::NN
 {
 Linear::Linear(int inputFeatureSize, int outputFeatureSize,
-               Util::SharedPtr<Optimizer::Optimizer> optimizer,
+               Optimizer::Optimizer* optimizer,
                CudaDevice device, bool isSparse)
-    : m_inputs(inputFeatureSize),
+    : Unit(optimizer),
+      m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
-      m_optimizer(std::move(optimizer)),
       m_device(std::move(device)),
       m_isSparse(isSparse)
 {
@@ -35,7 +34,7 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto mode = x.Mode();
     if (!Util::CheckModeEquality(mode, weight, bias))
         throw std::invalid_argument("NN::Linear - Device mode inequality");
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
 
     auto& xDesc =
         model.GetDescriptor(x.TensorDescriptorKey());
@@ -53,42 +52,45 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto yData = yDesc.GetForwardData();
     auto dyData = yDesc.GetBackwardData();
 
-    auto transposedWeight = TensorUtil::TensorData(
-        Shape({ m_outputs, m_inputs }), Type::Dense, weight.GetDevice());
+    auto transposedWeight =
+        TensorUtil::TensorData(Shape({ m_outputs, m_inputs }), Type::Dense,
+                               weight.GetDevice());
     transposedWeight.SetMode(weight.Mode());
-    auto ones =
-        TensorUtil::TensorData(bias.GetShape().GetTranspose(), Type::Dense,
-                               bias.GetDevice());
+
+    auto ones = TensorUtil::TensorData(bias.GetShape().GetTranspose(),
+                                       Type::Dense,
+                                       bias.GetDevice());
     ones.SetMode(bias.Mode());
+    Compute::Initialize::Ones(ones);
 
     //! Change the dimension of the data to match the requirements
     Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData);
 
-    auto expandedBias =
-        TensorUtil::TensorData(yData.GetShape(), Type::Dense, bias.GetDevice());
+    auto expandedBias = TensorUtil::TensorData(
+        yData.GetShape(), Type::Dense, bias.GetDevice());
     expandedBias.SetMode(bias.Mode());
 
-    Compute::Initialize::Ones(ones);
-    Compute::Initialize::Zeros(yData);
     Compute::Initialize::Zeros(expandedBias);
     Compute::Transpose(transposedWeight, weightData);
-    Compute::Gemm(expandedBias, ones, biasData, expandedBias);
-    Compute::Gemm(yData, xData, transposedWeight, expandedBias);
+    Compute::Gemm(expandedBias, ones,
+                  biasData);
+    TensorUtil::TensorData::DeepCopy(yData, expandedBias);
+    Compute::Gemm(yData, xData, transposedWeight);
 
-    auto backPropWrapper =
-        Util::SharedPtr<BackProp::LinearBackProp>::Make(
+    auto* backPropWrapper =
+        new BackProp::LinearBackProp(
             dxData, dyData, weightData, biasData, xData,
             m_optimizer,
-            xData.GetBatchSize(2));
-    SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
-                std::make_tuple(&yDesc));
+            xData.Rows());
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
+                      std::make_tuple(&yDesc));
     return Tensor(yKey);
 }
 
 int Linear::m_registerOutputTensor(
     const TensorUtil::TensorDescriptor& xDesc) const
 {
-    auto& model = ModelManager::GetCurrentModel();
+    auto& model = ModelManager::CurModel();
     const auto x = xDesc.GetForwardData();
     const Shape xShape = xDesc.GetShape();
     Shape yShape = xShape;

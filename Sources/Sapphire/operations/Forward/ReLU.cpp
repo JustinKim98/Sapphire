@@ -16,18 +16,18 @@ namespace Sapphire::NN
 {
 Tensor ReLU(Tensor xTensor)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     const auto yDescKey = model.RegisterTensorDescriptor(
         xDesc.GetShape(), xDesc.GetType(), xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
     yDesc.SetMode(xDesc.Mode());
 
-    auto x = xDesc.GetForwardData().CreateCopy();
+    auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
-    auto wrapper = Util::SharedPtr<BackProp::ReLUBackward>::Make(dx, dy, x);
+    auto* wrapper = new BackProp::ReLUBackward(dx, dy, x);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
     Util::ChangeTensorDataDimension(1, x, dx, y, dy);

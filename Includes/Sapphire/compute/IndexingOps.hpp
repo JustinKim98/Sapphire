@@ -12,8 +12,6 @@
 namespace Sapphire::Compute
 {
 using namespace TensorUtil;
-void Reshape(TensorData& tensorData, Shape newShape);
-
 void Flatten(TensorData& tensorData);
 }
 

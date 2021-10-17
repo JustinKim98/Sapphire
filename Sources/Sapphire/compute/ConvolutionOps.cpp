@@ -40,7 +40,7 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
         };
 
         Dense::Cuda::Conv2DForward(
-            y.GetMutableDenseCuda(), x.GetDenseCuda(), filter.GetDenseCuda(),
+            y.CudaMutableRawPtr(), x.CudaRawPtr(), filter.CudaRawPtr(),
             xShape, filterShape, strideRow, strideCol, dilationRow, dilationCol,
             rowPadding, columnPadding, device.GetID());
     }
@@ -70,7 +70,7 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowRows,
         };
 
         Dense::Cuda::Pool2DForward(
-            y.GetMutableDenseCuda(), x.GetDenseCuda(), xShape, windowRows,
+            y.CudaMutableRawPtr(), x.CudaRawPtr(), xShape, windowRows,
             windowCols, strideRow, strideCol, rowPadding, columnPadding,
             Dense::Cuda::PoolingMode::Max, CUDNN_PROPAGATE_NAN, device.GetID());
     }
@@ -99,7 +99,7 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
         };
 
         Dense::Cuda::Pool2DForward(
-            y.GetMutableDenseCuda(), x.GetDenseCuda(), xShape, windowRows,
+            y.CudaMutableRawPtr(), x.CudaRawPtr(), xShape, windowRows,
             windowCols, strideRow, strideCol, rowPadding, columnPadding,
             Dense::Cuda::PoolingMode::Avg, CUDNN_PROPAGATE_NAN, device.GetID());
     }
@@ -140,9 +140,9 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
         };
 
         Dense::Cuda::Conv2DBackward(
-            dx.GetMutableDenseCuda(), filter.GetDenseCuda(),
-            dFilter.GetMutableDenseCuda(),
-            x.GetDenseCuda(), dy.GetDenseCuda(), xShape, filterShape, strideRow,
+            dx.CudaMutableRawPtr(), filter.CudaRawPtr(),
+            dFilter.CudaMutableRawPtr(),
+            x.CudaRawPtr(), dy.CudaRawPtr(), xShape, filterShape, strideRow,
             strideCol, dilationRow, dilationCol, rowPadding, colPadding,
             device.GetID());
     }
@@ -178,8 +178,8 @@ void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
         };
 
         Dense::Cuda::Pool2DBackward(
-            y.GetDenseCuda(), dy.GetDenseCuda(), x.GetDenseCuda(),
-            dx.GetMutableDenseCuda(),
+            y.CudaRawPtr(), dy.CudaRawPtr(), x.CudaRawPtr(),
+            dx.CudaMutableRawPtr(),
             xShape, windowRows, windowCols, strideRow, strideCol, rowPadding,
             columnPadding, Dense::Cuda::PoolingMode::Max, device.GetID());
     }
@@ -215,8 +215,8 @@ void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
         };
 
         Dense::Cuda::Pool2DBackward(
-            y.GetDenseCuda(), dy.GetDenseCuda(), x.GetDenseCuda(),
-            dx.GetMutableDenseCuda(),
+            y.CudaRawPtr(), dy.CudaRawPtr(), x.CudaRawPtr(),
+            dx.CudaMutableRawPtr(),
             xShape, windowRows, windowCols, strideRow, strideCol, rowPadding,
             columnPadding, Dense::Cuda::PoolingMode::Avg, device.GetID());
     }

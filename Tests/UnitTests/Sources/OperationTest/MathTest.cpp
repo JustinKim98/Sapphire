@@ -28,6 +28,8 @@ void TestMultiply(bool print)
 
     Tensor inputA(shapeA, gpu, Type::Dense);
     Tensor inputB(shapeB, gpu, Type::Dense);
+    inputA.SetMode(DeviceType::Host);
+    inputB.SetMode(DeviceType::Host);
 
     Initialize::Initialize(
         inputA, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
@@ -39,14 +41,14 @@ void TestMultiply(bool print)
     auto y = NN::Functional::MulOp(inputA, inputB);
 
     y.ToHost();
-    const auto forwardDataPtr = y.GetForwardDataCopy();
+    const auto forwardDataPtr = y.GetDataCopy();
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 
     Initialize::InitializeBackwardData(
         y, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
     y.ToCuda();
-    ModelManager::GetCurrentModel().BackProp(y);
+    ModelManager::CurModel().BackProp(y);
 
     inputA.ToHost();
     inputB.ToHost();
@@ -89,7 +91,7 @@ void TestMultiply(bool print)
         }
     }
 
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 
 void TestAdd(bool print)
@@ -116,14 +118,14 @@ void TestAdd(bool print)
     auto y = NN::Functional::AddOp(inputA, inputB);
 
     y.ToHost();
-    const auto forwardDataPtr = y.GetForwardDataCopy();
+    const auto forwardDataPtr = y.GetDataCopy();
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 
     Initialize::InitializeBackwardData(
         y, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     y.ToCuda();
-    ModelManager::GetCurrentModel().BackProp(y);
+    ModelManager::CurModel().BackProp(y);
 
     inputA.ToHost();
     inputB.ToHost();
@@ -165,6 +167,6 @@ void TestAdd(bool print)
             std::cout << std::endl;
         }
     }
-    ModelManager::GetCurrentModel().Clear();
+    ModelManager::CurModel().Clear();
 }
 }

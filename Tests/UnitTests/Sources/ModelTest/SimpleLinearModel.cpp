@@ -10,73 +10,74 @@
 #include <Sapphire/operations/Forward/ReLU.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
 {
 void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
                        int inputSize, int outputSize, float learningRate,
-                       int batchSize, int epochs)
+                       int batchSize, int epochs, bool hostMode)
 {
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
 
     const CudaDevice gpu(0, "cuda0");
 
-    Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense);
-    Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense);
-
-    x.SetForwardData(xData);
-    label.SetForwardData(labelData);
     NN::Linear linear(inputSize, outputSize,
-                      Util::SharedPtr<Optimizer::SGD>::Make(learningRate), gpu);
-    NN::Linear linear1(inputSize, outputSize,
-                       Util::SharedPtr<Optimizer::SGD>::Make(learningRate),
-                       gpu);
+                      new Optimizer::SGD(learningRate), gpu);
 
-    Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense);
-    Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense);
+    Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense, true);
+    Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense, true);
 
-    Tensor bias(Shape({ 1, outputSize }), gpu, Type::Dense);
-    Tensor bias1(Shape({ 1, outputSize }), gpu, Type::Dense);
+    Tensor bias(Shape({ 1, outputSize }), gpu, Type::Dense, true);
+    Tensor bias1(Shape({ 1, outputSize }), gpu, Type::Dense, true);
     Initialize::Initialize(weight,
                            std::make_unique<Initialize::Normal>(0.0f, 0.01f));
     Initialize::Initialize(weight1,
                            std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(
-        bias, std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(
-        bias1, std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(bias,
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
+    Initialize::Initialize(bias1,
+                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
 
-    // x.ToHost();
-    // label.ToHost();
-    // weight.ToHost();
-    // weight1.ToHost();
-    // bias.ToHost();
-    // bias1.ToHost();
+    if (hostMode)
+    {
+        weight.ToHost();
+        weight1.ToHost();
+        bias.ToHost();
+        bias1.ToHost();
+    }
 
-    x.ToCuda();
-    label.ToCuda();
-    weight.ToCuda();
-    weight1.ToCuda();
-    bias.ToCuda();
-    bias1.ToCuda();
+    Tensor x(Shape({ batchSize, 1, inputSize }), gpu, Type::Dense, true);
+    Tensor label(Shape({ batchSize, 1, outputSize }), gpu, Type::Dense, true);
 
+    if (hostMode)
+    {
+        x.ToHost();
+        label.ToHost();
+    }
+
+    x.LoadData(xData);
+    label.LoadData(labelData);
     for (int i = 0; i < epochs; ++i)
     {
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
+        y = NN::ReLU(linear(y, weight1, bias1));
         const auto loss = NN::Loss::MSE(y, label);
-        //ModelManager::GetCurrentModel().InitGradient();
-        ModelManager::GetCurrentModel().BackProp(loss);
-
-        if (i % 1 == 0)
+        if (i % 20 == 0)
         {
-            const auto lossData = loss.GetForwardDataCopy();
-            std::cout << "epoch: " << i << " loss : " << lossData[0] <<
-                std::endl;
+            const auto lossData = loss.GetDataCopy();
+            std::cout << "epoch: " << i << " loss : " << lossData[0]
+                << std::endl;
         }
+        //ModelManager::CurModel().InitGradient();
+        ModelManager::CurModel().BackProp(loss);
+        ModelManager::CurModel().Clear();
+        if (i % 10 == 0)
+            Util::ResourceManager::Clean();
     }
-    ModelManager::GetCurrentModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

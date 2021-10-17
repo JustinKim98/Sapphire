@@ -8,14 +8,13 @@
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MathBackward.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
-#include <Sapphire/util/SharedPtr.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 
 namespace Sapphire::NN::Functional
 {
 Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     if (inputA.Mode() != inputB.Mode())
         throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
@@ -63,11 +62,9 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    Compute::Gemm(y, a, b, y);
+    Compute::Gemm(y, a, b);
 
-    const auto backPropWrapper =
-        Util::SharedPtr<BackProp::MulBackProp>::Make(a, da, b, db, y);
-
+    auto* backPropWrapper = new BackProp::MulBackProp(a, da, b, db, y);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
                       std::make_tuple(&yDesc));
 
@@ -76,7 +73,7 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
 
 Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
 {
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     if (inputA.Mode() != inputB.Mode())
         throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
@@ -115,8 +112,7 @@ Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    const auto backPropWrapper =
-        Util::SharedPtr<BackProp::AddBackProp>::Make(da, db, dy);
+    auto* backPropWrapper = new BackProp::AddBackProp(da, db, dy);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
                       std::make_tuple(&yDesc));
 
@@ -129,7 +125,7 @@ Tensor MeanOp(const Tensor& input, int dim)
     if (dim < 0 || dim >= input.GetShape().Dim())
         throw std::invalid_argument("NN::Functional::MeanOp - Invalid dim");
 
-    Model& model = ModelManager::GetCurrentModel();
+    Model& model = ModelManager::CurModel();
 
     auto mode = input.Mode();
 
@@ -152,8 +148,7 @@ Tensor MeanOp(const Tensor& input, int dim)
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
 
-    const auto backPropWrapper =
-        Util::SharedPtr<BackProp::MeanBackProp>::Make(dx, x, dy, dim);
+    auto* backPropWrapper = new BackProp::MeanBackProp(dx, x, dy, dim);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 

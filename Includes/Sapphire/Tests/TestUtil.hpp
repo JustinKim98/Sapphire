@@ -15,6 +15,8 @@
 #include <random>
 #include <cstring>
 #include <tuple>
+#include <iostream>
+#include <doctest.h>
 
 namespace Sapphire::Test
 {
@@ -28,13 +30,28 @@ void InitRandomDenseMatrix(float* matrixPtr, const size_t m, const size_t n,
 
 Shape CreateRandomShape(int dim, int maxDim = 10);
 
-void CheckNoneZeroEquality(const float* ptrA, const float* ptrB, unsigned size,
+template <typename TPtrA, typename TPtrB>
+void CheckNoneZeroEquality(const TPtrA ptrA, const TPtrB ptrB, unsigned size,
                            bool print,
                            float equalThreshold = std::numeric_limits<
-                               float>::epsilon());
+                               float>::epsilon())
+{
+    bool isAllZero = true;
+    for (unsigned int i = 0; i < size; ++i)
+    {
+        if (print)
+            std::cout << "ptrA : " << ptrA[i] << " ptrB : " << ptrB[i]
+                << std::endl;
+        if (!std::isnan(ptrA[i]) && !std::isnan(ptrB[i]))
+            CHECK(std::abs(ptrA[i] - ptrB[i]) <= equalThreshold);
+        if (ptrA[i] > 0.0f || ptrA[i] < 0.0f)
+            isAllZero = false;
+    }
+    CHECK(!isAllZero);
+}
 
-void CheckNoneZero(const float* ptr, unsigned size, unsigned colSize,
-                   unsigned padSize, bool print);
+void CheckNoneZero(const float* ptr, unsigned size,
+                   bool print);
 
 template <typename Func>
 void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
@@ -61,9 +78,9 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
     function(Out, A, B);
 
     //! Copy the host result to temporary buffer
-    auto* cpuGemmResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuGemmResult, Out.GetDenseHost(),
-                Out.DenseTotalLengthHost * sizeof(float));
+    auto* cpuGemmResult = new float[Out.HostTotalSize];
+    std::memcpy(cpuGemmResult, Out.HostRawPtr(),
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -83,8 +100,8 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
     Out.SetMode(DeviceType::Host);
 
     //! Check the equality
-    CheckNoneZeroEquality(cpuGemmResult, Out.GetDenseHost(),
-                          Out.DenseTotalLengthHost, print, equalThreshold);
+    CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
+                          Out.HostTotalSize, print, equalThreshold);
 
     delete[] cpuGemmResult;
 }
@@ -112,9 +129,9 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
     function(Out, In);
 
     //! Copy the host result to temporary buffer
-    auto* cpuResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuResult, Out.GetDenseHost(),
-                Out.DenseTotalLengthHost * sizeof(float));
+    auto* cpuResult = new float[Out.HostTotalSize];
+    std::memcpy(cpuResult, Out.HostRawPtr(),
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -133,8 +150,8 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
     Out.SetMode(DeviceType::Host);
 
     //! Check the equality
-    CheckNoneZeroEquality(cpuResult, Out.GetDenseHost(),
-                          Out.DenseTotalLengthHost, print, equalThreshold);
+    CheckNoneZeroEquality(cpuResult, Out.HostRawPtr(),
+                          Out.HostTotalSize, print, equalThreshold);
 
     delete[] cpuResult;
 }
@@ -161,9 +178,9 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
     function(Out, In);
 
     //! Copy the host result to temporary buffer
-    auto* cpuResult = new float[Out.DenseTotalLengthHost];
-    std::memcpy(cpuResult, Out.GetDenseHost(),
-                Out.DenseTotalLengthHost * sizeof(float));
+    auto* cpuResult = new float[Out.HostTotalSize];
+    std::memcpy(cpuResult, Out.HostRawPtr(),
+                Out.HostTotalSize * sizeof(float));
 
     //! Initialize output as zeros on host
     Compute::Initialize::Zeros(Out);
@@ -182,8 +199,8 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
     Out.SetMode(DeviceType::Host);
 
     //! Check the equality
-    CheckNoneZeroEquality(cpuResult, Out.GetDenseHost(),
-                          Out.DenseTotalLengthHost, print, equalThreshold);
+    CheckNoneZeroEquality(cpuResult, Out.HostRawPtr(),
+                          Out.HostTotalSize, print, equalThreshold);
 
     delete[] cpuResult;
 }
@@ -200,9 +217,9 @@ void EqualInitializeTest(Func function, bool print)
     function(data);
 
     //! Copy the host result to temporary memory
-    auto* cpuResult = new float[data.DenseTotalLengthHost];
-    std::memcpy(cpuResult, data.GetDenseHost(),
-                data.DenseTotalLengthHost * sizeof(float));
+    auto* cpuResult = new float[data.HostTotalSize];
+    std::memcpy(cpuResult, data.HostRawPtr(),
+                data.HostTotalSize * sizeof(float));
 
     //! Initialize host with zeros
     Compute::Initialize::Zeros(data);
@@ -214,8 +231,8 @@ void EqualInitializeTest(Func function, bool print)
     data.ToHost();
     data.SetMode(DeviceType::Host);
 
-    CheckNoneZeroEquality(cpuResult, data.GetDenseHost(),
-                          data.DenseTotalLengthHost, print);
+    CheckNoneZeroEquality(cpuResult, data.HostRawPtr(),
+                          data.HostTotalSize, print);
 }
 
 template <typename Func, typename ...Ts>
@@ -229,9 +246,9 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
 
     function(data, params...);
 
-    CheckNoneZero(data.GetDenseHost(),
-                  data.DenseTotalLengthHost, data.GetShape().Cols()
-                  , data.PaddedHostColSize, print);
+    CheckNoneZero(data.HostRawPtr(),
+                  data.HostTotalSize, print
+        );
 
     //! Initialize host with zeros
     Compute::Initialize::Zeros(data);
@@ -244,10 +261,10 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
     data.ToHost();
     data.SetMode(DeviceType::Host);
 
-    CheckNoneZero(data.GetDenseHost(),
-                  data.DenseTotalLengthHost,
-                  data.GetShape().Cols()
-                  , data.PaddedHostColSize, print);
+    CheckNoneZero(data.HostRawPtr(),
+                  data.HostTotalSize,
+                  print
+        );
 }
 
 
@@ -337,8 +354,6 @@ void TestOperation(CudaDevice cudaDevice, std::tuple<Shape> inputShapes,
 
     auto params = std::tuple_cat(outputTensors, inputTensors, funcParams);
     auto outputCuda = std::apply(function, params);
-
-
 }
 } // namespace Sapphire::Test
 

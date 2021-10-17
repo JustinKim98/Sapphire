@@ -7,14 +7,26 @@
 #ifndef SAPPHIRE_MODEL_HPP
 #define SAPPHIRE_MODEL_HPP
 
+#include <cmath>
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
+#include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <string>
 #include <unordered_map>
 
 namespace Sapphire
 {
+inline void HasInvalidNumberHost(TensorUtil::TensorData tensorData)
+{
+    for (unsigned int i = 0; i < tensorData.HostTotalSize; ++i)
+    {
+        const auto data = tensorData.HostRawPtr()[i];
+        if (std::isnan(data) || std::isinf(data))
+            throw std::runtime_error("NAN or INF detected");
+    }
+}
+
 class Model
 {
 public:
@@ -29,10 +41,13 @@ public:
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const CudaDevice& device);
+                                 const CudaDevice& device,
+                                 bool preserve = false);
 
-    //! Returns unitDataWrapper with given key
-    [[nodiscard]] UnitDataWrapper& GetUnitDataWrapper(int key);
+    //! Registers back propagation wrapper
+//! \param backPropWrapper :  back propagation wrapper to register
+//! \return : key of the back propagation wrapper
+    int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
 
     //! Returns descriptor using the descKey
     //! \param descKey : key of the descriptor
@@ -63,7 +78,12 @@ private:
         int Counter = 0;
     };
 
+    void m_removeDescriptor(int descKey);
+
+
     TensorDescriptorPool m_tensorDescriptorPool;
+    TensorDescriptorPool m_preservedDescriptorPool;
+    std::unordered_map<int, BackProp::BackPropWrapper*> m_backPropWrapperPool;
     std::string m_name;
 };
 
@@ -77,7 +97,7 @@ public:
 
     //! Returns currently active model
     //! \return : current model
-    static Model& GetCurrentModel();
+    static Model& CurModel();
 
     //! Sets current model to the given modelName
     //! \param modelName : name of the model to be set

@@ -15,7 +15,7 @@ namespace Sapphire::BackProp
 constexpr static int dxIdx = 0;
 constexpr static int dyIdx = 0;
 constexpr static int weightIdx = 0;
-constexpr static int biasIdx = 0;
+constexpr static int biasIdx = 1;
 constexpr static int xIdx = 0;
 
 class LinearBackProp : public BackPropWrapper
@@ -26,7 +26,7 @@ public:
                             TensorUtil::TensorData weight,
                             TensorUtil::TensorData bias,
                             TensorUtil::TensorData x,
-                            Util::SharedPtr<Optimizer::Optimizer> optimizer,
+                            Optimizer::Optimizer* optimizer,
                             int batchSize);
 
 private:

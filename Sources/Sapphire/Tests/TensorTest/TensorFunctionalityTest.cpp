@@ -28,31 +28,27 @@ void SendDataBetweenHostDevice(bool print)
     const auto shape = CreateRandomShape(dim);
 
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
+    tensorData.ToHost();
 
     //! Randomly initialize data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
 
     //! Save the original data on the separate memory
-    auto* originalData = new float[tensorData.DenseTotalLengthHost];
-    std::memcpy(originalData, tensorData.GetMutableDenseHost(),
-                tensorData.DenseTotalLengthHost * sizeof(float));
-
+    auto originalData = tensorData.GetDataCopy();
     //! Random data should be copied to cuda
     tensorData.ToCuda();
 
     //! Re-Initialize data on host with zero
-    for (unsigned long i = 0; i < tensorData.DenseTotalLengthHost; ++i)
-        tensorData.GetMutableDenseHost()[i] = 0.0f;
+    for (unsigned long i = 0; i < tensorData.HostTotalSize; ++i)
+        tensorData.HostMutableRawPtr()[i] = 0.0f;
 
     //! Zeros on the host memory should be overwritten by copied data on cuda
     tensorData.ToHost();
+    const auto copiedData = tensorData.GetDataCopy();
 
     //! Checks whether data has been succesfully copied to host 
-    CheckNoneZeroEquality(tensorData.GetDenseHost(), originalData,
-                          tensorData.DenseTotalLengthHost, print, 0.1f);
-
-    //! Clear the Resourcemanager
-    delete[] originalData;
+    CheckNoneZeroEquality(copiedData, originalData,
+                          tensorData.Size(), print, 0.1f);
 }
 
 void TensorDataCopyOnCuda(bool print)
@@ -66,44 +62,36 @@ void TensorDataCopyOnCuda(bool print)
     const CudaDevice cuda(0, "cuda0");
 
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
+    tensorData.ToHost();
 
-    tensorData.SetMode(DeviceType::Host);
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
 
-    //! Save the original data on the separate memory
-    auto* originalData = new float[tensorData.DenseTotalLengthHost];
-    std::memcpy(originalData, tensorData.GetMutableDenseHost(),
-                tensorData.DenseTotalLengthHost * sizeof(float));
-
     //! Copy data to cuda
     tensorData.ToCuda();
-    tensorData.SetMode(DeviceType::Cuda);
 
-    //! Re-Initialize data on host with zero
-    for (unsigned long i = 0; i < tensorData.DenseTotalLengthHost; ++i)
-        tensorData.GetMutableDenseHost()[i] = 0.0f;
+    //! Save the original data on the separate memory
+    auto originalData = tensorData.GetDataCopy();
 
     //! Create deep copy of the original tensorData
     TensorUtil::TensorData copiedTensorData = tensorData.CreateCopy();
 
-    //! Copy data to host from copied tensorData
-    copiedTensorData.ToHost();
-    copiedTensorData.SetMode(DeviceType::Host);
+    auto copiedData = copiedTensorData.GetDataCopy();
+
+    CHECK(tensorData.GetShape() == copiedTensorData.GetShape());
 
     //! Checks whether data has been succesfully copied to host
-    CheckNoneZeroEquality(copiedTensorData.GetDenseHost(), originalData,
-                          copiedTensorData.DenseTotalLengthHost, print);
+    CheckNoneZeroEquality(copiedData, originalData,
+                          copiedTensorData.Size(), print);
 
     //! Check equality of pointers
-    CHECK((std::uintptr_t)(tensorData.GetDenseHost()) !=
-        (std::uintptr_t)(copiedTensorData.GetDenseHost()));
+    CHECK((std::uintptr_t)(tensorData.HostRawPtr()) !=
+        (std::uintptr_t)(copiedTensorData.HostRawPtr()));
 
-    CHECK((std::uintptr_t)(tensorData.GetDenseCuda()) !=
-        (std::uintptr_t)(copiedTensorData.GetDenseCuda()));
+    CHECK((std::uintptr_t)(tensorData.CudaRawPtr()) !=
+        (std::uintptr_t)(copiedTensorData.CudaRawPtr()));
 
     TensorUtil::TensorData copyConstructedTensorData = tensorData;
-    delete[] originalData;
 }
 
 void TensorDataCopyOnHost(bool print)
@@ -117,6 +105,8 @@ void TensorDataCopyOnHost(bool print)
 
     CudaDevice cuda(0, "cuda0");
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
+    tensorData.ToHost();
+    tensorData.SetMode(DeviceType::Host);
 
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);
@@ -125,13 +115,13 @@ void TensorDataCopyOnHost(bool print)
     TensorUtil::TensorData copiedTensorData = tensorData.CreateCopy();
 
     //! Checks whether data has been succesfully copied to host
-    CheckNoneZeroEquality(copiedTensorData.GetDenseHost(),
-                          tensorData.GetDenseHost(),
-                          copiedTensorData.DenseTotalLengthHost, print);
+    CheckNoneZeroEquality(copiedTensorData.HostRawPtr(),
+                          tensorData.HostRawPtr(),
+                          copiedTensorData.HostTotalSize, print);
 
     //! Check equality of pointers
-    CHECK((std::uintptr_t)(tensorData.GetDenseHost()) !=
-        (std::uintptr_t)(copiedTensorData.GetDenseHost()));
+    CHECK((std::uintptr_t)(tensorData.HostRawPtr()) !=
+        (std::uintptr_t)(copiedTensorData.HostRawPtr()));
 
     TensorUtil::TensorData copyConstructedTensorData = tensorData;
 }
