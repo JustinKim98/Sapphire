@@ -44,22 +44,23 @@ __global__ void SoftMaxBackwardKernel(float* dx, const float* dy,
                                       unsigned int totalSize,
                                       unsigned int unitSize)
 {
-    const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto curUnitIdx = unitId / unitSize;
-    const auto i = curUnitIdx * unitSize + unitId % unitSize;
+    const auto threadId = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto batchId = threadId / unitSize;
+    const auto i = threadId % unitSize;
+    const auto iIdx = unitSize * batchId + i;
 
-    if (i < totalSize)
+    if (threadId < totalSize)
     {
-        float gradX = 0;
-        for (unsigned int idx = 0; idx < unitSize; idx++)
+        float sum = 0;
+        for (unsigned int j = 0; j < unitSize; j++)
         {
-            const auto j = unitSize * curUnitIdx + idx;
+            const auto jIdx = unitSize * batchId + j;
             if (j == i)
-                gradX += dy[j] * (y[j] * (1 - y[j]));
+                sum += dy[jIdx] * (y[jIdx] * (1.0f - y[jIdx]));
             else
-                gradX += dy[j] * (-y[i] * y[j]);
+                sum += dy[jIdx] * (-y[iIdx] * y[jIdx]);
         }
-        dx[i] = gradX;
+        dx[iIdx] = sum;
     }
 }
 }

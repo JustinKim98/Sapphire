@@ -16,12 +16,11 @@ void SoftMax(TensorData& y, const TensorData& x)
     assert(y.Mode() == x.Mode());
     assert(y.GetDevice() == x.GetDevice());
     const auto device = y.GetDevice();
-    const auto unitSize = y.Cols();
+    const auto unitSize = y.GetShape().At(-1);
     const auto totalSize = y.Size();
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::SoftMax(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize,
                              unitSize);
@@ -42,7 +41,6 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::LeakyReLU(y.CudaMutableRawPtr(), x.CudaRawPtr(), a,
                                totalSize);
     }
@@ -62,7 +60,6 @@ void ReLU(TensorData& y, const TensorData& x)
 
     if (y.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::ReLU(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
     else
@@ -82,7 +79,6 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 
     if (dx.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::ReLUBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                   x.CudaRawPtr(), totalSize);
     }
@@ -101,7 +97,6 @@ void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
 
     if (dx.Mode() == DeviceType::Cuda)
     {
-        cudaSetDevice(device.GetID());
         Dense::Cuda::LeakyReLUBackward(dx.CudaMutableRawPtr(),
                                        dy.CudaRawPtr(),
                                        x.CudaRawPtr(),
@@ -111,6 +106,26 @@ void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
     {
         throw std::runtime_error(
             "Compute::LeakyReLUBackward - Host not implemented");
+    }
+}
+
+void SoftmaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
+{
+    assert(dx.Mode() == dy.Mode() && dx.Mode() == y.Mode());
+    assert(dx.GetDevice() == dy.GetDevice() && dx.GetDevice() == y.GetDevice());
+    const auto device = dx.GetDevice();
+    const auto totalSize = dx.Size();
+    const auto unitSize = dx.GetShape().At(-1);
+
+    if (dx.Mode() == DeviceType::Cuda)
+    {
+        Dense::Cuda::SoftmaxBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
+                                     y.CudaRawPtr(), totalSize, unitSize);
+    }
+    else
+    {
+        Dense::Naive::SoftmaxBackward(dx.HostMutableRawPtr(), dy.HostRawPtr(),
+                                      y.HostRawPtr(), totalSize, unitSize);
     }
 }
 }

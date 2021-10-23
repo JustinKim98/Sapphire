@@ -100,7 +100,7 @@ __host__ void LeakyReLUBackward(float* dx, const float* dy, const float* x,
     }
 }
 
-__host__ void SoftmaxBack(float* dx, const float* dy, const float* x,
+__host__ void SoftmaxBackward(float* dx, const float* dy, const float* x,
                           unsigned int totalSize, unsigned int unitSize)
 {
     auto blockDim = (unitSize > 64) ? 64 : unitSize;

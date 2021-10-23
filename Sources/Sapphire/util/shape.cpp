@@ -70,6 +70,8 @@ std::string Shape::ToString() const
 
 int Shape::At(int index) const
 {
+    if (index < 0)
+        return m_shapeVector.at(m_shapeVector.size() + index);
     return m_shapeVector.at(index);
 }
 

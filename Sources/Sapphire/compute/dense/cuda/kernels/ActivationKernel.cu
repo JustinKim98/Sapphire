@@ -39,18 +39,19 @@ __global__ void SoftMaxKernel(float* y, const float* x, unsigned int totalSize,
                               unsigned int unitSize)
 {
     const auto unitId = blockIdx.x * blockDim.x + threadIdx.x;
-    const auto curBatch = unitId / unitSize;
-    const auto curIdx = unitId % unitSize;
+    const auto batchId = unitId / unitSize;
+    const auto i = unitId % unitSize;
+    const auto iIdx = unitSize * batchId + i;
 
     if (unitId < totalSize)
     {
         float sum = 0;
-        for (unsigned int i = 0; i < unitSize; i++)
+        for (unsigned int j = 0; j < unitSize; j++)
         {
-            sum += expf(x[unitSize * curBatch + i]);
+            const auto jIdx = unitSize * batchId + j;
+            sum += expf(x[jIdx]);
         }
-        y[unitSize * curBatch + curIdx] =
-            expf(x[unitSize * curBatch + curIdx]) / sum;
+        y[iIdx] = expf(x[iIdx]) / sum;
     }
 }
 }
