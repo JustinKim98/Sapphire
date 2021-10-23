@@ -42,9 +42,9 @@ void BroadcastWithOneDimension(bool print)
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
-    A.SetMode(DeviceType::Host);
-    B.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    A.SetMode(ComputeMode::Host);
+    B.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize input tensors with normal distribution and output tensors as zeros
     Compute::Initialize::Normal(A, 10, 5);
@@ -102,9 +102,9 @@ void BroadcastWithMissingDimension(bool print)
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
-    A.SetMode(DeviceType::Host);
-    B.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    A.SetMode(ComputeMode::Host);
+    B.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize input tensors with normal distribution and output tensors as
     //! zeros
@@ -163,9 +163,9 @@ void BroadcastMixed(bool print)
     TensorUtil::TensorData B(shapeB, Type::Dense, cuda);
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
-    A.SetMode(DeviceType::Host);
-    B.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    A.SetMode(ComputeMode::Host);
+    B.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize input tensors with normal distribution and output tensors
     //! as zeros

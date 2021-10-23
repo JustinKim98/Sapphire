@@ -64,9 +64,9 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
     TensorUtil::TensorData A(shape, Type::Dense, cuda);
     TensorUtil::TensorData B(shape, Type::Dense, cuda);
     TensorUtil::TensorData Out(shape, Type::Dense, cuda);
-    A.SetMode(DeviceType::Host);
-    B.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    A.SetMode(ComputeMode::Host);
+    B.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize the input data with normal distribution and output data as
     //! zeros
@@ -89,15 +89,15 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
     A.ToCuda();
     B.ToCuda();
     Out.ToCuda();
-    A.SetMode(DeviceType::Cuda);
-    B.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
+    A.SetMode(ComputeMode::Cuda);
+    B.SetMode(ComputeMode::Cuda);
+    Out.SetMode(ComputeMode::Cuda);
 
     function(Out, A, B);
 
     //! Send the data back to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Check the equality
     CheckNoneZeroEquality(cpuGemmResult, Out.HostRawPtr(),
@@ -116,8 +116,8 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
     //! Initialize data
     TensorUtil::TensorData In(shape, Type::Dense, cuda);
     TensorUtil::TensorData Out(shape, Type::Dense, cuda);
-    In.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    In.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize the input data with normal distribution and output data as
     //! zeros
@@ -139,15 +139,15 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
     //! Send data to cuda
     In.ToCuda();
     Out.ToCuda();
-    In.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
+    In.SetMode(ComputeMode::Cuda);
+    Out.SetMode(ComputeMode::Cuda);
 
     //! Invoke function on cuda
     function(Out, In);
 
     //! Send the data back to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Check the equality
     CheckNoneZeroEquality(cpuResult, Out.HostRawPtr(),
@@ -166,8 +166,8 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
     //! Initialize data
     TensorUtil::TensorData In(shape, Type::Dense, cuda);
     TensorUtil::TensorData Out(shape, Type::Dense, cuda);
-    In.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    In.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize the input data with normal distribution and output data as
     //! zeros
@@ -188,15 +188,15 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
     //! Send data to cuda
     In.ToCuda();
     Out.ToCuda();
-    In.SetMode(DeviceType::Cuda);
-    Out.SetMode(DeviceType::Cuda);
+    In.SetMode(ComputeMode::Cuda);
+    Out.SetMode(ComputeMode::Cuda);
 
     //! Invoke function on cuda
     function(Out, In);
 
     //! Send the data back to host
     Out.ToHost();
-    Out.SetMode(DeviceType::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Check the equality
     CheckNoneZeroEquality(cpuResult, Out.HostRawPtr(),
@@ -212,7 +212,7 @@ void EqualInitializeTest(Func function, bool print)
     const CudaDevice cuda(0, "cuda0");
 
     TensorUtil::TensorData data(shape, Type::Dense, cuda);
-    data.SetMode(DeviceType::Host);
+    data.SetMode(ComputeMode::Host);
 
     function(data);
 
@@ -225,11 +225,11 @@ void EqualInitializeTest(Func function, bool print)
     Compute::Initialize::Zeros(data);
 
     data.ToCuda();
-    data.SetMode(DeviceType::Cuda);
+    data.SetMode(ComputeMode::Cuda);
     function(data);
 
     data.ToHost();
-    data.SetMode(DeviceType::Host);
+    data.SetMode(ComputeMode::Host);
 
     CheckNoneZeroEquality(cpuResult, data.HostRawPtr(),
                           data.HostTotalSize, print);
@@ -242,7 +242,7 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
     const CudaDevice cuda(0, "cuda0");
 
     TensorUtil::TensorData data(shape, Type::Dense, cuda);
-    data.SetMode(DeviceType::Host);
+    data.SetMode(ComputeMode::Host);
 
     function(data, params...);
 
@@ -254,12 +254,12 @@ void NoneZeroTest(Func function, bool print, Ts ...params)
     Compute::Initialize::Zeros(data);
 
     data.ToCuda();
-    data.SetMode(DeviceType::Cuda);
+    data.SetMode(ComputeMode::Cuda);
 
     function(data, params...);
 
     data.ToHost();
-    data.SetMode(DeviceType::Host);
+    data.SetMode(ComputeMode::Host);
 
     CheckNoneZero(data.HostRawPtr(),
                   data.HostTotalSize,
@@ -283,9 +283,9 @@ auto VectorToTuple(const std::vector<T>& v)
 }
 
 template <typename T>
-auto SendTo(DeviceType device, T& tensors)
+auto SendTo(ComputeMode device, T& tensors)
 {
-    if (device == DeviceType::Cuda)
+    if (device == ComputeMode::Cuda)
         tensors.ToCuda();
     else
         tensors.ToHost();
@@ -293,10 +293,10 @@ auto SendTo(DeviceType device, T& tensors)
 }
 
 template <typename T, typename ...Ts>
-auto SendTo(DeviceType device, T tensor, Ts&& ... tensors)
+auto SendTo(ComputeMode device, T tensor, Ts&& ... tensors)
 {
     static_assert(std::is_same_v<TensorUtil::TensorData, T>);
-    if (device == DeviceType::Cuda)
+    if (device == ComputeMode::Cuda)
         tensor.ToCuda();
     else
         tensor.ToHost();
@@ -347,7 +347,7 @@ void TestOperation(CudaDevice cudaDevice, std::tuple<Shape> inputShapes,
 
     std::apply(SendTo,
                std::make_tuple(
-                   std::tuple_cat(std::make_tuple(DeviceType::Cuda),
+                   std::tuple_cat(std::make_tuple(ComputeMode::Cuda),
                                   inputTensors,
                                   outputTensors))
         );

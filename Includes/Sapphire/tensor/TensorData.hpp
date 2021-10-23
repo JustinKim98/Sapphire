@@ -77,7 +77,7 @@ public:
     //! \return : device descriptor
     [[nodiscard]] CudaDevice GetDevice() const
     {
-        if (Mode() == DeviceType::Host)
+        if (Mode() == ComputeMode::Host)
             return CudaDevice();
         return m_device;
     }
@@ -111,9 +111,9 @@ public:
 
     //! Sets whether cuda or host will execute operations
     //! This operation is available only on Cuda type tensorData
-    void SetMode(DeviceType type);
+    void SetMode(ComputeMode type);
 
-    [[nodiscard]] DeviceType Mode() const
+    [[nodiscard]] ComputeMode Mode() const
     {
         return m_mode;
     }
@@ -181,7 +181,7 @@ private:
     int m_parentDescKey = -1;
 
     Type m_type = Type::Dense;
-    DeviceType m_mode = DeviceType::Host;
+    ComputeMode m_mode = ComputeMode::Host;
 
     CudaDevice m_device;
     bool m_preserve;

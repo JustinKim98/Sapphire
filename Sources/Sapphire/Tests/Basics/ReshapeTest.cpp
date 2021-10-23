@@ -35,7 +35,7 @@ void ReshapeTest(bool printResult)
 
     //! Define TensorData for input and transposed
     TensorUtil::TensorData inputTensor(shapeInput, Type::Dense, cuda);
-    inputTensor.SetMode(DeviceType::Host);
+    inputTensor.SetMode(ComputeMode::Host);
 
     //! Initialize input Tensor with normal distribution
     Compute::Initialize::Normal(inputTensor, 10, 5);
@@ -51,7 +51,7 @@ void ReshapeTest(bool printResult)
 
     //! Send the input tensor to cuda
     inputTensor.ToCuda();
-    inputTensor.SetMode(DeviceType::Cuda);
+    inputTensor.SetMode(ComputeMode::Cuda);
     transposedTensor = inputTensor.CreateCopy();
 
     //! Perform reshape on cuda
@@ -61,7 +61,7 @@ void ReshapeTest(bool printResult)
     //! Send the transposed result to host
     //! Zero initialized data on the host should be overwritten
     transposedTensor.ToHost();
-    transposedTensor.SetMode(DeviceType::Host);
+    transposedTensor.SetMode(ComputeMode::Host);
 
     //! Compare the results
     auto cudaResult = transposedTensor.GetDataCopy();

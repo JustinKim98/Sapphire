@@ -63,12 +63,12 @@ void Conv2DTest(bool printForward, bool printBackward)
     TensorUtil::TensorData y(yShape, Type::Dense, cuda);
     TensorUtil::TensorData dy(yShape, Type::Dense, cuda);
 
-    x.SetMode(DeviceType::Cuda);
-    dx.SetMode(DeviceType::Cuda);
-    filter.SetMode(DeviceType::Cuda);
-    dFilter.SetMode(DeviceType::Cuda);
-    y.SetMode(DeviceType::Cuda);
-    dy.SetMode(DeviceType::Cuda);
+    x.SetMode(ComputeMode::Cuda);
+    dx.SetMode(ComputeMode::Cuda);
+    filter.SetMode(ComputeMode::Cuda);
+    dFilter.SetMode(ComputeMode::Cuda);
+    y.SetMode(ComputeMode::Cuda);
+    dy.SetMode(ComputeMode::Cuda);
 
     Compute::Initialize::Ones(x);
     Compute::Initialize::Zeros(dx);
@@ -81,7 +81,7 @@ void Conv2DTest(bool printForward, bool printBackward)
                            dilationCol, rowPadding, colPadding);
 
     y.ToHost();
-    y.SetMode(DeviceType::Host);
+    y.SetMode(ComputeMode::Host);
 
     const auto* forwardOutput = y.HostRawPtr();
     for (unsigned i = 0; i < y.HostTotalSize; ++i)
@@ -89,7 +89,7 @@ void Conv2DTest(bool printForward, bool printBackward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i] <<
                 std::endl;
 
-    y.SetMode(DeviceType::Cuda);
+    y.SetMode(ComputeMode::Cuda);
 
     Compute::Conv2DBackward(dx, dFilter, dy, x, filter, strideRow, strideCol,
                             rowPadding, colPadding, dilationRow, dilationCol);
@@ -143,10 +143,10 @@ void MaxPool2DTest(bool printForward, bool printBackward)
     TensorUtil::TensorData y(yShape, Type::Dense, cuda);
     TensorUtil::TensorData dy(yShape, Type::Dense, cuda);
 
-    x.SetMode(DeviceType::Cuda);
-    dx.SetMode(DeviceType::Cuda);
-    y.SetMode(DeviceType::Cuda);
-    dy.SetMode(DeviceType::Cuda);
+    x.SetMode(ComputeMode::Cuda);
+    dx.SetMode(ComputeMode::Cuda);
+    y.SetMode(ComputeMode::Cuda);
+    dy.SetMode(ComputeMode::Cuda);
 
     Compute::Initialize::Ones(x);
     Compute::Initialize::Zeros(dx);
@@ -158,7 +158,7 @@ void MaxPool2DTest(bool printForward, bool printBackward)
                               rowPadding, colPadding);
 
     y.ToHost();
-    y.SetMode(DeviceType::Host);
+    y.SetMode(ComputeMode::Host);
 
     const auto* forwardOutput = y.HostRawPtr();
     for (unsigned i = 0; i < y.HostTotalSize; ++i)
@@ -166,7 +166,7 @@ void MaxPool2DTest(bool printForward, bool printBackward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i]
                 << std::endl;
 
-    y.SetMode(DeviceType::Cuda);
+    y.SetMode(ComputeMode::Cuda);
 
     Compute::MaxPool2DBackward(dx, dy, x, y, windowRows, windowCols, strideRow,
                                strideCol, rowPadding, colPadding);
@@ -216,10 +216,10 @@ void AvgPool2DTest(bool printForward, bool printBackward)
     TensorUtil::TensorData y(yShape, Type::Dense, cuda);
     TensorUtil::TensorData dy(yShape, Type::Dense, cuda);
 
-    x.SetMode(DeviceType::Cuda);
-    dx.SetMode(DeviceType::Cuda);
-    y.SetMode(DeviceType::Cuda);
-    dy.SetMode(DeviceType::Cuda);
+    x.SetMode(ComputeMode::Cuda);
+    dx.SetMode(ComputeMode::Cuda);
+    y.SetMode(ComputeMode::Cuda);
+    dy.SetMode(ComputeMode::Cuda);
 
     Compute::Initialize::Ones(x);
     Compute::Initialize::Zeros(dx);
@@ -230,7 +230,7 @@ void AvgPool2DTest(bool printForward, bool printBackward)
                               strideCol, rowPadding, colPadding);
 
     y.ToHost();
-    y.SetMode(DeviceType::Host);
+    y.SetMode(ComputeMode::Host);
 
     const auto* forwardOutput = y.HostRawPtr();
     for (unsigned i = 0; i < y.HostTotalSize; ++i)
@@ -238,7 +238,7 @@ void AvgPool2DTest(bool printForward, bool printBackward)
             std::cout << "forwardData [" << i << "] : " << forwardOutput[i]
                 << std::endl;
 
-    y.SetMode(DeviceType::Cuda);
+    y.SetMode(ComputeMode::Cuda);
 
     Compute::AvgPool2DBackward(dx, dy, x, y, windowRows, windowCols, strideRow,
                                strideCol, rowPadding, colPadding);
@@ -300,10 +300,10 @@ void HostIm2ColTest(bool print)
     TensorUtil::TensorData
         reConvertedInputData(inputShape, Type::Dense, device);
 
-    inputData.SetMode(DeviceType::Host);
-    filterData.SetMode(DeviceType::Host);
-    inputMatrixData.SetMode(DeviceType::Host);
-    reConvertedInputData.SetMode(DeviceType::Host);
+    inputData.SetMode(ComputeMode::Host);
+    filterData.SetMode(ComputeMode::Host);
+    inputMatrixData.SetMode(ComputeMode::Host);
+    reConvertedInputData.SetMode(ComputeMode::Host);
 
     int count = 0;
     for (int i = 0; i < inputData.Size(); ++i)
@@ -381,12 +381,12 @@ void HostConv2DTest(bool print)
     TensorUtil::TensorData y(yShape, Type::Dense, device);
     TensorUtil::TensorData dFilter(filterShape, Type::Dense, device);
     TensorUtil::TensorData dy(yShape, Type::Dense, device);
-    x.SetMode(DeviceType::Host);
-    dx.SetMode(DeviceType::Host);
-    filter.SetMode(DeviceType::Host);
-    y.SetMode(DeviceType::Host);
-    dFilter.SetMode(DeviceType::Host);
-    dy.SetMode(DeviceType::Host);
+    x.SetMode(ComputeMode::Host);
+    dx.SetMode(ComputeMode::Host);
+    filter.SetMode(ComputeMode::Host);
+    y.SetMode(ComputeMode::Host);
+    dFilter.SetMode(ComputeMode::Host);
+    dy.SetMode(ComputeMode::Host);
 
     Compute::Initialize::Zeros(y);
 

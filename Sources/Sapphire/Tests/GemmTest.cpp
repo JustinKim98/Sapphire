@@ -45,9 +45,9 @@ void Gemm1(bool print)
     TensorUtil::TensorData Out(shapeOut, Type::Dense, cuda);
 
     //! Set tensor mode as host
-    A.SetMode(DeviceType::Host);
-    B.SetMode(DeviceType::Host);
-    Out.SetMode(DeviceType::Host);
+    A.SetMode(ComputeMode::Host);
+    B.SetMode(ComputeMode::Host);
+    Out.SetMode(ComputeMode::Host);
 
     //! Initialize with normal distribution
     Compute::Initialize::Normal(A, 10, 5);

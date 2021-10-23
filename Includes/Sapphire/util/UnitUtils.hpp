@@ -91,7 +91,7 @@ bool CheckDeviceEquality(const T& paramA, const T& paramB)
     if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
         return false;
 
-    if (paramA.Mode() == DeviceType::Cuda &&
+    if (paramA.Mode() == ComputeMode::Cuda &&
         paramA.GetDevice() != paramB.GetDevice())
         return false;
 
@@ -105,7 +105,7 @@ bool CheckDeviceEquality(const T& paramA, const T& paramB,
     if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
         return false;
 
-    if (paramA.Mode() == DeviceType::Cuda &&
+    if (paramA.Mode() == ComputeMode::Cuda &&
         paramA.GetDevice() != paramB.GetDevice())
         return false;
 
@@ -159,13 +159,13 @@ inline std::optional<Shape> GetBroadcastedShape(const Shape& shapeA,
 }
 
 template <typename TensorT>
-bool CheckModeEquality(DeviceType mode, TensorT tensor)
+bool CheckModeEquality(ComputeMode mode, TensorT tensor)
 {
     return mode == tensor.Mode();
 }
 
 template <typename TensorT, typename ...TensorTs>
-bool CheckModeEquality(DeviceType mode, TensorT tensor,
+bool CheckModeEquality(ComputeMode mode, TensorT tensor,
                        TensorTs ... tensors)
 {
     if (mode == tensor.Mode())

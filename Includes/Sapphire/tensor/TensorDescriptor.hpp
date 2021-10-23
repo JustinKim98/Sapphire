@@ -54,10 +54,10 @@ public:
     void ToHost();
 
     //! Gets current mode of the descriptor
-    [[nodiscard]] DeviceType Mode() const;
+    [[nodiscard]] ComputeMode Mode() const;
 
     //! Sets the mode of the descriptor
-    void SetMode(DeviceType deviceType);
+    void SetMode(ComputeMode deviceType);
 
     //! Initializes backward data to zero
     void InitGradient();

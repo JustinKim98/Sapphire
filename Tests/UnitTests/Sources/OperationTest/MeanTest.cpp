@@ -29,7 +29,7 @@ void TestMean(bool print)
     });
 
     Tensor x(xShape, gpu, Type::Dense);
-    x.SetMode(DeviceType::Host);
+    x.SetMode(ComputeMode::Host);
 
     Initialize::Initialize(
         x, std::make_unique<Initialize::Normal>(5.0f, 1.0f));
@@ -42,8 +42,8 @@ void TestMean(bool print)
     x.ToHost();
     const auto yHost = NN::Functional::MeanOp(x, dim);
 
-    const auto yForwardGpu = yGpu.GetDataCopy();
-    const auto yForwardHost = yHost.GetDataCopy();
+    const auto yForwardGpu = yGpu.GetData();
+    const auto yForwardHost = yHost.GetData();
     const auto yShape = yGpu.GetShape();
 
     for (int i = 0; i < yShape.Size(); ++i)
@@ -58,14 +58,14 @@ void TestMean(bool print)
     ModelManager::CurModel().BackProp(yGpu);
     x.ToHost();
 
-    const auto xBackwardGpu = x.GetBackwardDataCopy();
+    const auto xBackwardGpu = x.GetGradient();
 
     Initialize::InitializeBackwardData(
         x, std::make_unique<Initialize::Zeros>());
     ModelManager::CurModel().BackProp(yHost);
     x.ToHost();
 
-    const auto xBackwardHost = x.GetBackwardDataCopy();
+    const auto xBackwardHost = x.GetGradient();
 
     for (int i = 0; i < xShape.Size(); ++i)
         CHECK(std::abs(xBackwardGpu[i] - xBackwardHost[i]) <

@@ -28,8 +28,8 @@ void TestMultiply(bool print)
 
     Tensor inputA(shapeA, gpu, Type::Dense);
     Tensor inputB(shapeB, gpu, Type::Dense);
-    inputA.SetMode(DeviceType::Host);
-    inputB.SetMode(DeviceType::Host);
+    inputA.SetMode(ComputeMode::Host);
+    inputB.SetMode(ComputeMode::Host);
 
     Initialize::Initialize(
         inputA, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
@@ -41,7 +41,7 @@ void TestMultiply(bool print)
     auto y = NN::Functional::MulOp(inputA, inputB);
 
     y.ToHost();
-    const auto forwardDataPtr = y.GetDataCopy();
+    const auto forwardDataPtr = y.GetData();
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 
@@ -53,8 +53,8 @@ void TestMultiply(bool print)
     inputA.ToHost();
     inputB.ToHost();
 
-    const auto backwardDataPtrA = inputA.GetBackwardDataCopy();
-    const auto backwardDataPtrB = inputB.GetBackwardDataCopy();
+    const auto backwardDataPtrA = inputA.GetGradient();
+    const auto backwardDataPtrB = inputB.GetGradient();
 
     if (print)
     {
@@ -118,7 +118,7 @@ void TestAdd(bool print)
     auto y = NN::Functional::AddOp(inputA, inputB);
 
     y.ToHost();
-    const auto forwardDataPtr = y.GetDataCopy();
+    const auto forwardDataPtr = y.GetData();
     const auto outputRows = y.GetShape().Rows();
     const auto outputCols = y.GetShape().Cols();
 
@@ -130,8 +130,8 @@ void TestAdd(bool print)
     inputA.ToHost();
     inputB.ToHost();
 
-    const auto backwardDataPtrA = inputA.GetBackwardDataCopy();
-    const auto backwardDataPtrB = inputB.GetBackwardDataCopy();
+    const auto backwardDataPtrA = inputA.GetGradient();
+    const auto backwardDataPtrB = inputB.GetGradient();
 
     if (print)
     {

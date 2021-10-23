@@ -259,11 +259,11 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     int strideCol, int rowPadding, int colPadding,
                     int dilationRow, int dilationCol, CudaDevice device)
 {
-    assert(dx.Mode() == DeviceType::Host);
-    assert(dFilter.Mode() == DeviceType::Host);
-    assert(dy.Mode() == DeviceType::Host);
-    assert(x.Mode() == DeviceType::Host);
-    assert(filter.Mode() == DeviceType::Host);
+    assert(dx.Mode() == ComputeMode::Host);
+    assert(dFilter.Mode() == ComputeMode::Host);
+    assert(dy.Mode() == ComputeMode::Host);
+    assert(x.Mode() == ComputeMode::Host);
+    assert(filter.Mode() == ComputeMode::Host);
 
     const auto dXShape = dx.GetShape();
     const auto dFilterShape = dFilter.GetShape();
@@ -290,13 +290,13 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     TensorData drFilter = dFilter;
     TensorData drY = dy;
 
-    rX.SetMode(DeviceType::Host);
-    rXT.SetMode(DeviceType::Host);
-    drX.SetMode(DeviceType::Host);
-    rFilter.SetMode(DeviceType::Host);
-    rFilterT.SetMode(DeviceType::Host);
-    drFilter.SetMode(DeviceType::Host);
-    drY.SetMode(DeviceType::Host);
+    rX.SetMode(ComputeMode::Host);
+    rXT.SetMode(ComputeMode::Host);
+    drX.SetMode(ComputeMode::Host);
+    rFilter.SetMode(ComputeMode::Host);
+    rFilterT.SetMode(ComputeMode::Host);
+    drFilter.SetMode(ComputeMode::Host);
+    drY.SetMode(ComputeMode::Host);
 
     Im2Col(rX, filter, x, strideRow, strideCol, rowPadding, colPadding,
            dilationRow, dilationCol, 0);

@@ -64,7 +64,7 @@ Shape TensorDescriptor::GetShape() const
 
 CudaDevice TensorDescriptor::GetDevice() const
 {
-    if (Mode() == DeviceType::Cuda)
+    if (Mode() == ComputeMode::Cuda)
         return m_forwardData.GetDevice();
     return CudaDevice();
 }
@@ -99,12 +99,12 @@ void TensorDescriptor::ToHost()
 }
 
 
-DeviceType TensorDescriptor::Mode() const
+ComputeMode TensorDescriptor::Mode() const
 {
     return m_forwardData.Mode();
 }
 
-void TensorDescriptor::SetMode(DeviceType deviceType)
+void TensorDescriptor::SetMode(ComputeMode deviceType)
 {
     m_forwardData.SetMode(deviceType);
     m_backwardData.SetMode(deviceType);

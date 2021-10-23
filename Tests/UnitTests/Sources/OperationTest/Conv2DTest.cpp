@@ -59,15 +59,15 @@ void TestConv2D(bool print)
     for (auto& data : backwardData)
         data = dist(gen);
 
-    Tensor input(Shape({ batchSize, inputChannels, inputRows, inputCols }), gpu,
-                 Type::Dense);
+    Tensor input(Shape({ batchSize, inputChannels, inputRows, inputCols }),
+                 gpu);
     Tensor filter(Shape({ outputChannels, inputChannels,
                           std::get<0>(filterSize), std::get<1>(filterSize) }),
-                  gpu, Type::Dense);
-    Tensor bias(Shape({ outputChannels }), gpu, Type::Dense);
-    input.SetMode(DeviceType::Host);
-    filter.SetMode(DeviceType::Host);
-    bias.SetMode(DeviceType::Host);
+                  gpu);
+    Tensor bias(Shape({ outputChannels }), gpu);
+    input.SetMode(ComputeMode::Host);
+    filter.SetMode(ComputeMode::Host);
+    bias.SetMode(ComputeMode::Host);
 
     //! Initialize input, kernel and bias
     Initialize::Initialize(
@@ -89,10 +89,10 @@ void TestConv2D(bool print)
     auto gpuOutput = conv2D(input, filter, bias);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
-    const auto gpuForwardPtr = gpuOutput.GetDataCopy();
-    gpuOutput.SetBackwardData(backwardData);
+    const auto gpuForwardData = gpuOutput.GetData();
+    gpuOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
-    const auto gpuBackwardPtr = input.GetBackwardDataCopy();
+    const auto gpuBackwardData = input.GetGradient();
 
     //! Move tensors to host
     input.ToHost();
@@ -104,12 +104,12 @@ void TestConv2D(bool print)
                                        std::make_unique<Initialize::Zeros>());
 
     auto hostOutput = conv2D(input, filter, bias);
-    const auto hostForwardPtr = hostOutput.GetDataCopy();
+    const auto hostForwardData = hostOutput.GetData();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
-    hostOutput.SetBackwardData(backwardData);
+    hostOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
-    const auto hostBackwardPtr = input.GetBackwardDataCopy();
+    const auto hostBackwardData = input.GetGradient();
 
     if (print)
     {
@@ -125,7 +125,31 @@ void TestConv2D(bool print)
                     for (int j = 0; j < outputColsHost; ++j)
                     {
                         std::cout
-                            << hostForwardPtr[batchIdx * outputRows *
+                            << hostForwardData[batchIdx * outputRows *
+                                               outputCols * outputChannels +
+                                               channelIdx * outputRows *
+                                               outputCols +
+                                               i * inputCols + j]
+                            << " ";
+                    }
+                    std::cout << std::endl;
+                }
+            }
+        }
+
+        std::cout << "Conv2D forward result (Cuda)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            std::cout << "batch : " << batchIdx << std::endl;
+            for (int channelIdx = 0; channelIdx < batchSize; ++channelIdx)
+            {
+                std::cout << "channel : " << channelIdx << std::endl;
+                for (int i = 0; i < outputRows; ++i)
+                {
+                    for (int j = 0; j < outputCols; ++j)
+                    {
+                        std::cout
+                            << gpuForwardData[batchIdx * outputRows *
                                               outputCols * outputChannels +
                                               channelIdx * outputRows *
                                               outputCols +
@@ -149,35 +173,11 @@ void TestConv2D(bool print)
                     for (int j = 0; j < inputCols; ++j)
                     {
                         std::cout
-                            << hostBackwardPtr[batchIdx * outputRows *
-                                               outputCols * outputChannels +
-                                               channelIdx * outputRows *
-                                               outputCols +
-                                               i * inputCols + j]
-                            << " ";
-                    }
-                    std::cout << std::endl;
-                }
-            }
-        }
-
-        std::cout << "Conv2D forward result (Cuda)" << std::endl;
-        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            std::cout << "batch : " << batchIdx << std::endl;
-            for (int channelIdx = 0; channelIdx < batchSize; ++channelIdx)
-            {
-                std::cout << "channel : " << channelIdx << std::endl;
-                for (int i = 0; i < outputRows; ++i)
-                {
-                    for (int j = 0; j < outputCols; ++j)
-                    {
-                        std::cout << gpuForwardPtr[
-                                batchIdx * outputRows * outputCols *
-                                outputChannels +
-                                channelIdx * outputRows *
-                                outputCols +
-                                i * inputCols + j]
+                            << hostBackwardData[batchIdx * outputRows *
+                                                outputCols * outputChannels +
+                                                channelIdx * outputRows *
+                                                outputCols +
+                                                i * inputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -197,11 +197,11 @@ void TestConv2D(bool print)
                     for (int j = 0; j < inputCols; ++j)
                     {
                         std::cout
-                            << gpuBackwardPtr[batchIdx * outputRows *
-                                              outputCols * outputChannels +
-                                              channelIdx * outputRows *
-                                              outputCols +
-                                              i * inputCols + j]
+                            << gpuBackwardData[batchIdx * outputRows *
+                                               outputCols * outputChannels +
+                                               channelIdx * outputRows *
+                                               outputCols +
+                                               i * inputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -215,11 +215,11 @@ void TestConv2D(bool print)
 
     for (int idx = 0;
          idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
-        CHECK(TestEquality(hostForwardPtr[idx], gpuForwardPtr[idx]));
+        CHECK(TestEquality(hostForwardData[idx], gpuForwardData[idx]));
 
     for (int idx = 0;
          idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
-        CHECK(TestEquality(hostBackwardPtr[idx], gpuBackwardPtr[idx]));
+        CHECK(TestEquality(hostBackwardData[idx], gpuBackwardData[idx]));
 
     ModelManager::CurModel().Clear();
 }

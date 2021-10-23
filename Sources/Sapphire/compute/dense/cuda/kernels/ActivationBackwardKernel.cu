@@ -19,7 +19,7 @@ __global__ void ReLUBackwardKernel(float* dx, const float* dy,
     {
         const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
 
-        dx[idx] = x[idx] > 0.0f ? dy[idx] : 0.0f;
+        dx[idx] += x[idx] > 0.0f ? dy[idx] : 0.0f;
     }
 }
 
@@ -35,7 +35,7 @@ __global__ void LeakyReLUBackwardKernel(float* dx, const float* dy,
     for (unsigned int i = 0; i < numLoops; i++)
     {
         const auto idx = blockOffset + blockDim.x * i + threadIdx.x;
-        dx[idx] = x[idx] > 0.0f ? dy[idx] : a;
+        dx[idx] += x[idx] > 0.0f ? dy[idx] : a;
     }
 }
 
@@ -51,16 +51,16 @@ __global__ void SoftMaxBackwardKernel(float* dx, const float* dy,
 
     if (threadId < totalSize)
     {
-        float sum = 0;
+        float sum = 0.0f;
         for (unsigned int j = 0; j < unitSize; j++)
         {
             const auto jIdx = unitSize * batchId + j;
             if (j == i)
                 sum += dy[jIdx] * (y[jIdx] * (1.0f - y[jIdx]));
             else
-                sum += dy[jIdx] * (-y[iIdx] * y[jIdx]);
+                sum += dy[iIdx] * (-y[iIdx] * y[jIdx]);
         }
-        dx[iIdx] = sum;
+        dx[iIdx] += sum;
     }
 }
 }

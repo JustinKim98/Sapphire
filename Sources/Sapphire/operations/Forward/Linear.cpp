@@ -16,12 +16,10 @@
 namespace Sapphire::NN
 {
 Linear::Linear(int inputFeatureSize, int outputFeatureSize,
-               Optimizer::Optimizer* optimizer,
-               CudaDevice device, bool isSparse)
+               Optimizer::Optimizer* optimizer,bool isSparse)
     : Unit(optimizer),
       m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
-      m_device(std::move(device)),
       m_isSparse(isSparse)
 {
     if (m_isSparse)

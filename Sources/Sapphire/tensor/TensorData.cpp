@@ -30,7 +30,7 @@ TensorData::TensorData(Shape shape, Type type, CudaDevice device, bool preserve)
 {
     if (device.GetID() >= 0)
     {
-        m_mode = DeviceType::Cuda;
+        m_mode = ComputeMode::Cuda;
         m_allocateCuda();
     }
     else
@@ -48,7 +48,7 @@ TensorData::TensorData(Shape shape, Type type, CudaDevice device,
     if (device.GetID() >= 0)
     {
         m_allocateCuda();
-        m_mode = DeviceType::Cuda;
+        m_mode = ComputeMode::Cuda;
     }
     else
         m_allocateHost();
@@ -112,12 +112,12 @@ void TensorData::Reshape(const Shape& shape)
             "size");
     }
 
-    if (m_mode == DeviceType::Cuda)
+    if (m_mode == ComputeMode::Cuda)
     {
         m_shape = shape;
     }
 
-    if (m_mode == DeviceType::Host)
+    if (m_mode == ComputeMode::Host)
     {
         m_shape = shape;
     }
@@ -125,7 +125,7 @@ void TensorData::Reshape(const Shape& shape)
 
 std::vector<float> TensorData::GetDataCopy()
 {
-    if (m_mode == DeviceType::Cuda)
+    if (m_mode == ComputeMode::Cuda)
         m_toHost();
 
     auto dataPtr = std::vector<float>(m_shape.Size());
@@ -147,13 +147,13 @@ void TensorData::SetData(std::vector<float> data)
             std::to_string(shape.Size()) + ")");
     }
 
-    if (m_mode == DeviceType::Cuda)
+    if (m_mode == ComputeMode::Cuda)
     {
         Compute::Cuda::CopyHostToDevice(m_denseCuda, &data.front(),
                                         sizeof(float) * shape.Size());
     }
 
-    if (m_mode == DeviceType::Host)
+    if (m_mode == ComputeMode::Host)
     {
         for (std::size_t i = 0; i < HostTotalSize; ++i)
             m_denseHost[i] = data.at(i);
@@ -174,12 +174,12 @@ TensorData TensorData::CreateCopy() const
     return tensorData;
 }
 
-void TensorData::SetMode(DeviceType type)
+void TensorData::SetMode(ComputeMode type)
 {
     m_mode = type;
-    if (m_mode == DeviceType::Host && m_denseHost == nullptr)
+    if (m_mode == ComputeMode::Host && m_denseHost == nullptr)
         m_allocateHost();
-    if (m_mode == DeviceType::Cuda && m_denseCuda == nullptr)
+    if (m_mode == ComputeMode::Cuda && m_denseCuda == nullptr)
     {
         if (m_device.GetID() == -1)
             throw std::runtime_error(
@@ -191,17 +191,17 @@ void TensorData::SetMode(DeviceType type)
 
 void TensorData::ToCuda()
 {
-    if (m_denseHost == nullptr && m_mode == DeviceType::Cuda)
+    if (m_denseHost == nullptr && m_mode == ComputeMode::Cuda)
         return;
-    SetMode(DeviceType::Cuda);
+    SetMode(ComputeMode::Cuda);
     m_toCuda();
 }
 
 void TensorData::ToHost()
 {
-    if (m_denseCuda == nullptr && m_mode == DeviceType::Host)
+    if (m_denseCuda == nullptr && m_mode == ComputeMode::Host)
         return;
-    SetMode(DeviceType::Host);
+    SetMode(ComputeMode::Host);
     m_toHost();
 }
 
@@ -226,23 +226,23 @@ void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
     const auto matrixType = dst.GetType();
 
     for (int i = 0; i < dst.Size() / src.Size(); ++i)
-        if (mode == DeviceType::Cuda && matrixType == Type::Dense)
+        if (mode == ComputeMode::Cuda && matrixType == Type::Dense)
         {
             auto* dstPtr = dst.m_denseCuda + src.Size() * i;
             Compute::Cuda::CopyDeviceToDevice(
                 dstPtr, src.m_denseCuda,
                 dst.DenseTotalLengthCuda * sizeof(float));
         }
-        else if (mode == DeviceType::Host && matrixType == Type::Dense)
+        else if (mode == ComputeMode::Host && matrixType == Type::Dense)
         {
             auto* dstPtr = dst.m_denseHost + src.Size() * i;
             std::memcpy(dstPtr, src.m_denseHost,
                         dst.HostTotalSize * sizeof(float));
         }
-        else if (mode == DeviceType::Cuda && matrixType == Type::Sparse)
+        else if (mode == ComputeMode::Cuda && matrixType == Type::Sparse)
             throw std::runtime_error(
                 "DeepCopy - Cuda Sparse deep copy is not implemented");
-        else if (mode == DeviceType::Host && matrixType == Type::Sparse)
+        else if (mode == ComputeMode::Host && matrixType == Type::Sparse)
             throw std::runtime_error(
                 "DeepCopy - Host Sparse ddp copy is not implemented");
 }

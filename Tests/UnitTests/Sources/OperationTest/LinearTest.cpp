@@ -36,9 +36,9 @@ void TestLinear(bool print)
     Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense);
     Tensor weight(Shape({ inputs, outputs }), gpu, Type::Dense);
     Tensor bias(Shape({ 1, outputs }), gpu, Type::Dense);
-    input.SetMode(DeviceType::Host);
-    weight.SetMode(DeviceType::Host);
-    bias.SetMode(DeviceType::Host);
+    input.SetMode(ComputeMode::Host);
+    weight.SetMode(ComputeMode::Host);
+    bias.SetMode(ComputeMode::Host);
 
     Initialize::Initialize(input,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
@@ -52,14 +52,13 @@ void TestLinear(bool print)
     bias.ToCuda();
 
     NN::Linear linear(inputs, outputs,
-                      new Optimizer::SGD(0.0f),
-                      gpu);
+                      new Optimizer::SGD(0.0f));
 
     auto gpuOutput = linear(input, weight, bias);
-    const auto gpuForwardPtr = gpuOutput.GetDataCopy();
-    gpuOutput.SetBackwardData(backwardData);
+    const auto gpuForwardPtr = gpuOutput.GetData();
+    gpuOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
-    const auto gpuBackwardPtr = input.GetBackwardDataCopy();
+    const auto gpuBackwardPtr = input.GetGradient();
 
     input.ToHost();
     weight.ToHost();
@@ -69,12 +68,12 @@ void TestLinear(bool print)
                                        std::make_unique<Initialize::Zeros>());
 
     NN::Linear linearHost(inputs, outputs,
-                          new Optimizer::SGD(0.0f), gpu);
+                          new Optimizer::SGD(0.0f));
     const auto hostOutput = linearHost(input, weight, bias);
-    const auto hostForwardPtr = hostOutput.GetDataCopy();
-    hostOutput.SetBackwardData(backwardData);
+    const auto hostForwardPtr = hostOutput.GetData();
+    hostOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
-    const auto hostBackwardPtr = input.GetBackwardDataCopy();
+    const auto hostBackwardPtr = input.GetGradient();
 
     if (print)
     {

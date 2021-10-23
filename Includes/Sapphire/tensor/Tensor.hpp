@@ -18,6 +18,10 @@ class Tensor
 {
 public:
     Tensor();
+
+    Tensor(const Shape& shape, const CudaDevice& device,
+           bool preserve = false);
+
     Tensor(const Shape& shape, const CudaDevice& device, Type type,
            bool preserve = false);
 
@@ -39,16 +43,16 @@ public:
         m_tensorDescKey = key;
     }
 
-    [[nodiscard]] std::vector<float> GetDataCopy() const;
-    [[nodiscard]] std::vector<float> GetBackwardDataCopy() const;
+    [[nodiscard]] std::vector<float> GetData() const;
+    [[nodiscard]] std::vector<float> GetGradient() const;
 
     void LoadData(const std::vector<float>& data) const;
-    void SetBackwardData(const std::vector<float>& data) const;
+    void SetGradient(const std::vector<float>& data) const;
 
     void ToCuda();
     void ToHost();
-    [[nodiscard]] DeviceType Mode() const;
-    void SetMode(DeviceType mode) const;
+    [[nodiscard]] ComputeMode Mode() const;
+    void SetMode(ComputeMode mode) const;
 
 private:
     int m_tensorDescKey;

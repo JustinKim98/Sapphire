@@ -42,18 +42,18 @@ void TestMSE(bool print)
 
     const auto gpuLoss = NN::Loss::MSE(x, label);
     const auto lossShape = gpuLoss.GetShape();
-    const auto gpuForwardPtr = gpuLoss.GetDataCopy();
-    gpuLoss.SetBackwardData(backwardData);
+    const auto gpuForwardPtr = gpuLoss.GetData();
+    gpuLoss.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuLoss);
-    const auto gpuBackwardPtr = x.GetBackwardDataCopy();
+    const auto gpuBackwardPtr = x.GetGradient();
 
     x.ToHost();
     label.ToHost();
     const auto hostLoss = NN::Loss::MSE(x, label);
-    const auto hostForwardPtr = hostLoss.GetDataCopy();
-    hostLoss.SetBackwardData(backwardData);
+    const auto hostForwardPtr = hostLoss.GetData();
+    hostLoss.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostLoss);
-    const auto hostBackwardPtr = x.GetBackwardDataCopy();
+    const auto hostBackwardPtr = x.GetGradient();
 
     CHECK(gpuLoss.GetShape().Cols() == 1);
     CHECK(gpuLoss.GetShape().Rows() == batchSize);

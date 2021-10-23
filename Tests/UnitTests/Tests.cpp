@@ -17,6 +17,7 @@
 #include <OperationTest/MSETest.hpp>
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
+#include <OperationTest/SoftmaxTest.hpp>
 #include <ModelTest/Conv2DModel.hpp>
 #include <ModelTest/SimpleLinearModel.hpp>
 #include <Sapphire/Tests/Basics/TransposeTest.hpp>
@@ -32,14 +33,14 @@
 #include "doctest.h"
 
 #define GraphTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
-#define ConvolutionTest
-#define BasicGraphTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
+// #define ConvolutionTest
+// #define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test
@@ -354,6 +355,13 @@ TEST_CASE("BasicGraphTest")
         for (int i = 0; i < 3; ++i)
             TestConv2D(false);
     }
+
+    SUBCASE("SoftmaxTest")
+    {
+        std::cout << "Softmax" << std::endl;
+        for (int i = 0; i < 1; ++i)
+            TestSoftmax(true);
+    }
 }
 #endif
 
@@ -368,9 +376,11 @@ TEST_CASE("Model Test")
         int batchSize = 10;
         std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
         std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
-    
+
+        std::cout << "--- Simple Linear Model ---" << std::endl;
+
         SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
-                          0.0001f, batchSize, 1000, false);
+                          0.0001f, batchSize, 2000, false);
     }
 
     SUBCASE("Conv2DModelTest")
@@ -409,6 +419,7 @@ TEST_CASE("Model Test")
             batchSize * yChannels * yRows * yCols
             , 10.0f);
 
+        std::cout << "--- Simple Conv2D Model ---" << std::endl;
         Conv2DModel(xFeatureVector, labelVector, batchSize, yChannels,
                     xChannels, xSize,
                     std::make_pair(yRows, yCols),

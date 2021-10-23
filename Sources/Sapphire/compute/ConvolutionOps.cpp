@@ -21,7 +21,7 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
         y.GetDevice() == filter.GetDevice());
 
     const auto device = y.GetDevice();
-    if (y.Mode() == DeviceType::Cuda)
+    if (y.Mode() == ComputeMode::Cuda)
     {
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
@@ -59,7 +59,7 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowRows,
     assert(y.GetDevice() == x.GetDevice());
 
     const auto device = y.GetDevice();
-    if (y.Mode() == DeviceType::Cuda)
+    if (y.Mode() == ComputeMode::Cuda)
     {
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
@@ -88,7 +88,7 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
     assert(y.Mode() == x.Mode());
     assert(y.GetDevice() == x.GetDevice());
     const auto device = y.GetDevice();
-    if (y.Mode() == DeviceType::Cuda)
+    if (y.Mode() == ComputeMode::Cuda)
     {
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
@@ -122,7 +122,7 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     assert(dy.GetDevice() == dx.GetDevice() &&
         dy.GetDevice() == dFilter.GetDevice());
     const auto device = dx.GetDevice();
-    if (dx.Mode() == DeviceType::Cuda)
+    if (dx.Mode() == ComputeMode::Cuda)
     {
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D filterShape = {
@@ -167,7 +167,7 @@ void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
         dx.GetDevice() == y.GetDevice());
 
     const auto device = dx.GetDevice();
-    if (dx.Mode() == DeviceType::Cuda)
+    if (dx.Mode() == ComputeMode::Cuda)
     {
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {
@@ -204,7 +204,7 @@ void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
         dx.GetDevice() == y.GetDevice());
 
     const auto device = dx.GetDevice();
-    if (dx.Mode() == DeviceType::Cuda)
+    if (dx.Mode() == ComputeMode::Cuda)
     {
         cudaSetDevice(device.GetID());
         const Dense::Cuda::Shape4D xShape = {

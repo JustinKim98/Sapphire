@@ -25,7 +25,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
     const CudaDevice gpu(0, "cuda0");
 
     NN::Linear linear(inputSize, outputSize,
-                      new Optimizer::SGD(learningRate), gpu);
+                      new Optimizer::SGD(learningRate));
 
     Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense, true);
     Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense, true);
@@ -68,7 +68,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
         const auto loss = NN::Loss::MSE(y, label);
         if (i % 20 == 0)
         {
-            const auto lossData = loss.GetDataCopy();
+            const auto lossData = loss.GetData();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;
         }

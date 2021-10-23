@@ -22,7 +22,7 @@ void* AllocHost(std::size_t size)
     ptr = malloc(size);
     // ptr = _aligned_malloc(size, 32);
 #else
-    ptr=  aligned_alloc(32, size);
+    ptr = aligned_alloc(32, size);
 #endif
     return ptr;
 }
@@ -305,14 +305,9 @@ void ResourceManager::ClearVolatilePool()
 void ResourceManager::ClearFreePool()
 {
     for (auto& [size, memoryChunk] : m_hostFreePool)
-    {
         FreeHost(memoryChunk.Data);
-    }
-
     for (auto& [size, memoryChunk] : m_cudaFreePool)
-    {
         Compute::Cuda::CudaFree(memoryChunk.Data);
-    }
 
     m_hostFreePool.clear();
     m_cudaFreePool.clear();
@@ -325,6 +320,7 @@ void ResourceManager::ClearAll()
     ClearCublasHandlePool();
     ClearCudnnHandlePool();
     ClearPreservedPool();
+    ClearVolatilePool();
     ClearFreePool();
 }
 
@@ -359,8 +355,10 @@ ResourceManager::m_hostVolatilePool;
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_cudaVolatilePool;
 
-std::unordered_multimap<std::size_t, MemoryChunk> ResourceManager::m_hostFreePool;
-std::unordered_multimap<std::size_t, MemoryChunk> ResourceManager::m_cudaFreePool;
+std::unordered_multimap<std::size_t, MemoryChunk>
+ResourceManager::m_hostFreePool;
+std::unordered_multimap<std::size_t, MemoryChunk>
+ResourceManager::m_cudaFreePool;
 
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_hostPreservedPool;

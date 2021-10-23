@@ -19,7 +19,7 @@ void SoftMax(TensorData& y, const TensorData& x)
     const auto unitSize = y.GetShape().At(-1);
     const auto totalSize = y.Size();
 
-    if (y.Mode() == DeviceType::Cuda)
+    if (y.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::SoftMax(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize,
@@ -39,7 +39,7 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
     const auto device = y.GetDevice();
     const auto totalSize = y.Size();
 
-    if (y.Mode() == DeviceType::Cuda)
+    if (y.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::LeakyReLU(y.CudaMutableRawPtr(), x.CudaRawPtr(), a,
                                totalSize);
@@ -58,7 +58,7 @@ void ReLU(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto totalSize = y.Size();
 
-    if (y.Mode() == DeviceType::Cuda)
+    if (y.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::ReLU(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
     }
@@ -77,7 +77,7 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
     const auto device = dx.GetDevice();
     const auto totalSize = dx.Size();
 
-    if (dx.Mode() == DeviceType::Cuda)
+    if (dx.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::ReLUBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                   x.CudaRawPtr(), totalSize);
@@ -95,7 +95,7 @@ void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
     const auto device = dx.GetDevice();
     const auto totalSize = dx.Size();
 
-    if (dx.Mode() == DeviceType::Cuda)
+    if (dx.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::LeakyReLUBackward(dx.CudaMutableRawPtr(),
                                        dy.CudaRawPtr(),
@@ -109,7 +109,7 @@ void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
     }
 }
 
-void SoftmaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
+void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
 {
     assert(dx.Mode() == dy.Mode() && dx.Mode() == y.Mode());
     assert(dx.GetDevice() == dy.GetDevice() && dx.GetDevice() == y.GetDevice());
@@ -117,7 +117,7 @@ void SoftmaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
     const auto totalSize = dx.Size();
     const auto unitSize = dx.GetShape().At(-1);
 
-    if (dx.Mode() == DeviceType::Cuda)
+    if (dx.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::SoftmaxBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                      y.CudaRawPtr(), totalSize, unitSize);

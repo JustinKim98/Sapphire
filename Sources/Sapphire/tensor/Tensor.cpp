@@ -15,6 +15,15 @@ Tensor::Tensor()
 }
 
 Tensor::Tensor(const Shape& shape, const CudaDevice& device,
+               bool preserve)
+    : m_tensorDescKey(-1)
+{
+    auto& model = ModelManager::CurModel();
+    m_tensorDescKey =
+        model.RegisterTensorDescriptor(shape, Type::Dense, device, preserve);
+}
+
+Tensor::Tensor(const Shape& shape, const CudaDevice& device,
                Type type, bool preserve)
     : m_tensorDescKey(-1)
 {
@@ -64,7 +73,7 @@ void Tensor::ToCuda()
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
         m_tensorDescKey);
     desc.ToCuda();
-    desc.SetMode(DeviceType::Cuda);
+    desc.SetMode(ComputeMode::Cuda);
 }
 
 void Tensor::ToHost()
@@ -72,24 +81,24 @@ void Tensor::ToHost()
     Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     desc.ToHost();
-    desc.SetMode(DeviceType::Host);
+    desc.SetMode(ComputeMode::Host);
 }
 
-DeviceType Tensor::Mode() const
+ComputeMode Tensor::Mode() const
 {
     Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     return desc.Mode();
 }
 
-void Tensor::SetMode(DeviceType mode) const
+void Tensor::SetMode(ComputeMode mode) const
 {
     Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
     desc.SetMode(mode);
 }
 
-std::vector<float> Tensor::GetDataCopy() const
+std::vector<float> Tensor::GetData() const
 {
     Model& model = ModelManager::CurModel();
     const TensorUtil::TensorDescriptor& desc =
@@ -99,7 +108,7 @@ std::vector<float> Tensor::GetDataCopy() const
     return tensorData.GetDataCopy();
 }
 
-std::vector<float> Tensor::GetBackwardDataCopy() const
+std::vector<float> Tensor::GetGradient() const
 {
     Model& model = ModelManager::CurModel();
     const TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
@@ -127,13 +136,13 @@ void Tensor::LoadData(const std::vector<float>& data) const
     tensorData.SetData(data);
 }
 
-void Tensor::SetBackwardData(const std::vector<float>& data) const
+void Tensor::SetGradient(const std::vector<float>& data) const
 {
     const auto shape = GetShape();
     if (static_cast<int>(data.size()) != shape.Size())
     {
         throw std::invalid_argument(
-            "Tensor::SetBackwardData - data size mismatch Given size : (" +
+            "Tensor::SetGradient - data size mismatch Given size : (" +
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }

@@ -34,8 +34,8 @@ void TransposeTest(bool printResult)
     //! Define TensorData for input and transposed
     TensorUtil::TensorData inputTensor(shapeInput, Type::Dense, cuda);
     TensorUtil::TensorData transposedTensor(shapeTransposed, Type::Dense, cuda);
-    inputTensor.SetMode(DeviceType::Host);
-    transposedTensor.SetMode(DeviceType::Host);
+    inputTensor.SetMode(ComputeMode::Host);
+    transposedTensor.SetMode(ComputeMode::Host);
 
     //! Initialize input Tensor with normal distribution
     Compute::Initialize::Normal(inputTensor, 10, 5);
@@ -55,8 +55,8 @@ void TransposeTest(bool printResult)
     //! Send the input tensor to cuda
     inputTensor.ToCuda();
     transposedTensor.ToCuda();
-    inputTensor.SetMode(DeviceType::Cuda);
-    transposedTensor.SetMode(DeviceType::Cuda);
+    inputTensor.SetMode(ComputeMode::Cuda);
+    transposedTensor.SetMode(ComputeMode::Cuda);
 
     //! Transpose the tensor on cuda
     Compute::Transpose(transposedTensor, inputTensor);
@@ -64,7 +64,7 @@ void TransposeTest(bool printResult)
     //! Send the transposed result to host
     //! Zero initialized data on the host should be overwritten
     transposedTensor.ToHost();
-    transposedTensor.SetMode(DeviceType::Host);
+    transposedTensor.SetMode(ComputeMode::Host);
 
     //! Compare the results
     const float* cudaResult = transposedTensor.HostRawPtr();

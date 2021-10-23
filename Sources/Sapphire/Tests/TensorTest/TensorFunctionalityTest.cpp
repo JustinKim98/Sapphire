@@ -106,7 +106,7 @@ void TensorDataCopyOnHost(bool print)
     CudaDevice cuda(0, "cuda0");
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
     tensorData.ToHost();
-    tensorData.SetMode(DeviceType::Host);
+    tensorData.SetMode(ComputeMode::Host);
 
     //! Randomly initialize the data on host
     Compute::Initialize::Normal(tensorData, 10, 5);

@@ -167,7 +167,7 @@ void ReLUBackward(float* dx, const float* dy, const float* x,
 {
     for (unsigned int i = 0; i < totalSize; ++i)
     {
-        dx[i] = x[i] > 0.0f ? dy[i] : 0.0f;
+        dx[i] += x[i] > 0.0f ? dy[i] : 0.0f;
     }
 }
 
@@ -185,7 +185,7 @@ void LeakyReLUBackward(float* output, const float* input, float a,
 {
     for (unsigned int i = 0; i < totalSize; ++i)
     {
-        output[i] = input[i] > 0 ? 1 : a;
+        output[i] += input[i] > 0 ? 1 : a;
     }
 }
 
@@ -247,7 +247,7 @@ void Softmax(float* output, const float* input, unsigned int totalSize,
     }
 }
 
-void SoftmaxBackward(float* dx, const float* dy, const float* x,
+void SoftmaxBackward(float* dx, const float* dy, const float* y,
                      unsigned int totalSize, unsigned int unitSize)
 {
     const auto batchSize = totalSize / unitSize;
@@ -255,21 +255,23 @@ void SoftmaxBackward(float* dx, const float* dy, const float* x,
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         const unsigned int offset = unitSize * batchIdx;
-        float sum = 0;
-        for (unsigned int unitIdx = 0; unitIdx < unitSize; ++unitIdx)
-            for (unsigned int i = 0; i < unitSize; ++i)
+        for (unsigned int i = 0; i < unitSize; ++i)
+        {
+            float sum = 0.0f;
+            for (unsigned int j = 0; j < unitSize; ++j)
             {
-                if (i == unitIdx)
+                if (i == j)
                 {
-                    dx[offset + i] += dy[offset + i] *
-                        (x[offset + i] * (1 - x[offset + i]));
+                    sum += dy[offset + j] * (
+                        y[offset + j] * (1.0f - y[offset + j]));
                 }
                 else
                 {
-                    sum += dy[offset + i] *
-                        (-x[offset + unitIdx] * x[offset + i]);
+                    sum += dy[offset + i] * (-y[offset + i] * y[offset + j]);
                 }
             }
+            dx[offset + i] += sum;
+        }
     }
 }
 } // namespace Sapphire::Compute::Naive::Dense

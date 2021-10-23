@@ -78,7 +78,7 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
         //! Print loss every 10 epochs
         if (i % 10 == 0)
         {
-            const auto lossData = loss.GetDataCopy();
+            const auto lossData = loss.GetData();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;
         }

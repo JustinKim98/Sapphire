@@ -71,7 +71,7 @@ void MeanBackward(float* dx, const float* dy,
 void Softmax(float* output, const float* input, unsigned int totalSize,
              unsigned int unitSize);
 
-void SoftmaxBackward(float* dx, const float* dy, const float* x,
+void SoftmaxBackward(float* dx, const float* dy, const float* y,
                      unsigned int totalSize, unsigned int unitSize);
 } // namespace Sapphire::Compute::Naive::Dense
 

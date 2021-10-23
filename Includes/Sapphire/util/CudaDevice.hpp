@@ -13,7 +13,7 @@
 
 namespace Sapphire
 {
-enum class DeviceType
+enum class ComputeMode
 {
     Host,
     Cuda,

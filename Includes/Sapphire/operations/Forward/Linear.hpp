@@ -19,7 +19,6 @@ class Linear : public Unit
 public:
     Linear(int inputFeatureSize, int outputFeatureSize,
            Optimizer::Optimizer* optimizer,
-           CudaDevice device = CudaDevice(),
            bool isSparse = false);
     ~Linear() override = default;
 
