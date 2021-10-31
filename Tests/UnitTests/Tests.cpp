@@ -20,25 +20,26 @@
 #include <ModelTest/SimpleLinearModel.hpp>
 #include <BasicsTest/TransposeTest.hpp>
 #include <TensorTest/TensorFunctionalityTest.hpp>
-#include <TestUtil.hpp>
 #include <FunctionTest/Conv2DTest.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
 #include <GraphTest/GraphFunctionalityTest.hpp>
 #include <BasicsTest/ReshapeTest.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
+#include <TestUtil.hpp>
 #include <iostream>
 #include "doctest.h"
 
 #define GraphTest
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
-// #define ConvolutionTest
-// #define BasicGraphTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test

@@ -25,8 +25,8 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
                  std::pair<int, int> dilation, float learningRate,
                  bool hostMode, int epochs)
 {
-    ModelManager::AddModel("SimpleLinearModel");
-    ModelManager::SetCurrentModel("SimpleLinearModel");
+    ModelManager::AddModel("SimpleConv2DModel");
+    ModelManager::SetCurrentModel("SimpleConv2DModel");
 
     const auto [filterRows, filterCols] = filterSize;
     const auto [xRows, xCols] = xSize;
