@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties
 
-#ifndef SAPPHIRE_COMPUTE_CONV2D_HPP
-#define SAPPHIRE_COMPUTE_CONV2D_HPP
+#ifndef SAPPHIRE_COMPUTE_CONVOLUTION_HPP
+#define SAPPHIRE_COMPUTE_CONVOLUTION_HPP
 
 #include <Sapphire/tensor/TensorData.hpp>
 

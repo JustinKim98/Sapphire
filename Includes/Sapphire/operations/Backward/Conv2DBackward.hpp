@@ -11,6 +11,8 @@
 
 namespace Sapphire::BackProp
 {
+using namespace TensorUtil;
+
 class Conv2DBackProp : public BackPropWrapper
 {
 public:

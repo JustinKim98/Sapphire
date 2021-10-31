@@ -160,9 +160,14 @@ void TensorData::SetData(std::vector<float> data)
     }
 }
 
-int TensorData::GetBatchSize(int requiredDim) const
+int TensorData::GetNumUnits(int requiredDim) const
 {
-    return m_shape.GetBatchSize(requiredDim);
+    return m_shape.GetNumUnits(requiredDim);
+}
+
+int TensorData::GetUnitSize(int requiredDim) const
+{
+    return m_shape.GetUnitSize(requiredDim);
 }
 
 TensorData TensorData::CreateCopy() const

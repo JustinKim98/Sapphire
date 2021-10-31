@@ -42,6 +42,15 @@ Shape& Shape::operator=(Shape&& shape) noexcept
 
 int& Shape::operator[](int index)
 {
+    if (index >= static_cast<int>(m_shapeVector.size())
+        || index < -static_cast<int>(m_shapeVector.size()))
+        throw std::invalid_argument(
+            "Shape::operator[] - Given index " + std::to_string(index) +
+            " is out of range (Shape dimension : " + std::to_string(Dim()) +
+            ")");
+
+    if (index < 0)
+        return m_shapeVector.at(m_shapeVector.size() + index);
     return m_shapeVector.at(index);
 }
 
@@ -70,6 +79,13 @@ std::string Shape::ToString() const
 
 int Shape::At(int index) const
 {
+    if (index >= static_cast<int>(m_shapeVector.size()) ||
+        index < -static_cast<int>(m_shapeVector.size()))
+        throw std::invalid_argument(
+            "Shape::At - Given index " + std::to_string(index) +
+            " is out of range (Shape dimension : " + std::to_string(Dim()) +
+            ")");
+
     if (index < 0)
         return m_shapeVector.at(m_shapeVector.size() + index);
     return m_shapeVector.at(index);
@@ -77,7 +93,7 @@ int Shape::At(int index) const
 
 int Shape::Dim() const
 {
-    return m_shapeVector.size();
+    return static_cast<int>(m_shapeVector.size());
 }
 
 int Shape::Size() const noexcept
@@ -85,7 +101,7 @@ int Shape::Size() const noexcept
     int size = 1;
     if (m_shapeVector.empty())
         return 0;
-    for (auto i : m_shapeVector)
+    for (const auto& i : m_shapeVector)
     {
         size *= i;
     }
@@ -93,9 +109,18 @@ int Shape::Size() const noexcept
     return size;
 }
 
-void Shape::Set(int dim, int value)
+void Shape::Set(int index, int value)
 {
-    if (dim >= static_cast<int>(m_shapeVector.size()))
+    if (index >= static_cast<int>(m_shapeVector.size()) ||
+        index < -static_cast<int>(m_shapeVector.size()))
+        throw std::invalid_argument(
+            "Shape::Set - Given index " + std::to_string(index) +
+            " is out of range (Shape dimension : " + std::to_string(Dim()) +
+            ")");
+
+    if (index < 0)
+        index = Dim() + index;
+    if (index >= static_cast<int>(m_shapeVector.size()))
     {
         throw std::invalid_argument(
             "Shape::Set - Given dimension exceeds shape dimension");
@@ -107,28 +132,15 @@ void Shape::Set(int dim, int value)
             "Shape::Set - Shape cannot have dimension with '0'");
     }
 
-    m_shapeVector.at(dim) = value;
-}
-
-void Shape::SetRow(int value)
-{
-    if (m_shapeVector.size() < 2)
-        throw std::runtime_error(
-            "Shape::SetRow - Shape has less dimension than 2");
-
-    m_shapeVector.at(static_cast<std::size_t>(Dim()) - 2) = value;
-}
-
-void Shape::SetCol(int value)
-{
-    if (m_shapeVector.empty())
-        throw std::runtime_error("Shape::SetCol - Shape is empty");
-
-    m_shapeVector.at(static_cast<std::size_t>(Dim()) - 1) = value;
+    m_shapeVector.at(index) = value;
 }
 
 void Shape::Expand(int dim)
 {
+    if (dim < 0)
+        throw std::invalid_argument(
+            "Shape::Expand - Given dimension " + std::to_string(dim) +
+            " must be greater than zero");
     if (dim <= Dim())
         return;
 
@@ -145,12 +157,20 @@ void Shape::Expand(int dim)
     m_shapeVector = newShapeVector;
 }
 
-void Shape::Squeeze(int dim)
+void Shape::Squeeze(int index)
 {
-    if (dim >= Dim())
+    if (index >= static_cast<int>(m_shapeVector.size()) ||
+        index < -static_cast<int>(m_shapeVector.size()))
+        throw std::invalid_argument(
+            "Shape::Squeeze - Given index " + std::to_string(index) +
+            " is out of range (Shape dimension : " + std::to_string(Dim()) +
+            ")");
+    if (index < 0)
+        index = Dim() + index;
+    if (index >= Dim())
         return;
 
-    const auto dimIdx = m_shapeVector.size() - 1 - dim;
+    const auto dimIdx = m_shapeVector.size() - 1 - index;
 
     if (m_shapeVector.at(dimIdx) > 1)
         return;
@@ -164,6 +184,8 @@ void Shape::Squeeze(int dim)
             newShapeVector.at(newIdx) = m_shapeVector.at(i);
             newIdx -= 1;
         }
+
+    m_shapeVector = newShapeVector;
 }
 
 void Shape::Squeeze()
@@ -182,13 +204,19 @@ void Shape::Squeeze()
 
 void Shape::Shrink(int dim)
 {
+    if (dim < 0)
+        throw std::invalid_argument("Shape::Shrink - Given dimension " +
+                                    std::to_string(dim) +
+                                    " must be greater than zero");
+    if (dim < 0)
+        dim = Dim() + dim;
     if (dim >= Dim())
         return;
 
     const auto dimIdx = m_shapeVector.size() - dim;
     std::vector<int> newShapeVector(dim);
 
-    for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; --i)
+    for (int i = static_cast<int>(m_shapeVector.size()) - 1; i >= 0; i -= 1)
     {
         if (i >= static_cast<int>(dimIdx))
             newShapeVector.at(i - (m_shapeVector.size() - dim)) =
@@ -200,8 +228,12 @@ void Shape::Shrink(int dim)
     m_shapeVector = newShapeVector;
 }
 
-int Shape::GetBatchSize(int requiredDim) const
+int Shape::GetNumUnits(int requiredDim) const
 {
+    if (requiredDim < 0)
+        throw std::invalid_argument("Shape::GetNumUnits - Given dimension " +
+                                    std::to_string(requiredDim) +
+                                    " must be greater than zero");
     if (const auto dim = Dim(); dim > requiredDim)
     {
         int batchSize = 1;
@@ -212,6 +244,15 @@ int Shape::GetBatchSize(int requiredDim) const
         return batchSize;
     }
     return 1;
+}
+
+int Shape::GetUnitSize(int requiredDim) const
+{
+    if (requiredDim < 0)
+        throw std::invalid_argument("Shape::GetUnitSize - Given dimension " +
+                                    std::to_string(requiredDim) +
+                                    " must be greater than zero");
+    return Size() / GetNumUnits(requiredDim);
 }
 
 Shape Shape::GetTranspose() const

@@ -53,11 +53,7 @@ public:
         return m_shapeVector;
     }
 
-    void Set(int dim, int value);
-
-    void SetRow(int value);
-
-    void SetCol(int value);
+    void Set(int index, int value);
 
     [[nodiscard]] int Rows() const
     {
@@ -79,7 +75,7 @@ public:
     void Expand(int dim);
 
     //! Removes the dimension if given dimension has size 1
-    void Squeeze(int dim);
+    void Squeeze(int index);
 
     //! Removes all 1's in the given shape
     void Squeeze();
@@ -87,7 +83,10 @@ public:
     //! Shrinks dimension to given dim
     void Shrink(int dim);
 
-    [[nodiscard]] int GetBatchSize(int requiredDim) const;
+    [[nodiscard]] int GetNumUnits(int requiredDim) const;
+
+    [[nodiscard]] int GetUnitSize(int requiredDim) const;
+
 
     Shape GetReverse() const;
 

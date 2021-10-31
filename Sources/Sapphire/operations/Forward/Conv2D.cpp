@@ -142,6 +142,7 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter)
 
     Util::ChangeTensorDataDimension(4, x, dx, y, dy);
 
+    //! TODO : Do we need this?
     Compute::Initialize::Zeros(y);
     Compute::Conv2DForward(y, x, filterData, strideRows, strideCols,
                            dilationRows, dilationCols, rowPadding, colPadding);
@@ -161,9 +162,9 @@ int Conv2D::m_registerOutputTensor(
     const auto x = xDesc.GetForwardData();
     const Shape xShape = xDesc.GetShape();
     Shape yShape = xShape;
-    yShape.SetCol(m_yCols);
-    yShape.SetRow(m_yRows);
-    yShape[yShape.Dim() - 3] = m_yChannels;
+    yShape[-1] = m_yCols;
+    yShape[-2] = m_yRows;
+    yShape[- 3] = m_yChannels;
     const auto yKey =
         model.RegisterTensorDescriptor(yShape, x.GetType(), xDesc.GetDevice());
     return yKey;

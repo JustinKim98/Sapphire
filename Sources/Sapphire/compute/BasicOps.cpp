@@ -194,16 +194,16 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
     //! 2
     if (y.GetShape().Dim() == 2 && a.GetShape().Dim() == 2 &&
         b.GetShape().Dim() == 2 && y.
-        GetBatchSize(2) > 1)
+        GetNumUnits(2) > 1)
     {
-        const auto batchSize = y.GetBatchSize(2);
+        const auto batchSize = y.GetNumUnits(2);
 
         if (y.Mode() == ComputeMode::Cuda)
         {
             Dense::Cuda::GemmMatrixWiseBroadcast(
                 y.CudaMutableRawPtr(), a.CudaRawPtr(), b.CudaRawPtr(),
-                M, N, K, batchSize, a.GetBatchSize(2) == 1,
-                b.GetBatchSize(2) == 1, 0);
+                M, N, K, batchSize, a.GetNumUnits(2) == 1,
+                b.GetNumUnits(2) == 1, 0);
             return;
         }
     }
@@ -263,7 +263,7 @@ void Transpose(TensorData& y, const TensorData& x)
     const auto device = y.GetDevice();
     const auto inputM = x.Rows();
     const auto inputN = x.Cols();
-    const auto broadcast = x.GetBatchSize(2) == 1;
+    const auto broadcast = x.GetNumUnits(2) == 1;
     const auto chunkSize = y.GetShape().Size() / (inputM * inputN);
 
     if (y.Mode() == ComputeMode::Cuda)

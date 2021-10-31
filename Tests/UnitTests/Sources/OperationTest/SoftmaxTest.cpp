@@ -5,7 +5,6 @@
 // property of any third parties.
 
 #include <OperationTest/SoftmaxTest.hpp>
-#include <OperationTest/Conv2DTest.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/Softmax.hpp>

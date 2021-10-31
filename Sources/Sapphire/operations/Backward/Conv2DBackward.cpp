@@ -57,7 +57,7 @@ void Conv2DBackProp::m_runBackProp()
     auto kernel = m_trainableData[kernelIdx];
     auto dx = m_dxVector[dxIdx];
     auto dy = m_dyVector[dyIdx];
-    auto x = m_constants[xIdx];
+    const auto& x = m_constants[xIdx];
 
     const auto [strideRow, strideCol] = m_stride;
     const auto [dilationRow, dilationCol] = m_dilation;
@@ -75,9 +75,9 @@ void Conv2DBackProp::m_runBackProp()
     {
         auto bias = m_trainableData[biasIdx];
         auto mean0Shape = dy.GetShape();
-        mean0Shape.SetCol(1);
+        mean0Shape[-1] = 1;
         auto mean1Shape = mean0Shape;
-        mean1Shape.SetRow(1);
+        mean1Shape[-2] = 1;
         auto mean2Shape = mean1Shape;
         mean2Shape.Set(0, 1);
         assert(bias.GetShape() == mean2Shape);

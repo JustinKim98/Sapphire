@@ -5,8 +5,7 @@
 // property of any third parties.
 
 #include <cassert>
-#include <memory>
-#include <Sapphire/compute/dense/naive/Conv2D.hpp>
+#include <Sapphire/compute/dense/naive/Convolution.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 
 namespace Sapphire::Compute::Dense::Naive
@@ -226,7 +225,7 @@ void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
     const auto yShape = y.GetShape();
     const auto yRows = y.GetShape().Rows();
     const auto yCols = y.GetShape().Cols();
-    const auto N = y.GetBatchSize(3);
+    const auto N = y.GetNumUnits(3);
     const auto yChannels = yShape.At(yShape.Dim() - 3);
 
     const auto rXRows = filterShape.At(filterShape.Dim() - 3) *
@@ -270,7 +269,7 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
     const auto dYShape = dy.GetShape();
     const auto dyRows = dy.Rows();
     const auto dyCols = dy.Cols();
-    const auto N = dy.GetBatchSize(3);
+    const auto N = dy.GetNumUnits(3);
     const auto dyChannels = dYShape.At(dYShape.Dim() - 3);
 
     const auto drXRows = dFilterShape.At(dFilterShape.Dim() - 3) *

@@ -17,7 +17,7 @@ namespace Sapphire::NN
 {
 class Conv2D : public Unit
 {
- public:
+public:
     Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
            std::pair<int, int> filterSize, std::pair<int, int> stride,
            std::pair<int, int> padSize, std::pair<int, int> dilation,
@@ -33,15 +33,16 @@ class Conv2D : public Unit
     Tensor operator()(Tensor& tensor, Tensor& filter, Tensor& bias);
     Tensor operator()(Tensor& tensor, Tensor& filter);
 
- private:
+private:
     [[nodiscard]] int m_registerOutputTensor(
         const TensorUtil::TensorDescriptor& xDesc) const;
 
     void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const override;
 
-    std::pair<int, int> m_inputSize, m_filterSize, m_stride, m_padSize,
-        m_dilation;
+    std::pair<int, int> m_inputSize,
+                        m_filterSize, m_stride,
+                        m_padSize, m_dilation;
     int m_yChannels = -1;
     int m_xChannels = -1;
     bool m_useBias = false;
@@ -49,6 +50,6 @@ class Conv2D : public Unit
     int m_yRows = -1;
     int m_yCols = -1;
 };
-};  // namespace Sapphire::NN
+}; // namespace Sapphire::NN
 
 #endif

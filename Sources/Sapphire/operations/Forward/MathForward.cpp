@@ -44,8 +44,8 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     }
 
     auto yShape = yShapeOption.value();
-    yShape.SetRow(inputA.GetShape().Rows());
-    yShape.SetCol(inputB.GetShape().Cols());
+    yShape[-2] = inputA.GetShape().At(-2);
+    yShape[-1] = inputB.GetShape().At(-1);
 
     const Type type = aDesc.GetType();
     const CudaDevice device = aDesc.GetDevice();

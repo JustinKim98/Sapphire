@@ -50,7 +50,15 @@ public:
         return m_parentDescKey;
     }
 
-    [[nodiscard]] int GetBatchSize(int requiredDim) const;
+    //! Get number of unit (batch size) given dimension of required data unit
+    //! \param requiredDim : dimension of the data unit
+    //! \return : number of units (batch size)
+    [[nodiscard]] int GetNumUnits(int requiredDim) const;
+
+    //! Get size of units given dimension of required data unit
+    //! \param requiredDim : dimension of the data unit
+    //! \return : size of the unit
+    [[nodiscard]] int GetUnitSize(int requiredDim) const;
 
     [[nodiscard]] Shape GetShape()
     {
