@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
+#include <GraphTest/GraphFunctionalityTest.hpp>
 #include <Sapphire/operations/Forward/Basic.hpp>
 #include <Sapphire/Model.hpp>
 #include "doctest.h"

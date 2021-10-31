@@ -1,62 +1,65 @@
-// Copyright (c) 2021, Justin Kim
+// Copyright (c) 2021, Jaewoo Kim
 
 // We are making my contributions/submissions to this project solely in our
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/Basics/ReshapeTest.hpp>
+#include <BasicsTest/TransposeTest.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
-#include <Sapphire/compute/IndexingOps.hpp>
-#include <Sapphire/Tests/TestUtil.hpp>
+#include <TestUtil.hpp>
 #include <Sapphire/Model.hpp>
 #include <iostream>
 #include <random>
-#include "doctest.h"
 
 namespace Sapphire::Test
 {
-void ReshapeTest(bool printResult)
+void TransposeTest(bool printResult)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(1, 100);
+    std::uniform_int_distribution<> distrib(1, 100);
 
-    const int dim = dist(gen) % 1 + 2;
+    const int dim = distrib(gen) % 1 + 2;
 
     const auto shapeInput = CreateRandomShape(dim, 30);
-    const auto newShape = shapeInput.GetTranspose();
+    const auto shapeTransposed = shapeInput.GetTranspose();
 
     const CudaDevice cuda(0, "device0");
 
     //! Define TensorData for input and transposed
     TensorUtil::TensorData inputTensor(shapeInput, Type::Dense, cuda);
+    TensorUtil::TensorData transposedTensor(shapeTransposed, Type::Dense, cuda);
     inputTensor.SetMode(ComputeMode::Host);
+    transposedTensor.SetMode(ComputeMode::Host);
 
     //! Initialize input Tensor with normal distribution
     Compute::Initialize::Normal(inputTensor, 10, 5);
     //! Initialize output Tensor with zeros
-    TensorUtil::TensorData transposedTensor = inputTensor.CreateCopy();
+    Compute::Initialize::Zeros(transposedTensor);
 
-    //! Perform reshape on host
-    transposedTensor.Reshape(newShape);
-    CHECK(transposedTensor.GetShape() == newShape);
-
+    //! Perform transpose on the host side
+    Compute::Transpose(transposedTensor, inputTensor);
     //! Use the buffer to store the host result temporarily
-    auto cpuResult = transposedTensor.GetDataCopy();
+    auto* cpuResult = new float[transposedTensor.HostTotalSize];
+    std::memcpy(cpuResult, transposedTensor.HostRawPtr(),
+                transposedTensor.HostTotalSize * sizeof(float));
+
+    //! Re-initialize the transoised tensor with zeros
+    Compute::Initialize::Zeros(transposedTensor);
 
     //! Send the input tensor to cuda
     inputTensor.ToCuda();
+    transposedTensor.ToCuda();
     inputTensor.SetMode(ComputeMode::Cuda);
-    transposedTensor = inputTensor.CreateCopy();
+    transposedTensor.SetMode(ComputeMode::Cuda);
 
-    //! Perform reshape on cuda
-    transposedTensor.Reshape(newShape);
-    CHECK(transposedTensor.GetShape() == newShape);
+    //! Transpose the tensor on cuda
+    Compute::Transpose(transposedTensor, inputTensor);
 
     //! Send the transposed result to host
     //! Zero initialized data on the host should be overwritten
@@ -64,8 +67,10 @@ void ReshapeTest(bool printResult)
     transposedTensor.SetMode(ComputeMode::Host);
 
     //! Compare the results
-    auto cudaResult = transposedTensor.GetDataCopy();
-    CheckNoneZeroEquality(std::move(cpuResult), std::move(cudaResult),
-                          transposedTensor.Size(), printResult);
+    const float* cudaResult = transposedTensor.HostRawPtr();
+    CheckNoneZeroEquality(cpuResult, cudaResult,
+                          transposedTensor.HostTotalSize, printResult);
+
+    delete[] cpuResult;
 }
 }

@@ -4,14 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/BroadcastTest.hpp>
+#include <FunctionTest/BroadcastTest.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/CudaDevice.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
-#include <Sapphire/Tests/TestUtil.hpp>
+#include <TestUtil.hpp>
 #include <iostream>
 #include <random>
 

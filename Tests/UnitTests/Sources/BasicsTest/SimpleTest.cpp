@@ -1,4 +1,4 @@
-#include <Sapphire/Tests/Test.hpp>
+#include <BasicsTest/SimpleTest.hpp>
 
 namespace Sapphire::Test
 {

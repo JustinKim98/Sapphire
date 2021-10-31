@@ -6,12 +6,10 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Sapphire/Tests/BroadcastTest.hpp>
-#include <Sapphire/Tests/GemmTest.hpp>
+#include <FunctionTest/BroadcastTest.hpp>
+#include <FunctionTest/GemmTest.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
-#include <Sapphire/Tests/SparseGemmTest.hpp>
-#include <Sapphire/Tests/SparseMemoryTest.hpp>
-#include <Sapphire/Tests/Test.hpp>
+#include <BasicsTest/SimpleTest.hpp>
 #include <OperationTest/MathTest.hpp>
 #include <OperationTest/MeanTest.hpp>
 #include <OperationTest/MSETest.hpp>
@@ -20,15 +18,15 @@
 #include <OperationTest/SoftmaxTest.hpp>
 #include <ModelTest/Conv2DModel.hpp>
 #include <ModelTest/SimpleLinearModel.hpp>
-#include <Sapphire/Tests/Basics/TransposeTest.hpp>
-#include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
-#include <Sapphire/Tests/TestUtil.hpp>
-#include <Sapphire/Tests/Conv2DTest.hpp>
+#include <BasicsTest/TransposeTest.hpp>
+#include <TensorTest/TensorFunctionalityTest.hpp>
+#include <TestUtil.hpp>
+#include <FunctionTest/Conv2DTest.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
-#include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
-#include <Sapphire/Tests/Basics/ReshapeTest.hpp>
+#include <GraphTest/GraphFunctionalityTest.hpp>
+#include <BasicsTest/ReshapeTest.hpp>
 #include <iostream>
 #include "doctest.h"
 

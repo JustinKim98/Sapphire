@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/Conv2DTest.hpp>
-#include <Sapphire/Tests/TestUtil.hpp>
+#include <FunctionTest/Conv2DTest.hpp>
+#include <TestUtil.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/compute/dense/naive/Conv2D.hpp>
 #include <Sapphire/util/Shape.hpp>

@@ -4,8 +4,8 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
-#include <Sapphire/Tests/TestUtil.hpp>
+#include <TensorTest/TensorFunctionalityTest.hpp>
+#include <TestUtil.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/CudaDevice.hpp>

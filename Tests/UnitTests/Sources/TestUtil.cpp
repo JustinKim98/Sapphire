@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/Tests/TestUtil.hpp>
+#include <TestUtil.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <random>
 #include <doctest.h>
