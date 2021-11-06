@@ -401,7 +401,7 @@ TEST_CASE("Model Test")
         const auto padSize = std::make_pair(2, 2);
         const auto dilation = std::make_pair(1, 1);
         const auto learningRate = 0.001f;
-        const auto hostMode = false;
+        const auto hostMode = true;
         const auto epochs = 1000;
 
         const auto [xRows, xCols] = xSize;

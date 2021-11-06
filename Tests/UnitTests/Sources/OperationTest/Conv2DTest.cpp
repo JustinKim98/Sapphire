@@ -22,17 +22,17 @@ void TestConv2D(bool print)
 
     const CudaDevice gpu(0, "cuda0");
     const int batchSize = 4;
-    const int inputChannels = 3;
-    const int outputChannels = 3;
-    const int inputRows = 4;
-    const int inputCols = 4;
+    const int inputChannels = 2;
+    const int outputChannels = 4;
+    const int inputRows = 6;
+    const int inputCols = 8;
     const int kernelRows = 3;
-    const int kernelCols = 3;
-    const int strideRows = 1;
+    const int kernelCols = 4;
+    const int strideRows = 2;
     const int strideCols = 1;
-    const int dilationRows = 1;
-    const int dilationCols = 1;
-    const int padSizeRows = 1;
+    const int dilationRows = 2;
+    const int dilationCols = 2;
+    const int padSizeRows = 2;
     const int padSizeCols = 1;
 
     const auto inputSize = std::make_pair(inputRows, inputCols);
@@ -129,7 +129,7 @@ void TestConv2D(bool print)
                                                outputCols * outputChannels +
                                                channelIdx * outputRows *
                                                outputCols +
-                                               i * inputCols + j]
+                                               i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -153,7 +153,7 @@ void TestConv2D(bool print)
                                               outputCols * outputChannels +
                                               channelIdx * outputRows *
                                               outputCols +
-                                              i * inputCols + j]
+                                              i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -172,12 +172,12 @@ void TestConv2D(bool print)
                 {
                     for (int j = 0; j < inputCols; ++j)
                     {
-                        std::cout
-                            << hostBackwardData[batchIdx * outputRows *
-                                                outputCols * outputChannels +
-                                                channelIdx * outputRows *
-                                                outputCols +
-                                                i * inputCols + j]
+                        std::cout << hostBackwardData[batchIdx * outputRows *
+                                outputCols *
+                                outputChannels +
+                                channelIdx * outputRows *
+                                outputCols +
+                                i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -201,7 +201,7 @@ void TestConv2D(bool print)
                                                outputCols * outputChannels +
                                                channelIdx * outputRows *
                                                outputCols +
-                                               i * inputCols + j]
+                                               i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;

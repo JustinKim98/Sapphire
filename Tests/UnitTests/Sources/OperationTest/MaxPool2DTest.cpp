@@ -23,30 +23,26 @@ void TestMaxPool2D(bool print)
 
     const CudaDevice gpu(0, "cuda0");
     const int batchSize = 4;
-    const int inputChannels = 3;
-    const int outputChannels = 3;
-    const int inputRows = 4;
+    const int channels = 3;
+    const int inputRows = 6;
     const int inputCols = 4;
-    const int kernelRows = 3;
-    const int kernelCols = 3;
+    const int windowRows = 3;
+    const int windowCols = 3;
     const int strideRows = 1;
-    const int strideCols = 1;
-    const int dilationRows = 1;
-    const int dilationCols = 1;
-    const int padSizeRows = 1;
+    const int strideCols = 2;
+    const int padSizeRows = 2;
     const int padSizeCols = 1;
 
-    const auto inputSize = std::make_pair(inputRows, inputCols);
-    const auto filterSize = std::make_pair(kernelRows, kernelCols);
+    const auto windowSize = std::make_pair(windowRows, windowCols);
     const auto stride = std::make_pair(strideRows, strideCols);
     const auto padSize = std::make_pair(padSizeRows, padSizeCols);
 
     const auto outputRows =
-        (inputRows + 2 * padSizeRows - dilationRows * (kernelRows - 1) - 1) /
+        (inputRows + 2 * padSizeRows - (windowRows - 1) - 1) /
         strideRows +
         1;
     const auto outputCols =
-        (inputCols + 2 * padSizeCols - dilationCols * (kernelCols - 1) - 1) /
+        (inputCols + 2 * padSizeCols - (windowCols - 1) - 1) /
         strideCols +
         1;
 
@@ -54,17 +50,17 @@ void TestMaxPool2D(bool print)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-    std::vector<float> backwardData(batchSize * outputChannels * outputRows *
+    std::vector<float> backwardData(batchSize * channels * outputRows *
                                     outputCols);
     for (auto& data : backwardData)
         data = dist(gen);
 
-    Tensor input(Shape({ batchSize, inputChannels, inputRows, inputCols }),
+    Tensor input(Shape({ batchSize, channels, inputRows, inputCols }),
                  gpu);
-    Tensor filter(Shape({ outputChannels, inputChannels,
-                          std::get<0>(filterSize), std::get<1>(filterSize) }),
+    Tensor filter(Shape({ channels, channels,
+                          std::get<0>(windowSize), std::get<1>(windowSize) }),
                   gpu);
-    Tensor bias(Shape({ outputChannels }), gpu);
+    Tensor bias(Shape({ channels }), gpu);
     input.SetMode(ComputeMode::Host);
     filter.SetMode(ComputeMode::Host);
     bias.SetMode(ComputeMode::Host);
@@ -86,8 +82,7 @@ void TestMaxPool2D(bool print)
     bias.ToCuda();
 
     //! Test Conv2D on gpu
-    NN::MaxPool2D maxPool2D(outputChannels, inputChannels, inputSize,
-                            filterSize,
+    NN::MaxPool2D maxPool2D(channels, windowSize,
                             stride, padSize);
     auto gpuOutput = maxPool2D(input);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
@@ -120,7 +115,7 @@ void TestMaxPool2D(bool print)
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             std::cout << "batch : " << batchIdx << std::endl;
-            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
+            for (int channelIdx = 0; channelIdx < channels; ++channelIdx)
             {
                 std::cout << "channel" << channelIdx << std::endl;
                 for (int i = 0; i < outputRowsHost; ++i)
@@ -129,10 +124,10 @@ void TestMaxPool2D(bool print)
                     {
                         std::cout
                             << hostForwardData[batchIdx * outputRows *
-                                               outputCols * outputChannels +
+                                               outputCols * channels +
                                                channelIdx * outputRows *
                                                outputCols +
-                                               i * inputCols + j]
+                                               i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -144,7 +139,7 @@ void TestMaxPool2D(bool print)
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             std::cout << "batch : " << batchIdx << std::endl;
-            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
+            for (int channelIdx = 0; channelIdx < channels; ++channelIdx)
             {
                 std::cout << "channel : " << channelIdx << std::endl;
                 for (int i = 0; i < outputRows; ++i)
@@ -153,10 +148,10 @@ void TestMaxPool2D(bool print)
                     {
                         std::cout
                             << gpuForwardData[batchIdx * outputRows *
-                                              outputCols * outputChannels +
+                                              outputCols * channels +
                                               channelIdx * outputRows *
                                               outputCols +
-                                              i * inputCols + j]
+                                              i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -168,7 +163,7 @@ void TestMaxPool2D(bool print)
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             std::cout << "batch : " << batchIdx << std::endl;
-            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
+            for (int channelIdx = 0; channelIdx < channels; ++channelIdx)
             {
                 std::cout << "channel : " << channelIdx << std::endl;
                 for (int i = 0; i < inputRows; ++i)
@@ -177,10 +172,10 @@ void TestMaxPool2D(bool print)
                     {
                         std::cout << hostBackwardData[batchIdx * outputRows *
                                 outputCols *
-                                outputChannels +
+                                channels +
                                 channelIdx * outputRows *
                                 outputCols +
-                                i * inputCols + j]
+                                i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -192,7 +187,7 @@ void TestMaxPool2D(bool print)
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             std::cout << "batch : " << batchIdx << std::endl;
-            for (int channelIdx = 0; channelIdx < outputChannels; ++channelIdx)
+            for (int channelIdx = 0; channelIdx < channels; ++channelIdx)
             {
                 std::cout << "channel : " << channelIdx << std::endl;
                 for (int i = 0; i < inputRows; ++i)
@@ -201,10 +196,10 @@ void TestMaxPool2D(bool print)
                     {
                         std::cout
                             << gpuBackwardData[batchIdx * outputRows *
-                                               outputCols * outputChannels +
+                                               outputCols * channels +
                                                channelIdx * outputRows *
                                                outputCols +
-                                               i * inputCols + j]
+                                               i * outputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
@@ -217,11 +212,11 @@ void TestMaxPool2D(bool print)
     CHECK(outputCols == outputColsHost);
 
     for (int idx = 0;
-         idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
+         idx < batchSize * channels * outputRows * outputCols; ++idx)
         CHECK(TestEquality(hostForwardData[idx], gpuForwardData[idx]));
 
     for (int idx = 0;
-         idx < batchSize * outputChannels * outputRows * outputCols; ++idx)
+         idx < batchSize * channels * outputRows * outputCols; ++idx)
         CHECK(TestEquality(hostBackwardData[idx], gpuBackwardData[idx]));
 
     ModelManager::CurModel().Clear();

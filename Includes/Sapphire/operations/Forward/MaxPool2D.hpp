@@ -16,9 +16,8 @@ namespace Sapphire::NN
 class MaxPool2D : public Unit
 {
 public:
-    MaxPool2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
-              std::pair<int, int> windowSize, std::pair<int, int> stride,
-              std::pair<int, int> padSize);
+    MaxPool2D(int channels, std::pair<int, int> windowSize,
+              std::pair<int, int> stride, std::pair<int, int> padSize);
 
     Tensor operator()(const Tensor& tensor);
 
@@ -31,10 +30,9 @@ private:
         std::vector<TensorUtil::TensorDescriptor*> arguments) const;
 
 
-    std::pair<int, int> m_inputSize, m_windowSize, m_stride, m_padSize;
+    std::pair<int, int> m_windowSize, m_stride, m_padSize;
 
-    int m_yChannels = -1;
-    int m_xChannels = -1;
+    int m_channels = -1;
     bool m_isSparse = false;
     int m_yRows = -1;
     int m_yCols = -1;

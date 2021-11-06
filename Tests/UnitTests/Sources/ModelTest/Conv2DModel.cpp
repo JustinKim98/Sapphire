@@ -12,6 +12,7 @@
 #include <Sapphire/operations/Loss/MSE.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#include <Sapphire/operations/Forward/MaxPool2D.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -35,9 +36,11 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
     const CudaDevice gpu(0, "cuda0");
 
     //! Declare conv2d Layer
-    NN::Conv2D conv2d(yChannels, xChannels, xSize, filterSize, stride,
-                      padSize, dilation,
-                      new Optimizer::SGD(learningRate), true);
+    NN::Conv2D conv2d(yChannels, xChannels, xSize, filterSize, stride, padSize,
+                      dilation, new Optimizer::SGD(learningRate), true);
+
+    NN::MaxPool2D maxPool2d(yChannels, std::make_pair(2, 2),
+                            std::make_pair(2, 2), std::make_pair(2, 2));
 
     //! Declare input tensors
     Tensor filter(Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
@@ -72,6 +75,7 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
     for (int i = 0; i < epochs; ++i)
     {
         auto y = conv2d(x, filter, bias);
+        y = maxPool2d(y);
         y = NN::ReLU(y);
         const auto loss = NN::Loss::MSE(y, label);
 

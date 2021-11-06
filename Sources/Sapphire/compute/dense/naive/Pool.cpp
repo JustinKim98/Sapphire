@@ -19,7 +19,7 @@ void MaxPool2D(TensorUtil::TensorData& y, const TensorUtil::TensorData& x,
     const auto [rowPadding, colPadding] = padding;
     const auto [rowDilation, colDilation] = dilation;
     const auto xUnitSize = x.GetUnitSize(3);
-    const auto yUnitSize = x.GetUnitSize(3);
+    const auto yUnitSize = y.GetUnitSize(3);
     const auto batchSize = x.GetNumUnits(3);
     const auto xShape = x.GetShape();
     const auto yShape = y.GetShape();
@@ -77,7 +77,7 @@ void MaxPool2DBackward(TensorUtil::TensorData& dx,
     const auto [rowPadding, colPadding] = padding;
     const auto [rowDilation, colDilation] = dilation;
     const auto dxUnitSize = dx.GetUnitSize(3);
-    const auto dyUnitSize = dx.GetUnitSize(3);
+    const auto dyUnitSize = dy.GetUnitSize(3);
     const auto batchSize = dx.GetNumUnits(3);
     const auto dxShape = dx.GetShape();
     const auto dyShape = dy.GetShape();
