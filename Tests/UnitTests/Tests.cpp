@@ -16,6 +16,7 @@
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
 #include <OperationTest/SoftmaxTest.hpp>
+#include <OperationTest/MaxPool2DTest.hpp>
 #include <ModelTest/Conv2DModel.hpp>
 #include <ModelTest/SimpleLinearModel.hpp>
 #include <BasicsTest/TransposeTest.hpp>
@@ -353,6 +354,13 @@ TEST_CASE("BasicGraphTest")
         std::cout << "Conv2D" << std::endl;
         for (int i = 0; i < 3; ++i)
             TestConv2D(false);
+    }
+
+    SUBCASE("MaxPool2DTest")
+    {
+        std::cout << "MaxPool2D" << std::endl;
+        for (int i = 0; i < 1; ++i)
+            TestMaxPool2D(true);
     }
 
     SUBCASE("SoftmaxTest")

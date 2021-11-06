@@ -13,7 +13,7 @@
 #include <Sapphire/compute/Initialize.hpp>
 
 
-namespace Sapphire::NN::Functional
+namespace Sapphire::NN
 {
 MaxPool2D::MaxPool2D(int yChannels, int xChannels,
                      std::pair<int, int> inputSize,

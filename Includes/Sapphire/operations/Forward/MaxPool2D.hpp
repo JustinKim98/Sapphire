@@ -11,7 +11,7 @@
 #include <Sapphire/tensor/Tensor.hpp>
 #include <utility>
 
-namespace Sapphire::NN::Functional
+namespace Sapphire::NN
 {
 class MaxPool2D : public Unit
 {

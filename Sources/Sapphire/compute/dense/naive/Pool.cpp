@@ -28,7 +28,7 @@ void MaxPool2D(TensorUtil::TensorData& y, const TensorUtil::TensorData& x,
         for (int channelIdx = 0; channelIdx < xShape.At(-3); ++channelIdx)
         {
             const auto xOffset =
-                batchIdx * xUnitSize * channelIdx * x.GetUnitSize(2);
+                batchIdx * xUnitSize + channelIdx * x.GetUnitSize(2);
             const auto yOffset =
                 batchIdx * yUnitSize + channelIdx * y.GetUnitSize(2);
 
@@ -39,8 +39,8 @@ void MaxPool2D(TensorUtil::TensorData& y, const TensorUtil::TensorData& x,
                     const auto xColOffset = yColIdx * colStride - colPadding;
                     float maxVal = -std::numeric_limits<float>::max();
 
-                    for (int filterRowIdx = 0; filterRowIdx < filterRows; ++
-                         filterRowIdx)
+                    for (int filterRowIdx = 0; filterRowIdx < filterRows;
+                         ++filterRowIdx)
                         for (int filterColIdx = 0; filterColIdx < filterCols;
                              ++filterColIdx)
                         {
@@ -48,7 +48,8 @@ void MaxPool2D(TensorUtil::TensorData& y, const TensorUtil::TensorData& x,
                                 xRowOffset + filterRowIdx * rowDilation;
                             const auto xColIdx =
                                 xColOffset + filterColIdx * colDilation;
-                            if (xRowIdx < 0.0f || xColIdx < 0.0f)
+                            if (xRowIdx < 0.0f || xColIdx < 0.0 || xRowIdx >=
+                                xShape.At(-2) || xColIdx >= xShape.At(-1))
                                 continue;
 
                             const auto val =
@@ -75,22 +76,22 @@ void MaxPool2DBackward(TensorUtil::TensorData& dx,
     const auto [rowStride, colStride] = stride;
     const auto [rowPadding, colPadding] = padding;
     const auto [rowDilation, colDilation] = dilation;
-    const auto xUnitSize = dx.GetUnitSize(3);
-    const auto yUnitSize = dx.GetUnitSize(3);
+    const auto dxUnitSize = dx.GetUnitSize(3);
+    const auto dyUnitSize = dx.GetUnitSize(3);
     const auto batchSize = dx.GetNumUnits(3);
-    const auto xShape = dx.GetShape();
-    const auto yShape = dy.GetShape();
+    const auto dxShape = dx.GetShape();
+    const auto dyShape = dy.GetShape();
 
     for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        for (int channelIdx = 0; channelIdx < xShape.At(-3); ++channelIdx)
+        for (int channelIdx = 0; channelIdx < dxShape.At(-3); ++channelIdx)
         {
-            const auto xOffset =
-                batchIdx * xUnitSize * channelIdx * dx.GetUnitSize(2);
-            const auto yOffset =
-                batchIdx * yUnitSize + channelIdx * dy.GetUnitSize(2);
+            const auto dxOffset =
+                batchIdx * dxUnitSize + channelIdx * dx.GetUnitSize(2);
+            const auto dyOffset =
+                batchIdx * dyUnitSize + channelIdx * dy.GetUnitSize(2);
 
-            for (int yRowIdx = 0; yRowIdx < yShape.At(-2); ++yRowIdx)
-                for (int yColIdx = 0; yColIdx < yShape.At(-1); ++yColIdx)
+            for (int yRowIdx = 0; yRowIdx < dyShape.At(-2); ++yRowIdx)
+                for (int yColIdx = 0; yColIdx < dyShape.At(-1); ++yColIdx)
                 {
                     const auto xRowOffset = yRowIdx * rowStride - rowPadding;
                     const auto xColOffset = yColIdx * colStride - colPadding;
@@ -108,12 +109,15 @@ void MaxPool2DBackward(TensorUtil::TensorData& dx,
                                 xRowOffset + filterRowIdx * rowDilation;
                             const auto xColIdx =
                                 xColOffset + filterColIdx * colDilation;
-                            if (xRowIdx < 0.0f || xColIdx < 0.0f)
+
+                            if (xRowIdx < 0.0f || xColIdx < 0.0 ||
+                                xRowIdx >= dxShape.At(-2) ||
+                                xColIdx >= dxShape.At(-1))
                                 continue;
 
                             const auto val =
-                                x.HostRawPtr()[xOffset +
-                                               xRowIdx * xShape.At(-1) +
+                                x.HostRawPtr()[dxOffset +
+                                               xRowIdx * dxShape.At(-1) +
                                                xColIdx];
                             if (val > maxVal)
                             {
@@ -123,10 +127,11 @@ void MaxPool2DBackward(TensorUtil::TensorData& dx,
                             }
                         }
 
-                    dx.HostMutableRawPtr()[yOffset + yRowIdx * yShape.At(-1) +
-                                           yColIdx] +=
-                        dy.HostRawPtr()[xOffset + maxXRowIdx * xShape.At(-1) +
-                                        maxXColIdx];
+                    dx.HostMutableRawPtr()[dxOffset +
+                                           maxXRowIdx * dxShape.At(-1) +
+                                           maxXColIdx] +=
+                        dy.HostRawPtr()[dyOffset + yRowIdx * dyShape.At(-1) +
+                                        yColIdx];
                 }
         }
 }

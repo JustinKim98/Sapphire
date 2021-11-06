@@ -4,18 +4,19 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <OperationTest/Conv2DTest.hpp>
+#include <OperationTest/MaxPool2DTest.hpp>
+#include <Sapphire/operations/Forward/MaxPool2D.hpp>
 #include <Sapphire/Model.hpp>
-#include <Sapphire/operations/Forward/Conv2D.hpp>
-#include <Sapphire/operations/optimizers/SGD.hpp>
+#include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <TestUtil.hpp>
-#include <iostream>
-#include <doctest/doctest.h>
 #include <random>
+#include <iostream>
+#include <doctest.h>
+
 
 namespace Sapphire::Test
 {
-void TestConv2D(bool print)
+void TestMaxPool2D(bool print)
 {
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -38,7 +39,6 @@ void TestConv2D(bool print)
     const auto inputSize = std::make_pair(inputRows, inputCols);
     const auto filterSize = std::make_pair(kernelRows, kernelCols);
     const auto stride = std::make_pair(strideRows, strideCols);
-    const auto dilation = std::make_pair(dilationRows, dilationCols);
     const auto padSize = std::make_pair(padSizeRows, padSizeCols);
 
     const auto outputRows =
@@ -54,8 +54,8 @@ void TestConv2D(bool print)
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-    std::vector<float> backwardData(batchSize *
-                                    outputChannels * outputRows * outputCols);
+    std::vector<float> backwardData(batchSize * outputChannels * outputRows *
+                                    outputCols);
     for (auto& data : backwardData)
         data = dist(gen);
 
@@ -70,12 +70,15 @@ void TestConv2D(bool print)
     bias.SetMode(ComputeMode::Host);
 
     //! Initialize input, kernel and bias
-    Initialize::Initialize(
-        input, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-    Initialize::Initialize(
-        filter, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-    Initialize::Initialize(
-        bias, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    Initialize::Initialize(input,
+                           std::make_unique<Initialize::Normal>(
+                               0.0f, 1.0f));
+    Initialize::Initialize(filter,
+                           std::make_unique<Initialize::Normal>(
+                               0.0f, 1.0f));
+    Initialize::Initialize(bias,
+                           std::make_unique<Initialize::Normal>(
+                               0.0f, 1.0f));
 
     //! Move tensors to gpu
     input.ToCuda();
@@ -83,10 +86,10 @@ void TestConv2D(bool print)
     bias.ToCuda();
 
     //! Test Conv2D on gpu
-    NN::Conv2D conv2D(outputChannels, inputChannels, inputSize, filterSize,
-                      stride, padSize, dilation,
-                      new Optimizer::SGD(0.0f), true);
-    auto gpuOutput = conv2D(input, filter, bias);
+    NN::MaxPool2D maxPool2D(outputChannels, inputChannels, inputSize,
+                            filterSize,
+                            stride, padSize);
+    auto gpuOutput = maxPool2D(input);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
@@ -103,7 +106,7 @@ void TestConv2D(bool print)
     Initialize::InitializeBackwardData(input,
                                        std::make_unique<Initialize::Zeros>());
 
-    auto hostOutput = conv2D(input, filter, bias);
+    auto hostOutput = maxPool2D(input);
     const auto hostForwardData = hostOutput.GetData();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
@@ -172,12 +175,12 @@ void TestConv2D(bool print)
                 {
                     for (int j = 0; j < inputCols; ++j)
                     {
-                        std::cout
-                            << hostBackwardData[batchIdx * outputRows *
-                                                outputCols * outputChannels +
-                                                channelIdx * outputRows *
-                                                outputCols +
-                                                i * inputCols + j]
+                        std::cout << hostBackwardData[batchIdx * outputRows *
+                                outputCols *
+                                outputChannels +
+                                channelIdx * outputRows *
+                                outputCols +
+                                i * inputCols + j]
                             << " ";
                     }
                     std::cout << std::endl;
