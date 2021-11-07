@@ -111,7 +111,7 @@ protected:
         m_receivedGradients.at(location) = true;
         return std::all_of(m_receivedGradients.begin(),
                            m_receivedGradients.end(),
-                           [](auto x) { return x; });
+                           [](bool x)-> bool { return x; });
     }
 
     virtual void m_runBackProp() = 0;

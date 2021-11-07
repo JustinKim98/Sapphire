@@ -91,6 +91,11 @@ ComputeMode Tensor::Mode() const
     return desc.Mode();
 }
 
+int Tensor::Size() const
+{
+    return GetShape().Size();
+}
+
 void Tensor::SetMode(ComputeMode mode) const
 {
     Model& model = ModelManager::CurModel();

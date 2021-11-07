@@ -6,11 +6,11 @@
 
 #ifndef SAPPHIRE_UNIT_UTILS_HPP
 #define SAPPHIRE_UNIT_UTILS_HPP
-#include <type_traits>
-#include <optional>
+
 #include <Sapphire/tensor/TensorDescriptor.hpp>
 #include <Sapphire/Model.hpp>
-
+#include <type_traits>
+#include <optional>
 
 namespace Sapphire::Util
 {

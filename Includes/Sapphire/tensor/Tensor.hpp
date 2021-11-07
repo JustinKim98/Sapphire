@@ -52,6 +52,7 @@ public:
     void ToCuda();
     void ToHost();
     [[nodiscard]] ComputeMode Mode() const;
+    [[nodiscard]] int Size() const;
     void SetMode(ComputeMode mode) const;
 
 private:

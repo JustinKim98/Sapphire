@@ -24,20 +24,23 @@
 
 namespace Sapphire::Test
 {
-template <typename T, std::enable_if_t<std::is_integral_v<T>, bool> = true>
+template <typename T, std::enable_if_t<std::is_integral_v<T>, bool>  = true>
 inline bool TestEquality(T a, T b)
 {
     return a == b;
 }
 
 template <typename T,
-          std::enable_if_t<std::is_floating_point_v<T>, bool> = true>
+          std::enable_if_t<std::is_floating_point_v<T>, bool>  = true>
 inline bool TestEquality(T a, T b)
 {
     auto isEqual = std::abs(a - b) < static_cast<T>(FP_EQUAL_THRESHOLD);
+    if (std::isnan(a) && std::isnan(b))
+        isEqual = true;
+
     if (!isEqual)
         std::cout << "left : " << std::to_string(a)
-                  << " right : " << std::to_string(b) << std::endl;
+            << " right : " << std::to_string(b) << std::endl;
     return isEqual;
 }
 

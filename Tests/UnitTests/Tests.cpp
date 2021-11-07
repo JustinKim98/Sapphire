@@ -17,6 +17,7 @@
 #include <OperationTest/Conv2DTest.hpp>
 #include <OperationTest/SoftmaxTest.hpp>
 #include <OperationTest/MaxPool2DTest.hpp>
+#include <OperationTest/CrossEntropyTest.hpp>
 #include <ModelTest/Conv2DModel.hpp>
 #include <ModelTest/SimpleLinearModel.hpp>
 #include <BasicsTest/TransposeTest.hpp>
@@ -337,6 +338,12 @@ TEST_CASE("BasicGraphTest")
         TestMSE(false);
     }
 
+    SUBCASE("CrossEntropyTest")
+    {
+        std::cout << "CrossEntropy" << std::endl;
+        TestCrossEntropy(true);
+    }
+
     SUBCASE("AddTest")
     {
         std::cout << "Add" << std::endl;
@@ -360,14 +367,14 @@ TEST_CASE("BasicGraphTest")
     {
         std::cout << "MaxPool2D" << std::endl;
         for (int i = 0; i < 1; ++i)
-            TestMaxPool2D(true);
+            TestMaxPool2D(false);
     }
 
     SUBCASE("SoftmaxTest")
     {
         std::cout << "Softmax" << std::endl;
         for (int i = 0; i < 1; ++i)
-            TestSoftmax(true);
+            TestSoftmax(false);
     }
 }
 #endif

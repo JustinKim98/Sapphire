@@ -9,7 +9,9 @@
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/ReLU.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <Sapphire/operations/Forward/Softmax.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 
@@ -65,7 +67,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
         auto y = linear(x, weight, bias);
         y = NN::ReLU(y);
         y = NN::ReLU(linear(y, weight1, bias1));
-        const auto loss = NN::Loss::MSE(y, label);
+        const auto loss = NN::Loss::CrossEntropy(y, label);
         if (i % 20 == 0)
         {
             const auto lossData = loss.GetData();

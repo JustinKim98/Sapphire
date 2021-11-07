@@ -4,10 +4,10 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <OperationTest/MSETest.hpp>
+#include <OperationTest/CrossEntropyTest.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/Model.hpp>
-#include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
 #include <random>
@@ -15,7 +15,7 @@
 
 namespace Sapphire::Test
 {
-void TestMSE(bool print)
+void TestCrossEntropy(bool print)
 {
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -24,47 +24,53 @@ void TestMSE(bool print)
 
     const int inputs = 10;
 
-    const Shape xShape = Shape({ 3, 6, 7, inputs });
-
-    const auto batchSize = xShape.GetNumUnits(1);
+    const Shape xShape = Shape({2,6,3, inputs });
 
     Tensor x(xShape, gpu, Type::Dense);
     Tensor label(xShape, gpu, Type::Dense);
     x.ToHost();
     label.ToHost();
 
-    const std::vector backwardData = { 0.0f };
+    const auto batchSize = xShape.GetNumUnits(1);
+
+    const std::vector backwardData(batchSize, 0.0f);
 
     Initialize::Initialize(x, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-    Initialize::Initialize(
-        label, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+    Initialize::Initialize(label,
+                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
 
     x.ToCuda();
     label.ToCuda();
-    const auto gpuLoss = NN::Loss::MSE(x, label);
+    const auto gpuLoss = NN::Loss::CrossEntropy(x, label);
     const auto lossShape = gpuLoss.GetShape();
     const auto gpuForwardPtr = gpuLoss.GetData();
     gpuLoss.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuLoss);
     const auto gpuBackwardPtr = x.GetGradient();
 
+    x.SetGradient(std::vector<float>(x.Size(), 0.0f));
+
     x.ToHost();
     label.ToHost();
-    const auto hostLoss = NN::Loss::MSE(x, label);
+    const auto hostLoss = NN::Loss::CrossEntropy(x, label);
     const auto hostForwardPtr = hostLoss.GetData();
     hostLoss.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostLoss);
     const auto hostBackwardPtr = x.GetGradient();
 
-    CHECK(gpuLoss.GetShape().Cols() == 1);
-    CHECK(gpuLoss.GetShape().Rows() == 1);
+    CHECK(gpuLoss.GetShape().At(-1) == 1);
+    CHECK(gpuLoss.GetShape().At(-2) == batchSize);
 
     if (print)
     {
-        std::cout << "MSE Forward (Cuda)" << std::endl;
-        std::cout << gpuForwardPtr[0] << " " << std::endl;;
+        std::cout << " CrossEntropy Forward (Cuda)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            std::cout << gpuForwardPtr[batchIdx] << " ";
+        }
+        std::cout << std::endl;
 
-        std::cout << "MSE Backward (Cuda)" << std::endl;
+        std::cout << "CrossEntropy Backward (Cuda)" << std::endl;
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             for (int i = 0; i < inputs; ++i)
@@ -72,10 +78,14 @@ void TestMSE(bool print)
             std::cout << std::endl;
         }
 
-        std::cout << "MSE Forward (Host)" << std::endl;
-        std::cout << hostForwardPtr[0] << " " << std::endl;
+        std::cout << "CrossEntropy Forward (Host)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            std::cout << hostForwardPtr[batchIdx] << " ";
+        }
+        std::cout << std::endl;
 
-        std::cout << "MSE Backward(Host)" << std::endl;
+        std::cout << "CrossEntropy Backward(Host)" << std::endl;
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             for (int i = 0; i < inputs; ++i)

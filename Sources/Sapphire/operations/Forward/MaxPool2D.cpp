@@ -12,7 +12,6 @@
 #include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 
-
 namespace Sapphire::NN
 {
 MaxPool2D::MaxPool2D(int channels,
