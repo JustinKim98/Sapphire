@@ -18,8 +18,11 @@ class Linear : public Unit
 {
 public:
     Linear(int inputFeatureSize, int outputFeatureSize,
-           Optimizer::Optimizer* optimizer,
            bool isSparse = false);
+
+    Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
+           bool isSparse = false);
+
     ~Linear() override = default;
 
     Linear(const Linear& linear) = default;
@@ -56,6 +59,7 @@ private:
     void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const override;
 
+    static int m_unitIdCount;
     int m_inputs;
     int m_outputs;
     CudaDevice m_device;

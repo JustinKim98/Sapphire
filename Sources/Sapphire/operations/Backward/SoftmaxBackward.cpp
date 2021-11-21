@@ -13,10 +13,11 @@ constexpr int dyIdx = 0;
 constexpr int xIdx = 0;
 constexpr int dxIdx = 0;
 
-SoftMaxBackward::SoftMaxBackward(TensorUtil::TensorData dx,
+SoftMaxBackward::SoftMaxBackward(std::string name, TensorUtil::TensorData dx,
                                  TensorUtil::TensorData dy,
                                  TensorUtil::TensorData x)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) }, { std::move(x) },
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
+                      { std::move(x) },
                       {})
 {
 }

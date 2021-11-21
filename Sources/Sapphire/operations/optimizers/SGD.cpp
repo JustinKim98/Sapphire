@@ -19,7 +19,7 @@ SGD::SGD(SGD&& sgd) noexcept
 {
 }
 
-void SGD::operator()(TensorData& z, const TensorData& dz)
+void SGD::operator()(TensorData& z, const TensorData& dz, std::string name)
 {
     TensorData temp(dz.GetShape(), dz.GetType(), dz.GetDevice());
     temp.SetMode(dz.Mode());

@@ -10,7 +10,7 @@
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <list>
-#include <memory>
+#include <algorithm>
 #include <mutex>
 
 namespace Sapphire::TensorUtil

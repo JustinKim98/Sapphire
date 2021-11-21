@@ -18,9 +18,9 @@ namespace Sapphire::Test
 {
 void TestLinear(bool print)
 {
-    const int batchSize = 2;
-    const int inputs = 100;
-    const int outputs = 100;
+    constexpr int batchSize = 2;
+    constexpr int inputs = 100;
+    constexpr int outputs = 100;
 
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -51,12 +51,14 @@ void TestLinear(bool print)
     weight.ToCuda();
     bias.ToCuda();
 
-    NN::Linear linear(inputs, outputs,
-                      new Optimizer::SGD(0.0f));
+    NN::Linear linear(inputs, outputs);
 
     auto gpuOutput = linear(input, weight, bias);
     const auto gpuForwardPtr = gpuOutput.GetData();
     gpuOutput.SetGradient(backwardData);
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardPtr = input.GetGradient();
 
@@ -67,8 +69,7 @@ void TestLinear(bool print)
     Initialize::InitializeBackwardData(input,
                                        std::make_unique<Initialize::Zeros>());
 
-    NN::Linear linearHost(inputs, outputs,
-                          new Optimizer::SGD(0.0f));
+    NN::Linear linearHost(inputs, outputs);
     const auto hostOutput = linearHost(input, weight, bias);
     const auto hostForwardPtr = hostOutput.GetData();
     hostOutput.SetGradient(backwardData);

@@ -7,9 +7,8 @@
 #ifndef SAPPHIRE_BACKPROP_WRAPPER_HPP
 #define SAPPHIRE_BACKPROP_WRAPPER_HPP
 
-#include <algorithm>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/operations/optimizers/Optimizer.hpp>
+#include <algorithm>
 #include <functional>
 
 namespace Sapphire::BackProp
@@ -24,50 +23,54 @@ namespace Sapphire::BackProp
 class BackPropWrapper
 {
 public:
-    BackPropWrapper() = default;
+    BackPropWrapper();
     virtual ~BackPropWrapper() = default;
 
-    explicit BackPropWrapper(
+    BackPropWrapper(
+        std::string name,
         std::vector<TensorUtil::TensorData> dxVector,
         std::vector<TensorUtil::TensorData> dyVector,
         std::vector<TensorUtil::TensorData> trainableData,
         std::vector<TensorUtil::TensorData> constants,
-        std::vector<TensorUtil::TensorData> mutables,
-        Optimizer::Optimizer* optimizer)
-        : m_dxVector(std::move(dxVector)),
+        std::vector<TensorUtil::TensorData> mutables)
+        : m_name(std::move(name)),
+          m_dxVector(std::move(dxVector)),
           m_dyVector(std::move(dyVector)),
           m_trainableData(std::move(trainableData)),
           m_constants(std::move(constants)),
           m_mutables(std::move(mutables)),
-          m_optimizer(optimizer),
           m_receivedGradients(dyVector.size(), false)
     {
-        m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
+        m_receivedGradients = std::vector(m_dyVector.size(), false);
     }
 
-    explicit BackPropWrapper(
+    BackPropWrapper(
+        std::string name,
         std::vector<TensorUtil::TensorData> dxVector,
         std::vector<TensorUtil::TensorData> dyVector,
         std::vector<TensorUtil::TensorData> constants,
         std::vector<TensorUtil::TensorData> mutables)
-        : m_dxVector(std::move(dxVector)),
+        : m_name(std::move(name)),
+          m_dxVector(std::move(dxVector)),
           m_dyVector(std::move(dyVector)),
           m_constants(std::move(constants)),
           m_mutables(std::move(mutables)),
           m_receivedGradients(dyVector.size(), false)
 
     {
-        m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
+        m_receivedGradients = std::vector(m_dyVector.size(), false);
     }
 
-    explicit BackPropWrapper(
+    BackPropWrapper(
+        std::string name,
         std::vector<TensorUtil::TensorData> dxVector,
         std::vector<TensorUtil::TensorData> dyVector)
-        : m_dxVector(std::move(dxVector)),
+        : m_name(std::move(name)),
+          m_dxVector(std::move(dxVector)),
           m_dyVector(std::move(dyVector)),
           m_receivedGradients(dyVector.size(), false)
     {
-        m_receivedGradients = std::vector<bool>(m_dyVector.size(), false);
+        m_receivedGradients = std::vector(m_dyVector.size(), false);
     }
 
 
@@ -116,13 +119,13 @@ protected:
 
     virtual void m_runBackProp() = 0;
 
+    std::string m_name;
     //! Vector of tensorData that should give its output
     std::vector<TensorUtil::TensorData> m_dxVector;
     std::vector<TensorUtil::TensorData> m_dyVector; // const
     std::vector<TensorUtil::TensorData> m_trainableData;
     std::vector<TensorUtil::TensorData> m_constants;
     std::vector<TensorUtil::TensorData> m_mutables;
-    Optimizer::Optimizer* m_optimizer;
     std::vector<bool> m_receivedGradients;
     //! Data saved in m_constants should not be modified
 };

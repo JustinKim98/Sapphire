@@ -8,9 +8,9 @@
 
 namespace Sapphire::BackProp
 {
-FlattenBackward::FlattenBackward(TensorUtil::TensorData dx,
+FlattenBackward::FlattenBackward(std::string name, TensorUtil::TensorData dx,
                                  TensorUtil::TensorData dy, Shape shape)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) }),
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) }),
       m_shape(std::move(shape))
 {
 }

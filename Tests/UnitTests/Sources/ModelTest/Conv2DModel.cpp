@@ -36,11 +36,15 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
     const CudaDevice gpu(0, "cuda0");
 
     //! Declare conv2d Layer
-    NN::Conv2D conv2d(yChannels, xChannels, xSize, filterSize, stride, padSize,
-                      dilation, new Optimizer::SGD(learningRate), true);
-
-    NN::MaxPool2D maxPool2d(yChannels, std::make_pair(2, 2),
-                            std::make_pair(2, 2), std::make_pair(2, 2));
+    NN::Conv2D conv1(6, 3, std::make_pair(5, 5), stride, padSize,
+                     dilation, true);
+    NN::MaxPool2D pool1(yChannels, std::make_pair(2, 2), std::make_pair(2, 2));
+    NN::Conv2D conv2(16, 6, std::make_pair(5, 5), stride, padSize,
+                     dilation,
+                     true);
+    NN::Linear fc1(16 * 5 * 5, 120);
+    NN::Linear fc2(120, 84);
+    NN::Linear fc3(84, 10);
 
     //! Declare input tensors
     Tensor filter(Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
@@ -72,10 +76,12 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
     x.LoadData(xData);
     label.LoadData(labelData);
 
+    Optimizer::SGD sgd(learningRate);
+    ModelManager::CurModel().SetOptimizer(&sgd);
+
     for (int i = 0; i < epochs; ++i)
     {
-        auto y = conv2d(x, filter, bias);
-        y = maxPool2d(y);
+        auto y = NN::ReLU(conv1(x, filter, bias));
         y = NN::ReLU(y);
         const auto loss = NN::Loss::MSE(y, label);
 

@@ -7,12 +7,12 @@
 #include <OperationTest/MaxPool2DTest.hpp>
 #include <Sapphire/operations/Forward/MaxPool2D.hpp>
 #include <Sapphire/Model.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <TestUtil.hpp>
 #include <random>
 #include <iostream>
 #include <doctest.h>
-
 
 namespace Sapphire::Test
 {
@@ -89,6 +89,9 @@ void TestMaxPool2D(bool print)
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
     gpuOutput.SetGradient(backwardData);
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardData = input.GetGradient();
 

@@ -8,12 +8,12 @@
 #define SAPPHIRE_MODEL_HPP
 
 #include <cmath>
-#include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
-#include <Sapphire/operations/Backward/BackPropWrapper.hpp>
+#include <Sapphire/operations/optimizers/Optimizer.hpp>
 #include <string>
 #include <unordered_map>
+
 
 namespace Sapphire
 {
@@ -31,7 +31,13 @@ class Model
 {
 public:
     explicit Model(std::string name);
-    ~Model() = default;
+
+    explicit Model(std::string name, Optimizer::Optimizer* optimizer);
+
+    ~Model()
+    {
+        Clear();
+    }
 
     Model(const Model& model) = delete;
     Model(Model&& model) noexcept = default;
@@ -53,6 +59,19 @@ public:
     //! \param descKey : key of the descriptor
     //! \return : tensor descriptor of given key
     [[nodiscard]] TensorUtil::TensorDescriptor& GetDescriptor(int descKey);
+
+    [[nodiscard]] Optimizer::Optimizer* GetOptimizer() const
+    {
+        if (m_optimizer == nullptr)
+            throw std::runtime_error(
+                "Model::GetOptimizer() - optimizer was null");
+        return m_optimizer;
+    }
+
+    void SetOptimizer(Optimizer::Optimizer* optimizer)
+    {
+        m_optimizer = optimizer;
+    }
 
     //! Starts back propagation from the given tensor
     //! \param tensor : tensor to start back propagation
@@ -80,11 +99,11 @@ private:
 
     void m_removeDescriptor(int descKey);
 
-
+    std::string m_name;
+    Optimizer::Optimizer* m_optimizer;
     TensorDescriptorPool m_tensorDescriptorPool;
     TensorDescriptorPool m_preservedDescriptorPool;
     std::unordered_map<int, BackProp::BackPropWrapper*> m_backPropWrapperPool;
-    std::string m_name;
 };
 
 //! Singleton class for model management

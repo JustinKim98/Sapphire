@@ -6,8 +6,9 @@
 
 #include <GraphTest/GraphFunctionalityTest.hpp>
 #include <Sapphire/operations/Forward/Basic.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/Model.hpp>
-#include "doctest.h"
+#include <doctest.h>
 
 
 namespace Sapphire::Test
@@ -26,7 +27,6 @@ void GraphFunctionalityTest()
     NN::InplaceOp inplace1;
     NN::Basic output;
 
-
     Tensor x(Shape({ 10 }), gpu, Type::Dense);
     Initialize::Initialize(x, std::make_unique<Initialize::Ones>());
 
@@ -36,6 +36,9 @@ void GraphFunctionalityTest()
     auto x31 = twoInputs(x21, x22);
     inplace1(x31);
     auto y = output(x31);
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
 
     ModelManager::CurModel().BackProp(y);
     ModelManager::CurModel().Clear();

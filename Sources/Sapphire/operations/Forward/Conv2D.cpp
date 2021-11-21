@@ -13,30 +13,53 @@
 
 namespace Sapphire::NN
 {
-Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
-               std::pair<int, int> filterSize, std::pair<int, int> stride,
-               std::pair<int, int> padSize, std::pair<int, int> dilation,
-               Optimizer::Optimizer* optimizer, bool useBias)
-    : Unit(optimizer),
+int Conv2D::m_unitIdCount = 0;
+
+Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> filterSize,
+               std::pair<int, int> stride, std::pair<int, int> padSize,
+               std::pair<int, int> dilation, bool useBias)
+    : Unit(std::string("Conv2D") + std::to_string(m_unitIdCount++)),
       m_yChannels(yChannels),
       m_xChannels(xChannels),
-      m_useBias(useBias)
+      m_useBias(useBias),
+      m_filterSize(filterSize),
+      m_stride(stride),
+      m_padSize(padSize),
+      m_dilation(dilation)
 {
-    const auto [filterRows, filterCols] = filterSize;
-    const auto [dilationRows, dilationCols] = dilation;
-    const auto [inputRows, inputCols] = inputSize;
-    const auto [rowPadding, colPadding] = padSize;
-    const auto [strideRows, strideCols] = stride;
+}
 
-    m_xChannels = xChannels;
-    m_yChannels = yChannels;
-    m_inputSize = inputSize;
-    m_filterSize = std::make_pair(filterRows, filterCols);
-    m_stride = stride;
-    m_dilation = dilation;
-    m_isSparse = false;
-    m_optimizer = std::move(optimizer);
-    m_padSize = padSize;
+Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
+               std::pair<int, int> filterSize,
+               std::pair<int, int> stride, std::pair<int, int> padSize,
+               std::pair<int, int> dilation,
+               bool useBias)
+    : Unit(std::move(name)),
+      m_yChannels(yChannels),
+      m_xChannels(xChannels),
+      m_useBias(useBias),
+      m_filterSize(filterSize),
+      m_stride(stride),
+      m_padSize(padSize),
+      m_dilation(dilation)
+{
+}
+
+Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
+{
+    if (!m_useBias)
+        throw std::runtime_error(
+            "Conv2D::operator() - This unit was not configured to use bias, "
+            "but it "
+            "was called with bias");
+
+    auto inputRows = tensor.GetShape().At(-2);
+    auto inputCols = tensor.GetShape().At(-1);
+    const auto [dilationRows, dilationCols] = m_dilation;
+    const auto [rowPadding, colPadding] = m_padSize;
+    const auto [strideRows, strideCols] = m_stride;
+    const auto [filterRows, filterCols] = m_filterSize;
+    m_inputSize = std::make_pair(inputRows, inputCols);
 
     m_yRows =
         (inputRows + 2 * rowPadding - dilationRows * (filterRows - 1) - 1) /
@@ -49,15 +72,7 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
 
     if (m_yRows <= 0 || m_yCols <= 0)
         throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
-}
 
-Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
-{
-    if (!m_useBias)
-        throw std::runtime_error(
-            "Conv2D::operator() - This unit was not configured to use bias, "
-            "but it "
-            "was called with bias");
     auto mode = tensor.Mode();
     auto& model = ModelManager::CurModel();
 
@@ -69,10 +84,6 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
     yDesc.SetMode(mode);
-
-    auto [dilationRows, dilationCols] = m_dilation;
-    auto [rowPadding, colPadding] = m_padSize;
-    auto [strideRows, strideCols] = m_stride;
 
     auto filterData = filterDesc.GetForwardData();
     auto biasData = biasDesc.GetForwardData();
@@ -101,8 +112,9 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
     Compute::Add(y, y, biasData);
     auto yCopy = y.GetDataCopy();
     auto* backPropWrapper =
-        new BackProp::Conv2DBackProp(dx, dy, filterData, biasData, x, m_stride,
-                                     m_dilation, m_padSize, m_optimizer);
+        new BackProp::Conv2DBackProp(m_name, dx, dy, filterData, biasData, x,
+                                     m_stride,
+                                     m_dilation, m_padSize);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 
@@ -147,8 +159,9 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter)
     Compute::Conv2DForward(y, x, filterData, strideRows, strideCols,
                            dilationRows, dilationCols, rowPadding, colPadding);
 
-    auto* backPropWrapper = new BackProp::Conv2DBackProp(
-        dx, dy, filterData, x, m_stride, m_dilation, m_padSize, m_optimizer);
+    auto* backPropWrapper = new BackProp::Conv2DBackProp(m_name,
+        dx, dy, filterData, x, m_stride, m_dilation, m_padSize);
+
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 

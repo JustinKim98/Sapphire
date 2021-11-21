@@ -19,7 +19,7 @@ MaxPool2DBackProp::MaxPool2DBackProp(TensorData dx, TensorData dy, TensorData x,
                                      std::pair<int, int> windowSize,
                                      std::pair<int, int> stride,
                                      std::pair<int, int> padSize)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
+    : BackPropWrapper("MaxPool2D", { std::move(dx) }, { std::move(dy) },
                       { std::move(x), std::move(y) }, {}),
       m_windowSize(windowSize),
       m_stride(stride),

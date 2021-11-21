@@ -15,9 +15,22 @@
 
 namespace Sapphire::NN
 {
-Linear::Linear(int inputFeatureSize, int outputFeatureSize,
-               Optimizer::Optimizer* optimizer,bool isSparse)
-    : Unit(optimizer),
+int Linear::m_unitIdCount = 0;
+
+Linear::Linear(int inputFeatureSize, int outputFeatureSize, bool isSparse)
+    : Unit(std::string("Linear") + std::to_string(m_unitIdCount++)),
+      m_inputs(inputFeatureSize),
+      m_outputs(outputFeatureSize),
+      m_isSparse(isSparse)
+{
+    if (m_isSparse)
+        throw std::invalid_argument(
+            "NN::Linear - Sparse version not implemented");
+}
+
+Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
+               bool isSparse)
+    : Unit(std::move(name)),
       m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
       m_isSparse(isSparse)
@@ -76,12 +89,13 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     Compute::Gemm(yData, xData, transposedWeight);
 
     auto* backPropWrapper =
-        new BackProp::LinearBackProp(
-            dxData, dyData, weightData, biasData, xData,
-            m_optimizer,
-            xData.Rows());
+        new BackProp::LinearBackProp(m_name,
+                                     dxData, dyData, weightData, biasData,
+                                     xData,
+                                     xData.Rows());
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
+
     return Tensor(yKey);
 }
 

@@ -8,6 +8,7 @@
 #include <Sapphire/operations/Backward/Conv2DBackward.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
+#include <Sapphire/Model.hpp>
 
 namespace Sapphire::BackProp
 {
@@ -17,17 +18,18 @@ constexpr int kernelIdx = 0;
 constexpr int biasIdx = 1;
 constexpr int xIdx = 0;
 
-Conv2DBackProp::Conv2DBackProp(
-    TensorUtil::TensorData dx, TensorUtil::TensorData dy,
-    TensorUtil::TensorData filter, TensorUtil::TensorData bias,
-    TensorUtil::TensorData x,
-    std::pair<int, int> stride, std::pair<int, int> dilation,
-    std::pair<int, int> padding,
-    Optimizer::Optimizer* optimizer)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
+Conv2DBackProp::Conv2DBackProp(std::string name,
+                               TensorData dx,
+                               TensorData dy,
+                               TensorData filter,
+                               TensorData bias,
+                               TensorData x,
+                               std::pair<int, int> stride,
+                               std::pair<int, int> dilation,
+                               std::pair<int, int> padding)
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
                       { std::move(filter), std::move(bias) }, { std::move(x) },
-                      {},
-                      optimizer),
+                      {}),
       m_stride(std::move(stride)),
       m_dilation(std::move(dilation)),
       m_padding(std::move(padding)),
@@ -35,16 +37,16 @@ Conv2DBackProp::Conv2DBackProp(
 {
 }
 
-Conv2DBackProp::Conv2DBackProp(
-    TensorUtil::TensorData dx, TensorUtil::TensorData dy,
-    TensorUtil::TensorData filter,
-    TensorUtil::TensorData x,
-    std::pair<int, int> stride,
-    std::pair<int, int> dilation, std::pair<int, int> padding,
-    Optimizer::Optimizer* optimizer)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
-                      { std::move(filter) }, { std::move(x) },
-                      {}, optimizer),
+Conv2DBackProp::Conv2DBackProp(std::string name,
+                               TensorData dx,
+                               TensorData dy,
+                               TensorData filter,
+                               TensorData x,
+                               std::pair<int, int> stride,
+                               std::pair<int, int> dilation,
+                               std::pair<int, int> padding)
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
+                      { std::move(filter) }, { std::move(x) }, {}),
       m_stride(std::move(stride)),
       m_dilation(std::move(dilation)),
       m_padding(std::move(padding)),
@@ -63,13 +65,14 @@ void Conv2DBackProp::m_runBackProp()
     const auto [dilationRow, dilationCol] = m_dilation;
     const auto [rowPadding, colPadding] = m_padding;
 
-    TensorUtil::TensorData dKernel(kernel.GetShape(), kernel.GetType(),
-                                   kernel.GetDevice());
+    TensorData dKernel(kernel.GetShape(), kernel.GetType(),
+                       kernel.GetDevice());
     dKernel.SetMode(kernel.Mode());
 
     Compute::Conv2DBackward(dx, dKernel, dy, x, kernel, strideRow, strideCol,
                             rowPadding, colPadding, dilationRow, dilationCol);
-    m_optimizer->operator()(kernel, dKernel);
+    ModelManager::CurModel().GetOptimizer()->operator()(kernel, dKernel,
+        m_name);
 
     if (m_hasBias)
     {
@@ -81,9 +84,9 @@ void Conv2DBackProp::m_runBackProp()
         auto mean2Shape = mean1Shape;
         mean2Shape.Set(0, 1);
         assert(bias.GetShape() == mean2Shape);
-        TensorUtil::TensorData mean0(mean0Shape, dy.GetType(), dy.GetDevice());
-        TensorUtil::TensorData mean1(mean1Shape, dy.GetType(), dy.GetDevice());
-        TensorUtil::TensorData mean2(mean2Shape, dy.GetType(), dy.GetDevice());
+        TensorData mean0(mean0Shape, dy.GetType(), dy.GetDevice());
+        TensorData mean1(mean1Shape, dy.GetType(), dy.GetDevice());
+        TensorData mean2(mean2Shape, dy.GetType(), dy.GetDevice());
         mean0.SetMode(dy.Mode());
         mean1.SetMode(dy.Mode());
         mean2.SetMode(dy.Mode());
@@ -91,7 +94,8 @@ void Conv2DBackProp::m_runBackProp()
         Compute::Mean(mean1, mean0, mean0Shape.Dim() - 2);
         Compute::Mean(mean2, mean1, 0);
 
-        m_optimizer->operator()(bias, mean1);
+        ModelManager::CurModel().GetOptimizer()->operator()(bias, mean1,
+            m_name);
     }
 }
 }

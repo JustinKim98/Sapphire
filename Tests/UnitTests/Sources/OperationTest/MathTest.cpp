@@ -9,6 +9,7 @@
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -48,6 +49,9 @@ void TestMultiply(bool print)
     Initialize::InitializeBackwardData(
         y, std::make_unique<Initialize::Normal>(0.0f, 10.0f));
     y.ToCuda();
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(y);
 
     inputA.ToHost();
@@ -125,6 +129,9 @@ void TestAdd(bool print)
     Initialize::InitializeBackwardData(
         y, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     y.ToCuda();
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(y);
 
     inputA.ToHost();

@@ -14,7 +14,7 @@ namespace Sapphire::BackProp
 class CrossEntropyBackward : public BackPropWrapper
 {
 public:
-    CrossEntropyBackward(TensorUtil::TensorData dx,
+    CrossEntropyBackward(std::string name, TensorUtil::TensorData dx,
                          TensorUtil::TensorData label);
 
 private:

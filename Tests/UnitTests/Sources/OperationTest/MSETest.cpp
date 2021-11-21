@@ -7,6 +7,7 @@
 #include <OperationTest/MSETest.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/Model.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
@@ -45,6 +46,8 @@ void TestMSE(bool print)
     const auto lossShape = gpuLoss.GetShape();
     const auto gpuForwardPtr = gpuLoss.GetData();
     gpuLoss.SetGradient(backwardData);
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(gpuLoss);
     const auto gpuBackwardPtr = x.GetGradient();
 

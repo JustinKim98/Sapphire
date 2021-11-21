@@ -14,7 +14,7 @@ namespace Sapphire::BackProp
 class MulBackProp : public BackPropWrapper
 {
 public:
-    explicit MulBackProp(const TensorUtil::TensorData& a,
+    explicit MulBackProp(std::string name, const TensorUtil::TensorData& a,
                          TensorUtil::TensorData da,
                          const TensorUtil::TensorData& b,
                          TensorUtil::TensorData db,
@@ -28,7 +28,8 @@ private:
 class AddBackProp : public BackPropWrapper
 {
 public:
-    explicit AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
+    explicit AddBackProp(std::string name, TensorUtil::TensorData da,
+                         TensorUtil::TensorData db,
                          TensorUtil::TensorData dy);
 
 private:
@@ -38,7 +39,8 @@ private:
 class MeanBackProp : public BackPropWrapper
 {
 public:
-    explicit MeanBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData x,
+    explicit MeanBackProp(std::string name, TensorUtil::TensorData dx,
+                          TensorUtil::TensorData x,
                           TensorUtil::TensorData dy, int dim);
 
 private:

@@ -14,7 +14,7 @@ namespace Sapphire::BackProp
 class MSEBackward : public BackPropWrapper
 {
 public:
-    MSEBackward(TensorUtil::TensorData dx, TensorUtil::TensorData x,
+    MSEBackward(std::string name, TensorUtil::TensorData dx, TensorUtil::TensorData x,
                 TensorUtil::TensorData label);
 
 private:

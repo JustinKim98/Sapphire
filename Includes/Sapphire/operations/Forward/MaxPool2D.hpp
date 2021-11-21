@@ -17,7 +17,8 @@ class MaxPool2D : public Unit
 {
 public:
     MaxPool2D(int channels, std::pair<int, int> windowSize,
-              std::pair<int, int> stride, std::pair<int, int> padSize);
+              std::pair<int, int> stride,
+              std::pair<int, int> padSize = std::pair(0, 0));
 
     Tensor operator()(const Tensor& tensor);
 
@@ -29,7 +30,7 @@ private:
     void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const;
 
-
+    static int m_unitIdCount;
     std::pair<int, int> m_windowSize, m_stride, m_padSize;
 
     int m_channels = -1;

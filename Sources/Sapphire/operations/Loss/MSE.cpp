@@ -14,6 +14,7 @@ namespace Sapphire::NN::Loss
 {
 Tensor MSE(const Tensor& input, const Tensor& label)
 {
+    static int unitIdCount = 0;
     auto mode = input.Mode();
     if (!Util::CheckModeEquality(mode, label))
         throw std::invalid_argument("NN::Loss::MSE - Device mode inequality");
@@ -37,7 +38,8 @@ Tensor MSE(const Tensor& input, const Tensor& label)
     auto labelData = labelDesc.GetForwardData();
     auto yData = yDesc.GetForwardData();
     auto dxData = xDesc.GetBackwardData();
-    auto* wrapper = new BackProp::MSEBackward(dxData, xData, labelData);
+    auto* wrapper = new BackProp::MSEBackward(
+        "MSE" + std::to_string(unitIdCount++), dxData, xData, labelData);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc, &labelDesc),
                       std::make_tuple(&yDesc));
 

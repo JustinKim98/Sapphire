@@ -8,6 +8,7 @@
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Loss/CrossEntropy.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
 #include <random>
@@ -55,6 +56,9 @@ void TestCrossEntropy(bool print)
     const auto hostLoss = NN::Loss::CrossEntropy(x, label);
     const auto hostForwardPtr = hostLoss.GetData();
     hostLoss.SetGradient(backwardData);
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(hostLoss);
     const auto hostBackwardPtr = x.GetGradient();
 

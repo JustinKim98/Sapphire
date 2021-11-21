@@ -14,10 +14,12 @@
 
 namespace Sapphire::NN
 {
+int MaxPool2D::m_unitIdCount = 0;
+
 MaxPool2D::MaxPool2D(int channels,
                      std::pair<int, int> windowSize, std::pair<int, int> stride,
                      std::pair<int, int> padSize)
-    : Unit(),
+    : Unit("MaxPool2D" + std::to_string(m_unitIdCount++)),
       m_channels(channels)
 {
     const auto [filterRows, filterCols] = windowSize;

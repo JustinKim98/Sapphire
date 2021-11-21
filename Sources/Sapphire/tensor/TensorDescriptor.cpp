@@ -6,7 +6,6 @@
 
 #include <Sapphire/tensor/TensorDescriptor.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
-#include <algorithm>
 
 namespace Sapphire::TensorUtil
 {

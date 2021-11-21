@@ -33,7 +33,7 @@ void TestSoftmax(bool print)
     for (auto& data : backwardData)
         data = dist(gen);
 
-    NN::Linear linear(10, 10, new Optimizer::SGD(0.0f));
+    NN::Linear linear(10, 10);
 
     Tensor input({ batchSize, unitSize }, gpu);
     Tensor weight({ unitSize, unitSize }, gpu, true);
@@ -53,6 +53,8 @@ void TestSoftmax(bool print)
     auto tensor = NN::SoftMax(input);
 
     const auto forwardDataHost = tensor.GetData();
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     tensor.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(tensor);
     const auto backwardDataHost = input.GetGradient();

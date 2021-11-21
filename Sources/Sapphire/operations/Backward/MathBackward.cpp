@@ -10,11 +10,12 @@
 
 namespace Sapphire::BackProp
 {
-MulBackProp::MulBackProp(const TensorUtil::TensorData& a,
+MulBackProp::MulBackProp(std::string name, const TensorUtil::TensorData& a,
                          TensorUtil::TensorData da,
                          const TensorUtil::TensorData& b,
                          TensorUtil::TensorData db, TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) },
+    : BackPropWrapper(std::move(name), { std::move(da), std::move(db) },
+                      { std::move(dy) },
                       { a, b },
                       { TensorUtil::TensorData(a.GetShape().GetTranspose(),
                                                a.GetType(),
@@ -49,9 +50,11 @@ void MulBackProp::m_runBackProp()
     Compute::Gemm(db, transposedA, dy);
 }
 
-AddBackProp::AddBackProp(TensorUtil::TensorData da, TensorUtil::TensorData db,
+AddBackProp::AddBackProp(std::string name, TensorUtil::TensorData da,
+                         TensorUtil::TensorData db,
                          TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(da), std::move(db) }, { std::move(dy) })
+    : BackPropWrapper(std::move(name), { std::move(da), std::move(db) },
+                      { std::move(dy) })
 {
 }
 
@@ -64,9 +67,11 @@ void AddBackProp::m_runBackProp()
     Compute::Add(db, dy, db);
 }
 
-MeanBackProp::MeanBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData x,
+MeanBackProp::MeanBackProp(std::string name, TensorUtil::TensorData dx,
+                           TensorUtil::TensorData x,
                            TensorUtil::TensorData dy, int dim)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) }, { std::move(x) },
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
+                      { std::move(x) },
                       {}),
       m_dim(dim)
 {

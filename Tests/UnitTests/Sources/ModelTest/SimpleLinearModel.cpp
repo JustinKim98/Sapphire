@@ -26,8 +26,7 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
 
     const CudaDevice gpu(0, "cuda0");
 
-    NN::Linear linear(inputSize, outputSize,
-                      new Optimizer::SGD(learningRate));
+    NN::Linear linear(inputSize, outputSize);
 
     Tensor weight(Shape({ inputSize, outputSize }), gpu, Type::Dense, true);
     Tensor weight1(Shape({ outputSize, outputSize }), gpu, Type::Dense, true);
@@ -62,6 +61,9 @@ void SimpleLinearModel(std::vector<float> xData, std::vector<float> labelData,
 
     x.LoadData(xData);
     label.LoadData(labelData);
+    Optimizer::SGD sgd(learningRate);
+    ModelManager::CurModel().SetOptimizer(&sgd);
+
     for (int i = 0; i < epochs; ++i)
     {
         auto y = linear(x, weight, bias);

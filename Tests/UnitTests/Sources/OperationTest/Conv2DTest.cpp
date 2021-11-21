@@ -21,31 +21,30 @@ void TestConv2D(bool print)
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
-    const int batchSize = 4;
-    const int inputChannels = 2;
-    const int outputChannels = 4;
-    const int inputRows = 6;
-    const int inputCols = 8;
-    const int kernelRows = 3;
-    const int kernelCols = 4;
-    const int strideRows = 2;
-    const int strideCols = 1;
-    const int dilationRows = 2;
-    const int dilationCols = 2;
-    const int padSizeRows = 2;
-    const int padSizeCols = 1;
+    constexpr int batchSize = 4;
+    constexpr int inputChannels = 2;
+    constexpr int outputChannels = 4;
+    constexpr int inputRows = 6;
+    constexpr int inputCols = 8;
+    constexpr int kernelRows = 3;
+    constexpr int kernelCols = 4;
+    constexpr int strideRows = 2;
+    constexpr int strideCols = 1;
+    constexpr int dilationRows = 2;
+    constexpr int dilationCols = 2;
+    constexpr int padSizeRows = 2;
+    constexpr int padSizeCols = 1;
 
-    const auto inputSize = std::make_pair(inputRows, inputCols);
-    const auto filterSize = std::make_pair(kernelRows, kernelCols);
-    const auto stride = std::make_pair(strideRows, strideCols);
-    const auto dilation = std::make_pair(dilationRows, dilationCols);
-    const auto padSize = std::make_pair(padSizeRows, padSizeCols);
+    constexpr auto filterSize = std::make_pair(kernelRows, kernelCols);
+    constexpr auto stride = std::make_pair(strideRows, strideCols);
+    constexpr auto dilation = std::make_pair(dilationRows, dilationCols);
+    constexpr auto padSize = std::make_pair(padSizeRows, padSizeCols);
 
-    const auto outputRows =
+    constexpr auto outputRows =
         (inputRows + 2 * padSizeRows - dilationRows * (kernelRows - 1) - 1) /
         strideRows +
         1;
-    const auto outputCols =
+    constexpr auto outputCols =
         (inputCols + 2 * padSizeCols - dilationCols * (kernelCols - 1) - 1) /
         strideCols +
         1;
@@ -83,14 +82,16 @@ void TestConv2D(bool print)
     bias.ToCuda();
 
     //! Test Conv2D on gpu
-    NN::Conv2D conv2D(outputChannels, inputChannels, inputSize, filterSize,
-                      stride, padSize, dilation,
-                      new Optimizer::SGD(0.0f), true);
+    NN::Conv2D conv2D(outputChannels, inputChannels, filterSize,
+                      stride, padSize, dilation, true);
     auto gpuOutput = conv2D(input, filter, bias);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
     gpuOutput.SetGradient(backwardData);
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuBackwardData = input.GetGradient();
 
@@ -108,6 +109,7 @@ void TestConv2D(bool print)
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
     hostOutput.SetGradient(backwardData);
+
     ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardData = input.GetGradient();
 

@@ -14,7 +14,7 @@ namespace Sapphire::BackProp
 {
 BasicBackward::BasicBackward(TensorUtil::TensorData dx,
                              TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(dx) }, {
+    : BackPropWrapper("BackwardExample", { std::move(dx) }, {
                           std::move(dy) })
 {
 }
@@ -27,7 +27,9 @@ void BasicBackward::m_runBackProp()
 BackwardTwoInputs::BackwardTwoInputs(TensorUtil::TensorData dx1,
                                      TensorUtil::TensorData dx2,
                                      TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(dx1), std::move(dx2) }, { std::move(dy) })
+    : BackPropWrapper("BackwardTwoInputsExample",
+                      { std::move(dx1), std::move(dx2) },
+                      { std::move(dy) })
 {
 }
 
@@ -39,7 +41,8 @@ void BackwardTwoInputs::m_runBackProp()
 BackwardTwoOutputs::BackwardTwoOutputs(TensorUtil::TensorData dx,
                                        TensorUtil::TensorData dy1,
                                        TensorUtil::TensorData dy2)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy1), std::move(dy2) })
+    : BackPropWrapper("BackwardTwoOutputsExample", { std::move(dx) },
+                      { std::move(dy1), std::move(dy2) })
 {
 }
 
@@ -50,7 +53,8 @@ void BackwardTwoOutputs::m_runBackProp()
 
 BackwardInplace::BackwardInplace(TensorUtil::TensorData dx,
                                  TensorUtil::TensorData dy)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) })
+    : BackPropWrapper("BackwardInplaceExample", { std::move(dx) },
+                      { std::move(dy) })
 {
 }
 

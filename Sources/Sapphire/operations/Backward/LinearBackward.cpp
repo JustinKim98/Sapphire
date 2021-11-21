@@ -4,24 +4,22 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <cmath>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Backward/LinearBackward.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 
 namespace Sapphire::BackProp
 {
-LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
+LinearBackProp::LinearBackProp(std::string name, TensorUtil::TensorData dx,
                                TensorUtil::TensorData dy,
                                TensorUtil::TensorData weight,
                                TensorUtil::TensorData bias,
                                TensorUtil::TensorData x,
-                               Optimizer::Optimizer* optimizer,
                                int batchSize)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
                       { std::move(weight), std::move(bias) },
                       { std::move(x) },
-                      {}, std::move(optimizer)),
+                      {}),
       m_batchSize(batchSize)
 {
 }
@@ -66,7 +64,7 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     Compute::Gemm(dw, dyTranspose, x);
     Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
 
-    m_optimizer->operator()(weight, dw);
+    ModelManager::CurModel().GetOptimizer()->operator()(weight, dw, m_name);
 }
 
 void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
@@ -86,6 +84,6 @@ void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
     Compute::Gemm(dB, ones, dy);
 
     Compute::Scale(dB, dB, 1.0f / static_cast<float>(m_batchSize));
-    m_optimizer->operator()(bias, dB);
+    ModelManager::CurModel().GetOptimizer()->operator()(bias, dB, m_name);
 }
 } // namespace Sapphire::BackProp

@@ -7,10 +7,11 @@
 #include <OperationTest/MeanTest.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
 #include <iostream>
 #include <random>
-#include "doctest.h"
+#include <doctest.h>
 
 namespace Sapphire::Test
 {
@@ -55,6 +56,9 @@ void TestMean(bool print)
     Initialize::InitializeBackwardData(yGpu,
                                        std::make_unique<Initialize::Normal>(
                                            0.0f, 10.0f));
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(yGpu);
     x.ToHost();
 

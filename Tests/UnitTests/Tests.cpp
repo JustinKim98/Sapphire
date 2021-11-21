@@ -314,11 +314,11 @@ TEST_CASE("Convolution")
 #ifdef GraphTest
 TEST_CASE("BasicGraphTest")
 {
-    SUBCASE("BasicGraph")
-    {
-        std::cout << "Basic graph test" << std::endl;
-        GraphFunctionalityTest();
-    }
+    // SUBCASE("BasicGraph")
+    // {
+    //     std::cout << "Basic graph test" << std::endl;
+    //     GraphFunctionalityTest();
+    // }
 
     SUBCASE("MultiplyTest")
     {
@@ -385,9 +385,9 @@ TEST_CASE("Model Test")
 {
     SUBCASE("SimpleLinearModelTest")
     {
-        int xFeatures = 300;
-        int yFeatures = 300;
-        int batchSize = 10;
+        constexpr int xFeatures = 300;
+        constexpr int yFeatures = 300;
+        constexpr int batchSize = 10;
         std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
         std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
 
@@ -399,17 +399,17 @@ TEST_CASE("Model Test")
 
     SUBCASE("Conv2DModelTest")
     {
-        const auto xChannels = 3;
-        const auto yChannels = 3;
-        const auto batchSize = 1;
-        const auto xSize = std::make_pair(5, 5);
-        const auto filterSize = std::make_pair(3, 3);
-        const auto stride = std::make_pair(2, 2);
-        const auto padSize = std::make_pair(2, 2);
-        const auto dilation = std::make_pair(1, 1);
-        const auto learningRate = 0.001f;
-        const auto hostMode = true;
-        const auto epochs = 1000;
+        constexpr auto xChannels = 3;
+        constexpr auto yChannels = 3;
+        constexpr auto batchSize = 1;
+        constexpr auto xSize = std::make_pair(5, 5);
+        constexpr auto filterSize = std::make_pair(3, 3);
+        constexpr auto stride = std::make_pair(2, 2);
+        constexpr auto padSize = std::make_pair(2, 2);
+        constexpr auto dilation = std::make_pair(1, 1);
+        constexpr auto learningRate = 0.001f;
+        constexpr auto hostMode = true;
+        constexpr auto epochs = 1000;
 
         const auto [xRows, xCols] = xSize;
         const auto [filterRows, filterCols] = filterSize;

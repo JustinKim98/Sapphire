@@ -9,10 +9,12 @@
 
 namespace Sapphire::BackProp
 {
-ReLUBackward::ReLUBackward(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
+ReLUBackward::ReLUBackward(std::string name, TensorUtil::TensorData dx,
+                           TensorUtil::TensorData dy,
                            TensorUtil::TensorData x)
-    : BackPropWrapper(
-        { std::move(dx) }, { std::move(dy) }, { std::move(x) }, {})
+    : BackPropWrapper(std::move(name),
+                      { std::move(dx) }, { std::move(dy) }, { std::move(x) },
+                      {})
 {
 }
 

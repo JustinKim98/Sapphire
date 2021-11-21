@@ -18,10 +18,15 @@ namespace Sapphire::NN
 class Conv2D : public Unit
 {
 public:
-    Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
+    Conv2D(int yChannels, int xChannels,
            std::pair<int, int> filterSize, std::pair<int, int> stride,
            std::pair<int, int> padSize, std::pair<int, int> dilation,
-           Optimizer::Optimizer* optimizer, bool useBias);
+           bool useBias);
+
+    Conv2D(std::string name, int yChannels, int xChannels,
+           std::pair<int, int> filterSize,
+           std::pair<int, int> stride, std::pair<int, int> padSize,
+           std::pair<int, int> dilation, bool useBias);
 
     ~Conv2D() override = default;
 
@@ -40,13 +45,13 @@ private:
     void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const override;
 
-    std::pair<int, int> m_inputSize,
-                        m_filterSize, m_stride,
-                        m_padSize, m_dilation;
-    int m_yChannels = -1;
-    int m_xChannels = -1;
-    bool m_useBias = false;
-    bool m_isSparse = false;
+    static int m_unitIdCount;
+    const int m_yChannels = -1;
+    const int m_xChannels = -1;
+    const bool m_useBias = false;
+    const bool m_isSparse = false;
+    const std::pair<int, int> m_filterSize, m_stride, m_padSize, m_dilation;
+    std::pair<int, int> m_inputSize;
     int m_yRows = -1;
     int m_yCols = -1;
 };

@@ -14,9 +14,11 @@ constexpr int labelIdx = 0;
 constexpr int dxIdx = 0;
 
 
-CrossEntropyBackward::CrossEntropyBackward(TensorUtil::TensorData dx,
+CrossEntropyBackward::CrossEntropyBackward(std::string name,
+                                           TensorUtil::TensorData dx,
                                            TensorUtil::TensorData label)
-    : BackPropWrapper({ std::move(dx) }, { TensorUtil::TensorData() },
+    : BackPropWrapper(std::move(name), { std::move(dx) },
+                      { TensorUtil::TensorData() },
                       { std::move(label) }, {})
 {
 }

@@ -13,10 +13,11 @@ constexpr int xIdx = 0;
 constexpr int labelIdx = 1;
 constexpr int dxIdx = 0;
 
-MSEBackward::MSEBackward(TensorUtil::TensorData dx,
+MSEBackward::MSEBackward(std::string name, TensorUtil::TensorData dx,
                          TensorUtil::TensorData x,
                          TensorUtil::TensorData label)
-    : BackPropWrapper({ std::move(dx) }, { TensorUtil::TensorData() },
+    : BackPropWrapper(std::move(name), { std::move(dx) },
+                      { TensorUtil::TensorData() },
                       { std::move(x), std::move(label) },
                       {})
 

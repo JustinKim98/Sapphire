@@ -9,7 +9,15 @@
 namespace Sapphire
 {
 Model::Model(std::string name)
-    : m_name(std::move(name))
+    : m_name(std::move(name)),
+      m_optimizer(nullptr)
+{
+}
+
+
+Model::Model(std::string name, Optimizer::Optimizer* optimizer)
+    : m_name(std::move(name)),
+      m_optimizer(optimizer)
 {
 }
 
@@ -101,10 +109,10 @@ TensorUtil::TensorDescriptor& Model::GetDescriptor(int descKey)
 
 void Model::BackProp(Tensor tensor)
 {
+    if (m_optimizer == nullptr)
+        throw std::runtime_error(
+            "Model::BackProp - Optimzier has not been set");
     m_autoGrad(tensor.TensorDescriptorKey());
-    // for (auto& [key, wrapper] : m_backPropWrapperPool)
-    //     delete wrapper;
-    // m_backPropWrapperPool.clear();
 }
 
 void Model::Clear()
