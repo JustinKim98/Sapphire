@@ -13,6 +13,8 @@ namespace Sapphire::Compute::Initialize
 {
 void Normal(TensorUtil::TensorData& data, float mean, float sd);
 
+void Uniform(TensorUtil::TensorData& data, float min, float max);
+
 void Ones(TensorUtil::TensorData& data);
 
 void Zeros(TensorUtil::TensorData& data);

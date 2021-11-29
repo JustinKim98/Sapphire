@@ -9,65 +9,77 @@
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/operations/Forward/ReLU.hpp>
-#include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/operations/Forward/MaxPool2D.hpp>
+#include <Sapphire/tensor/CreateTensor.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
 {
 void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
                  int batchSize,
-                 int yChannels, int xChannels, std::pair<int, int> xSize,
-                 std::pair<int, int> ySize,
-                 std::pair<int, int> filterSize, std::pair<int, int> stride,
-                 std::pair<int, int> padSize,
                  std::pair<int, int> dilation, float learningRate,
                  bool hostMode, int epochs)
 {
     ModelManager::AddModel("SimpleConv2DModel");
     ModelManager::SetCurrentModel("SimpleConv2DModel");
 
-    const auto [filterRows, filterCols] = filterSize;
-    const auto [xRows, xCols] = xSize;
-    const auto [yRows, yCols] = ySize;
-
     const CudaDevice gpu(0, "cuda0");
 
     //! Declare conv2d Layer
-    NN::Conv2D conv1(6, 3, std::make_pair(5, 5), stride, padSize,
-                     dilation, true);
-    NN::MaxPool2D pool1(yChannels, std::make_pair(2, 2), std::make_pair(2, 2));
-    NN::Conv2D conv2(16, 6, std::make_pair(5, 5), stride, padSize,
+    NN::Conv2D conv0(6, 3, std::make_pair(5, 5), std::pair(1, 1),
+                     std::pair(0, 0), std::pair(1, 1), true);
+    NN::MaxPool2D pool(6, std::make_pair(2, 2), std::make_pair(2, 2));
+    NN::Conv2D conv1(16, 6, std::make_pair(5, 5), std::pair(1, 1),
+                     std::make_pair(0, 0),
                      dilation,
-                     true);
-    NN::Linear fc1(16 * 5 * 5, 120);
-    NN::Linear fc2(120, 84);
-    NN::Linear fc3(84, 10);
+
+                     true
+        );
+    NN::Linear fc0(16 * 5 * 5, 120);
+    NN::Linear fc1(120, 84);
+    NN::Linear fc2(84, 10);
 
     //! Declare input tensors
-    Tensor filter(Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
-                  Type::Dense, true);
+    Tensor convFilter0 = MakeTensor(Shape({ 5, 5 }), gpu,
+                                    M<Initialize::Normal>(
+                                        0.0f, 1.0f), true);
+    Tensor convBias0 = MakeTensor(Shape({ 6 }), gpu,
+                                  M<Initialize::Normal>(0.0f, 1.0f),
+                                  true);
+    Tensor convFilter1 =
+        MakeTensor(Shape({ 5, 5 }), gpu,
+                   M<Initialize::Normal>(0.0f, 1.0f), true);
+    Tensor convBias1 =
+        MakeTensor(Shape({ 16 }), gpu, M<Initialize::Normal>(0.0f, 1.0f), true);
+    Tensor fcWeight0 = MakeTensor(Shape({ 16 * 5 * 5, 120 }), gpu,
+                                  M<Initialize::Normal>(0.0f, 1.0f),
+                                  true);
+    Tensor fcBias0 = MakeTensor(Shape({ 120 }), gpu,
+                                M<Initialize::Normal>(0.0f, 1.0f),
+                                true);
+    Tensor fcWeight1 =
+        MakeTensor(Shape({ 120, 84 }), gpu,
+                   M<Initialize::Normal>(0.0f, 1.0f), true);
+    Tensor fcBias1 =
+        MakeTensor(Shape({ 84 }), gpu,
+                   M<Initialize::Normal>(0.0f, 1.0f), true);
+    Tensor fcWeight2 = MakeTensor(Shape({ 84, 10 }), gpu,
+                                  M<Initialize::Normal>(0.0f, 1.0f),
+                                  true);
+    Tensor fcBias2 = MakeTensor(Shape({ 10 }), gpu,
+                                M<Initialize::Normal>(0.0f, 1.0f), true);
 
-    Tensor bias(Shape({ yChannels }), gpu, Type::Dense, true);
-
-    Tensor x(Shape({ batchSize, xChannels, xRows, xCols }), gpu, Type::Dense,
+    Tensor x(Shape({ batchSize, 3, xRows, xCols }), gpu, Type::Dense,
              true);
-    Tensor label(Shape({ batchSize, yChannels, yRows, yCols }), gpu,
+    Tensor label(Shape({ batchSize, 10 }), gpu,
                  Type::Dense, true);
-
-    //! Initialize weights to arbitrary values
-    Initialize::Initialize(filter,
-                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(bias,
-                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
 
     //! Configure data to be on host if needed
     if (hostMode)
     {
-        filter.ToHost();
-        bias.ToHost();
         x.ToHost();
         label.ToHost();
     }
@@ -81,9 +93,16 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
 
     for (int i = 0; i < epochs; ++i)
     {
-        auto y = NN::ReLU(conv1(x, filter, bias));
-        y = NN::ReLU(y);
-        const auto loss = NN::Loss::MSE(y, label);
+        //! Load data to x and label here
+
+        auto tensor = pool(NN::ReLU(conv0(x, convFilter0, convBias0)));
+        tensor = pool(NN::ReLU(conv1(tensor, convFilter1, convBias1)));
+
+        tensor = NN::ReLU(fc0(tensor, fcWeight0, fcBias0));
+        tensor = NN::ReLU(fc1(tensor, fcWeight1, fcBias1));
+        auto out = fc2(tensor, fcWeight2, fcBias2);
+
+        auto loss = NN::Loss::CrossEntropy(out, label);
 
         //! Print loss every 10 epochs
         if (i % 10 == 0)

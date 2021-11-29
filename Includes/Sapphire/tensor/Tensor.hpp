@@ -10,6 +10,8 @@
 #include <Sapphire/util/CudaDevice.hpp>
 #include <memory>
 
+
+
 namespace Sapphire
 {
 //! TensorDescriptor class contains data vector for processing
@@ -17,7 +19,7 @@ namespace Sapphire
 class Tensor
 {
 public:
-    Tensor();
+    Tensor() = default;
 
     Tensor(const Shape& shape, const CudaDevice& device,
            bool preserve = false);
@@ -56,8 +58,17 @@ public:
     void SetMode(ComputeMode mode) const;
 
 private:
-    int m_tensorDescKey;
+    int m_tensorDescKey = -1;
 };
+
+
+template <typename T, typename... Ts>
+std::unique_ptr<T> M(Ts&&... args)
+{
+    return std::unique_ptr<T>(std::forward<Ts>(args)...);
+}
+
+
 } // namespace Sapphire
 
 #endif

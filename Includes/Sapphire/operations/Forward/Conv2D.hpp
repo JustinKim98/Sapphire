@@ -35,6 +35,8 @@ public:
     Conv2D& operator=(const Conv2D& conv2D) = default;
     Conv2D& operator=(Conv2D&& conv2D) noexcept = default;
 
+
+    Tensor operator()(Tensor& tensor);
     Tensor operator()(Tensor& tensor, Tensor& filter, Tensor& bias);
     Tensor operator()(Tensor& tensor, Tensor& filter);
 
@@ -54,6 +56,7 @@ private:
     std::pair<int, int> m_inputSize;
     int m_yRows = -1;
     int m_yCols = -1;
+    Tensor m_filter, m_bias;
 };
 }; // namespace Sapphire::NN
 

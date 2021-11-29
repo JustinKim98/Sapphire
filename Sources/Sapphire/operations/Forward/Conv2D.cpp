@@ -10,6 +10,7 @@
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
+#include <Sapphire/tensor/CreateTensor.hpp>
 
 namespace Sapphire::NN
 {
@@ -44,6 +45,59 @@ Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
       m_dilation(dilation)
 {
 }
+
+Tensor Conv2D::operator()(Tensor& tensor)
+{
+    if (!m_useBias)
+        throw std::runtime_error(
+            "Conv2D::operator() - This unit was not configured to use bias, "
+            "but it "
+            "was called with bias");
+
+    auto inputRows = tensor.GetShape().At(-2);
+    auto inputCols = tensor.GetShape().At(-1);
+    const auto [dilationRows, dilationCols] = m_dilation;
+    const auto [rowPadding, colPadding] = m_padSize;
+    const auto [strideRows, strideCols] = m_stride;
+    const auto [filterRows, filterCols] = m_filterSize;
+    m_inputSize = std::make_pair(inputRows, inputCols);
+
+    m_yRows =
+        (inputRows + 2 * rowPadding - dilationRows * (filterRows - 1) - 1) /
+        strideRows +
+        1;
+    m_yCols =
+        (inputCols + 2 * colPadding - dilationCols * (filterCols - 1) - 1) /
+        strideCols +
+        1;
+
+    if (m_yRows <= 0 || m_yCols <= 0)
+        throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
+
+    const float stdv = 1.0f / std::sqrt(filterRows * filterCols);
+    if (m_filter.TensorDescriptorKey() == -1)
+    {
+        m_filter = MakeTensor(
+            Shape({ m_yChannels, m_xChannels, filterRows, filterCols }),
+            tensor.GetDevice(),
+            std::make_unique<Initialize::Uniform>(-stdv, stdv), true);
+        if (tensor.Mode() == ComputeMode::Cuda)
+            m_filter.ToCuda();
+    }
+    if (m_bias.TensorDescriptorKey() == -1 && m_useBias)
+    {
+        m_bias = MakeTensor(Shape({ m_yChannels }), tensor.GetDevice(),
+                            std::make_unique<Initialize::Uniform>(-stdv, stdv),
+                            true);
+        if (tensor.Mode() == ComputeMode::Cuda)
+            m_bias.ToCuda();
+    }
+
+    if (m_useBias)
+        return this->operator()(tensor, m_filter, m_bias);
+    return this->operator()(tensor, m_filter);
+}
+
 
 Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
 {

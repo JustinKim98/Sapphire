@@ -8,6 +8,7 @@
 
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/compute/Initialize.hpp>
+#include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/Model.hpp>
 
 namespace Sapphire::Initialize
@@ -96,6 +97,25 @@ public:
 private:
     float m_mean,
           m_sd;
+};
+
+class Uniform : public Initializer
+{
+public:
+    Uniform(float min, float max)
+        : Initializer(),
+          m_min(min),
+          m_max(max)
+    {
+    }
+
+    void operator()(TensorData& tensorData) override
+    {
+        Compute::Initialize::Uniform(tensorData, m_min, m_max);
+    }
+
+private:
+    float m_min, m_max;
 };
 
 class HeNormal : public Initializer
