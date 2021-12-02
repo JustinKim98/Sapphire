@@ -82,7 +82,7 @@ void TestMaxPool2D(bool print)
     bias.ToCuda();
 
     //! Test Conv2D on gpu
-    NN::MaxPool2D maxPool2D(channels, windowSize,
+    NN::MaxPool2D maxPool2D(windowSize,
                             stride, padSize);
     auto gpuOutput = maxPool2D(input);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);

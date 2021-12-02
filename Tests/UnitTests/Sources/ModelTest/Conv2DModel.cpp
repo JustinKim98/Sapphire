@@ -18,39 +18,37 @@
 
 namespace Sapphire::Test
 {
-void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
-                 int batchSize,
-                 std::pair<int, int> dilation, float learningRate,
-                 bool hostMode, int epochs)
+void Conv2DModelTest(
+    std::vector<float> xData, std::vector<float> yData,
+    int batchSize, std::pair<int, int> inputSize,
+    float learningRate,
+    bool hostMode, int epochs)
 {
     ModelManager::AddModel("SimpleConv2DModel");
     ModelManager::SetCurrentModel("SimpleConv2DModel");
 
     const CudaDevice gpu(0, "cuda0");
+    const auto [xRows, xCols] = inputSize;
 
     //! Declare conv2d Layer
     NN::Conv2D conv0(6, 3, std::make_pair(5, 5), std::pair(1, 1),
                      std::pair(0, 0), std::pair(1, 1), true);
-    NN::MaxPool2D pool(6, std::make_pair(2, 2), std::make_pair(2, 2));
+    NN::MaxPool2D pool(std::make_pair(2, 2), std::make_pair(2, 2));
     NN::Conv2D conv1(16, 6, std::make_pair(5, 5), std::pair(1, 1),
-                     std::make_pair(0, 0),
-                     dilation,
-
-                     true
-        );
+                     std::make_pair(0, 0), std::make_pair(1, 1), true);
     NN::Linear fc0(16 * 5 * 5, 120);
     NN::Linear fc1(120, 84);
     NN::Linear fc2(84, 10);
 
     //! Declare input tensors
-    Tensor convFilter0 = MakeTensor(Shape({ 5, 5 }), gpu,
+    Tensor convFilter0 = MakeTensor(Shape({ 6, 3, 5, 5 }), gpu,
                                     M<Initialize::Normal>(
                                         0.0f, 1.0f), true);
     Tensor convBias0 = MakeTensor(Shape({ 6 }), gpu,
                                   M<Initialize::Normal>(0.0f, 1.0f),
                                   true);
     Tensor convFilter1 =
-        MakeTensor(Shape({ 5, 5 }), gpu,
+        MakeTensor(Shape({ 16, 6, 5, 5 }), gpu,
                    M<Initialize::Normal>(0.0f, 1.0f), true);
     Tensor convBias1 =
         MakeTensor(Shape({ 16 }), gpu, M<Initialize::Normal>(0.0f, 1.0f), true);
@@ -84,19 +82,19 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
         label.ToHost();
     }
 
-    //! Load the data to model
-    x.LoadData(xData);
-    label.LoadData(labelData);
-
     Optimizer::SGD sgd(learningRate);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
     for (int i = 0; i < epochs; ++i)
     {
-        //! Load data to x and label here
+        //! Load the data to model
+        x.LoadData(xData);
+        label.LoadData(yData);
 
+        //! Load data to x and label here
         auto tensor = pool(NN::ReLU(conv0(x, convFilter0, convBias0)));
         tensor = pool(NN::ReLU(conv1(tensor, convFilter1, convBias1)));
+        tensor.Flatten();
 
         tensor = NN::ReLU(fc0(tensor, fcWeight0, fcBias0));
         tensor = NN::ReLU(fc1(tensor, fcWeight1, fcBias1));
@@ -105,7 +103,7 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
         auto loss = NN::Loss::CrossEntropy(out, label);
 
         //! Print loss every 10 epochs
-        if (i % 10 == 0)
+        if (i % 1 == 0)
         {
             const auto lossData = loss.GetData();
             std::cout << "epoch: " << i << " loss : " << lossData[0]

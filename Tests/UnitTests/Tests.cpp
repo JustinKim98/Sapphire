@@ -314,12 +314,6 @@ TEST_CASE("Convolution")
 #ifdef GraphTest
 TEST_CASE("BasicGraphTest")
 {
-    // SUBCASE("BasicGraph")
-    // {
-    //     std::cout << "Basic graph test" << std::endl;
-    //     GraphFunctionalityTest();
-    // }
-
     SUBCASE("MultiplyTest")
     {
         std::cout << "Multiply" << std::endl;
@@ -341,7 +335,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("CrossEntropyTest")
     {
         std::cout << "CrossEntropy" << std::endl;
-        TestCrossEntropy(true);
+        TestCrossEntropy(false);
     }
 
     SUBCASE("AddTest")
@@ -402,43 +396,13 @@ TEST_CASE("Model Test")
         constexpr auto xChannels = 3;
         constexpr auto yChannels = 3;
         constexpr auto batchSize = 1;
-        constexpr auto xSize = std::make_pair(5, 5);
-        constexpr auto filterSize = std::make_pair(3, 3);
-        constexpr auto stride = std::make_pair(2, 2);
-        constexpr auto padSize = std::make_pair(2, 2);
-        constexpr auto dilation = std::make_pair(1, 1);
-        constexpr auto learningRate = 0.001f;
-        constexpr auto hostMode = true;
-        constexpr auto epochs = 1000;
-
-        const auto [xRows, xCols] = xSize;
-        const auto [filterRows, filterCols] = filterSize;
-        const auto [strideRows, strideCols] = stride;
-        const auto [padRows, padCols] = padSize;
-        const auto [dilationRows, dilationCols] = dilation;
-
-        const auto yRows =
-            (xRows + 2 * padRows - dilationRows * (filterRows - 1) - 1) /
-            strideRows +
-            1;
-        const auto yCols =
-            (xCols + 2 * padCols - dilationCols * (filterCols - 1) - 1) /
-            strideCols +
-            1;
-
-        std::vector<float> xFeatureVector(
-            batchSize * xChannels * xRows * xCols,
-            0.1f);
-        std::vector<float> labelVector(
-            batchSize * yChannels * yRows * yCols
-            , 10.0f);
+        constexpr auto xSize = std::make_pair(32, 32);
+        std::vector<float> xData(32 * 32 * 3, 0.0f);
+        std::vector<float> labelData(10, 0.0f);
+        labelData[5] = 1.0f;
 
         std::cout << "--- Simple Conv2D Model ---" << std::endl;
-        Conv2DModel(xFeatureVector, labelVector, batchSize, yChannels,
-                    xChannels, xSize,
-                    std::make_pair(yRows, yCols),
-                    filterSize, stride, padSize, dilation, learningRate,
-                    hostMode, epochs);
+        Conv2DModelTest(xData, labelData, batchSize, xSize, 0.001f, false, 10);
     }
 }
 

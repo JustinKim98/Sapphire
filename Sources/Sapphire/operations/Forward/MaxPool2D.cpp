@@ -16,11 +16,10 @@ namespace Sapphire::NN
 {
 int MaxPool2D::m_unitIdCount = 0;
 
-MaxPool2D::MaxPool2D(int channels,
-                     std::pair<int, int> windowSize, std::pair<int, int> stride,
-                     std::pair<int, int> padSize)
-    : Unit("MaxPool2D" + std::to_string(m_unitIdCount++)),
-      m_channels(channels)
+MaxPool2D::MaxPool2D(
+    std::pair<int, int> windowSize, std::pair<int, int> stride,
+    std::pair<int, int> padSize)
+    : Unit("MaxPool2D" + std::to_string(m_unitIdCount++))
 {
     const auto [filterRows, filterCols] = windowSize;
 
@@ -44,11 +43,11 @@ Tensor MaxPool2D::operator()(const Tensor& tensor)
         (inputRows + 2 * rowPadding - (windowRows - 1) - 1) / strideRows + 1;
     m_yCols =
         (inputCols + 2 * colPadding - (windowCols - 1) - 1) / strideCols + 1;
-
     if (m_yRows <= 0 || m_yCols <= 0)
         throw std::invalid_argument(
             "MaxPool2D::MaxPool2D - invalid argument (could not derive size of y)");
 
+    m_channels = tensor.GetShape().At(-3);
     auto device = tensor.GetDevice();
     auto& xDesc = model.GetDescriptor(tensor.TensorDescriptorKey());
     m_checkArguments({ &xDesc });
@@ -104,7 +103,7 @@ void MaxPool2D::m_checkArguments(
     if (xShape.Dim() < 4)
         throw std::invalid_argument(
             "NN::MaxPool2D - input should have shape of (*, C, H, W)");
-    if (xShape.At(xShape.Dim() - 3) != m_channels)
+    if (xShape.At(-3) != m_channels)
         throw std::invalid_argument(
             "NN::MaxPool2D - size of x channels does not match ");
 }

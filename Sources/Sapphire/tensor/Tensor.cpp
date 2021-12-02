@@ -96,6 +96,24 @@ void Tensor::SetMode(ComputeMode mode) const
     desc.SetMode(mode);
 }
 
+void Tensor::Reshape(Shape shape) const
+{
+    if (shape.Size() != GetShape().Size())
+        throw std::runtime_error(
+            "Tensor::Reshape - New shape does not match the size of current "
+            "shape");
+
+    Model& model = ModelManager::CurModel();
+    TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);
+    desc.Reshape(shape);
+}
+
+void Tensor::Flatten() const
+{
+    const auto newShape = Shape({ GetShape().Size() });
+    Reshape(newShape);
+}
+
 std::vector<float> Tensor::GetData() const
 {
     Model& model = ModelManager::CurModel();

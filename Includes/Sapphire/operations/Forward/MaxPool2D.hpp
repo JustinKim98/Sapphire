@@ -16,7 +16,7 @@ namespace Sapphire::NN
 class MaxPool2D : public Unit
 {
 public:
-    MaxPool2D(int channels, std::pair<int, int> windowSize,
+    MaxPool2D(std::pair<int, int> windowSize,
               std::pair<int, int> stride,
               std::pair<int, int> padSize = std::pair(0, 0));
 

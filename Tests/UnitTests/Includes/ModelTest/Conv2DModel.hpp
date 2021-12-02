@@ -12,13 +12,9 @@
 
 namespace Sapphire::Test
 {
-void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
-                 int batchSize,
-                 int yChannels, int xChannels, std::pair<int, int> xSize,
-                 std::pair<int, int> ySize, std::pair<int, int> filterSize,
-                 std::pair<int, int> stride, std::pair<int, int> padSize,
-                 std::pair<int, int> dilation, float learningRate,
-                 bool hostMode, int epochs);
+void Conv2DModelTest(std::vector<float> xData, std::vector<float> yData,
+                     int batchSize, std::pair<int, int> inputSize,
+                     float learningRate, bool hostMode, int epochs);
 }
 
 #endif

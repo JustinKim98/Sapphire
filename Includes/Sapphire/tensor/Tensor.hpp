@@ -55,7 +55,10 @@ public:
     void ToHost();
     [[nodiscard]] ComputeMode Mode() const;
     [[nodiscard]] int Size() const;
+
     void SetMode(ComputeMode mode) const;
+    void Reshape(Shape shape) const;
+    void Flatten() const;
 
 private:
     int m_tensorDescKey = -1;
@@ -65,7 +68,7 @@ private:
 template <typename T, typename... Ts>
 std::unique_ptr<T> M(Ts&&... args)
 {
-    return std::unique_ptr<T>(std::forward<Ts>(args)...);
+    return std::make_unique<T>(std::forward<Ts>(args)...);
 }
 
 
