@@ -11,8 +11,10 @@
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
 #include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
+#include <Sapphire/util/UnitUtils.hpp>
 #include <algorithm>
 #include <cassert>
+
 
 namespace Sapphire::Compute
 {
@@ -77,11 +79,15 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
 
+    const int minRequiredDim = Util::GetMatchingDim(
+        { shapeOut, shapeA, shapeB });
+
     if (y.Mode() == ComputeMode::Cuda)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
-                             b.CudaRawPtr(), 0, 0, Dense::Cuda::Sub, 0, false,
+                             b.CudaRawPtr(), 0, minRequiredDim,
+                             Dense::Cuda::Sub, 0, false,
                              false);
     }
     else
@@ -89,7 +95,7 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
                              shapeA.Size(), shapeB.Size(),
                              y.HostMutableRawPtr(),
-                             a.HostRawPtr(), b.HostRawPtr(), 0, 0,
+                             a.HostRawPtr(), b.HostRawPtr(), 0, minRequiredDim,
                              Dense::Naive::Sub, 0, false, false);
     }
 }

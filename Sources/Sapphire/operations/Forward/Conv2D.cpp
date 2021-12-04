@@ -7,6 +7,7 @@
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/operations/Backward/Conv2DBackward.hpp>
+#include <Sapphire/tensor/CreateTensor.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
@@ -28,6 +29,21 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> filterSize,
       m_padSize(padSize),
       m_dilation(dilation)
 {
+    const CudaDevice gpu(0, "cuda0");
+    const auto [filterRows, filterCols] = filterSize;
+    //const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
+    //const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
+
+    m_filter = MakeTensor(
+        Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
+        M<Initialize::Normal>(0.0f, 1.0f), true);
+    if (useBias)
+    {
+        //const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
+        m_bias = MakeTensor(Shape({ yChannels }), gpu,
+                            M<Initialize::Normal>(0.0f, 1.0f),
+                            true);
+    }
 }
 
 Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
@@ -46,7 +62,7 @@ Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
 {
 }
 
-Tensor Conv2D::operator()(Tensor& tensor)
+Tensor Conv2D::operator()(Tensor& x)
 {
     if (!m_useBias)
         throw std::runtime_error(
@@ -54,8 +70,8 @@ Tensor Conv2D::operator()(Tensor& tensor)
             "but it "
             "was called with bias");
 
-    auto inputRows = tensor.GetShape().At(-2);
-    auto inputCols = tensor.GetShape().At(-1);
+    auto inputRows = x.GetShape().At(-2);
+    auto inputCols = x.GetShape().At(-1);
     const auto [dilationRows, dilationCols] = m_dilation;
     const auto [rowPadding, colPadding] = m_padSize;
     const auto [strideRows, strideCols] = m_stride;
@@ -74,28 +90,24 @@ Tensor Conv2D::operator()(Tensor& tensor)
     if (m_yRows <= 0 || m_yCols <= 0)
         throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
 
-    const float stdv = 1.0f / std::sqrt(filterRows * filterCols);
-    if (m_filter.TensorDescriptorKey() == -1)
+    if (m_filter.Mode() != x.Mode())
     {
-        m_filter = MakeTensor(
-            Shape({ m_yChannels, m_xChannels, filterRows, filterCols }),
-            tensor.GetDevice(),
-            std::make_unique<Initialize::Uniform>(-stdv, stdv), true);
-        if (tensor.Mode() == ComputeMode::Cuda)
+        if (x.Mode() == ComputeMode::Cuda)
             m_filter.ToCuda();
+        else
+            m_filter.ToHost();
     }
-    if (m_bias.TensorDescriptorKey() == -1 && m_useBias)
+    if (m_useBias)
     {
-        m_bias = MakeTensor(Shape({ m_yChannels }), tensor.GetDevice(),
-                            std::make_unique<Initialize::Uniform>(-stdv, stdv),
-                            true);
-        if (tensor.Mode() == ComputeMode::Cuda)
+        if (x.Mode() == ComputeMode::Cuda)
             m_bias.ToCuda();
+        else
+            m_bias.ToHost();
     }
 
     if (m_useBias)
-        return this->operator()(tensor, m_filter, m_bias);
-    return this->operator()(tensor, m_filter);
+        return this->operator()(x, m_filter, m_bias);
+    return this->operator()(x, m_filter);
 }
 
 

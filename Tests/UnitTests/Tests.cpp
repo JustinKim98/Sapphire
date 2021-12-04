@@ -33,15 +33,15 @@
 #include <iostream>
 #include "doctest.h"
 
-#define GraphTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
-#define ConvolutionTest
-#define BasicGraphTest
+//#define GraphTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
+// #define ConvolutionTest
+// #define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test
@@ -347,7 +347,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear(false);
+        //TestLinear(true);
     }
 
     SUBCASE("Conv2DTest")
@@ -360,15 +360,13 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("MaxPool2DTest")
     {
         std::cout << "MaxPool2D" << std::endl;
-        for (int i = 0; i < 1; ++i)
-            TestMaxPool2D(false);
+        TestMaxPool2D(false);
     }
 
     SUBCASE("SoftmaxTest")
     {
         std::cout << "Softmax" << std::endl;
-        for (int i = 0; i < 1; ++i)
-            TestSoftmax(false);
+        TestSoftmax(true);
     }
 }
 #endif
@@ -395,12 +393,12 @@ TEST_CASE("Model Test")
     {
         constexpr auto batchSize = 1;
         constexpr auto xSize = std::make_pair(32, 32);
-        std::vector xData((32 * 32 * 3 + 1), 0.0f);
+        std::vector xData(32 * 32 * 3 + 1, 0.0f);
         std::vector labelData(10, 0.0f);
         labelData[5] = 1.0f;
 
         std::cout << "--- Simple Conv2D Model ---" << std::endl;
-        Conv2DModelTest(labelData, batchSize, xSize, 0.005f, false, 1000);
+        Conv2DModelTest(labelData, batchSize, xSize, 0.0001f, false, 1000);
     }
 }
 

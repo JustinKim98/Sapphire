@@ -48,15 +48,6 @@ __host__ void LeakyReLU(float* y, const float* x, const float a,
     }
 }
 
-__host__ void SoftMax(float* y, const float* x, unsigned int totalSize,
-                      unsigned int unitSize)
-{
-    const auto blockDim = (unitSize > 512) ? 512 : unitSize;
-    const auto gridDim = (totalSize % blockDim == 0)
-                             ? totalSize / blockDim
-                             : totalSize / blockDim + 1;
-    SoftMaxKernel<<<gridDim, blockDim>>>(y, x, totalSize, unitSize);
-}
 
 __host__ void ReLUBackward(float* dx, const float* dy, const float* x,
                            unsigned int totalSize)
@@ -98,6 +89,15 @@ __host__ void LeakyReLUBackward(float* dx, const float* dy, const float* x,
         LeakyReLUBackwardKernel<<<1, totalSize - firstLaunchSize>>>(
             dx, dy, x, a, totalSize - firstLaunchSize);
     }
+}
+
+__host__ void SoftMax(float* y, const float* x, unsigned int totalSize,
+                      unsigned int unitSize)
+{
+    const auto blockDim = (unitSize > 512) ? 512 : unitSize;
+    const auto gridDim = (totalSize % blockDim == 0) ? totalSize / blockDim
+                                                     : totalSize / blockDim + 1;
+    SoftMaxKernel<<<gridDim, blockDim>>>(y, x, totalSize, unitSize);
 }
 
 __host__ void SoftmaxBackward(float* dx, const float* dy, const float* x,

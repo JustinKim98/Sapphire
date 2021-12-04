@@ -12,12 +12,14 @@
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
+#include <Sapphire/tensor/CreateTensor.hpp>
 
 namespace Sapphire::NN
 {
 int Linear::m_unitIdCount = 0;
 
-Linear::Linear(int inputFeatureSize, int outputFeatureSize, bool isSparse)
+Linear::Linear(int inputFeatureSize, int outputFeatureSize,
+               bool isSparse)
     : Unit(std::string("Linear") + std::to_string(m_unitIdCount++)),
       m_inputs(inputFeatureSize),
       m_outputs(outputFeatureSize),
@@ -26,6 +28,14 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize, bool isSparse)
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
+
+    CudaDevice gpu(0, "cuda0");
+
+    auto sd = 1.0f / std::sqrt(inputFeatureSize);
+    m_weight = MakeTensor(Shape({ inputFeatureSize, outputFeatureSize }), gpu,
+                          M<Initialize::Normal>(0.0f, 0.1f), true);
+    m_bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
+                        M<Initialize::Uniform>(-sd, sd), true);
 }
 
 Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
@@ -38,6 +48,34 @@ Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
+    CudaDevice gpu(0, "cuda0");
+
+    auto sd = 1.0f / std::sqrt(inputFeatureSize);
+    m_weight = MakeTensor(Shape({ inputFeatureSize, outputFeatureSize }), gpu,
+                          M<Initialize::Normal>(0.0f, 0.1f), true);
+    m_bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
+                        M<Initialize::Uniform>(-sd, sd), true);
+}
+
+Tensor Linear::operator()(Tensor& x)
+{
+    if (m_weight.Mode() != x.Mode())
+    {
+        if (x.Mode() == ComputeMode::Cuda)
+            m_weight.ToCuda();
+        else
+            m_weight.ToHost();
+    }
+
+    if (m_bias.Mode() != x.Mode())
+    {
+        if (x.Mode() == ComputeMode::Cuda)
+            m_bias.ToCuda();
+        else
+            m_bias.ToHost();
+    }
+
+    return this->operator()(x, m_weight, m_bias);
 }
 
 Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
@@ -63,40 +101,49 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
     auto yData = yDesc.GetForwardData();
     auto dyData = yDesc.GetBackwardData();
 
-    auto transposedWeight =
-        TensorUtil::TensorData(Shape({ m_outputs, m_inputs }), Type::Dense,
-                               weight.GetDevice());
-    transposedWeight.SetMode(weight.Mode());
-
-    auto ones = TensorUtil::TensorData(bias.GetShape().GetTranspose(),
-                                       Type::Dense,
-                                       bias.GetDevice());
-    ones.SetMode(bias.Mode());
-    Compute::Initialize::Ones(ones);
+    const auto batchSize = x.GetShape().GetNumUnits(1);
+    auto transposedOnes = TensorUtil::TensorData(
+        Shape({ batchSize, 1 }), Type::Dense,
+        bias.GetDevice());
+    transposedOnes.SetMode(bias.Mode());
+    Compute::Initialize::Ones(transposedOnes);
 
     //! Change the dimension of the data to match the requirements
-    Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData);
+    Util::ChangeTensorDataDimension(2, xData, dxData, yData, dyData, biasData);
 
     auto expandedBias = TensorUtil::TensorData(
         yData.GetShape(), Type::Dense, bias.GetDevice());
     expandedBias.SetMode(bias.Mode());
 
+    const auto shape0 = expandedBias.GetShape();
+    const auto shape1 = transposedOnes.GetShape(); // check
+    const auto shape2 = biasData.GetShape();
+    const auto shape3 = yData.GetShape();
+    const auto shape4 = weightData.GetShape();
+
     Compute::Initialize::Zeros(expandedBias);
-    Compute::Transpose(transposedWeight, weightData);
-    Compute::Gemm(expandedBias, ones,
+    Compute::Gemm(yData, transposedOnes,
                   biasData);
-    TensorUtil::TensorData::DeepCopy(yData, expandedBias);
-    Compute::Gemm(yData, xData, transposedWeight);
+    Compute::Gemm(yData, xData, weightData);
 
     auto* backPropWrapper =
         new BackProp::LinearBackProp(m_name,
                                      dxData, dyData, weightData, biasData,
-                                     xData,
-                                     xData.Rows());
+                                     xData, batchSize);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 
     return Tensor(yKey);
+}
+
+Tensor Linear::GetWeight() const
+{
+    return m_weight;
+}
+
+Tensor Linear::GetBias() const
+{
+    return m_bias;
 }
 
 int Linear::m_registerOutputTensor(
@@ -117,6 +164,10 @@ void Linear::m_checkArguments(
 {
     const auto input = arguments.at(0);
     if (input->GetShape().Cols() != m_inputs)
-        throw std::invalid_argument("NN::Linear - Shape mismatch");
+        throw std::invalid_argument("NN::Linear - Shape mismatch input: (" +
+                                    std::to_string(input->GetShape().Cols()) +
+                                    ") expected : (" + std::to_string(m_inputs)
+                                    +
+                                    ")");
 }
 } // namespace Sapphire::NN

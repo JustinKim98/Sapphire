@@ -36,7 +36,7 @@ public:
     Conv2D& operator=(Conv2D&& conv2D) noexcept = default;
 
 
-    Tensor operator()(Tensor& tensor);
+    Tensor operator()(Tensor& x);
     Tensor operator()(Tensor& tensor, Tensor& filter, Tensor& bias);
     Tensor operator()(Tensor& tensor, Tensor& filter);
 

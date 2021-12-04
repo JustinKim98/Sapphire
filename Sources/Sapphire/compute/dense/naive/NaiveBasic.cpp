@@ -7,6 +7,7 @@
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <cmath>
 #include <stdexcept>
+#include <limits>
 
 namespace Sapphire::Compute::Dense::Naive
 {
@@ -237,13 +238,18 @@ void Softmax(float* output, const float* input, unsigned int totalSize,
 
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
+        float max = std::numeric_limits<float>::min();
+        for (unsigned int i = 0; i < unitSize; ++i)
+            if (max < input[unitSize * batchIdx + i])
+                max = input[unitSize * batchIdx + i];
+
         float sum = 0;
         for (unsigned int i = 0; i < unitSize; ++i)
-            sum += std::exp(input[unitSize * batchIdx + i]);
+            sum += std::exp(input[unitSize * batchIdx + i] - max);
 
         for (unsigned int i = 0; i < unitSize; ++i)
             output[unitSize * batchIdx + i] =
-                std::exp(input[unitSize * batchIdx + i]) / sum;
+                std::exp(input[unitSize * batchIdx + i] - max) / sum;
     }
 }
 

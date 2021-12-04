@@ -49,12 +49,11 @@ void TestSoftmax(bool print)
     Initialize::Initialize(bias,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
 
-    //auto tensor = linear(input, weight, bias);
-    auto tensor = NN::SoftMax(input);
-
-    const auto forwardDataHost = tensor.GetData();
     Optimizer::SGD sgd(0.0f);
     ModelManager::CurModel().SetOptimizer(&sgd);
+
+    auto tensor = NN::SoftMax(input);
+    const auto forwardDataHost = tensor.GetData();
     tensor.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(tensor);
     const auto backwardDataHost = input.GetGradient();
@@ -66,7 +65,6 @@ void TestSoftmax(bool print)
     Initialize::InitializeBackwardData(input,
                                        std::make_unique<Initialize::Zeros>());
 
-    //tensor = linear(input, weight, bias);
     tensor = NN::SoftMax(input);
     const auto forwardDataCuda = tensor.GetData();
     tensor.SetGradient(backwardData);

@@ -19,8 +19,8 @@ namespace Sapphire::Test
 void TestLinear(bool print)
 {
     constexpr int batchSize = 2;
-    constexpr int inputs = 100;
-    constexpr int outputs = 100;
+    constexpr int inputs = 50;
+    constexpr int outputs = 30;
 
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
@@ -34,26 +34,17 @@ void TestLinear(bool print)
         data = dist(gen);
 
     Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense);
-    Tensor weight(Shape({ inputs, outputs }), gpu, Type::Dense);
-    Tensor bias(Shape({ 1, outputs }), gpu, Type::Dense);
+
     input.SetMode(ComputeMode::Host);
-    weight.SetMode(ComputeMode::Host);
-    bias.SetMode(ComputeMode::Host);
 
     Initialize::Initialize(input,
                            std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-    Initialize::Initialize(weight,
-                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-    Initialize::Initialize(bias,
-                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
 
     input.ToCuda();
-    weight.ToCuda();
-    bias.ToCuda();
 
     NN::Linear linear(inputs, outputs);
 
-    auto gpuOutput = linear(input, weight, bias);
+    auto gpuOutput = linear(input);
     const auto gpuForwardPtr = gpuOutput.GetData();
     gpuOutput.SetGradient(backwardData);
 
@@ -63,14 +54,12 @@ void TestLinear(bool print)
     const auto gpuBackwardPtr = input.GetGradient();
 
     input.ToHost();
-    weight.ToHost();
-    bias.ToHost();
 
     Initialize::InitializeBackwardData(input,
                                        std::make_unique<Initialize::Zeros>());
 
     NN::Linear linearHost(inputs, outputs);
-    const auto hostOutput = linearHost(input, weight, bias);
+    const auto hostOutput = linearHost(input);
     const auto hostForwardPtr = hostOutput.GetData();
     hostOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);

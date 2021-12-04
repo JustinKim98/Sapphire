@@ -19,7 +19,6 @@ class Linear : public Unit
 public:
     Linear(int inputFeatureSize, int outputFeatureSize,
            bool isSparse = false);
-
     Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
            bool isSparse = false);
 
@@ -30,7 +29,11 @@ public:
     Linear& operator=(const Linear& linear) = default;
     Linear& operator=(Linear&& linear) noexcept = default;
 
+    Tensor operator()(Tensor& x);
     Tensor operator()(Tensor& x, Tensor weight, Tensor bias);
+
+    Tensor GetWeight() const;
+    Tensor GetBias() const;
 
 protected:
     void m_addTensorData(std::string name, TensorUtil::TensorData tensorData)
@@ -64,6 +67,7 @@ private:
     int m_outputs;
     CudaDevice m_device;
     bool m_isSparse;
+    Tensor m_weight, m_bias;
 };
 } // namespace Sapphire::NN
 
