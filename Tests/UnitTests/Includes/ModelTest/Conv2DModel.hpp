@@ -9,12 +9,14 @@
 
 #include <utility>
 #include <vector>
+#include <cstdint>
 
 namespace Sapphire::Test
 {
-void Conv2DModelTest(std::vector<float> xData, std::vector<float> yData,
-                     int batchSize, std::pair<int, int> inputSize,
-                     float learningRate, bool hostMode, int epochs);
+void Conv2DModelTest(
+    std::vector<float> yData, int batchSize,
+    std::pair<int, int> inputSize, float learningRate,
+    bool hostMode, int epochs);
 }
 
 #endif

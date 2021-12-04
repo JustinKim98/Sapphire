@@ -167,8 +167,7 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
     auto yCopy = y.GetDataCopy();
     auto* backPropWrapper =
         new BackProp::Conv2DBackProp(m_name, dx, dy, filterData, biasData, x,
-                                     m_stride,
-                                     m_dilation, m_padSize);
+                                     m_stride, m_dilation, m_padSize);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 

@@ -377,32 +377,30 @@ TEST_CASE("BasicGraphTest")
 
 TEST_CASE("Model Test")
 {
-    SUBCASE("SimpleLinearModelTest")
-    {
-        constexpr int xFeatures = 300;
-        constexpr int yFeatures = 300;
-        constexpr int batchSize = 10;
-        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
-        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
-
-        std::cout << "--- Simple Linear Model ---" << std::endl;
-
-        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
-                          0.0001f, batchSize, 2000, false);
-    }
+    // SUBCASE("SimpleLinearModelTest")
+    // {
+    //     constexpr int xFeatures = 300;
+    //     constexpr int yFeatures = 300;
+    //     constexpr int batchSize = 10;
+    //     std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
+    //     std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+    //
+    //     std::cout << "--- Simple Linear Model ---" << std::endl;
+    //
+    //     SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
+    //                       0.0001f, batchSize, 2000, false);
+    // }
 
     SUBCASE("Conv2DModelTest")
     {
-        constexpr auto xChannels = 3;
-        constexpr auto yChannels = 3;
         constexpr auto batchSize = 1;
         constexpr auto xSize = std::make_pair(32, 32);
-        std::vector<float> xData(32 * 32 * 3, 0.0f);
-        std::vector<float> labelData(10, 0.0f);
+        std::vector xData((32 * 32 * 3 + 1), 0.0f);
+        std::vector labelData(10, 0.0f);
         labelData[5] = 1.0f;
 
         std::cout << "--- Simple Conv2D Model ---" << std::endl;
-        Conv2DModelTest(xData, labelData, batchSize, xSize, 0.001f, false, 10);
+        Conv2DModelTest(labelData, batchSize, xSize, 0.005f, false, 1000);
     }
 }
 
