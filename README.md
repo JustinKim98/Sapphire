@@ -1,31 +1,31 @@
-# Motutapu
+# Sapphire
 
 <img src="./Medias/Logo.png" width=306 height=344 />
 
-[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/jwkim98/Motutapu/blob/master/LICENSE) [![Build Status](https://travis-ci.org/jwkim98/Motutapu.svg?branch=master)](https://travis-ci.org/jwkim98/Motutapu/branches)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/69c0165c20a14c3197359d360d35cbd2)](https://app.codacy.com/gh/jwkim98/Sapphire?utm_source=github.com&utm_medium=referral&utm_content=jwkim98/Sapphire&utm_campaign=Badge_Grade_Settings)
+[![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/jwkim98/Motutapu/blob/master/LICENSE) 
 [![Build status](https://ci.appveyor.com/api/projects/status/v8c2tpqjy7mbghji?svg=true)](https://ci.appveyor.com/project/jwkim98/motutapu)
+ 
+[![codecov](https://codecov.io/gh/jwkim98/Motutapu/branch/master/graph/badge.svg?token=TABTFS9WBN)](https://codecov.io/gh/jwkim98/Motutapu)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d81d09c4b414983b5a99110dfb2a183)](https://www.codacy.com/gh/jwkim98/Motutapu/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jwkim98/Motutapu&amp;utm_campaign=Badge_Grade)
 
-[![codecov](https://codecov.io/gh/utilForever/cpp-oss-template/branch/master/graph/badge.svg)](https://codecov.io/gh/utilForever/cpp-oss-template)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7430fcc2933b44209cc97a87050c6a8e)](https://www.codacy.com/manual/utilForever/cpp-oss-template?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=utilForever/cpp-oss-template&amp;utm_campaign=Badge_Grade)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/utilForever/cpp-oss-template.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/cpp-oss-template/alerts/)
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/utilForever/cpp-oss-template.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/utilForever/cpp-oss-template/context:cpp)
+Sapphire is a Flexible and efficient Deep learning framework built for research purpose.
 
-Motutapu is a matrix operation library for use in machine learning applications.
+## Aim of this project
+* Efficient Sparse-Sparse, Dense-Dense matrix operations on CPU and GPU
+* Designed and optimized for x86-64 processors with AVX instructions and Nvidia GPUs supporting CUDA
+* Support for deep-learning operations
+* Supports flexible modeling and custom operations
+* Intuitive and easy to use interface with C++17 support
 
-
-
-## How To Contribute
-
-Contributions are always welcome, either reporting issues/bugs or forking the repository and then issuing pull requests when you have completed some additional coding that you feel will be beneficial to the main project. If you are interested in contributing in a more dedicated capacity, then please contact me.
+## Documents
+Refer to this notion page
+https://witty-print-3f0.notion.site/Supported-Layers-97317b7921664aabb25a2d231674990e
 
 ## Contact
 
 You can contact me via e-mail (jwkimrhkgkr@gmail.com or jwkim98@kaist.ac.kr).
 I am always happy to answer questions or help with any issues you might have, and please be sure to share any additional work or your creations with me, I love seeing what other people are making.
-
-## References
-
-- https://github.com/codecov/cpp-11-standard
 
 ## License
 
