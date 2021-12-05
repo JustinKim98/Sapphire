@@ -33,7 +33,7 @@ void MSEBackward::m_runBackProp()
                                 label.GetDevice(), false);
     diff.SetMode(label.Mode());
 
-    Compute::Sub(diff, label, x);
-    Compute::Scale(dx, diff, -2.0f);
+    Compute::Sub(diff, x, label);
+    Compute::Scale(dx, diff, -2.0f / static_cast<float>(dx.GetShape().At(-1)));
 }
 } // namespace Sapphire::BackProp

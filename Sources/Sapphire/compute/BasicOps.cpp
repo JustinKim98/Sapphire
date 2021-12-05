@@ -40,19 +40,22 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     const auto sizeA = shapeA.Size();
     const auto sizeB = shapeB.Size();
 
+    const int minRequiredDim =
+        Util::GetMatchingDim({ shapeOut, shapeA, shapeB });
+
     if (y.Mode() == ComputeMode::Cuda)
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0,
-                             0, Dense::Cuda::Add, 0, false, false);
+                             minRequiredDim, Dense::Cuda::Add, 0, false, false);
     }
     else
     {
         BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
                              shapeA.Size(), shapeB.Size(),
                              y.HostMutableRawPtr(),
-                             a.HostRawPtr(), b.HostRawPtr(), 0, 0,
+                             a.HostRawPtr(), b.HostRawPtr(), 0, minRequiredDim,
                              Dense::Naive::Add, 0, false, false);
     }
 }

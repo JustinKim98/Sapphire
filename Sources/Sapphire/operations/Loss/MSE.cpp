@@ -38,12 +38,12 @@ Tensor MSE(const Tensor& input, const Tensor& label)
     auto labelData = labelDesc.GetForwardData();
     auto yData = yDesc.GetForwardData();
     auto dxData = xDesc.GetBackwardData();
+    Util::ChangeTensorDataDimension(1, xData, labelData, yData, dxData, diff);
     auto* wrapper = new BackProp::MSEBackward(
         "MSE" + std::to_string(unitIdCount++), dxData, xData, labelData);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc, &labelDesc),
                       std::make_tuple(&yDesc));
 
-    Util::ChangeTensorDataDimension(1, xData, labelData, yData, dxData, diff);
     Compute::Sub(diff, labelData, xData);
     Compute::Pow(diff, diff, 2.0f);
     Compute::Mean(yData, diff, 0);

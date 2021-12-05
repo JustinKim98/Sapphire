@@ -16,7 +16,6 @@
 #include <Sapphire/tensor/CreateTensor.hpp>
 #include <Sapphire/util/FileManager.hpp>
 #include <iostream>
-
 #include <Sapphire/operations/Forward/Softmax.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
 
@@ -34,12 +33,12 @@ void Conv2DModelTest(std::vector<float> yData,
     const auto [xRows, xCols] = inputSize;
 
     //! Declare conv2d Layer
-    NN::Conv2D conv0(32, 3, std::make_pair(3, 3), std::pair(2, 2),
-                     std::pair(1, 1), std::pair(1, 1), true);
+    NN::Conv2D conv0(6, 3, std::make_pair(5, 5), std::pair(1, 1),
+                     std::pair(0, 0), std::pair(1, 1), true);
     NN::MaxPool2D pool(std::make_pair(2, 2), std::make_pair(2, 2));
-    NN::Conv2D conv1(32, 32, std::make_pair(3, 3), std::pair(2, 2),
-                     std::make_pair(1, 1), std::make_pair(1, 1), true);
-    NN::Linear fc0(32 * 16 * 16, 10);
+    NN::Conv2D conv1(16, 6, std::make_pair(5, 5), std::pair(1, 1),
+                     std::make_pair(0, 0), std::make_pair(1, 1), true);
+    NN::Linear fc0(16 * 5 * 5, 120);
     NN::Linear fc1(120, 84);
     NN::Linear fc2(84, 10);
 
@@ -86,6 +85,10 @@ void Conv2DModelTest(std::vector<float> yData,
         tensor = NN::ReLU(fc1(tensor));
         tensor = fc2(tensor);
         tensor = NN::SoftMax(tensor);
+        const auto val = tensor.GetData();
+        for (const auto& elem : val)
+            std::cout << elem << " ";
+        std::cout << std::endl;
         auto loss = NN::Loss::CrossEntropy(tensor, label);
 
         //! Print loss every 10 epochs
