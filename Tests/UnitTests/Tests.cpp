@@ -374,12 +374,14 @@ TEST_CASE("train test")
 {
     SUBCASE("Linear Train")
     {
-        TestLinearWeightDecay();
+        std::cout << "Testing Linear training with MSE" << std::endl;
+        TestLinearTraining(false);
     }
 
     SUBCASE("Conv2D Train")
     {
-        TestConv2DWeightDecay();
+        std::cout << "Testing Conv2D training with MSE" << std::endl;
+        TestConv2DTraining(false);
     }
 }
 
@@ -391,8 +393,8 @@ TEST_CASE("Model Test")
     {
         std::cout << "--- Simple Linear Model ---" << std::endl;
 
-        SimpleLinearModel(
-            -0.0001f, 10000, false);
+        // SimpleLinearModel(
+        //     0.0001f, 10000, false);
     }
 
     SUBCASE("MNIST test")

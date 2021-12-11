@@ -57,6 +57,7 @@ void TestConv2D(bool print)
                                    outputCols);
     std::vector<float> backwardData(batchSize *
                                     outputChannels * outputRows * outputCols);
+
     for (auto& data : forwardData)
         data = dist(gen);
     for (auto& data : backwardData)
@@ -83,7 +84,7 @@ void TestConv2D(bool print)
     conv2D.ToCuda();
 
     //! Setup optimizer
-    Optimizer::SGD sgd(0.0f);
+    Optimizer::SGD sgd(0.01f);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
     //! Test Conv2D on gpu
@@ -229,7 +230,7 @@ void TestConv2D(bool print)
 }
 
 //! Test simple weight decay
-void TestConv2DWeightDecay()
+void TestConv2DTraining(bool printData)
 {
     constexpr int epochs = 100;
     constexpr int batchSize = 2;
@@ -260,6 +261,10 @@ void TestConv2DWeightDecay()
         strideCols +
         1;
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution dist(-10.0f, 10.0f);
+
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
 
@@ -274,13 +279,17 @@ void TestConv2DWeightDecay()
         Shape({ batchSize * outputChannels * outputRows * outputCols }), gpu,
         Type::Dense, true);
 
-    Optimizer::SGD sgd(-0.001f);
+    Optimizer::SGD sgd(0.01f);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
     std::vector<float> labelData(
-        batchSize * outputChannels * outputRows * outputCols, 2);
-    std::vector<float> xData(batchSize * inputChannels * inputRows * inputCols,
-                             1);
+        batchSize * outputChannels * outputRows * outputCols);
+    std::vector<float> xData(batchSize * inputChannels * inputRows * inputCols);
+
+    for (auto& data : labelData)
+        data = dist(gen);
+    for (auto& data : xData)
+        data = dist(gen);
 
     for (int i = 0; i < epochs; ++i)
     {
@@ -289,14 +298,16 @@ void TestConv2DWeightDecay()
         auto tensor = conv2D(x);
         tensor.Flatten();
         const auto loss = NN::Loss::MSE(tensor, label);
-
         if (i % 10 == 0)
         {
-            const auto yDataCopy = tensor.GetData();
-            const auto labelDataCopy = label.GetData();
-            for (const auto& elem : yDataCopy)
-                std::cout << elem << " ";
-            std::cout << std::endl;
+            if (printData)
+            {
+                const auto yDataCopy = tensor.GetData();
+                const auto labelDataCopy = label.GetData();
+                for (const auto& elem : yDataCopy)
+                    std::cout << elem << " ";
+                std::cout << std::endl;
+            }
             const auto lossData = loss.GetData();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;

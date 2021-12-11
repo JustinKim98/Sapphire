@@ -7,9 +7,7 @@
 #ifndef SAPPHIRE_NN_CONV2D_HPP
 #define SAPPHIRE_NN_CONV2D_HPP
 
-#include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/operations/Unit.hpp>
-#include <Sapphire/operations/optimizers/Optimizer.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <utility>
 

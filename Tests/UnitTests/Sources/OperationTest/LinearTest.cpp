@@ -4,7 +4,6 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-
 #include <OperationTest/LinearTest.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
@@ -31,6 +30,7 @@ void TestLinear(bool print)
     std::uniform_real_distribution dist(-10.0f, 10.0f);
     std::vector<float> forwardData(batchSize * inputs);
     std::vector<float> backwardData(batchSize * outputs);
+
     for (auto& data : forwardData)
         data = dist(gen);
     for (auto& data : backwardData)
@@ -50,7 +50,7 @@ void TestLinear(bool print)
     auto biasData = linear.GetBias().GetData();
 
     //! Setup optimizer
-    Optimizer::SGD sgd(-0.01f);
+    Optimizer::SGD sgd(0.01f);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
     //! Test the operation using cuda
@@ -137,24 +137,37 @@ void TestLinear(bool print)
 }
 
 //! Test simple weight decay
-void TestLinearWeightDecay()
+void TestLinearTraining(bool printData)
 {
     constexpr int epochs = 100;
+    constexpr int inputFeatureSize = 10;
+    constexpr int outputFeatureSize = 5;
+    constexpr float learningRate = 0.0001f;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution dist(-10.0f, 10.0f);
+
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
 
     const CudaDevice gpu(0, "cuda0");
 
-    NN::Linear linear(10, 5);
+    NN::Linear linear(inputFeatureSize, outputFeatureSize);
 
-    Tensor x(Shape({ 10 }), gpu, Type::Dense, true);
-    Tensor label(Shape({ 5 }), gpu, Type::Dense, true);
+    Tensor x(Shape({ inputFeatureSize }), gpu, Type::Dense, true);
+    Tensor label(Shape({ outputFeatureSize }), gpu, Type::Dense, true);
 
-    Optimizer::SGD sgd(-0.0001f);
+    Optimizer::SGD sgd(learningRate);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
-    std::vector<float> labelData(5, 2);
-    std::vector<float> xData(10, 1);
+    std::vector<float> labelData(outputFeatureSize);
+    std::vector<float> xData(inputFeatureSize);
+
+    for (auto& data : labelData)
+        data = dist(gen);
+    for (auto& data : xData)
+        data = dist(gen);
 
     for (int i = 0; i < epochs; ++i)
     {
@@ -164,11 +177,14 @@ void TestLinearWeightDecay()
         const auto loss = NN::Loss::MSE(tensor, label);
         if (i % 10 == 0)
         {
-            const auto yDataCopy = tensor.GetData();
-            const auto labelDataCopy = label.GetData();
-            for (const auto& elem : yDataCopy)
-                std::cout << elem << " ";
-            std::cout << std::endl;
+            if (printData)
+            {
+                const auto yDataCopy = tensor.GetData();
+                const auto labelDataCopy = label.GetData();
+                for (const auto& elem : yDataCopy)
+                    std::cout << elem << " ";
+                std::cout << std::endl;
+            }
             const auto lossData = loss.GetData();
             std::cout << "epoch: " << i << " loss : " << lossData[0]
                 << std::endl;

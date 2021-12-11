@@ -10,7 +10,7 @@ namespace Sapphire::Test
 {
 void TestLinear(bool print);
 
-void TestLinearWeightDecay();
+void TestLinearTraining(bool printData);
 }
 
 
