@@ -28,14 +28,17 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
-
     CudaDevice gpu(0, "cuda0");
 
     auto sd = 1.0f / std::sqrt(inputFeatureSize);
-    m_weight = MakeTensor(Shape({ inputFeatureSize, outputFeatureSize }), gpu,
-                          M<Initialize::Normal>(0.0f, 0.1f), true);
-    m_bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
-                        M<Initialize::Uniform>(-sd, sd), true);
+    const Tensor weight = MakeTensor(
+        Shape({ inputFeatureSize, outputFeatureSize }),
+        gpu,
+        M<Initialize::Normal>(0.0f, 0.1f), true);
+    const Tensor bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
+                                   M<Initialize::Uniform>(-sd, sd), true);
+    m_trainableTensorMap["weight"] = weight;
+    m_trainableTensorMap["bias"] = bias;
 }
 
 Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
@@ -51,31 +54,37 @@ Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
     CudaDevice gpu(0, "cuda0");
 
     auto sd = 1.0f / std::sqrt(inputFeatureSize);
-    m_weight = MakeTensor(Shape({ inputFeatureSize, outputFeatureSize }), gpu,
-                          M<Initialize::Normal>(0.0f, 0.1f), true);
-    m_bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
-                        M<Initialize::Uniform>(-sd, sd), true);
+    const Tensor weight = MakeTensor(
+        Shape({ inputFeatureSize, outputFeatureSize }), gpu,
+        M<Initialize::Normal>(0.0f, 0.1f), true);
+    const Tensor bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
+                                   M<Initialize::Uniform>(-sd, sd), true);
+
+    m_trainableTensorMap["weight"] = weight;
+    m_trainableTensorMap["bias"] = bias;
 }
 
 Tensor Linear::operator()(Tensor& x)
 {
-    if (m_weight.Mode() != x.Mode())
+    Tensor weight = m_trainableTensorMap.at("weight");
+    Tensor bias = m_trainableTensorMap.at("bias");
+    if (weight.Mode() != x.Mode())
     {
         if (x.Mode() == ComputeMode::Cuda)
-            m_weight.ToCuda();
+            weight.ToCuda();
         else
-            m_weight.ToHost();
+            weight.ToHost();
     }
 
-    if (m_bias.Mode() != x.Mode())
+    if (bias.Mode() != x.Mode())
     {
         if (x.Mode() == ComputeMode::Cuda)
-            m_bias.ToCuda();
+            bias.ToCuda();
         else
-            m_bias.ToHost();
+            bias.ToHost();
     }
 
-    return this->operator()(x, m_weight, m_bias);
+    return this->operator()(x, weight, bias);
 }
 
 Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
@@ -138,12 +147,12 @@ Tensor Linear::operator()(Tensor& x, Tensor weight, Tensor bias)
 
 Tensor Linear::GetWeight() const
 {
-    return m_weight;
+    return m_trainableTensorMap.at("weight");
 }
 
 Tensor Linear::GetBias() const
 {
-    return m_bias;
+    return m_trainableTensorMap.at("bias");
 }
 
 int Linear::m_registerOutputTensor(

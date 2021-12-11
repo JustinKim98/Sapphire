@@ -10,60 +10,75 @@
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <TestUtil.hpp>
+#include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
+#include <doctest/doctest.h>
 #include <iostream>
 #include <random>
-#include <doctest/doctest.h>
 
 namespace Sapphire::Test
 {
 void TestLinear(bool print)
 {
-    constexpr int batchSize = 2;
-    constexpr int inputs = 50;
-    constexpr int outputs = 30;
+    //! Initialize model hyperparameters
+    constexpr int batchSize = 1;
+    constexpr int inputs = 5;
+    constexpr int outputs = 3;
 
-    ModelManager::AddModel("myModel");
-    ModelManager::SetCurrentModel("myModel");
-
-    const CudaDevice gpu(0, "cuda0");
+    //! Initialize random input data
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution dist(-1.0f, 1.0f);
+    std::uniform_real_distribution dist(-10.0f, 10.0f);
+    std::vector<float> forwardData(batchSize * inputs);
     std::vector<float> backwardData(batchSize * outputs);
+    for (auto& data : forwardData)
+        data = dist(gen);
     for (auto& data : backwardData)
         data = dist(gen);
 
-    Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense);
+    //! Initialize model and device
+    ModelManager::AddModel("linear test model");
+    ModelManager::SetCurrentModel("linear test model");
+    const CudaDevice gpu(0, "cuda0");
 
-    input.SetMode(ComputeMode::Host);
+    Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense, true);
+    input.LoadData(forwardData);
 
-    Initialize::Initialize(input,
-                           std::make_unique<Initialize::Normal>(0.0f, 1.0f));
-
-    input.ToCuda();
-
+    //! Declare layer to test
     NN::Linear linear(inputs, outputs);
+    auto weightData = linear.GetWeight().GetData();
+    auto biasData = linear.GetBias().GetData();
 
-    auto gpuOutput = linear(input);
-    const auto gpuForwardPtr = gpuOutput.GetData();
-    gpuOutput.SetGradient(backwardData);
-
-    Optimizer::SGD sgd(0.0f);
+    //! Setup optimizer
+    Optimizer::SGD sgd(-0.01f);
     ModelManager::CurModel().SetOptimizer(&sgd);
+
+    //! Test the operation using cuda
+    linear.ToCuda();
+    input.ToCuda();
+    auto gpuOutput = linear(input);
+    const auto gpuForwardData = gpuOutput.GetData();
+    gpuOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
-    const auto gpuBackwardPtr = input.GetGradient();
+    const auto gpuGradientData = input.GetGradient();
+    const auto gpuWeightData = linear.GetWeight().GetData();
+    const auto gpuBiasData = linear.GetBias().GetData();
 
+    //! Reset backward Gradient
+    ModelManager::CurModel().Clear();
+    linear.GetWeight().LoadData(weightData);
+    linear.GetBias().LoadData(biasData);
+
+    //! Test the operation on the host
+    linear.ToHost();
     input.ToHost();
-
-    Initialize::InitializeBackwardData(input,
-                                       std::make_unique<Initialize::Zeros>());
-
-    NN::Linear linearHost(inputs, outputs);
-    const auto hostOutput = linearHost(input);
-    const auto hostForwardPtr = hostOutput.GetData();
+    const auto hostOutput = linear(input);
+    const auto hostForwardData = hostOutput.GetData();
     hostOutput.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
-    const auto hostBackwardPtr = input.GetGradient();
+    const auto hostGradientData = input.GetGradient();
+    const auto hostWeightData = linear.GetWeight().GetData();
+    const auto hostBiasData = linear.GetBias().GetData();
 
     if (print)
     {
@@ -72,17 +87,7 @@ void TestLinear(bool print)
         {
             for (int i = 0; i < outputs; ++i)
             {
-                std::cout << hostForwardPtr[batchIdx * outputs + i] << " ";
-            }
-            std::cout << std::endl;
-        }
-
-        std::cout << "Linear backward result (Host)" << std::endl;
-        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            for (int i = 0; i < outputs; ++i)
-            {
-                std::cout << hostBackwardPtr[batchIdx * outputs + i] << " ";
+                std::cout << hostForwardData[batchIdx * outputs + i] << " ";
             }
             std::cout << std::endl;
         }
@@ -92,7 +97,17 @@ void TestLinear(bool print)
         {
             for (int i = 0; i < outputs; ++i)
             {
-                std::cout << gpuForwardPtr[batchIdx * outputs + i] << " ";
+                std::cout << gpuForwardData[batchIdx * outputs + i] << " ";
+            }
+            std::cout << std::endl;
+        }
+
+        std::cout << "Linear backward result (Host)" << std::endl;
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            for (int i = 0; i < outputs; ++i)
+            {
+                std::cout << hostGradientData[batchIdx * outputs + i] << " ";
             }
             std::cout << std::endl;
         }
@@ -102,18 +117,67 @@ void TestLinear(bool print)
         {
             for (int i = 0; i < outputs; ++i)
             {
-                std::cout << gpuBackwardPtr[batchIdx * outputs + i] << " ";
+                std::cout << gpuGradientData[batchIdx * outputs + i] << " ";
             }
             std::cout << std::endl;
         }
     }
 
-    for (int i = 0; i < gpuOutput.GetShape().Size(); ++i)
-        CHECK(TestEquality(hostForwardPtr[i], gpuForwardPtr[i]));
-
-    for (int i = 0; i < input.GetShape().Size(); ++i)
-        CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
+    //! Check Equalities for all data
+    for (int i = 0; i < batchSize * outputs; ++i)
+        CHECK(TestEquality(hostForwardData[i], gpuForwardData[i]));
+    for (int i = 0; i < batchSize * inputs; ++i)
+        CHECK(TestEquality(hostGradientData[i], gpuGradientData[i]));
+    for (std::size_t i = 0; i < weightData.size(); ++i)
+        CHECK(TestEquality(hostWeightData[i], gpuWeightData[i]));
+    for (std::size_t i = 0; i < biasData.size(); ++i)
+        CHECK(TestEquality(hostBiasData[i], gpuBiasData[i]));
 
     ModelManager::CurModel().Clear();
+}
+
+//! Test simple weight decay
+void TestLinearWeightDecay()
+{
+    constexpr int epochs = 100;
+    ModelManager::AddModel("SimpleLinearModel");
+    ModelManager::SetCurrentModel("SimpleLinearModel");
+
+    const CudaDevice gpu(0, "cuda0");
+
+    NN::Linear linear(10, 5);
+
+    Tensor x(Shape({ 10 }), gpu, Type::Dense, true);
+    Tensor label(Shape({ 5 }), gpu, Type::Dense, true);
+
+    Optimizer::SGD sgd(-0.0001f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
+
+    std::vector<float> labelData(5, 2);
+    std::vector<float> xData(10, 1);
+
+    for (int i = 0; i < epochs; ++i)
+    {
+        x.LoadData(xData);
+        label.LoadData(labelData);
+        auto tensor = linear(x);
+        const auto loss = NN::Loss::MSE(tensor, label);
+        if (i % 10 == 0)
+        {
+            const auto yDataCopy = tensor.GetData();
+            const auto labelDataCopy = label.GetData();
+            for (const auto& elem : yDataCopy)
+                std::cout << elem << " ";
+            std::cout << std::endl;
+            const auto lossData = loss.GetData();
+            std::cout << "epoch: " << i << " loss : " << lossData[0]
+                << std::endl;
+        }
+        ModelManager::CurModel().BackProp(loss);
+        ModelManager::CurModel().Clear();
+        if (i % 10 == 0)
+            Util::ResourceManager::Clean();
+    }
+    Util::ResourceManager::ClearAll();
 }
 } // namespace Sapphire::Test

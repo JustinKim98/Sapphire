@@ -32,8 +32,8 @@ public:
     Tensor operator()(Tensor& x);
     Tensor operator()(Tensor& x, Tensor weight, Tensor bias);
 
-    Tensor GetWeight() const;
-    Tensor GetBias() const;
+    [[nodiscard]] Tensor GetWeight() const;
+    [[nodiscard]] Tensor GetBias() const;
 
 protected:
     void m_addTensorData(std::string name, TensorUtil::TensorData tensorData)
@@ -67,7 +67,6 @@ private:
     int m_outputs;
     CudaDevice m_device;
     bool m_isSparse;
-    Tensor m_weight, m_bias;
 };
 } // namespace Sapphire::NN
 
