@@ -33,7 +33,7 @@
 #include <iostream>
 #include "doctest.h"
 
-//#define GraphTest
+#define GraphTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
@@ -347,14 +347,13 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        //TestLinear(true);
+        TestLinear(true);
     }
 
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        for (int i = 0; i < 3; ++i)
-            TestConv2D(false);
+        TestConv2D(true);
     }
 
     SUBCASE("MaxPool2DTest")
@@ -371,6 +370,19 @@ TEST_CASE("BasicGraphTest")
 }
 #endif
 
+TEST_CASE("train test")
+{
+    SUBCASE("Linear Train")
+    {
+        TestLinearWeightDecay();
+    }
+
+    SUBCASE("Conv2D Train")
+    {
+        TestConv2DWeightDecay();
+    }
+}
+
 #ifdef ModelTest
 
 TEST_CASE("Model Test")
@@ -379,21 +391,26 @@ TEST_CASE("Model Test")
     {
         std::cout << "--- Simple Linear Model ---" << std::endl;
 
-        // SimpleLinearModel(
-        //     -0.001f, 10000, false);
+        SimpleLinearModel(
+            -0.0001f, 10000, false);
     }
 
-    SUBCASE("Conv2DModelTest")
+    SUBCASE("MNIST test")
     {
         constexpr auto batchSize = 1;
-        constexpr auto xSize = std::make_pair(32, 32);
-        std::vector xData(32 * 32 * 3 + 1, 0.0f);
-        std::vector labelData(10, 0.0f);
-        labelData[5] = 1.0f;
-
-        std::cout << "--- Simple Conv2D Model ---" << std::endl;
-        Conv2DModelTest(labelData, batchSize, xSize, 0.0001f, false, 1000);
     }
+
+    // SUBCASE("Conv2DModelTest")
+    // {
+    //     constexpr auto batchSize = 1;
+    //     constexpr auto xSize = std::make_pair(32, 32);
+    //     std::vector xData(32 * 32 * 3 + 1, 0.0f);
+    //     std::vector labelData(10, 0.0f);
+    //     labelData[5] = 1.0f;
+    //
+    //     std::cout << "--- Simple Conv2D Model ---" << std::endl;
+    //     Conv2DModelTest(labelData, batchSize, xSize, 0.0001f, false, 1000);
+    // }
 }
 
 #endif

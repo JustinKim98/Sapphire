@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
+#include <Sapphire/compute/Initialize.hpp>
 
 namespace Sapphire
 {
@@ -117,6 +118,11 @@ void Model::BackProp(Tensor tensor)
 
 void Model::Clear()
 {
+    for (const auto& [_, desc] : m_preservedDescriptorPool.TensorDescMap)
+    {
+        auto tensorData = desc.GetBackwardData();
+        Compute::Initialize::Zeros(tensorData);
+    }
     m_tensorDescriptorPool.TensorDescMap.clear();
 }
 

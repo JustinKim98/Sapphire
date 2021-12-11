@@ -20,7 +20,7 @@
 #include <type_traits>
 #include <iostream>
 
-#define FP_EQUAL_THRESHOLD 0.05
+#define FP_EQUAL_THRESHOLD 0.01
 
 namespace Sapphire::Test
 {
@@ -34,7 +34,10 @@ template <typename T,
           std::enable_if_t<std::is_floating_point_v<T>, bool>  = true>
 inline bool TestEquality(T a, T b)
 {
-    auto isEqual = std::abs(a - b) < static_cast<T>(FP_EQUAL_THRESHOLD);
+    auto divider = (std::abs(a) + std::abs(b)) / 2.0f;
+    divider = divider < std::numeric_limits<float>::epsilon() ? 1.0f : divider;
+    auto isEqual = std::abs(a - b) / divider < static_cast<T>(
+                       FP_EQUAL_THRESHOLD);
     if (std::isnan(a) && std::isnan(b))
         isEqual = true;
 

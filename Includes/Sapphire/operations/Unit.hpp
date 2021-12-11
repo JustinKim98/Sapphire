@@ -30,12 +30,17 @@ public:
     Unit& operator=(const Unit& unit) = default;
     Unit& operator=(Unit&& unit) noexcept = default;
 
+    //! Send all trainable tensors to host
+    void ToHost();
+
+    //! Send all trainable tensors to cuda
+    void ToCuda();
+
 protected:
     virtual void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const = 0;
     std::string m_name;
-    std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
-    std::unordered_map<std::string, TensorUtil::TensorData> m_mutableDataMap;
+    std::unordered_map<std::string, Tensor> m_trainableTensorMap;
 };
 
 //! UnitDataWrapper
