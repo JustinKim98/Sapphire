@@ -14,9 +14,9 @@ namespace Sapphire::Compute::Dense::Cuda
 __host__ void CrossEntropy(float* y, const float* x, const float* label,
                            int batchSize, int unitSize);
 
-__host__ void CrossEntropyBackward(float* dx,const float* label,
+__host__ void CrossEntropyBackward(float* dx, const float* x,
+                                   const float* label,
                                    int batchSize, int unitSize);
-
 }
 
 #endif

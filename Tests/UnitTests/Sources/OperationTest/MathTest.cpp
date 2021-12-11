@@ -10,6 +10,7 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -96,6 +97,7 @@ void TestMultiply(bool print)
     }
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 
 void TestAdd(bool print)
@@ -175,5 +177,6 @@ void TestAdd(bool print)
         }
     }
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

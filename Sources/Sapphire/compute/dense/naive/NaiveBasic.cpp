@@ -6,6 +6,7 @@
 
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
 #include <limits>
 
@@ -238,18 +239,25 @@ void Softmax(float* output, const float* input, unsigned int totalSize,
 
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
-        float max = std::numeric_limits<float>::min();
+        float max = -std::numeric_limits<float>::max();
         for (unsigned int i = 0; i < unitSize; ++i)
             if (max < input[unitSize * batchIdx + i])
                 max = input[unitSize * batchIdx + i];
 
         float sum = 0;
         for (unsigned int i = 0; i < unitSize; ++i)
-            sum += std::exp(input[unitSize * batchIdx + i] - max);
+        {
+            const auto inputVal = input[unitSize * batchIdx + i];
+            const auto toAdd = std::exp(inputVal - max);
+            sum += toAdd;
+        }
 
         for (unsigned int i = 0; i < unitSize; ++i)
+        {
+            const auto inputVal = input[unitSize * batchIdx + i];
             output[unitSize * batchIdx + i] =
-                std::exp(input[unitSize * batchIdx + i] - max) / sum;
+                std::exp(inputVal - max) / sum;
+        }
     }
 }
 
@@ -268,14 +276,24 @@ void SoftmaxBackward(float* dx, const float* dy, const float* y,
             {
                 if (i == j)
                 {
-                    sum += dy[offset + j] * (
-                        y[offset + j] * (1.0f - y[offset + j]));
+                    const auto yVal = y[offset + j];
+                    const auto dyVal = dy[offset + j];
+                    sum += dyVal * (
+                        yVal * (1.0f - yVal));
+                    if (std::isnan(sum))
+                        std::cout << "nan detected" << std::endl;
                 }
                 else
                 {
-                    sum += dy[offset + i] * (-y[offset + i] * y[offset + j]);
+                    const auto yVal0 = y[offset + i];
+                    const auto yVal1 = y[offset + j];
+                    const auto dyVal = dy[offset + j];
+                    sum += dyVal * (-yVal0 * yVal1);
+                    if (std::isnan(sum))
+                        std::cout << "nan detected" << std::endl;
                 }
             }
+
             dx[offset + i] += sum;
         }
     }

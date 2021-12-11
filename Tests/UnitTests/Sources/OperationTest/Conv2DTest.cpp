@@ -265,8 +265,8 @@ void TestConv2DTraining(bool printData)
     std::mt19937 gen(rd());
     std::uniform_real_distribution dist(-10.0f, 10.0f);
 
-    ModelManager::AddModel("SimpleLinearModel");
-    ModelManager::SetCurrentModel("SimpleLinearModel");
+    ModelManager::AddModel("SimpleConv2DModel");
+    ModelManager::SetCurrentModel("SimpleConv2DModel");
 
     const CudaDevice gpu(0, "cuda0");
 

@@ -11,6 +11,6 @@ namespace Sapphire::Compute::Dense::Cuda
 __global__ void CrossEntropyKernel(float* y, const float* x, const float* label,
                                    int batchSize, int unitSize);
 
-__global__ void CrossEntropyBackwardKernel(float* dx, const float* label,
+__global__ void CrossEntropyBackwardKernel(float* dx, const float* x, const float* label,
                                            int batchSize, int unitSize);
 }  // namespace Sapphire::Compute::Dense::Cuda

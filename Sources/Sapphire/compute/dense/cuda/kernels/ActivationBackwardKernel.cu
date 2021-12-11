@@ -58,7 +58,7 @@ __global__ void SoftMaxBackwardKernel(float* dx, const float* dy,
             if (j == i)
                 sum += dy[jIdx] * (y[jIdx] * (1.0f - y[jIdx]));
             else
-                sum += dy[iIdx] * (-y[iIdx] * y[jIdx]);
+                sum += dy[jIdx] * (-y[iIdx] * y[jIdx]);
         }
         dx[iIdx] += sum;
     }

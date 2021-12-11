@@ -43,7 +43,8 @@ Tensor CrossEntropy(const Tensor& input, const Tensor& label)
     auto yData = yDesc.GetForwardData();
 
     auto* wrapper = new BackProp::CrossEntropyBackward(
-        "CrossEntropy" + std::to_string(unitIdCount++), dxData, labelData);
+        "CrossEntropy" + std::to_string(unitIdCount++), dxData, xData,
+        labelData);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc, &labelDesc),
                       std::make_tuple(&yDesc));
 

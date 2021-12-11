@@ -35,6 +35,7 @@ void CrossEntropy(TensorUtil::TensorData& y, const TensorUtil::TensorData& x,
 }
 
 void CrossEntropyBackward(TensorUtil::TensorData& dx,
+                          const TensorUtil::TensorData& x,
                           const TensorUtil::TensorData& label)
 {
     assert(dx.Mode() == label.Mode());
@@ -44,14 +45,16 @@ void CrossEntropyBackward(TensorUtil::TensorData& dx,
 
     if (dx.Mode() == ComputeMode::Cuda)
     {
-        Dense::Cuda::CrossEntropyBackward(dx.CudaMutableRawPtr(),
-                                          label.CudaRawPtr(), batchSize,
-                                          unitSize);
+        Dense::Cuda::CrossEntropyBackward(
+            dx.CudaMutableRawPtr(), x.CudaMutableRawPtr(),
+            label.CudaRawPtr(), batchSize,
+            unitSize);
     }
     else
     {
         Dense::Naive::CrossEntropyBackward(
-            dx.HostMutableRawPtr(), label.HostRawPtr(), batchSize, unitSize);
+            dx.HostMutableRawPtr(), x.HostRawPtr(), label.HostRawPtr(),
+            batchSize, unitSize);
     }
 }
 }

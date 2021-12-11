@@ -9,6 +9,7 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <random>
 #include <iostream>
@@ -223,5 +224,6 @@ void TestMaxPool2D(bool print)
         CHECK(TestEquality(hostBackwardData[idx], gpuBackwardData[idx]));
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

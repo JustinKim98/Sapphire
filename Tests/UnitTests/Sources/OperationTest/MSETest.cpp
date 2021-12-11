@@ -9,6 +9,7 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
 #include <random>
@@ -94,5 +95,6 @@ void TestMSE(bool print)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

@@ -10,6 +10,8 @@
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <TestUtil.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <doctest/doctest.h>
 #include <iostream>
@@ -134,6 +136,7 @@ void TestLinear(bool print)
         CHECK(TestEquality(hostBiasData[i], gpuBiasData[i]));
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 
 //! Test simple weight decay
@@ -146,7 +149,7 @@ void TestLinearTraining(bool printData)
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution dist(-10.0f, 10.0f);
+    std::uniform_real_distribution dist(-1.0f, 1.0f);
 
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
@@ -158,6 +161,10 @@ void TestLinearTraining(bool printData)
     Tensor x(Shape({ inputFeatureSize }), gpu, Type::Dense, true);
     Tensor label(Shape({ outputFeatureSize }), gpu, Type::Dense, true);
 
+    // x.ToHost();
+    // label.ToHost();
+    // linear.ToHost();
+
     Optimizer::SGD sgd(learningRate);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
@@ -165,16 +172,20 @@ void TestLinearTraining(bool printData)
     std::vector<float> xData(inputFeatureSize);
 
     for (auto& data : labelData)
-        data = dist(gen);
+        data = 0.0f;
     for (auto& data : xData)
         data = dist(gen);
+
+    labelData[3] = 1.0f;
 
     for (int i = 0; i < epochs; ++i)
     {
         x.LoadData(xData);
         label.LoadData(labelData);
         auto tensor = linear(x);
-        const auto loss = NN::Loss::MSE(tensor, label);
+        tensor = NN::SoftMax(tensor);
+        const auto loss = NN::Loss::CrossEntropy(tensor, label);
+        //const auto loss = NN::Loss::MSE(tensor, label);
         if (i % 10 == 0)
         {
             if (printData)

@@ -10,24 +10,27 @@
 
 namespace Sapphire::BackProp
 {
-constexpr int labelIdx = 0;
+constexpr int xIdx = 0;
+constexpr int labelIdx = 1;
 constexpr int dxIdx = 0;
 
 
 CrossEntropyBackward::CrossEntropyBackward(std::string name,
                                            TensorUtil::TensorData dx,
+                                           TensorUtil::TensorData x,
                                            TensorUtil::TensorData label)
     : BackPropWrapper(std::move(name), { std::move(dx) },
                       { TensorUtil::TensorData() },
-                      { std::move(label) }, {})
+                      { std::move(x), std::move(label) }, {})
 {
 }
 
 void CrossEntropyBackward::m_runBackProp()
 {
+    const auto x = m_constants[xIdx];
     const auto label = m_constants[labelIdx];
     auto dx = m_dxVector[dxIdx];
 
-    Compute::CrossEntropyBackward(dx, label);
+    Compute::CrossEntropyBackward(dx, x, label);
 }
 }

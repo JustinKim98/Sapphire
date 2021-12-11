@@ -9,6 +9,7 @@
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 #include <random>
 #include <doctest.h>
@@ -100,5 +101,6 @@ void TestMean(bool print)
     }
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

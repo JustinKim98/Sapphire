@@ -16,7 +16,7 @@ class SoftMaxBackward : public BackPropWrapper
 public:
     SoftMaxBackward(std::string name, TensorUtil::TensorData dx,
                     TensorUtil::TensorData dy,
-                    TensorUtil::TensorData x);
+                    TensorUtil::TensorData y);
 
 private:
     void m_runBackProp() override;

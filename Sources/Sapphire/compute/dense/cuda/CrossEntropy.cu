@@ -19,14 +19,14 @@ __host__ void CrossEntropy(float* y, const float* x, const float* label,
     CrossEntropyKernel<<<gridDim, blockDim>>>(y, x, label, batchSize, unitSize);
 }
 
-__host__ void CrossEntropyBackward(float* dx, const float* label, int batchSize,
+__host__ void CrossEntropyBackward(float* dx,const float* x,  const float* label, int batchSize,
                                    int unitSize)
 {
     const int blockDim =
         MAX_THREAD_DIM_X / 16 > batchSize ? batchSize : MAX_THREAD_DIM_X / 16; 
     const int gridDim = (batchSize % blockDim == 0) ? batchSize / blockDim
                                                  : batchSize / blockDim + 1;
-    CrossEntropyBackwardKernel<<<gridDim, blockDim>>>(dx, label, batchSize,
+    CrossEntropyBackwardKernel<<<gridDim, blockDim>>>(dx, x, label, batchSize,
                                                       unitSize);
 }
 }  // namespace Sapphire::Compute::Dense::Cuda

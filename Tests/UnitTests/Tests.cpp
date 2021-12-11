@@ -347,13 +347,13 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Linear Test")
     {
         std::cout << "Linear" << std::endl;
-        TestLinear(true);
+        TestLinear(false);
     }
 
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        TestConv2D(true);
+        TestConv2D(false);
     }
 
     SUBCASE("MaxPool2DTest")
@@ -375,7 +375,7 @@ TEST_CASE("train test")
     SUBCASE("Linear Train")
     {
         std::cout << "Testing Linear training with MSE" << std::endl;
-        TestLinearTraining(false);
+        TestLinearTraining(true);
     }
 
     SUBCASE("Conv2D Train")
@@ -391,8 +391,8 @@ TEST_CASE("Model Test")
 {
     SUBCASE("SimpleLinearModelTest")
     {
-        std::cout << "--- Simple Linear Model ---" << std::endl;
-
+        // std::cout << "--- Simple Linear Model ---" << std::endl;
+        //
         // SimpleLinearModel(
         //     0.0001f, 10000, false);
     }

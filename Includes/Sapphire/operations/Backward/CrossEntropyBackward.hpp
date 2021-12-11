@@ -15,6 +15,7 @@ class CrossEntropyBackward : public BackPropWrapper
 {
 public:
     CrossEntropyBackward(std::string name, TensorUtil::TensorData dx,
+                         TensorUtil::TensorData x,
                          TensorUtil::TensorData label);
 
 private:

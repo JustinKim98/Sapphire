@@ -27,12 +27,12 @@ Tensor SoftMax(const Tensor& input)
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
     Util::ChangeTensorDataDimension(2, x, dx, y, dy);
+    Compute::SoftMax(y, x);
     auto* wrapper = new BackProp::SoftMaxBackward(
-        "Softmax" + std::to_string(unitIdCount++), dx, dy, x);
+        "Softmax" + std::to_string(unitIdCount++), dx, dy, y);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 
-    Compute::SoftMax(y, x);
 
     return Tensor(yDescKey);
 }

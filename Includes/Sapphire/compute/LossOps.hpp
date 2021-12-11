@@ -15,7 +15,7 @@ void CrossEntropy(TensorUtil::TensorData& y, const TensorUtil::TensorData& x,
                   const TensorUtil::TensorData& label);
 
 void CrossEntropyBackward(TensorUtil::TensorData& dx,
-                          const TensorUtil::TensorData& label);
+                          const TensorUtil::TensorData& x, const TensorUtil::TensorData& label);
 }
 
 #endif
