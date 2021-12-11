@@ -34,10 +34,7 @@ public:
 
     explicit Model(std::string name, Optimizer::Optimizer* optimizer);
 
-    ~Model()
-    {
-        Clear();
-    }
+    ~Model();
 
     Model(const Model& model) = delete;
     Model(Model&& model) noexcept = default;

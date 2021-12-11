@@ -365,7 +365,7 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("SoftmaxTest")
     {
         std::cout << "Softmax" << std::endl;
-        TestSoftmax(true);
+        TestSoftmax(false);
     }
 }
 #endif
@@ -375,7 +375,7 @@ TEST_CASE("train test")
     SUBCASE("Linear Train")
     {
         std::cout << "Testing Linear training with MSE" << std::endl;
-        TestLinearTraining(true);
+        TestLinearTraining(false);
     }
 
     SUBCASE("Conv2D Train")

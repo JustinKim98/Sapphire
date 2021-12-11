@@ -232,7 +232,7 @@ void ResourceManager::ClearCudnnConv2DMetaDataPool()
         Compute::Cuda::CudaFree(metaData->ForwardWorkSpace);
         Compute::Cuda::CudaFree(metaData->BackwardDataWorkSpace);
         Compute::Cuda::CudaFree(metaData->BackwardFilterWorkSpace);
-        free(metaData);
+        delete metaData;
     }
 
     m_cudnnConv2DMetaDataPool.clear();
@@ -242,7 +242,7 @@ void ResourceManager::ClearCudnnPool2DMetaDataPool()
 {
     for (auto& [key, metaData] : m_cudnnPool2DMetaDataPool)
     {
-        free(metaData);
+        delete metaData;
     }
     m_cudnnPool2DMetaDataPool.clear();
 }
@@ -252,7 +252,7 @@ void ResourceManager::ClearCublasHandlePool()
     for (auto& [key, handle] : m_cublasHandlePool)
     {
         cublasDestroy(*handle);
-        free(handle);
+        delete handle;
     }
 
     m_cublasHandlePool.clear();
@@ -263,7 +263,7 @@ void ResourceManager::ClearCudnnHandlePool()
     for (auto& [key, handle] : m_cudnnHandlePool)
     {
         cudnnDestroy(*handle);
-        free(handle);
+        delete handle;
     }
 
     m_cudnnHandlePool.clear();

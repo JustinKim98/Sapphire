@@ -22,6 +22,12 @@ Model::Model(std::string name, Optimizer::Optimizer* optimizer)
 {
 }
 
+Model::~Model()
+{
+    m_tensorDescriptorPool.TensorDescMap.clear();
+    m_preservedDescriptorPool.TensorDescMap.clear();
+}
+
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const CudaDevice& device, bool preserve)
 {
