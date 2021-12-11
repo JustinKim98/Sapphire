@@ -10,5 +10,7 @@
 namespace Sapphire::Test
 {
 void TestConv2D(bool print);
+
+void TestConv2DWeightDecay();
 }
 #endif

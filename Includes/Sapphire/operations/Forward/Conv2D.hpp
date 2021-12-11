@@ -40,6 +40,9 @@ public:
     Tensor operator()(Tensor& tensor, Tensor& filter, Tensor& bias);
     Tensor operator()(Tensor& tensor, Tensor& filter);
 
+    [[nodiscard]] Tensor GetFilter() const;
+    [[nodiscard]] Tensor GetBias() const;
+
 private:
     [[nodiscard]] int m_registerOutputTensor(
         const TensorUtil::TensorDescriptor& xDesc) const;
@@ -56,7 +59,6 @@ private:
     std::pair<int, int> m_inputSize;
     int m_yRows = -1;
     int m_yCols = -1;
-    Tensor m_filter, m_bias;
 };
 }; // namespace Sapphire::NN
 

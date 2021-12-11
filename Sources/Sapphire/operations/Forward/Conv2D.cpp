@@ -11,7 +11,6 @@
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
-#include <Sapphire/tensor/CreateTensor.hpp>
 
 namespace Sapphire::NN
 {
@@ -31,18 +30,21 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> filterSize,
 {
     const CudaDevice gpu(0, "cuda0");
     const auto [filterRows, filterCols] = filterSize;
-    //const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
-    //const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
+    const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
+    const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
 
-    m_filter = MakeTensor(
+    const auto filter = MakeTensor(
         Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
-        M<Initialize::Normal>(0.0f, 1.0f), true);
+        M<Initialize::Uniform>(-filterStd, filterStd), true);
+    m_trainableTensorMap["filter"] = filter;
+
     if (useBias)
     {
-        //const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
-        m_bias = MakeTensor(Shape({ yChannels }), gpu,
-                            M<Initialize::Normal>(0.0f, 1.0f),
-                            true);
+        const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
+        const auto bias = MakeTensor(Shape({ yChannels }), gpu,
+                                     M<Initialize::Uniform>(-biasStd, biasStd),
+                                     true);
+        m_trainableTensorMap["bias"] = bias;
     }
 }
 
@@ -90,24 +92,27 @@ Tensor Conv2D::operator()(Tensor& x)
     if (m_yRows <= 0 || m_yCols <= 0)
         throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
 
-    if (m_filter.Mode() != x.Mode())
+    auto filter = m_trainableTensorMap.at("filter");
+    auto bias = m_trainableTensorMap.at("bias");
+
+    if (filter.Mode() != x.Mode())
     {
         if (x.Mode() == ComputeMode::Cuda)
-            m_filter.ToCuda();
+            filter.ToCuda();
         else
-            m_filter.ToHost();
+            filter.ToHost();
     }
     if (m_useBias)
     {
         if (x.Mode() == ComputeMode::Cuda)
-            m_bias.ToCuda();
+            bias.ToCuda();
         else
-            m_bias.ToHost();
+            bias.ToHost();
     }
 
     if (m_useBias)
-        return this->operator()(x, m_filter, m_bias);
-    return this->operator()(x, m_filter);
+        return this->operator()(x, filter, bias);
+    return this->operator()(x, filter);
 }
 
 
@@ -298,5 +303,19 @@ void Conv2D::m_checkArguments(
                 "NN::Conv2D - Bias is configured to use different device with "
                 "x");
     }
+}
+
+Tensor Conv2D::GetFilter() const
+{
+    return m_trainableTensorMap.at("filter");
+}
+
+Tensor Conv2D::GetBias() const
+{
+    if (m_useBias)
+        return m_trainableTensorMap.at("bias");
+    else
+        throw std::runtime_error(
+            "Conv2D::GetBias - This Conv2D layer does not use bias");
 }
 } // namespace Sapphire::NN
