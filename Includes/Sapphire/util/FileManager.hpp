@@ -41,6 +41,7 @@ std::vector<T> ReadFile(std::string filePath)
 
 void WriteToFile(std::string filePath, unsigned char* data,
                  std::size_t data_len);
+
 } // namespace Sapphire::NN
 
 #endif

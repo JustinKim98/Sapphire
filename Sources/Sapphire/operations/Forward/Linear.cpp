@@ -34,7 +34,7 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
     const Tensor weight = MakeTensor(
         Shape({ inputFeatureSize, outputFeatureSize }),
         gpu,
-        M<Initialize::Normal>(0.0f, 0.1f), true);
+        M<Initialize::Uniform>(-sd, sd), true);
     const Tensor bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
                                    M<Initialize::Uniform>(-sd, sd), true);
     m_trainableTensorMap["weight"] = weight;
@@ -56,7 +56,7 @@ Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
     auto sd = 1.0f / std::sqrt(inputFeatureSize);
     const Tensor weight = MakeTensor(
         Shape({ inputFeatureSize, outputFeatureSize }), gpu,
-        M<Initialize::Normal>(0.0f, 0.1f), true);
+        M<Initialize::Uniform>(-sd, sd), true);
     const Tensor bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
                                    M<Initialize::Uniform>(-sd, sd), true);
 

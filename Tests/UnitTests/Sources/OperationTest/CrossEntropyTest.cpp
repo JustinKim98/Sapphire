@@ -6,9 +6,12 @@
 
 #include <OperationTest/CrossEntropyTest.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
+#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
+#include <Sapphire/operations/Forward/ReLU.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
@@ -26,7 +29,7 @@ void TestCrossEntropy(bool print)
 
     const int inputs = 10;
 
-    const Shape xShape = Shape({2,6,3, inputs });
+    const Shape xShape = Shape({ 2, 6, 3, inputs });
 
     Tensor x(xShape, gpu, Type::Dense);
     Tensor label(xShape, gpu, Type::Dense);
@@ -106,6 +109,77 @@ void TestCrossEntropy(bool print)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
+}
+
+//! Test simple weight decay
+void TestCrossEntropyTraining(bool printData)
+{
+    constexpr int epochs = 1000;
+    constexpr int inputFeatureSize = 10;
+    constexpr int outputFeatureSize = 5;
+    constexpr float learningRate = 0.0001f;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution dist(-1.0f, 1.0f);
+
+    ModelManager::AddModel("SimpleLinearModel");
+    ModelManager::SetCurrentModel("SimpleLinearModel");
+
+    const CudaDevice gpu(0, "cuda0");
+
+    NN::Linear linear(inputFeatureSize, outputFeatureSize);
+    NN::Linear linear1(outputFeatureSize, outputFeatureSize);
+
+    Tensor x(Shape({ inputFeatureSize }), gpu, Type::Dense, true);
+    Tensor label(Shape({ outputFeatureSize }), gpu, Type::Dense, true);
+
+    // x.ToHost();
+    // label.ToHost();
+    // linear.ToHost();
+
+    Optimizer::SGD sgd(learningRate);
+    ModelManager::CurModel().SetOptimizer(&sgd);
+
+    std::vector<float> labelData(outputFeatureSize);
+    std::vector<float> xData(inputFeatureSize);
+
+    for (auto& data : labelData)
+        data = 0.0f;
+    for (auto& data : xData)
+        data = dist(gen);
+
+    labelData[3] = 1.0f;
+
+    for (int i = 0; i < epochs; ++i)
+    {
+        x.LoadData(xData);
+        label.LoadData(labelData);
+        auto tensor = NN::ReLU(linear(x));
+        tensor = linear1(tensor);
+        tensor = NN::SoftMax(tensor);
+        const auto loss = NN::Loss::CrossEntropy(tensor, label);
+        // const auto loss = NN::Loss::MSE(tensor, label);
+        if (i % 10 == 0)
+        {
+            if (printData)
+            {
+                const auto yDataCopy = tensor.GetData();
+                const auto labelDataCopy = label.GetData();
+                for (const auto& elem : yDataCopy)
+                    std::cout << elem << " ";
+                std::cout << std::endl;
+            }
+            const auto lossData = loss.GetData();
+            std::cout << "epoch: " << i << " loss : " << lossData[0]
+                << std::endl;
+        }
+        ModelManager::CurModel().BackProp(loss);
+        ModelManager::CurModel().Clear();
+        if (i % 10 == 0)
+            Util::ResourceManager::Clean();
+    }
     Util::ResourceManager::ClearAll();
 }
 }

@@ -10,8 +10,6 @@
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <TestUtil.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
-#include <Sapphire/operations/Forward/Softmax.hpp>
-#include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <doctest/doctest.h>
 #include <iostream>
@@ -161,10 +159,6 @@ void TestLinearTraining(bool printData)
     Tensor x(Shape({ inputFeatureSize }), gpu, Type::Dense, true);
     Tensor label(Shape({ outputFeatureSize }), gpu, Type::Dense, true);
 
-    // x.ToHost();
-    // label.ToHost();
-    // linear.ToHost();
-
     Optimizer::SGD sgd(learningRate);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
@@ -183,9 +177,7 @@ void TestLinearTraining(bool printData)
         x.LoadData(xData);
         label.LoadData(labelData);
         auto tensor = linear(x);
-        tensor = NN::SoftMax(tensor);
-        const auto loss = NN::Loss::CrossEntropy(tensor, label);
-        //const auto loss = NN::Loss::MSE(tensor, label);
+        const auto loss = NN::Loss::MSE(tensor, label);
         if (i % 10 == 0)
         {
             if (printData)

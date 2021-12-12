@@ -25,7 +25,7 @@
 namespace Sapphire::Test
 {
 template <typename T, std::enable_if_t<std::is_integral_v<T>, bool>  = true>
-inline bool TestEquality(T a, T b)
+bool TestEquality(T a, T b)
 {
     return a == b;
 }

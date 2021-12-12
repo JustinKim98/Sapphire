@@ -22,18 +22,19 @@
 #include <ModelTest/SimpleLinearModel.hpp>
 #include <BasicsTest/TransposeTest.hpp>
 #include <TensorTest/TensorFunctionalityTest.hpp>
+#include <DataLoaderTest/CsvLoaderTest.hpp>
 #include <FunctionTest/Conv2DTest.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
 #include <GraphTest/GraphFunctionalityTest.hpp>
-#include <BasicsTest/ReshapeTest.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
 #include "doctest.h"
 
-#define GraphTest
+// #define GraphTest
+// #define DataLoaderTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
@@ -370,6 +371,18 @@ TEST_CASE("BasicGraphTest")
 }
 #endif
 
+#ifdef DataLoaderTest
+TEST_CASE("Data Loader Test")
+{
+    SUBCASE("Csv Loader Test")
+    {
+        std::cout << "Testing csv loader " << std::endl;
+        CsvLoaderTest(
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", false);
+    }
+}
+#endif
+
 TEST_CASE("train test")
 {
     SUBCASE("Linear Train")
@@ -383,6 +396,12 @@ TEST_CASE("train test")
         std::cout << "Testing Conv2D training with MSE" << std::endl;
         TestConv2DTraining(false);
     }
+
+    SUBCASE("CrossEntropy Train")
+    {
+        std::cout << "Testing Cross Entropy training" << std::endl;
+        TestCrossEntropyTraining(false);
+    }
 }
 
 #ifdef ModelTest
@@ -391,10 +410,11 @@ TEST_CASE("Model Test")
 {
     SUBCASE("SimpleLinearModelTest")
     {
-        // std::cout << "--- Simple Linear Model ---" << std::endl;
-        //
-        // SimpleLinearModel(
-        //     0.0001f, 10000, false);
+        std::cout << "--- Simple Linear Model ---" << std::endl;
+    
+        SimpleLinearModel(
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
+            0.0000001f, 1000000, false);
     }
 
     SUBCASE("MNIST test")

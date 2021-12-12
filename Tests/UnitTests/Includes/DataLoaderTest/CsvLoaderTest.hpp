@@ -4,15 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_TEST_CROSS_ENTROPY_TEST_HPP
-#define SAPHIRE_TEST_CROSS_ENTROPY_TEST_HPP
+#ifndef SAPPHIRE_TEST_CSV_LOADER_TEST_HPP
+#define SPAPHIRE_TEST_CSV_LOADER_TEST_HPP
 
+#include <filesystem>
 
 namespace Sapphire::Test
 {
-void TestCrossEntropy(bool print);
-
-void TestCrossEntropyTraining(bool printData);
+void CsvLoaderTest(std::filesystem::path filePath, bool print);
 }
 
 #endif

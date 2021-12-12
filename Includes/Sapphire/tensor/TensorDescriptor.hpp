@@ -120,6 +120,8 @@ private:
     //! This describes history of the tensorData
     //! As tensorData is used in unit function as an operand or input/output.
     //! It is stored using this struct
+    //! 1 : output of some layer or operation
+    //! 2 : used as operand of other operation
     struct History
     {
         //! This constructor creates output history, where tensor was newly created
@@ -201,6 +203,7 @@ private:
     unsigned int m_batchSize = 0;
     bool m_trainable = true;
 
+    //! Track history list for back propagation
     std::list<History> m_history;
 };
 } // namespace Sapphire::TensorUtil

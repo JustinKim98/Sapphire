@@ -282,9 +282,9 @@ void ResourceManager::Clean()
 
 void ResourceManager::ClearPreservedPool()
 {
-    for (auto& [key, memoryChunk] : m_hostPreservedPool)
+    for (auto& [_, memoryChunk] : m_hostPreservedPool)
         FreeHost(memoryChunk.Data);
-    for (auto& [key, memoryChunk] : m_cudaPreservedPool)
+    for (auto& [_, memoryChunk] : m_cudaPreservedPool)
         Compute::Cuda::CudaFree(memoryChunk.Data);
 
     m_hostPreservedPool.clear();

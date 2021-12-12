@@ -7,9 +7,11 @@
 #ifndef SAPPHIRE_TEST_SIMPLE_LINEAR_MODEL_HPP
 #define SAPPHIRE_TEST_SIMPLE_LINEAR_MODEL_HPP
 #include <vector>
+#include <filesystem>
 
 namespace Sapphire::Test
 {
-void SimpleLinearModel(float learningRate, int epochs, bool hostMode);
+void SimpleLinearModel(std::filesystem::path filePath, int batchSize,
+                       float learningRate, int epochs, bool hostMode);
 }
 #endif

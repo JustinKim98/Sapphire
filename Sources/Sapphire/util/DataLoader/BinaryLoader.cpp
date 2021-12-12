@@ -4,15 +4,10 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_TEST_CROSS_ENTROPY_TEST_HPP
-#define SAPHIRE_TEST_CROSS_ENTROPY_TEST_HPP
+#include <Sapphire/util/DataLoader/DataLoader.hpp>
+#include <Sapphire/util/DataLoader/BinaryLoader.hpp>
 
-
-namespace Sapphire::Test
+namespace Sapphire::Util
 {
-void TestCrossEntropy(bool print);
 
-void TestCrossEntropyTraining(bool printData);
 }
-
-#endif
