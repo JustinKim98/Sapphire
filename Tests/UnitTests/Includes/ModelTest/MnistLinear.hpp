@@ -11,7 +11,7 @@
 
 namespace Sapphire::Test
 {
-void SimpleLinearModel(std::filesystem::path filePath, int batchSize,
+void MnistLinear(std::filesystem::path filePath, int batchSize,
                        float learningRate, int epochs, bool hostMode);
 }
 #endif
