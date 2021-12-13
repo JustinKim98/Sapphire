@@ -14,8 +14,8 @@
 namespace Sapphire::Test
 {
 void Conv2DModelTest(
-    std::vector<float> yData, int batchSize,
-    std::pair<int, int> inputSize, float learningRate,
+    int batchSize,
+    float learningRate,
     bool hostMode, int epochs);
 }
 

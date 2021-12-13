@@ -19,7 +19,7 @@
 #include <OperationTest/MaxPool2DTest.hpp>
 #include <OperationTest/CrossEntropyTest.hpp>
 #include <ModelTest/Conv2DModel.hpp>
-#include <ModelTest/SimpleLinearModel.hpp>
+#include <ModelTest/MnistLinear.hpp>
 #include <BasicsTest/TransposeTest.hpp>
 #include <TensorTest/TensorFunctionalityTest.hpp>
 #include <DataLoaderTest/CsvLoaderTest.hpp>
@@ -35,6 +35,7 @@
 
 // #define GraphTest
 // #define DataLoaderTest
+// #define TrainTest
 // #define TensorFunctionalityTest
 // #define BasicsTest
 // #define ActivationTest
@@ -383,6 +384,7 @@ TEST_CASE("Data Loader Test")
 }
 #endif
 
+#ifdef TrainTest
 TEST_CASE("train test")
 {
     SUBCASE("Linear Train")
@@ -403,36 +405,28 @@ TEST_CASE("train test")
         TestCrossEntropyTraining(false);
     }
 }
+#endif
 
 #ifdef ModelTest
 
 TEST_CASE("Model Test")
 {
-    SUBCASE("SimpleLinearModelTest")
-    {
-        std::cout << "--- Simple Linear Model ---" << std::endl;
-    
-        SimpleLinearModel(
-            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
-            0.000001f, 1000000, false);
-    }
-
-    SUBCASE("MNIST test")
-    {
-        constexpr auto batchSize = 1;
-    }
-
-    // SUBCASE("Conv2DModelTest")
+    // SUBCASE("MnistTest")
     // {
-    //     constexpr auto batchSize = 1;
-    //     constexpr auto xSize = std::make_pair(32, 32);
-    //     std::vector xData(32 * 32 * 3 + 1, 0.0f);
-    //     std::vector labelData(10, 0.0f);
-    //     labelData[5] = 1.0f;
+    //     std::cout << "--- Simple Linear Model ---" << std::endl;
     //
-    //     std::cout << "--- Simple Conv2D Model ---" << std::endl;
-    //     Conv2DModelTest(labelData, batchSize, xSize, 0.0001f, false, 1000);
+    //     MnistLinear(
+    //         "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
+    //         0.000001f, 1000000, false);
     // }
+
+    SUBCASE("Conv2DModelTest")
+    {
+        constexpr auto batchSize = 100;
+    
+        std::cout << "--- Simple Conv2D Model ---" << std::endl;
+        Conv2DModelTest(batchSize, 0.0001f, false, 5000);
+    }
 }
 
 #endif
