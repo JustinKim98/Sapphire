@@ -27,23 +27,22 @@
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
-#include <GraphTest/GraphFunctionalityTest.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
 #include "doctest.h"
 
-// #define GraphTest
-// #define DataLoaderTest
-// #define TrainTest
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
-// #define ConvolutionTest
-// #define BasicGraphTest
+#define GraphTest
+#define DataLoaderTest
+#define TrainTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test
@@ -104,14 +103,6 @@ TEST_CASE("Basics")
         std::cout << "Transpose" << std::endl;
         for (int i = 0; i < testLoops; ++i)
             TransposeTest(false);
-        Util::ResourceManager::ClearAll();
-    }
-
-    SUBCASE("Reshape")
-    {
-        std::cout << "Reshape" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            ReshapeTest(false);
         Util::ResourceManager::ClearAll();
     }
 
@@ -411,21 +402,24 @@ TEST_CASE("train test")
 
 TEST_CASE("Model Test")
 {
-    // SUBCASE("MnistTest")
-    // {
-    //     std::cout << "--- Simple Linear Model ---" << std::endl;
-    //
-    //     MnistLinear(
-    //         "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
-    //         0.000001f, 1000000, false);
-    // }
+    SUBCASE("MnistTest")
+    {
+        std::cout << "--- Mnist linear model ---" << std::endl;
+
+        MnistLinear(
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
+            0.0001f, 5000, false);
+    }
 
     SUBCASE("Conv2DModelTest")
     {
         constexpr auto batchSize = 100;
-    
-        std::cout << "--- Simple Conv2D Model ---" << std::endl;
-        Conv2DModelTest(batchSize, 0.0001f, false, 5000);
+
+        std::cout << "--- Cifar-10 Conv2D image classification model ---" << std::endl;
+        Conv2DModelTest(
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/cifar-10-batches-bin/"
+            "data_batch_1.bin",
+            batchSize, 0.0002f, false, 2500);
     }
 }
 

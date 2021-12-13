@@ -13,19 +13,17 @@
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/operations/Forward/MaxPool2D.hpp>
-#include <Sapphire/tensor/CreateTensor.hpp>
 #include <Sapphire/util/FileManager.hpp>
 #include <Sapphire/operations/Forward/Softmax.hpp>
-#include <Sapphire/operations/Loss/MSE.hpp>
 #include <iostream>
 #include <random>
 
 namespace Sapphire::Test
 {
 void Conv2DModelTest(
+    std::filesystem::path filePath,
     int batchSize,
-    float learningRate,
-    bool hostMode, int epochs)
+    float learningRate, bool hostMode, int epochs)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -63,10 +61,7 @@ void Conv2DModelTest(
     Optimizer::SGD sgd(learningRate);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
-    const auto totalData = ReadFile<std::uint8_t>(
-        std::string(
-            "/mnt/c/Users/user/Documents/Sapphire/Datasets/cifar-10-batches-bin/"
-            "data_batch_1.bin"));
+    const auto totalData = ReadFile<std::uint8_t>(filePath.string());
 
     std::vector<float> labelData(batchSize * 10);
     std::vector<float> xData(batchSize * 32 * 32 * 3);

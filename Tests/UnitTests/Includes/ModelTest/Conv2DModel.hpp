@@ -7,16 +7,14 @@
 #ifndef SAPPHIRE_TEST_CONV2D_MODEL_HPP
 #define SAPPHIRE_TEST_CONV2D_MODEL_HPP
 
-#include <utility>
-#include <vector>
-#include <cstdint>
+#include <filesystem>
 
 namespace Sapphire::Test
 {
 void Conv2DModelTest(
+    std::filesystem::path filePath,
     int batchSize,
-    float learningRate,
-    bool hostMode, int epochs);
+    float learningRate, bool hostMode, int epochs);
 }
 
 #endif

@@ -115,7 +115,7 @@ void TestCrossEntropy(bool print)
 //! Test simple weight decay
 void TestCrossEntropyTraining(bool printData)
 {
-    constexpr int epochs = 1000;
+    constexpr int epochs = 100;
     constexpr int inputFeatureSize = 10;
     constexpr int outputFeatureSize = 5;
     constexpr float learningRate = 0.0001f;
