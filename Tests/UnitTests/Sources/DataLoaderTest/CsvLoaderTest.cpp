@@ -27,9 +27,12 @@ void CsvLoaderTest(std::filesystem::path filePath, bool print)
 
     const std::vector<float> data = dataTensor.GetData();
     const std::vector<float> label = labelTensor.GetData();
-    for (const auto elem : data)
-        std::cout << std::to_string(elem) << ", " << std::endl;
-    std::cout << "label : " << std::to_string(label[0]) << std::endl;
+    if (print)
+    {
+        for (const auto elem : data)
+            std::cout << std::to_string(elem) << ", " << std::endl;
+        std::cout << "label : " << std::to_string(label[0]) << std::endl;
+    }
 
     Util::ResourceManager::ClearAll();
 }
