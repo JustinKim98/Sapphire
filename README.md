@@ -3,7 +3,7 @@
 <img src="./Medias/Logo.png" width=306 height=344 />
 
 [![License](https://img.shields.io/badge/Licence-MIT-blue.svg)](https://github.com/jwkim98/Motutapu/blob/master/LICENSE) 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d81d09c4b414983b5a99110dfb2a183)](https://www.codacy.com/gh/jwkim98/Motutapu/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jwkim98/Motutapu&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d81d09c4b414983b5a99110dfb2a183)](https://www.codacy.com/gh/jwkim98/Sapphire/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jwkim98/Sapphire&amp;utm_campaign=Badge_Grade)
 
 Sapphire is a Flexible and efficient Deep learning framework built for research purpose.
 
