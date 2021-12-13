@@ -66,12 +66,6 @@ Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
 
 Tensor Conv2D::operator()(Tensor& x)
 {
-    if (!m_useBias)
-        throw std::runtime_error(
-            "Conv2D::operator() - This unit was not configured to use bias, "
-            "but it "
-            "was called with bias");
-
     auto inputRows = x.GetShape().At(-2);
     auto inputCols = x.GetShape().At(-1);
     const auto [dilationRows, dilationCols] = m_dilation;
@@ -93,7 +87,6 @@ Tensor Conv2D::operator()(Tensor& x)
         throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
 
     auto filter = m_trainableTensorMap.at("filter");
-    auto bias = m_trainableTensorMap.at("bias");
 
     if (filter.Mode() != x.Mode())
     {
@@ -104,14 +97,14 @@ Tensor Conv2D::operator()(Tensor& x)
     }
     if (m_useBias)
     {
+        auto bias = m_trainableTensorMap.at("bias");
         if (x.Mode() == ComputeMode::Cuda)
             bias.ToCuda();
         else
             bias.ToHost();
+        return this->operator()(x, filter, bias);
     }
 
-    if (m_useBias)
-        return this->operator()(x, filter, bias);
     return this->operator()(x, filter);
 }
 
