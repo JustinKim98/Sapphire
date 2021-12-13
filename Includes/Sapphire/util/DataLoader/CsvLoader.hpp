@@ -142,7 +142,7 @@ public:
                 const auto elemIdx = i + firstElemIdx;
                 std::string_view str = csvRow[elemIdx];
                 std::from_chars(str.data(), str.data() + str.size(), value);
-                data[batchIdx * (lastElemIdx - firstElemIdx) + i] = value;
+                data[batchIdx * (lastElemIdx - firstElemIdx + 1) + i] = value;
             }
         }
         tensor.LoadData(preprocess(data));

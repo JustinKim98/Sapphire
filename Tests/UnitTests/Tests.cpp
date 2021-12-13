@@ -414,7 +414,7 @@ TEST_CASE("Model Test")
     
         SimpleLinearModel(
             "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
-            0.0000001f, 1000000, false);
+            0.000001f, 1000000, false);
     }
 
     SUBCASE("MNIST test")
