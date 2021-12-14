@@ -57,6 +57,9 @@ public:
             m_fileData = std::move(vector);
             free(buffer);
         }
+        else
+            throw std::runtime_error("BinaryLoader - Could not open file (" +
+                                     filePath.string() + ")");
     }
 
     virtual ~BinaryLoader() = default;

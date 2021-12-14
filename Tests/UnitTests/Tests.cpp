@@ -368,9 +368,15 @@ TEST_CASE("Data Loader Test")
 {
     SUBCASE("Csv Loader Test")
     {
+#ifdef _MSC_VER
+        const std::string filePath =
+            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\train.csv";
+#else
+        const std::string filePath =
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
+#endif
         std::cout << "Testing csv loader " << std::endl;
-        CsvLoaderTest(
-            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", false);
+        CsvLoaderTest(filePath, false);
     }
 }
 #endif
@@ -402,24 +408,41 @@ TEST_CASE("train test")
 
 TEST_CASE("Model Test")
 {
-    // SUBCASE("MnistTest")
-    // {
-    //     std::cout << "--- Mnist linear model ---" << std::endl;
-    //
-    //     MnistLinear(
-    //         "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
-    //         0.0001f, 5000, false);
-    // }
+    SUBCASE("MnistTest")
+    {
+        std::cout << "--- Mnist linear model ---" << std::endl;
+#ifdef _MSC_VER
+        const std::string filePath =
+            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\train.csv";
+#else
+        const std::string filePath =
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
+#endif
+    
+        MnistLinear(
+            filePath, 100,
+            0.0001f, 5000, false);
+    }
 
     SUBCASE("Conv2DModelTest")
     {
         constexpr auto batchSize = 100;
 
-        std::cout << "--- Cifar-10 Conv2D image classification model ---" << std::endl;
-        Conv2DModelTest(
-            "/mnt/c/Users/user/Documents/Sapphire/Datasets/cifar-10-batches-bin/"
-            "data_batch_1.bin",
-            batchSize, 0.0002f, false, 2500);
+#ifdef _MSC_VER
+        const std::string filePath =
+            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\cifar-10-batches-"
+            "bin\\data_batch_1.bin";
+#else
+        const std::string filePath =
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/"
+            "cifar-10-batches-bin/"
+            "data_batch_1.bin";
+#endif
+
+        std::cout << "--- Cifar-10 Conv2D image classification model ---" <<
+            std::endl;
+        Conv2DModelTest(filePath,
+                        batchSize, 0.002f, false, 2500);
     }
 }
 
