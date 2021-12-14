@@ -126,11 +126,12 @@ public:
     }
 
     void LoadData(const Tensor& tensor, std::vector<std::size_t> lineIndices,
-                  std::size_t firstElemIdx, std::size_t lastElemIdx,
+                  std::size_t firstIdx, std::size_t lastIdx,
                   std::function<std::vector<float>(std::vector<T>)> preprocess)
     {
-        const auto inputSizePerBatch = lastElemIdx - firstElemIdx + 1;
-        std::vector<T> data(lineIndices.size() * inputSizePerBatch);
+        const auto inputSizePerBatch = lastIdx - firstIdx + 1;
+        const auto batchSize = lineIndices.size();
+        std::vector<T> data(batchSize * inputSizePerBatch);
 
         for (std::size_t batchIdx = 0;
              batchIdx < lineIndices.size(); ++batchIdx)
@@ -139,7 +140,7 @@ public:
             for (std::size_t i = 0; i < inputSizePerBatch; ++i)
             {
                 T value = static_cast<T>(0.0f);
-                const auto elemIdx = i + firstElemIdx;
+                const auto elemIdx = i + firstIdx;
                 std::string_view str = csvRow[elemIdx];
                 std::from_chars(str.data(), str.data() + str.size(), value);
                 data[batchIdx * inputSizePerBatch + i] = value;

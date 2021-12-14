@@ -82,6 +82,7 @@ void MnistLinear(std::filesystem::path filePath, int batchSize,
         {
             elem = dist(gen);
         }
+
         dataLoader.LoadData(x, batches, 1, 784, dataPreProcess);
         dataLoader.LoadData(label, batches, 0, 0, labelOneHot);
 

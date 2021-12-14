@@ -402,14 +402,14 @@ TEST_CASE("train test")
 
 TEST_CASE("Model Test")
 {
-    SUBCASE("MnistTest")
-    {
-        std::cout << "--- Mnist linear model ---" << std::endl;
-
-        MnistLinear(
-            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
-            0.0001f, 5000, false);
-    }
+    // SUBCASE("MnistTest")
+    // {
+    //     std::cout << "--- Mnist linear model ---" << std::endl;
+    //
+    //     MnistLinear(
+    //         "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv", 100,
+    //         0.0001f, 5000, false);
+    // }
 
     SUBCASE("Conv2DModelTest")
     {

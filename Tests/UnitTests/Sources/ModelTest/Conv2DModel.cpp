@@ -5,6 +5,7 @@
 // property of any third parties.
 
 #include <ModelTest/Conv2DModel.hpp>
+#include <Sapphire/util/DataLoader/BinaryLoader.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
@@ -28,6 +29,8 @@ void Conv2DModelTest(
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution dist(0, batchSize - 1);
+    Util::BinaryLoader<std::uint8_t> dataLoader(std::move(filePath), 3073,
+                                                3073 * 9999, batchSize, 3073);
 
     ModelManager::AddModel("SimpleConv2DModel");
     ModelManager::SetCurrentModel("SimpleConv2DModel");
@@ -61,10 +64,30 @@ void Conv2DModelTest(
     Optimizer::SGD sgd(learningRate);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
-    const auto totalData = ReadFile<std::uint8_t>(filePath.string());
+    auto dataPreProcess =
+        [batchSize](std::vector<std::uint8_t> data) -> std::vector<float> {
+        std::vector<float> outData(batchSize * 32 * 32 * 3);
+        if (data.size() > static_cast<std::size_t>(32 * 32 * 3) * batchSize)
+            throw std::runtime_error(
+                "dataPreProcess - given data was larger than expected");
+        for (std::size_t i = 0; i < data.size(); ++i)
+            outData[i] = static_cast<float>(data[i]) / 255.0f;
+        return outData;
+    };
 
-    std::vector<float> labelData(batchSize * 10);
-    std::vector<float> xData(batchSize * 32 * 32 * 3);
+    auto labelOneHot =
+        [batchSize](std::vector<std::uint8_t> label) -> std::vector<float> {
+        std::vector oneHot(batchSize * 10, 0.0f);
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            const auto idx = label.at(batchIdx);
+            if (idx >= 10 || idx < 0)
+                throw std::runtime_error("labelOneHot - idx out of range");
+            oneHot.at(batchIdx * 10 + idx) = 1.0f;
+        }
+        return oneHot;
+    };
+
     std::vector<std::size_t> batches(batchSize);
 
     for (int epoch = 0; epoch < epochs; ++epoch)
@@ -74,24 +97,8 @@ void Conv2DModelTest(
             elem = dist(gen);
         }
 
-        std::fill(labelData.begin(), labelData.end(), 0.0f);
-        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            const auto batch = batches.at(batchIdx);
-            const auto layerIdx =
-                batchIdx * 10 +
-                totalData.at(batch * (32 * 32 * 3 + 1));
-            labelData[layerIdx] = 1.0f;
-            for (int idx = 0; idx < 32 * 32 * 3; ++idx)
-                xData[batchIdx * (32 * 32 * 3) + idx] =
-                    static_cast<float>(totalData.at(
-                        batch * (32 * 32 * 3 + 1) + idx + 1)) /
-                    255.0f;
-        }
-
-        //! Load the data to model
-        x.LoadData(xData);
-        label.LoadData(labelData);
+        dataLoader.LoadData(x, batches, 1, 32 * 32 * 3, dataPreProcess);
+        dataLoader.LoadData(label, batches, 0, 0, labelOneHot);
 
         //! Load data to x and label here
         auto tensor = pool(NN::ReLU(conv0(x)));
