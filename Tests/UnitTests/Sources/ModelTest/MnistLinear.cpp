@@ -8,7 +8,6 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/ReLU.hpp>
-#include <Sapphire/operations/Loss/MSE.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>

@@ -129,20 +129,20 @@ public:
                   std::size_t firstElemIdx, std::size_t lastElemIdx,
                   std::function<std::vector<float>(std::vector<T>)> preprocess)
     {
-        const auto size = tensor.Size();
-        std::vector<T> data(size);
+        const auto inputSizePerBatch = lastElemIdx - firstElemIdx + 1;
+        std::vector<T> data(lineIndices.size() * inputSizePerBatch);
 
-        for (std::size_t batchIdx = 0; batchIdx < lineIndices.size(); ++
-             batchIdx)
+        for (std::size_t batchIdx = 0;
+             batchIdx < lineIndices.size(); ++batchIdx)
         {
             const auto csvRow = m_csvRows.at(lineIndices.at(batchIdx));
-            for (std::size_t i = 0; i <= lastElemIdx - firstElemIdx; ++i)
+            for (std::size_t i = 0; i < inputSizePerBatch; ++i)
             {
                 T value = static_cast<T>(0.0f);
                 const auto elemIdx = i + firstElemIdx;
                 std::string_view str = csvRow[elemIdx];
                 std::from_chars(str.data(), str.data() + str.size(), value);
-                data[batchIdx * (lastElemIdx - firstElemIdx + 1) + i] = value;
+                data[batchIdx * inputSizePerBatch + i] = value;
             }
         }
         tensor.LoadData(preprocess(data));
