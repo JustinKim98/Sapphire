@@ -10,8 +10,6 @@
 #include <Sapphire/util/CudaDevice.hpp>
 #include <memory>
 
-
-
 namespace Sapphire
 {
 //! TensorDescriptor class contains data vector for processing

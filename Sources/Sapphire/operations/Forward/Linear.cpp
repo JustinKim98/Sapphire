@@ -30,7 +30,7 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
             "NN::Linear - Sparse version not implemented");
     CudaDevice gpu(0, "cuda0");
 
-    auto sd = 1.0f / std::sqrt(inputFeatureSize);
+    auto sd = 1.0f / static_cast<float>(std::sqrt(inputFeatureSize));
     const Tensor weight = MakeTensor(
         Shape({ inputFeatureSize, outputFeatureSize }),
         gpu,
@@ -53,7 +53,7 @@ Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
             "NN::Linear - Sparse version not implemented");
     CudaDevice gpu(0, "cuda0");
 
-    auto sd = 1.0f / std::sqrt(inputFeatureSize);
+    auto sd = 1.0f / static_cast<float>(std::sqrt(inputFeatureSize));
     const Tensor weight = MakeTensor(
         Shape({ inputFeatureSize, outputFeatureSize }), gpu,
         M<Initialize::Uniform>(-sd, sd), true);

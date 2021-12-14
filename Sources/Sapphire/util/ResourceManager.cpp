@@ -20,7 +20,6 @@ void* AllocHost(std::size_t size)
     void* ptr = nullptr;
 #ifdef _MSC_VER
     ptr = malloc(size);
-    // ptr = _aligned_malloc(size, 32);
 #else
     ptr = aligned_alloc(32, size);
 #endif
@@ -31,7 +30,6 @@ void FreeHost(void* ptr)
 {
 #ifdef _MSC_VER
     free(ptr);
-    //_aligned_free(ptr);
 #else
     free(ptr);
 #endif

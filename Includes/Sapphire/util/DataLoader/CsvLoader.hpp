@@ -115,7 +115,7 @@ public:
         std::vector<float> data(size);
         for (std::size_t i = 0; i <= lastElemIdx - firstElemIdx; ++i)
         {
-            T value = 0.0f;
+            T value = static_cast<T>(0.0f);
             const auto elemIdx = i + firstElemIdx;
             std::string_view str = csvRow[elemIdx];
             std::from_chars(str.data(), str.data() + str.size(),
@@ -138,7 +138,7 @@ public:
             const auto csvRow = m_csvRows.at(lineIndices.at(batchIdx));
             for (std::size_t i = 0; i <= lastElemIdx - firstElemIdx; ++i)
             {
-                T value = 0.0f;
+                T value = static_cast<T>(0.0f);
                 const auto elemIdx = i + firstElemIdx;
                 std::string_view str = csvRow[elemIdx];
                 std::from_chars(str.data(), str.data() + str.size(), value);
