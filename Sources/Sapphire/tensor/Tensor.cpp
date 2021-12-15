@@ -60,7 +60,7 @@ int Tensor::TensorDescriptorKey() const
     return m_tensorDescKey;
 }
 
-void Tensor::ToCuda()
+void Tensor::ToCuda() const
 {
     Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
@@ -69,7 +69,7 @@ void Tensor::ToCuda()
     desc.SetMode(ComputeMode::Cuda);
 }
 
-void Tensor::ToHost()
+void Tensor::ToHost() const
 {
     Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(m_tensorDescKey);

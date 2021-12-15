@@ -14,7 +14,7 @@ namespace Sapphire::Compute::Initialize
 {
 void Normal(TensorUtil::TensorData& data, float mean, float sd)
 {
-    const auto device = data.GetDevice();
+    const auto device = data.GetCudaDevice();
     if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Normal(data.CudaMutableRawPtr(), mean, sd,
@@ -30,7 +30,7 @@ void Normal(TensorUtil::TensorData& data, float mean, float sd)
 
 void Uniform(TensorUtil::TensorData& data, float min, float max)
 {
-    if (const auto device = data.GetDevice();
+    if (const auto device = data.GetCudaDevice();
         data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Uniform(data.CudaMutableRawPtr(), min, max,
@@ -46,7 +46,7 @@ void Uniform(TensorUtil::TensorData& data, float min, float max)
 
 void Ones(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetDevice();
+    const auto device = data.GetCudaDevice();
     if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), 1.0f,
@@ -60,7 +60,7 @@ void Ones(TensorUtil::TensorData& data)
 
 void Zeros(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetDevice();
+    const auto device = data.GetCudaDevice();
     if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), 0.0f,
@@ -74,7 +74,7 @@ void Zeros(TensorUtil::TensorData& data)
 
 void Scalar(TensorUtil::TensorData& data, float value)
 {
-    const auto device = data.GetDevice();
+    const auto device = data.GetCudaDevice();
     if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), value,
@@ -88,7 +88,7 @@ void Scalar(TensorUtil::TensorData& data, float value)
 
 void HeNormal(TensorUtil::TensorData& data, int fanIn)
 {
-    const auto device = data.GetDevice();
+    const auto device = data.GetCudaDevice();
     if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Normal(
@@ -106,7 +106,7 @@ void HeNormal(TensorUtil::TensorData& data, int fanIn)
 
 void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
 {
-    const auto device = data.GetDevice();
+    const auto device = data.GetCudaDevice();
     if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Normal(

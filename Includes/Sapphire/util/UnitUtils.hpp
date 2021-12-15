@@ -130,7 +130,7 @@ bool CheckDeviceEquality(const T& paramA, const T& paramB)
         return false;
 
     if (paramA.Mode() == ComputeMode::Cuda &&
-        paramA.GetDevice() != paramB.GetDevice())
+        paramA.GetCudaDevice() != paramB.GetCudaDevice())
         return false;
 
     return true;
@@ -144,7 +144,7 @@ bool CheckDeviceEquality(const T& paramA, const T& paramB,
         return false;
 
     if (paramA.Mode() == ComputeMode::Cuda &&
-        paramA.GetDevice() != paramB.GetDevice())
+        paramA.GetCudaDevice() != paramB.GetCudaDevice())
         return false;
 
     return CheckDeviceEquality(paramB, params...);

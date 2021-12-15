@@ -9,6 +9,15 @@
 
 namespace Sapphire::TensorUtil
 {
+TensorDescriptor::TensorDescriptor(const Shape& shape, Type type, int key,
+                                   bool preserve)
+    : m_forwardData(shape, type, key, preserve),
+      m_backwardData(shape, type, key, preserve),
+      m_key(key),
+      m_trainable(false)
+{
+}
+
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
                                    const CudaDevice& device,
                                    int key, bool preserve)
@@ -64,13 +73,13 @@ Shape TensorDescriptor::GetShape() const
 CudaDevice TensorDescriptor::GetDevice() const
 {
     if (Mode() == ComputeMode::Cuda)
-        return m_forwardData.GetDevice();
+        return m_forwardData.GetCudaDevice();
     return CudaDevice();
 }
 
 CudaDevice TensorDescriptor::GetCudaDevice() const
 {
-    return m_forwardData.GetDevice();
+    return m_forwardData.GetCudaDevice();
 }
 
 Type TensorDescriptor::GetType() const

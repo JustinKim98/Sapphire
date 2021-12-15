@@ -23,6 +23,10 @@ class TensorDescriptor
 {
 public:
     TensorDescriptor() = default;
+
+    TensorDescriptor(const Shape& shape, Type type, int key,
+                     bool preserve = false);
+
     TensorDescriptor(const Shape& shape, Type type, const CudaDevice& device,
                      int key, bool preserve = false);
 

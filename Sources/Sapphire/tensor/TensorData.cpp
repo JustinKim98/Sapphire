@@ -17,10 +17,22 @@ namespace Sapphire::TensorUtil
 TensorData::TensorData(Shape shape, Type type, bool preserve)
     : m_shape(std::move(shape)),
       m_type(type),
+      m_mode(ComputeMode::Host),
       m_preserve(preserve)
 {
     m_allocateHost();
 }
+
+TensorData::TensorData(Shape shape, Type type, int parentDescKey, bool preserve)
+    : m_shape(std::move(shape)),
+      m_parentDescKey(parentDescKey),
+      m_type(type),
+      m_mode(ComputeMode::Host),
+      m_preserve(preserve)
+{
+    m_allocateHost();
+}
+
 
 TensorData::TensorData(Shape shape, Type type, CudaDevice device, bool preserve)
     : m_shape(std::move(shape)),
@@ -160,6 +172,23 @@ void TensorData::SetData(std::vector<float> data)
     }
 }
 
+void TensorData::SetDevice(CudaDevice device)
+{
+    if (device != m_device)
+    {
+        if (m_device.GetID() == -1)
+        {
+            m_allocateCuda();
+        }
+        m_device = device;
+    }
+}
+
+CudaDevice TensorData::GetCudaDevice() const
+{
+    return m_device;
+}
+
 int TensorData::GetNumUnits(int requiredDim) const
 {
     return m_shape.GetNumUnits(requiredDim);
@@ -172,7 +201,7 @@ int TensorData::GetUnitSize(int requiredDim) const
 
 TensorData TensorData::CreateCopy() const
 {
-    TensorData tensorData(m_shape, GetType(), GetDevice(), m_parentDescKey);
+    TensorData tensorData(m_shape, GetType(), GetCudaDevice(), m_parentDescKey);
     tensorData.SetMode(m_mode);
 
     DeepCopy(tensorData, *this);

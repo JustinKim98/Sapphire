@@ -66,7 +66,7 @@ void Conv2DBackProp::m_runBackProp()
     const auto [rowPadding, colPadding] = m_padding;
 
     TensorData dKernel(kernel.GetShape(), kernel.GetType(),
-                       kernel.GetDevice());
+                       kernel.GetCudaDevice());
     dKernel.SetMode(kernel.Mode());
 
     Compute::Conv2DBackward(dx, dKernel, dy, x, kernel, strideRow, strideCol,
@@ -84,9 +84,9 @@ void Conv2DBackProp::m_runBackProp()
         auto mean2Shape = mean1Shape;
         mean2Shape.Set(0, 1);
         assert(bias.GetShape() == mean2Shape);
-        TensorData mean0(mean0Shape, dy.GetType(), dy.GetDevice());
-        TensorData mean1(mean1Shape, dy.GetType(), dy.GetDevice());
-        TensorData mean2(mean2Shape, dy.GetType(), dy.GetDevice());
+        TensorData mean0(mean0Shape, dy.GetType(), dy.GetCudaDevice());
+        TensorData mean1(mean1Shape, dy.GetType(), dy.GetCudaDevice());
+        TensorData mean2(mean2Shape, dy.GetType(), dy.GetCudaDevice());
         mean0.SetMode(dy.Mode());
         mean1.SetMode(dy.Mode());
         mean2.SetMode(dy.Mode());

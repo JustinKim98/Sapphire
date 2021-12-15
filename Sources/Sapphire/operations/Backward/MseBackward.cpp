@@ -30,7 +30,7 @@ void MSEBackward::m_runBackProp()
     auto label = m_constants[labelIdx];
     auto dx = m_dxVector[dxIdx];
     TensorUtil::TensorData diff(label.GetShape(), label.GetType(),
-                                label.GetDevice(), false);
+                                label.GetCudaDevice(), false);
     diff.SetMode(label.Mode());
 
     Compute::Sub(diff, x, label);

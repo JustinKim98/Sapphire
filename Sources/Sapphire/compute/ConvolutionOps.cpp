@@ -18,10 +18,8 @@ void Conv2DForward(TensorData& y, const TensorData& x, const TensorData& filter,
                    int dilationCol, int rowPadding, int columnPadding)
 {
     assert(y.Mode() == x.Mode() && y.Mode() == filter.Mode());
-    assert(y.GetDevice() == x.GetDevice() &&
-        y.GetDevice() == filter.GetDevice());
 
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     if (y.Mode() == ComputeMode::Cuda)
     {
         const Dense::Cuda::Shape4D filterShape = {
@@ -56,9 +54,8 @@ void MaxPool2DForward(TensorData& y, const TensorData& x, int windowRows,
                       int rowPadding, int colPadding)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetDevice() == x.GetDevice());
 
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     if (y.Mode() == ComputeMode::Cuda)
     {
         const Dense::Cuda::Shape4D xShape = {
@@ -87,8 +84,7 @@ void AvgPool2DForward(TensorData& y, const TensorData& x, int windowRows,
                       int rowPadding, int colPadding)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetDevice() == x.GetDevice());
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     if (y.Mode() == ComputeMode::Cuda)
     {
         const Dense::Cuda::Shape4D xShape = {
@@ -117,11 +113,7 @@ void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
 {
     assert(dy.Mode() == dx.Mode() && dy.Mode() == dFilter.Mode());
     assert(dy.Mode() == x.Mode() && dy.Mode() == filter.Mode());
-    assert(dy.GetDevice() == x.GetDevice() &&
-        dy.GetDevice() == filter.GetDevice());
-    assert(dy.GetDevice() == dx.GetDevice() &&
-        dy.GetDevice() == dFilter.GetDevice());
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     if (dx.Mode() == ComputeMode::Cuda)
     {
         const Dense::Cuda::Shape4D filterShape = {
@@ -161,11 +153,8 @@ void MaxPool2DBackward(TensorData& dx, const TensorData& dy,
 {
     assert(dx.Mode() == dy.Mode() && dx.Mode() == x.Mode() &&
         dx.Mode() == y.Mode());
-    assert(dx.GetDevice() == dy.GetDevice() &&
-        dx.GetDevice() == x.GetDevice() &&
-        dx.GetDevice() == y.GetDevice());
 
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     if (dx.Mode() == ComputeMode::Cuda)
     {
         const Dense::Cuda::Shape4D xShape = {
@@ -201,11 +190,8 @@ void AvgPool2DBackward(TensorData& dx, const TensorData& dy,
     assert(
         dx.Mode() == dy.Mode() && dx.Mode() == x.Mode() && dx.Mode() == y.Mode(
         ));
-    assert(dx.GetDevice() == dy.GetDevice() &&
-        dx.GetDevice() == x.GetDevice() &&
-        dx.GetDevice() == y.GetDevice());
 
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     if (dx.Mode() == ComputeMode::Cuda)
     {
         const Dense::Cuda::Shape4D xShape = {

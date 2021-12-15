@@ -14,8 +14,7 @@ namespace Sapphire::Compute
 void SoftMax(TensorData& y, const TensorData& x)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetDevice() == x.GetDevice());
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto unitSize = y.GetShape().At(-1);
     const auto totalSize = y.Size();
 
@@ -35,8 +34,7 @@ void SoftMax(TensorData& y, const TensorData& x)
 void LeakyReLU(TensorData& y, const TensorData& x, float a)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetDevice() == x.GetDevice());
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto totalSize = y.Size();
 
     if (y.Mode() == ComputeMode::Cuda)
@@ -54,8 +52,7 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
 void ReLU(TensorData& y, const TensorData& x)
 {
     assert(y.Mode() == x.Mode());
-    assert(y.GetDevice() == x.GetDevice());
-    const auto device = y.GetDevice();
+    const auto device = y.GetCudaDevice();
     const auto totalSize = y.Size();
 
     if (y.Mode() == ComputeMode::Cuda)
@@ -72,9 +69,7 @@ void ReLU(TensorData& y, const TensorData& x)
 void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
     assert(dx.Mode() == dy.Mode() && dx.Mode() == x.Mode());
-    assert(dx.GetDevice() == dy.GetDevice() &&
-        dx.GetDevice() == x.GetDevice());
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     const auto totalSize = dx.Size();
 
     if (dx.Mode() == ComputeMode::Cuda)
@@ -92,7 +87,7 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
                        const TensorData& x, float a)
 {
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     const auto totalSize = dx.Size();
 
     if (dx.Mode() == ComputeMode::Cuda)
@@ -112,8 +107,7 @@ void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
 void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
 {
     assert(dx.Mode() == dy.Mode() && dx.Mode() == y.Mode());
-    assert(dx.GetDevice() == dy.GetDevice() && dx.GetDevice() == y.GetDevice());
-    const auto device = dx.GetDevice();
+    const auto device = dx.GetCudaDevice();
     const auto totalSize = dx.Size();
     const auto unitSize = dx.GetShape().At(-1);
 

@@ -19,6 +19,8 @@ class Tensor
 public:
     Tensor() = default;
 
+    Tensor(const Shape& shape, bool preserve = false);
+
     Tensor(const Shape& shape, const CudaDevice& device,
            bool preserve = false);
 
@@ -49,8 +51,8 @@ public:
     void LoadData(const std::vector<float>& data) const;
     void SetGradient(const std::vector<float>& data) const;
 
-    void ToCuda();
-    void ToHost();
+    void ToCuda() const;
+    void ToHost() const;
     [[nodiscard]] ComputeMode Mode() const;
     [[nodiscard]] int Size() const;
 
@@ -68,8 +70,6 @@ std::unique_ptr<T> M(Ts&&... args)
 {
     return std::make_unique<T>(std::forward<Ts>(args)...);
 }
-
-
 } // namespace Sapphire
 
 #endif

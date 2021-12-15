@@ -19,10 +19,10 @@ MulBackProp::MulBackProp(std::string name, const TensorUtil::TensorData& a,
                       { a, b },
                       { TensorUtil::TensorData(a.GetShape().GetTranspose(),
                                                a.GetType(),
-                                               a.GetDevice()),
+                                               a.GetCudaDevice()),
                         TensorUtil::TensorData(b.GetShape().GetTranspose(),
                                                b.GetType(),
-                                               b.GetDevice()) })
+                                               b.GetCudaDevice()) })
 {
     auto& aData = m_constants[0];
     auto& bData = m_constants[1];
