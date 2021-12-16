@@ -7,36 +7,88 @@
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/operations/Backward/Conv2DBackward.hpp>
+#include <Sapphire/tensor/CreateTensor.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 
 namespace Sapphire::NN
 {
-Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
-               std::pair<int, int> filterSize, std::pair<int, int> stride,
-               std::pair<int, int> padSize, std::pair<int, int> dilation,
-               Optimizer::Optimizer* optimizer, bool useBias)
-    : Unit(optimizer),
+int Conv2D::m_unitIdCount = 0;
+
+Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> filterSize,
+               std::pair<int, int> stride, std::pair<int, int> padSize,
+               std::pair<int, int> dilation, bool useBias)
+    : Unit(std::string("Conv2D") + std::to_string(m_unitIdCount++)),
       m_yChannels(yChannels),
       m_xChannels(xChannels),
-      m_useBias(useBias)
+      m_useBias(useBias),
+      m_filterSize(filterSize),
+      m_stride(stride),
+      m_padSize(padSize),
+      m_dilation(dilation)
 {
     const auto [filterRows, filterCols] = filterSize;
-    const auto [dilationRows, dilationCols] = dilation;
-    const auto [inputRows, inputCols] = inputSize;
-    const auto [rowPadding, colPadding] = padSize;
-    const auto [strideRows, strideCols] = stride;
+    const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
+    const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
 
-    m_xChannels = xChannels;
-    m_yChannels = yChannels;
-    m_inputSize = inputSize;
-    m_filterSize = std::make_pair(filterRows, filterCols);
-    m_stride = stride;
-    m_dilation = dilation;
-    m_isSparse = false;
-    m_optimizer = std::move(optimizer);
-    m_padSize = padSize;
+    const auto filter = MakeTensor(
+        Shape({ yChannels, xChannels, filterRows, filterCols }),
+        M<Initialize::Uniform>(-filterStd, filterStd), true);
+    m_trainableTensorMap["filter"] = filter;
+
+    if (useBias)
+    {
+        const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
+        const auto bias = MakeTensor(Shape({ yChannels }),
+                                     M<Initialize::Uniform>(-biasStd, biasStd),
+                                     true);
+        m_trainableTensorMap["bias"] = bias;
+    }
+}
+
+Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
+               std::pair<int, int> filterSize,
+               std::pair<int, int> stride, std::pair<int, int> padSize,
+               std::pair<int, int> dilation,
+               bool useBias)
+    : Unit(std::move(name)),
+      m_yChannels(yChannels),
+      m_xChannels(xChannels),
+      m_useBias(useBias),
+      m_filterSize(filterSize),
+      m_stride(stride),
+      m_padSize(padSize),
+      m_dilation(dilation)
+{
+    const auto [filterRows, filterCols] = filterSize;
+    const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
+    const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
+
+    const auto filter =
+        MakeTensor(Shape({ yChannels, xChannels, filterRows, filterCols }),
+                   M<Initialize::Uniform>(-filterStd, filterStd), true);
+    m_trainableTensorMap["filter"] = filter;
+
+    if (useBias)
+    {
+        const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
+        const auto bias =
+            MakeTensor(Shape({ yChannels }),
+                       M<Initialize::Uniform>(-biasStd, biasStd), true);
+        m_trainableTensorMap["bias"] = bias;
+    }
+}
+
+Tensor Conv2D::operator()(Tensor& x)
+{
+    auto inputRows = x.GetShape().At(-2);
+    auto inputCols = x.GetShape().At(-1);
+    const auto [dilationRows, dilationCols] = m_dilation;
+    const auto [rowPadding, colPadding] = m_padSize;
+    const auto [strideRows, strideCols] = m_stride;
+    const auto [filterRows, filterCols] = m_filterSize;
+    m_inputSize = std::make_pair(inputRows, inputCols);
 
     m_yRows =
         (inputRows + 2 * rowPadding - dilationRows * (filterRows - 1) - 1) /
@@ -49,7 +101,32 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> inputSize,
 
     if (m_yRows <= 0 || m_yCols <= 0)
         throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
+
+
+    auto filter = m_trainableTensorMap.at("filter");
+    filter.SetDevice(x.GetDevice());
+
+    if (filter.Mode() != x.Mode())
+    {
+        if (x.Mode() == ComputeMode::Cuda)
+            filter.ToCuda();
+        else
+            filter.ToHost();
+    }
+    if (m_useBias)
+    {
+        auto bias = m_trainableTensorMap.at("bias");
+        bias.SetDevice(x.GetDevice());
+        if (x.Mode() == ComputeMode::Cuda)
+            bias.ToCuda();
+        else
+            bias.ToHost();
+        return this->operator()(x, filter, bias);
+    }
+
+    return this->operator()(x, filter);
 }
+
 
 Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
 {
@@ -58,6 +135,27 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
             "Conv2D::operator() - This unit was not configured to use bias, "
             "but it "
             "was called with bias");
+
+    auto inputRows = tensor.GetShape().At(-2);
+    auto inputCols = tensor.GetShape().At(-1);
+    const auto [dilationRows, dilationCols] = m_dilation;
+    const auto [rowPadding, colPadding] = m_padSize;
+    const auto [strideRows, strideCols] = m_stride;
+    const auto [filterRows, filterCols] = m_filterSize;
+    m_inputSize = std::make_pair(inputRows, inputCols);
+
+    m_yRows =
+        (inputRows + 2 * rowPadding - dilationRows * (filterRows - 1) - 1) /
+        strideRows +
+        1;
+    m_yCols =
+        (inputCols + 2 * colPadding - dilationCols * (filterCols - 1) - 1) /
+        strideCols +
+        1;
+
+    if (m_yRows <= 0 || m_yCols <= 0)
+        throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
+
     auto mode = tensor.Mode();
     auto& model = ModelManager::CurModel();
 
@@ -69,10 +167,6 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
     const auto yKey = m_registerOutputTensor(xDesc);
     auto& yDesc = model.GetDescriptor(yKey);
     yDesc.SetMode(mode);
-
-    auto [dilationRows, dilationCols] = m_dilation;
-    auto [rowPadding, colPadding] = m_padSize;
-    auto [strideRows, strideCols] = m_stride;
 
     auto filterData = filterDesc.GetForwardData();
     auto biasData = biasDesc.GetForwardData();
@@ -101,8 +195,8 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter, Tensor& bias)
     Compute::Add(y, y, biasData);
     auto yCopy = y.GetDataCopy();
     auto* backPropWrapper =
-        new BackProp::Conv2DBackProp(dx, dy, filterData, biasData, x, m_stride,
-                                     m_dilation, m_padSize, m_optimizer);
+        new BackProp::Conv2DBackProp(m_name, dx, dy, filterData, biasData, x,
+                                     m_stride, m_dilation, m_padSize);
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 
@@ -142,12 +236,14 @@ Tensor Conv2D::operator()(Tensor& tensor, Tensor& filter)
 
     Util::ChangeTensorDataDimension(4, x, dx, y, dy);
 
+    //! TODO : Do we need this?
     Compute::Initialize::Zeros(y);
     Compute::Conv2DForward(y, x, filterData, strideRows, strideCols,
                            dilationRows, dilationCols, rowPadding, colPadding);
 
-    auto* backPropWrapper = new BackProp::Conv2DBackProp(
-        dx, dy, filterData, x, m_stride, m_dilation, m_padSize, m_optimizer);
+    auto* backPropWrapper = new BackProp::Conv2DBackProp(m_name,
+        dx, dy, filterData, x, m_stride, m_dilation, m_padSize);
+
     Util::SaveHistory(backPropWrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 
@@ -161,9 +257,9 @@ int Conv2D::m_registerOutputTensor(
     const auto x = xDesc.GetForwardData();
     const Shape xShape = xDesc.GetShape();
     Shape yShape = xShape;
-    yShape.SetCol(m_yCols);
-    yShape.SetRow(m_yRows);
-    yShape[yShape.Dim() - 3] = m_yChannels;
+    yShape[-1] = m_yCols;
+    yShape[-2] = m_yRows;
+    yShape[- 3] = m_yChannels;
     const auto yKey =
         model.RegisterTensorDescriptor(yShape, x.GetType(), xDesc.GetDevice());
     return yKey;
@@ -219,5 +315,19 @@ void Conv2D::m_checkArguments(
                 "NN::Conv2D - Bias is configured to use different device with "
                 "x");
     }
+}
+
+Tensor Conv2D::GetFilter() const
+{
+    return m_trainableTensorMap.at("filter");
+}
+
+Tensor Conv2D::GetBias() const
+{
+    if (m_useBias)
+        return m_trainableTensorMap.at("bias");
+    else
+        throw std::runtime_error(
+            "Conv2D::GetBias - This Conv2D layer does not use bias");
 }
 } // namespace Sapphire::NN

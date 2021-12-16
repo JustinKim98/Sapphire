@@ -14,11 +14,11 @@ namespace Sapphire::NN
 {
 Tensor SoftMax(const Tensor& input)
 {
+    static int unitIdCount = 0;
     Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(input.TensorDescriptorKey());
-    const auto numFeatures = xDesc.GetShape().Cols();
     const auto yDescKey = model.RegisterTensorDescriptor(
-        Shape({ numFeatures }), xDesc.GetType(),
+        input.GetShape(), xDesc.GetType(),
         xDesc.GetDevice());
     auto& yDesc = model.GetDescriptor(yDescKey);
 
@@ -26,12 +26,13 @@ Tensor SoftMax(const Tensor& input)
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
-    auto* wrapper = new BackProp::SoftMaxBackward(dx, dy, x);
+    Util::ChangeTensorDataDimension(2, x, dx, y, dy);
+    Compute::SoftMax(y, x);
+    auto* wrapper = new BackProp::SoftMaxBackward(
+        "Softmax" + std::to_string(unitIdCount++), dx, dy, y);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
 
-    Util::ChangeTensorDataDimension(1, x, dx, y, dy);
-    Compute::SoftMax(y, x);
 
     return Tensor(yDescKey);
 }

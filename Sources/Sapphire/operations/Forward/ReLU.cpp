@@ -16,6 +16,7 @@ namespace Sapphire::NN
 {
 Tensor ReLU(Tensor xTensor)
 {
+    static int unitIdCount = 0;
     Model& model = ModelManager::CurModel();
     auto& xDesc = model.GetDescriptor(xTensor.TensorDescriptorKey());
     const auto yDescKey = model.RegisterTensorDescriptor(
@@ -27,7 +28,9 @@ Tensor ReLU(Tensor xTensor)
     auto dx = xDesc.GetBackwardData();
     auto y = yDesc.GetForwardData();
     auto dy = yDesc.GetBackwardData();
-    auto* wrapper = new BackProp::ReLUBackward(dx, dy, x);
+    auto* wrapper = new BackProp::ReLUBackward(
+        "ReLU" + std::to_string(unitIdCount++), dx, dy,
+        x);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
     Util::ChangeTensorDataDimension(1, x, dx, y, dy);

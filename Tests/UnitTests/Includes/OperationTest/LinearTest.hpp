@@ -9,6 +9,8 @@
 namespace Sapphire::Test
 {
 void TestLinear(bool print);
+
+void TestLinearTraining(bool printData);
 }
 
 

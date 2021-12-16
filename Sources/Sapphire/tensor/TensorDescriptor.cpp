@@ -6,10 +6,18 @@
 
 #include <Sapphire/tensor/TensorDescriptor.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
-#include <algorithm>
 
 namespace Sapphire::TensorUtil
 {
+TensorDescriptor::TensorDescriptor(const Shape& shape, Type type, int key,
+                                   bool preserve)
+    : m_forwardData(shape, type, key, preserve),
+      m_backwardData(shape, type, key, preserve),
+      m_key(key),
+      m_trainable(false)
+{
+}
+
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
                                    const CudaDevice& device,
                                    int key, bool preserve)
@@ -64,19 +72,25 @@ Shape TensorDescriptor::GetShape() const
 
 CudaDevice TensorDescriptor::GetDevice() const
 {
-    if (Mode() == DeviceType::Cuda)
-        return m_forwardData.GetDevice();
+    if (Mode() == ComputeMode::Cuda)
+        return m_forwardData.GetCudaDevice();
     return CudaDevice();
 }
 
 CudaDevice TensorDescriptor::GetCudaDevice() const
 {
-    return m_forwardData.GetDevice();
+    return m_forwardData.GetCudaDevice();
 }
 
 Type TensorDescriptor::GetType() const
 {
     return m_forwardData.GetType();
+}
+
+void TensorDescriptor::SetDevice(CudaDevice device)
+{
+    m_forwardData.SetDevice(device);
+    m_backwardData.SetDevice(device);
 }
 
 void TensorDescriptor::Reshape(Shape shape)
@@ -99,12 +113,12 @@ void TensorDescriptor::ToHost()
 }
 
 
-DeviceType TensorDescriptor::Mode() const
+ComputeMode TensorDescriptor::Mode() const
 {
     return m_forwardData.Mode();
 }
 
-void TensorDescriptor::SetMode(DeviceType deviceType)
+void TensorDescriptor::SetMode(ComputeMode deviceType)
 {
     m_forwardData.SetMode(deviceType);
     m_backwardData.SetMode(deviceType);

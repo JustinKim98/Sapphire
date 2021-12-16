@@ -7,10 +7,12 @@
 #include <OperationTest/MeanTest.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Forward/MathForward.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 #include <random>
-#include "doctest.h"
+#include <doctest.h>
 
 namespace Sapphire::Test
 {
@@ -29,7 +31,7 @@ void TestMean(bool print)
     });
 
     Tensor x(xShape, gpu, Type::Dense);
-    x.SetMode(DeviceType::Host);
+    x.SetMode(ComputeMode::Host);
 
     Initialize::Initialize(
         x, std::make_unique<Initialize::Normal>(5.0f, 1.0f));
@@ -42,8 +44,8 @@ void TestMean(bool print)
     x.ToHost();
     const auto yHost = NN::Functional::MeanOp(x, dim);
 
-    const auto yForwardGpu = yGpu.GetDataCopy();
-    const auto yForwardHost = yHost.GetDataCopy();
+    const auto yForwardGpu = yGpu.GetData();
+    const auto yForwardHost = yHost.GetData();
     const auto yShape = yGpu.GetShape();
 
     for (int i = 0; i < yShape.Size(); ++i)
@@ -55,17 +57,20 @@ void TestMean(bool print)
     Initialize::InitializeBackwardData(yGpu,
                                        std::make_unique<Initialize::Normal>(
                                            0.0f, 10.0f));
+
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(yGpu);
     x.ToHost();
 
-    const auto xBackwardGpu = x.GetBackwardDataCopy();
+    const auto xBackwardGpu = x.GetGradient();
 
     Initialize::InitializeBackwardData(
         x, std::make_unique<Initialize::Zeros>());
     ModelManager::CurModel().BackProp(yHost);
     x.ToHost();
 
-    const auto xBackwardHost = x.GetBackwardDataCopy();
+    const auto xBackwardHost = x.GetGradient();
 
     for (int i = 0; i < xShape.Size(); ++i)
         CHECK(std::abs(xBackwardGpu[i] - xBackwardHost[i]) <
@@ -96,5 +101,6 @@ void TestMean(bool print)
     }
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

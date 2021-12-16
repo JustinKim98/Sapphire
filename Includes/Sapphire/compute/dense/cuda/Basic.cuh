@@ -42,14 +42,7 @@ __host__ void log(float* y, const float* x, unsigned int totalSize);
 
 __host__ void log10(float* y, const float* x, unsigned int totalSize);
 
-__host__ void ReLUBackward(float* dx, const float* dy,
-                           const float* x, unsigned int totalSize);
-
-__host__ void LeakyReLUBackward(float* dx, const float* dy, const float* x,
-                                float a, unsigned int totalSize);
-
-__host__ void Inverse(float* y, const float* x,
-                      unsigned int totalSize);
+__host__ void Inverse(float* y, const float* x, unsigned int totalSize);
 
 __host__ void Mean(float* y, const float* x, unsigned int yTotalSize,
                    unsigned int unitSize, unsigned int stride);

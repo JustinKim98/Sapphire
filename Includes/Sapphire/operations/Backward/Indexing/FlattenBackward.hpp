@@ -14,7 +14,7 @@ namespace Sapphire::BackProp
 class FlattenBackward : public BackPropWrapper
 {
 public:
-    explicit FlattenBackward(TensorUtil::TensorData dx, TensorUtil::TensorData dy, Shape shape);
+    explicit FlattenBackward(std::string name, TensorUtil::TensorData dx, TensorUtil::TensorData dy, Shape shape);
 
     void m_runBackProp() override;
 

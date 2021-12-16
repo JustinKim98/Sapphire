@@ -19,8 +19,12 @@ class TensorData
 {
 public:
     TensorData() = default;
-    //! TensorData is defined only in Host Mode
-    TensorData(Shape shape, Type type, bool preserve = false);
+    //! TensorData is defined only in Host only Mode
+    TensorData(Shape shape, Type type,
+               bool preserve = false);
+
+    TensorData(Shape shape, Type type, int parentDescKey,
+               bool preserve = false);
     //! TensorData is configured in both Host and Cuda Mode
     TensorData(Shape shape, Type type, CudaDevice device,
                bool preserve = false);
@@ -39,10 +43,32 @@ public:
     unsigned long DenseTotalLengthCuda = 0;
     unsigned long SparseTotalLength = 0;
 
+    //! Gets data stored in this tensorData
+    //! \return : vector that contains data copy of current tensorData
     [[nodiscard]] std::vector<float> GetDataCopy();
 
+    //! Sets internal data
+    //! Given data will be updated only on cuda if tensorData is in cuda mode,
+    //! or it will be updated only on host otherwise
+    //! \param data : vector that contains data to load
     void SetData(std::vector<float> data);
 
+    //! Sets cuda device of the tensorData
+    //! If TensorData was configured in host mode, tensorData will be able to use
+    //! cuda mode after this function is called.
+    //! -- TODO --
+    //! If TensorData was configured in host & cuda mode, and given device is different
+    //! with current device, data will be moved to the new device
+    //! \param device : cuda device
+    void SetDevice(CudaDevice device);
+
+    //! Gets current cuda device metadata
+    //! This object will be empty if current tensorData is configured in host only mode \return : device descriptor \return : device descriptor
+    //! \return : device descriptor
+    [[nodiscard]] CudaDevice GetCudaDevice() const;
+
+    //! Changes shape of the tensorData
+    //! \param shape : shape to change
     void Reshape(const Shape& shape);
 
     [[nodiscard]] int GetDescriptorKey() const
@@ -50,7 +76,15 @@ public:
         return m_parentDescKey;
     }
 
-    [[nodiscard]] int GetBatchSize(int requiredDim) const;
+    //! Get number of unit (batch size) given dimension of required data unit
+    //! \param requiredDim : dimension of the data unit
+    //! \return : number of units (batch size)
+    [[nodiscard]] int GetNumUnits(int requiredDim) const;
+
+    //! Get size of units given dimension of required data unit
+    //! \param requiredDim : dimension of the data unit
+    //! \return : size of the unit
+    [[nodiscard]] int GetUnitSize(int requiredDim) const;
 
     [[nodiscard]] Shape GetShape()
     {
@@ -71,15 +105,6 @@ public:
     [[nodiscard]] int Size() const
     {
         return m_shape.Size();
-    }
-
-    //! Gets device descriptor (Sparse or Dense)
-    //! \return : device descriptor
-    [[nodiscard]] CudaDevice GetDevice() const
-    {
-        if (Mode() == DeviceType::Host)
-            return CudaDevice();
-        return m_device;
     }
 
     //! Gets type of the data (Sparse of Dense)
@@ -111,9 +136,9 @@ public:
 
     //! Sets whether cuda or host will execute operations
     //! This operation is available only on Cuda type tensorData
-    void SetMode(DeviceType type);
+    void SetMode(ComputeMode type);
 
-    [[nodiscard]] DeviceType Mode() const
+    [[nodiscard]] ComputeMode Mode() const
     {
         return m_mode;
     }
@@ -181,7 +206,7 @@ private:
     int m_parentDescKey = -1;
 
     Type m_type = Type::Dense;
-    DeviceType m_mode = DeviceType::Host;
+    ComputeMode m_mode = ComputeMode::Host;
 
     CudaDevice m_device;
     bool m_preserve;

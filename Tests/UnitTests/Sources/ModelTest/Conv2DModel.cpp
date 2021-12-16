@@ -5,81 +5,122 @@
 // property of any third parties.
 
 #include <ModelTest/Conv2DModel.hpp>
+#include <Sapphire/util/DataLoader/BinaryLoader.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/operations/Forward/ReLU.hpp>
-#include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#include <Sapphire/operations/Forward/MaxPool2D.hpp>
+#include <Sapphire/util/FileManager.hpp>
+#include <Sapphire/operations/Forward/Softmax.hpp>
 #include <iostream>
+#include <random>
 
 namespace Sapphire::Test
 {
-void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
-                 int batchSize,
-                 int yChannels, int xChannels, std::pair<int, int> xSize,
-                 std::pair<int, int> ySize,
-                 std::pair<int, int> filterSize, std::pair<int, int> stride,
-                 std::pair<int, int> padSize,
-                 std::pair<int, int> dilation, float learningRate,
-                 bool hostMode, int epochs)
+void Conv2DModelTest(
+    std::filesystem::path filePath,
+    int batchSize,
+    float learningRate, bool hostMode, int epochs)
 {
-    ModelManager::AddModel("SimpleLinearModel");
-    ModelManager::SetCurrentModel("SimpleLinearModel");
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution dist(0, batchSize - 1);
+    Util::BinaryLoader<std::uint8_t> dataLoader(std::move(filePath), 3073,
+                                                3073 * 9999, batchSize, 3073);
 
-    const auto [filterRows, filterCols] = filterSize;
-    const auto [xRows, xCols] = xSize;
-    const auto [yRows, yCols] = ySize;
+    ModelManager::AddModel("SimpleConv2DModel");
+    ModelManager::SetCurrentModel("SimpleConv2DModel");
 
     const CudaDevice gpu(0, "cuda0");
+    constexpr auto xRows = 32;
+    constexpr auto xCols = 32;
 
     //! Declare conv2d Layer
-    NN::Conv2D conv2d(yChannels, xChannels, xSize, filterSize, stride,
-                      padSize, dilation,
-                      new Optimizer::SGD(learningRate), true);
+    NN::Conv2D conv0(6, 3, std::make_pair(5, 5), std::pair(1, 1),
+                     std::pair(0, 0), std::pair(1, 1), false);
+    NN::MaxPool2D pool(std::make_pair(2, 2), std::make_pair(2, 2));
+    NN::Conv2D conv1(16, 6, std::make_pair(5, 5), std::pair(1, 1),
+                     std::make_pair(0, 0), std::make_pair(1, 1), false);
+    NN::Linear fc0(16 * 5 * 5, 120);
+    NN::Linear fc1(120, 84);
+    NN::Linear fc2(84, 10);
 
-    //! Declare input tensors
-    Tensor filter(Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
-                  Type::Dense, true);
-
-    Tensor bias(Shape({ yChannels }), gpu, Type::Dense, true);
-
-    Tensor x(Shape({ batchSize, xChannels, xRows, xCols }), gpu, Type::Dense,
+    Tensor x(Shape({ batchSize, 3, xRows, xCols }), gpu, Type::Dense,
              true);
-    Tensor label(Shape({ batchSize, yChannels, yRows, yCols }), gpu,
+    Tensor label(Shape({ batchSize, 10 }), gpu,
                  Type::Dense, true);
-
-    //! Initialize weights to arbitrary values
-    Initialize::Initialize(filter,
-                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
-    Initialize::Initialize(bias,
-                           std::make_unique<Initialize::Normal>(0.0f, 0.01f));
 
     //! Configure data to be on host if needed
     if (hostMode)
     {
-        filter.ToHost();
-        bias.ToHost();
         x.ToHost();
         label.ToHost();
     }
 
-    //! Load the data to model
-    x.LoadData(xData);
-    label.LoadData(labelData);
+    Optimizer::SGD sgd(learningRate);
+    ModelManager::CurModel().SetOptimizer(&sgd);
 
-    for (int i = 0; i < epochs; ++i)
+    auto dataPreProcess =
+        [batchSize](std::vector<std::uint8_t> data) -> std::vector<float> {
+        std::vector<float> outData(batchSize * 32 * 32 * 3);
+        if (data.size() > static_cast<std::size_t>(32 * 32 * 3) * batchSize)
+            throw std::runtime_error(
+                "dataPreProcess - given data was larger than expected");
+        for (std::size_t i = 0; i < data.size(); ++i)
+            outData[i] = static_cast<float>(data[i]) / 255.0f;
+        return outData;
+    };
+
+    auto labelOneHot =
+        [batchSize](std::vector<std::uint8_t> label) -> std::vector<float> {
+        std::vector oneHot(batchSize * 10, 0.0f);
+        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+        {
+            const auto idx = label.at(batchIdx);
+            if (idx >= 10 || idx < 0)
+                throw std::runtime_error("labelOneHot - idx out of range");
+            oneHot.at(batchIdx * 10 + idx) = 1.0f;
+        }
+        return oneHot;
+    };
+
+    std::vector<std::size_t> batches(batchSize);
+
+    for (int epoch = 0; epoch < epochs; ++epoch)
     {
-        auto y = conv2d(x, filter, bias);
-        y = NN::ReLU(y);
-        const auto loss = NN::Loss::MSE(y, label);
+        for (auto& elem : batches)
+        {
+            elem = dist(gen);
+        }
+
+        dataLoader.LoadData(x, batches, 1, 32 * 32 * 3, dataPreProcess);
+        dataLoader.LoadData(label, batches, 0, 0, labelOneHot);
+
+        //! Load data to x and label here
+        auto tensor = pool(NN::ReLU(conv0(x)));
+        tensor = pool(NN::ReLU(conv1(tensor)));
+        tensor.Reshape(
+            Shape({ batchSize, tensor.GetShape().Size() / batchSize }));
+        tensor = NN::ReLU(fc0(tensor));
+        tensor = NN::ReLU(fc1(tensor));
+        tensor = fc2(tensor);
+        tensor = NN::SoftMax(tensor);
+
+        auto loss = NN::Loss::CrossEntropy(tensor, label);
 
         //! Print loss every 10 epochs
-        if (i % 10 == 0)
+        if (epoch % 10 == 0)
         {
-            const auto lossData = loss.GetDataCopy();
-            std::cout << "epoch: " << i << " loss : " << lossData[0]
+            const auto val = tensor.GetData();
+            for (int idx = 0; idx < 10; ++idx)
+                std::cout << val[idx] << " ";
+            std::cout << std::endl;
+            const auto lossData = loss.GetData();
+            std::cout << "epoch: " << epoch << " loss : " << lossData[0]
                 << std::endl;
         }
 
@@ -89,7 +130,7 @@ void Conv2DModel(std::vector<float> xData, std::vector<float> labelData,
         ModelManager::CurModel().Clear();
 
         //! Clear resources for every 10 epochs
-        if (i % 10 == 0)
+        if (epoch % 10 == 0)
             Util::ResourceManager::Clean();
     }
 

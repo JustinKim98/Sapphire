@@ -21,13 +21,11 @@ constexpr static int xIdx = 0;
 class LinearBackProp : public BackPropWrapper
 {
 public:
-    explicit LinearBackProp(TensorUtil::TensorData dx,
+    explicit LinearBackProp(std::string name, TensorUtil::TensorData dx,
                             TensorUtil::TensorData dy,
                             TensorUtil::TensorData weight,
                             TensorUtil::TensorData bias,
-                            TensorUtil::TensorData x,
-                            Optimizer::Optimizer* optimizer,
-                            int batchSize);
+                            TensorUtil::TensorData x, int batchSize);
 
 private:
     void m_runBackProp() override;

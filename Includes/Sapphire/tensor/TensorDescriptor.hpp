@@ -9,8 +9,8 @@
 
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
+#include <algorithm>
 #include <list>
-#include <memory>
 #include <mutex>
 
 namespace Sapphire::TensorUtil
@@ -23,6 +23,10 @@ class TensorDescriptor
 {
 public:
     TensorDescriptor() = default;
+
+    TensorDescriptor(const Shape& shape, Type type, int key,
+                     bool preserve = false);
+
     TensorDescriptor(const Shape& shape, Type type, const CudaDevice& device,
                      int key, bool preserve = false);
 
@@ -45,6 +49,8 @@ public:
     [[nodiscard]] CudaDevice GetCudaDevice() const;
     [[nodiscard]] Type GetType() const;
 
+    void SetDevice(CudaDevice device);
+
     void Reshape(Shape shape);
 
     //! Moves internal TensorData to cuda
@@ -54,10 +60,10 @@ public:
     void ToHost();
 
     //! Gets current mode of the descriptor
-    [[nodiscard]] DeviceType Mode() const;
+    [[nodiscard]] ComputeMode Mode() const;
 
     //! Sets the mode of the descriptor
-    void SetMode(DeviceType deviceType);
+    void SetMode(ComputeMode deviceType);
 
     //! Initializes backward data to zero
     void InitGradient();
@@ -120,6 +126,8 @@ private:
     //! This describes history of the tensorData
     //! As tensorData is used in unit function as an operand or input/output.
     //! It is stored using this struct
+    //! 1 : output of some layer or operation
+    //! 2 : used as operand of other operation
     struct History
     {
         //! This constructor creates output history, where tensor was newly created
@@ -201,6 +209,7 @@ private:
     unsigned int m_batchSize = 0;
     bool m_trainable = true;
 
+    //! Track history list for back propagation
     std::list<History> m_history;
 };
 } // namespace Sapphire::TensorUtil

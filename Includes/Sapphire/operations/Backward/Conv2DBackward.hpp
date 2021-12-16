@@ -11,21 +11,27 @@
 
 namespace Sapphire::BackProp
 {
+using namespace TensorUtil;
+
 class Conv2DBackProp : public BackPropWrapper
 {
 public:
-    Conv2DBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
-                   TensorUtil::TensorData filter, TensorUtil::TensorData bias,
-                   TensorUtil::TensorData x,
+    Conv2DBackProp(std::string name, TensorData dx, TensorData dy,
+                   TensorData filter, TensorData bias,
+                   TensorData x,
                    std::pair<int, int> stride, std::pair<int, int> dilation,
-                   std::pair<int, int> padding,
-                   Optimizer::Optimizer* optimizer);
+                   std::pair<int, int> padding);
 
-    Conv2DBackProp(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
-                   TensorUtil::TensorData filter, TensorUtil::TensorData x,
+    Conv2DBackProp(std::string name, TensorData dx, TensorData dy,
+                   TensorData filter, TensorData x,
                    std::pair<int, int> stride, std::pair<int, int> dilation,
-                   std::pair<int, int> padding,
-                   Optimizer::Optimizer* optimizer);
+                   std::pair<int, int> padding);
+
+    Conv2DBackProp(const Conv2DBackProp& conv2DBackProp) = default;
+    Conv2DBackProp(Conv2DBackProp&& conv2DBackProp) noexcept = default;
+    Conv2DBackProp& operator=(const Conv2DBackProp& conv2DBackProp) = delete;
+    Conv2DBackProp& operator=(Conv2DBackProp&& conv2DBackProp) noexcept = delete
+    ;
 
     ~Conv2DBackProp() override = default;
 

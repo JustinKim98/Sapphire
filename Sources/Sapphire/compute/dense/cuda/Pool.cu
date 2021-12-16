@@ -135,7 +135,7 @@ __host__ void Pool2DBackward(const float* y, const float* dy, const float* x,
             "Compute::Dense::Cuda::Pool2DBackward - CudnnPool2DMetaData was not "
             "found");
 
-    float alpha = 1.0f, beta = 0.0f;
+    float alpha = 1.0f, beta = 1.0f;
     auto* metaData = Util::ResourceManager::GetCudnnPoolMetaData(poolConfig);
     CudnnPoolBackward2d(metaData, y, dy, x, dx, &alpha, &beta, deviceId);
 }

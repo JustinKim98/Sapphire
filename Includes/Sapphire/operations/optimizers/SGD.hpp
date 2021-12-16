@@ -23,7 +23,7 @@ public:
     SGD& operator=(const SGD& sgd) = default;
     SGD& operator=(SGD&& sgd) noexcept = default;
 
-    void operator()(TensorData& z, const TensorData& dz) override;
+    void operator()(TensorData& z, const TensorData& dz, [[maybe_unused]] std::string name) override;
 
 private:
     float m_learningRate;

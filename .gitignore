@@ -44,3 +44,11 @@ cmake-build-debug
 *.so
 
 cmake-build-release/Libraries/doctest/generated/
+
+# ignore libtorch
+libtorch
+
+#ignore Datasets 
+Datasets/*
+
+Datasets/

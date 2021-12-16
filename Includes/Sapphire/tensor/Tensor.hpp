@@ -17,7 +17,13 @@ namespace Sapphire
 class Tensor
 {
 public:
-    Tensor();
+    Tensor() = default;
+
+    Tensor(const Shape& shape, bool preserve = false);
+
+    Tensor(const Shape& shape, const CudaDevice& device,
+           bool preserve = false);
+
     Tensor(const Shape& shape, const CudaDevice& device, Type type,
            bool preserve = false);
 
@@ -39,20 +45,32 @@ public:
         m_tensorDescKey = key;
     }
 
-    [[nodiscard]] std::vector<float> GetDataCopy() const;
-    [[nodiscard]] std::vector<float> GetBackwardDataCopy() const;
+    [[nodiscard]] std::vector<float> GetData() const;
+    [[nodiscard]] std::vector<float> GetGradient() const;
 
     void LoadData(const std::vector<float>& data) const;
-    void SetBackwardData(const std::vector<float>& data) const;
+    void SetGradient(const std::vector<float>& data) const;
 
-    void ToCuda();
-    void ToHost();
-    [[nodiscard]] DeviceType Mode() const;
-    void SetMode(DeviceType mode) const;
+    void SetDevice(CudaDevice device) const;
+    void ToCuda() const;
+    void ToHost() const;
+    [[nodiscard]] ComputeMode Mode() const;
+    [[nodiscard]] int Size() const;
+
+    void SetMode(ComputeMode mode) const;
+    void Reshape(Shape shape) const;
+    void Flatten() const;
 
 private:
-    int m_tensorDescKey;
+    int m_tensorDescKey = -1;
 };
+
+
+template <typename T, typename... Ts>
+std::unique_ptr<T> M(Ts&&... args)
+{
+    return std::make_unique<T>(std::forward<Ts>(args)...);
+}
 } // namespace Sapphire
 
 #endif

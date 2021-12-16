@@ -11,6 +11,7 @@
 
 namespace Sapphire::Compute::Dense::Cuda
 {
+//! Forward Kernels
 __host__ void ReLU(float* y, const float* x, unsigned int totalSize);
 
 __host__ void LeakyReLU(float* y, const float* x, float a,
@@ -18,6 +19,16 @@ __host__ void LeakyReLU(float* y, const float* x, float a,
 
 __host__ void SoftMax(float* y, const float* x, unsigned int totalSize,
                       unsigned int unitSize);
+
+//! Backward Kernels
+__host__ void ReLUBackward(float* dx, const float* dy, const float* x,
+                           unsigned int totalSize);
+
+__host__ void LeakyReLUBackward(float* dx, const float* dy, const float* x,
+                                float a, unsigned int totalSize);
+
+__host__ void SoftmaxBackward(float* dx, const float* dy, const float* y,
+                              unsigned int totalSize, unsigned int unitSize);
 }
 
 #endif

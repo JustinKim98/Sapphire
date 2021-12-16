@@ -6,17 +6,19 @@
 
 #include <Sapphire/operations/Backward/SoftmaxBackward.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
+#include <Sapphire/compute/Initialize.hpp>
 
 namespace Sapphire::BackProp
 {
 constexpr int dyIdx = 0;
-constexpr int xIdx = 0;
+constexpr int yIdx = 0;
 constexpr int dxIdx = 0;
 
-SoftMaxBackward::SoftMaxBackward(TensorUtil::TensorData dx,
+SoftMaxBackward::SoftMaxBackward(std::string name, TensorUtil::TensorData dx,
                                  TensorUtil::TensorData dy,
-                                 TensorUtil::TensorData x)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) }, { std::move(x) },
+                                 TensorUtil::TensorData y)
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
+                      { std::move(y) },
                       {})
 {
 }
@@ -25,9 +27,9 @@ SoftMaxBackward::SoftMaxBackward(TensorUtil::TensorData dx,
 void SoftMaxBackward::m_runBackProp()
 {
     const auto& dy = m_dyVector[dyIdx];
-    const auto& x = m_constants[xIdx];
+    const auto& y = m_constants[yIdx];
     auto& dx = m_dxVector[dxIdx];
 
-    Compute::SoftMaxBackward(dx, dy, x);
+    Compute::SoftMaxBackward(dx, dy, y);
 }
 }

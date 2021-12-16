@@ -14,8 +14,8 @@ namespace Sapphire::Compute::Initialize
 {
 void Normal(TensorUtil::TensorData& data, float mean, float sd)
 {
-    const auto device = data.GetDevice();
-    if (data.Mode() == DeviceType::Cuda)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Normal(data.CudaMutableRawPtr(), mean, sd,
                             data.DenseTotalLengthCuda,
@@ -30,8 +30,8 @@ void Normal(TensorUtil::TensorData& data, float mean, float sd)
 
 void Uniform(TensorUtil::TensorData& data, float min, float max)
 {
-    if (const auto device = data.GetDevice();
-        data.Mode() == DeviceType::Cuda)
+    if (const auto device = data.GetCudaDevice();
+        data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Uniform(data.CudaMutableRawPtr(), min, max,
                              data.DenseTotalLengthCuda,
@@ -46,8 +46,8 @@ void Uniform(TensorUtil::TensorData& data, float min, float max)
 
 void Ones(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetDevice();
-    if (data.Mode() == DeviceType::Cuda)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), 1.0f,
                             data.DenseTotalLengthCuda);
@@ -60,8 +60,8 @@ void Ones(TensorUtil::TensorData& data)
 
 void Zeros(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetDevice();
-    if (data.Mode() == DeviceType::Cuda)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), 0.0f,
                             data.DenseTotalLengthCuda);
@@ -74,8 +74,8 @@ void Zeros(TensorUtil::TensorData& data)
 
 void Scalar(TensorUtil::TensorData& data, float value)
 {
-    const auto device = data.GetDevice();
-    if (data.Mode() == DeviceType::Cuda)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), value,
                             data.DenseTotalLengthCuda);
@@ -88,8 +88,8 @@ void Scalar(TensorUtil::TensorData& data, float value)
 
 void HeNormal(TensorUtil::TensorData& data, int fanIn)
 {
-    const auto device = data.GetDevice();
-    if (data.Mode() == DeviceType::Cuda)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Normal(
             data.CudaMutableRawPtr(), 0.0,
@@ -106,8 +106,8 @@ void HeNormal(TensorUtil::TensorData& data, int fanIn)
 
 void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
 {
-    const auto device = data.GetDevice();
-    if (data.Mode() == DeviceType::Cuda)
+    const auto device = data.GetCudaDevice();
+    if (data.Mode() == ComputeMode::Cuda)
     {
         Dense::Cuda::Normal(
             data.CudaMutableRawPtr(), 0.0,

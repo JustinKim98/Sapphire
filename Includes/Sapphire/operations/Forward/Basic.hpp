@@ -18,7 +18,11 @@ namespace Sapphire::NN
 class Basic : public Unit
 {
 public:
-    Basic() = default;
+    Basic()
+        : Unit("Basic")
+    {
+    }
+
     ~Basic() override = default;
 
     Basic(const Basic& example) = default;
@@ -38,7 +42,11 @@ private:
 class TwoInputs : public Unit
 {
 public:
-    TwoInputs() = default;
+    TwoInputs()
+        : Unit("TwoInputs")
+    {
+    }
+
     ~TwoInputs() override = default;
 
     TwoInputs(const TwoInputs& receiveTwoInputs) = default;
@@ -60,7 +68,11 @@ private:
 class TwoOutputs : public Unit
 {
 public:
-    TwoOutputs() = default;
+    TwoOutputs()
+        : Unit("TwoOutputs")
+    {
+    }
+
     ~TwoOutputs() override = default;
 
     TwoOutputs(const TwoOutputs& twoOutputs) = default;
@@ -80,7 +92,11 @@ private:
 class InplaceOp : public Unit
 {
 public:
-    InplaceOp() = default;
+    InplaceOp()
+        : Unit("InplaceOp")
+    {
+    }
+
     ~InplaceOp() override = default;
 
     InplaceOp(const InplaceOp& inplaceOp) = default;

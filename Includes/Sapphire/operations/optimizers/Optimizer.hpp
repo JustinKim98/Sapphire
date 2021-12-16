@@ -23,7 +23,7 @@ public:
     Optimizer& operator=(const Optimizer& optimizer) = default;
     Optimizer& operator=(Optimizer&& optimizer) noexcept = default;
 
-    virtual void operator()(TensorData& z, const TensorData& dz)
+    virtual void operator()(TensorData& z, const TensorData& dz, std::string name)
     {
         throw std::runtime_error(
             "Optimizer::Optimizer::operator() - Default operator should not be "

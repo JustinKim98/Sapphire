@@ -4,24 +4,22 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <cmath>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Backward/LinearBackward.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 
 namespace Sapphire::BackProp
 {
-LinearBackProp::LinearBackProp(TensorUtil::TensorData dx,
+LinearBackProp::LinearBackProp(std::string name, TensorUtil::TensorData dx,
                                TensorUtil::TensorData dy,
                                TensorUtil::TensorData weight,
                                TensorUtil::TensorData bias,
                                TensorUtil::TensorData x,
-                               Optimizer::Optimizer* optimizer,
                                int batchSize)
-    : BackPropWrapper({ std::move(dx) }, { std::move(dy) },
+    : BackPropWrapper(std::move(name), { std::move(dx) }, { std::move(dy) },
                       { std::move(weight), std::move(bias) },
                       { std::move(x) },
-                      {}, std::move(optimizer)),
+                      {}),
       m_batchSize(batchSize)
 {
 }
@@ -40,8 +38,16 @@ void LinearBackProp::m_backProp(TensorUtil::TensorData& weight)
 {
     TensorUtil::TensorData& dx = m_dxVector[dxIdx];
     TensorUtil::TensorData& dy = m_dyVector[dyIdx];
+    TensorUtil::TensorData weightTranspose(
+        weight.GetShape().GetTranspose(), weight.GetType(), weight.GetCudaDevice());
+    weightTranspose.SetMode(weight.Mode());
 
-    Compute::Gemm(dx, dy, weight);
+    const auto shape0 = dx.GetShape();
+    const auto shape1 = weightTranspose.GetShape();
+    const auto shape3 = dy.GetShape();
+
+    Compute::Transpose(weightTranspose, weight);
+    Compute::Gemm(dx, dy, weightTranspose);
 }
 
 void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
@@ -50,42 +56,45 @@ void LinearBackProp::m_updateWeight(TensorUtil::TensorData& weight) const
     const TensorUtil::TensorData& x = m_constants[xIdx];
     TensorUtil::TensorData xTranspose(x.GetShape().GetTranspose(),
                                       x.GetType(),
-                                      x.GetDevice());
-    TensorUtil::TensorData dyTranspose(dy.GetShape().GetTranspose(),
-                                       dy.GetType(), dy.GetDevice());
-    TensorUtil::TensorData dw(weight.GetShape().GetTranspose(),
-                              weight.GetType(), weight.GetDevice());
+                                      x.GetCudaDevice());
+    TensorUtil::TensorData dw(weight.GetShape(),
+                              weight.GetType(), weight.GetCudaDevice());
 
     xTranspose.SetMode(x.Mode());
-    dyTranspose.SetMode(dy.Mode());
     dw.SetMode(weight.Mode());
 
-    Compute::Transpose(xTranspose, x);
-    Compute::Transpose(dyTranspose, dy);
-    Compute::Initialize::Zeros(dw);
-    Compute::Gemm(dw, dyTranspose, x);
-    Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
+    const auto shape0 = xTranspose.GetShape();
+    const auto shape1 = dw.GetShape();
+    const auto shape2 = dy.GetShape();
 
-    m_optimizer->operator()(weight, dw);
+    Compute::Transpose(xTranspose, x);
+    Compute::Initialize::Zeros(dw);
+    Compute::Gemm(dw, xTranspose, dy);
+    //Compute::Scale(dw, dw, 1.0f / static_cast<float>(m_batchSize));
+
+    ModelManager::CurModel().GetOptimizer()->operator()(weight, dw, m_name);
 }
 
 void LinearBackProp::m_updateBias(TensorUtil::TensorData& bias) const
 {
     const TensorUtil::TensorData& dy = m_dyVector[dyIdx];
-    TensorUtil::TensorData ones(Shape({ 1, m_batchSize }),
-                                dy.GetType(),
-                                dy.GetDevice());
+    TensorUtil::TensorData transposedOnes(Shape({ 1, m_batchSize }),
+                                          dy.GetType(), dy.GetCudaDevice());
     TensorUtil::TensorData dB(bias.GetShape(), bias.GetType(),
-                              bias.GetDevice());
+                              bias.GetCudaDevice());
 
     dB.SetMode(bias.Mode());
-    ones.SetMode(bias.Mode());
+    transposedOnes.SetMode(bias.Mode());
 
-    Compute::Initialize::Ones(ones);
+    const auto shape0 = transposedOnes.GetShape();
+    const auto shape2 = dB.GetShape();
+    const auto shape3 = dy.GetShape();
+
+    Compute::Initialize::Ones(transposedOnes);
     Compute::Initialize::Zeros(dB);
-    Compute::Gemm(dB, ones, dy);
+    Compute::Gemm(dB, transposedOnes, dy);
 
     Compute::Scale(dB, dB, 1.0f / static_cast<float>(m_batchSize));
-    m_optimizer->operator()(bias, dB);
+    ModelManager::CurModel().GetOptimizer()->operator()(bias, dB, m_name);
 }
 } // namespace Sapphire::BackProp

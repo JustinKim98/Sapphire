@@ -20,9 +20,8 @@ void* AllocHost(std::size_t size)
     void* ptr = nullptr;
 #ifdef _MSC_VER
     ptr = malloc(size);
-    // ptr = _aligned_malloc(size, 32);
 #else
-    ptr=  aligned_alloc(32, size);
+    ptr = aligned_alloc(32, size);
 #endif
     return ptr;
 }
@@ -31,7 +30,6 @@ void FreeHost(void* ptr)
 {
 #ifdef _MSC_VER
     free(ptr);
-    //_aligned_free(ptr);
 #else
     free(ptr);
 #endif
@@ -232,7 +230,7 @@ void ResourceManager::ClearCudnnConv2DMetaDataPool()
         Compute::Cuda::CudaFree(metaData->ForwardWorkSpace);
         Compute::Cuda::CudaFree(metaData->BackwardDataWorkSpace);
         Compute::Cuda::CudaFree(metaData->BackwardFilterWorkSpace);
-        free(metaData);
+        delete metaData;
     }
 
     m_cudnnConv2DMetaDataPool.clear();
@@ -242,7 +240,7 @@ void ResourceManager::ClearCudnnPool2DMetaDataPool()
 {
     for (auto& [key, metaData] : m_cudnnPool2DMetaDataPool)
     {
-        free(metaData);
+        delete metaData;
     }
     m_cudnnPool2DMetaDataPool.clear();
 }
@@ -252,7 +250,7 @@ void ResourceManager::ClearCublasHandlePool()
     for (auto& [key, handle] : m_cublasHandlePool)
     {
         cublasDestroy(*handle);
-        free(handle);
+        delete handle;
     }
 
     m_cublasHandlePool.clear();
@@ -263,7 +261,7 @@ void ResourceManager::ClearCudnnHandlePool()
     for (auto& [key, handle] : m_cudnnHandlePool)
     {
         cudnnDestroy(*handle);
-        free(handle);
+        delete handle;
     }
 
     m_cudnnHandlePool.clear();
@@ -282,9 +280,9 @@ void ResourceManager::Clean()
 
 void ResourceManager::ClearPreservedPool()
 {
-    for (auto& [key, memoryChunk] : m_hostPreservedPool)
+    for (auto& [_, memoryChunk] : m_hostPreservedPool)
         FreeHost(memoryChunk.Data);
-    for (auto& [key, memoryChunk] : m_cudaPreservedPool)
+    for (auto& [_, memoryChunk] : m_cudaPreservedPool)
         Compute::Cuda::CudaFree(memoryChunk.Data);
 
     m_hostPreservedPool.clear();
@@ -305,14 +303,9 @@ void ResourceManager::ClearVolatilePool()
 void ResourceManager::ClearFreePool()
 {
     for (auto& [size, memoryChunk] : m_hostFreePool)
-    {
         FreeHost(memoryChunk.Data);
-    }
-
     for (auto& [size, memoryChunk] : m_cudaFreePool)
-    {
         Compute::Cuda::CudaFree(memoryChunk.Data);
-    }
 
     m_hostFreePool.clear();
     m_cudaFreePool.clear();
@@ -325,6 +318,7 @@ void ResourceManager::ClearAll()
     ClearCublasHandlePool();
     ClearCudnnHandlePool();
     ClearPreservedPool();
+    ClearVolatilePool();
     ClearFreePool();
 }
 
@@ -359,8 +353,10 @@ ResourceManager::m_hostVolatilePool;
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_cudaVolatilePool;
 
-std::unordered_multimap<std::size_t, MemoryChunk> ResourceManager::m_hostFreePool;
-std::unordered_multimap<std::size_t, MemoryChunk> ResourceManager::m_cudaFreePool;
+std::unordered_multimap<std::size_t, MemoryChunk>
+ResourceManager::m_hostFreePool;
+std::unordered_multimap<std::size_t, MemoryChunk>
+ResourceManager::m_cudaFreePool;
 
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_hostPreservedPool;

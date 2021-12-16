@@ -11,7 +11,7 @@
 
 namespace Sapphire::NN
 {
-[[maybe_unused]] static Tensor SoftMax(const Tensor& input);
+Tensor SoftMax(const Tensor& input);
 }
 
 #endif  // Sapphire_SOFTMAX_HPP

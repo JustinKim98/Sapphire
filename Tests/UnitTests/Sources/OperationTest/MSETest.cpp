@@ -7,11 +7,13 @@
 #include <OperationTest/MSETest.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/Model.hpp>
+#include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Loss/MSE.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
-#include <doctest.h>
 #include <random>
+#include <doctest.h>
 
 namespace Sapphire::Test
 {
@@ -22,10 +24,11 @@ void TestMSE(bool print)
 
     const CudaDevice gpu(0, "cuda0");
 
-    const auto batchSize = 1;
     const int inputs = 10;
 
-    const Shape xShape = Shape({ batchSize, inputs });
+    const Shape xShape = Shape({ 3, 6, 7, inputs });
+
+    const auto batchSize = xShape.GetNumUnits(1);
 
     Tensor x(xShape, gpu, Type::Dense);
     Tensor label(xShape, gpu, Type::Dense);
@@ -37,58 +40,50 @@ void TestMSE(bool print)
     Initialize::Initialize(x, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
     Initialize::Initialize(
         label, std::make_unique<Initialize::Normal>(0.0f, 1.0f));
+
     x.ToCuda();
     label.ToCuda();
-
     const auto gpuLoss = NN::Loss::MSE(x, label);
     const auto lossShape = gpuLoss.GetShape();
-    const auto gpuForwardPtr = gpuLoss.GetDataCopy();
-    gpuLoss.SetBackwardData(backwardData);
+    const auto gpuForwardPtr = gpuLoss.GetData();
+    gpuLoss.SetGradient(backwardData);
+    Optimizer::SGD sgd(0.0f);
+    ModelManager::CurModel().SetOptimizer(&sgd);
     ModelManager::CurModel().BackProp(gpuLoss);
-    const auto gpuBackwardPtr = x.GetBackwardDataCopy();
+    const auto gpuBackwardPtr = x.GetGradient();
 
     x.ToHost();
     label.ToHost();
     const auto hostLoss = NN::Loss::MSE(x, label);
-    const auto hostForwardPtr = hostLoss.GetDataCopy();
-    hostLoss.SetBackwardData(backwardData);
+    const auto hostForwardPtr = hostLoss.GetData();
+    hostLoss.SetGradient(backwardData);
     ModelManager::CurModel().BackProp(hostLoss);
-    const auto hostBackwardPtr = x.GetBackwardDataCopy();
+    const auto hostBackwardPtr = x.GetGradient();
 
     CHECK(gpuLoss.GetShape().Cols() == 1);
-    CHECK(gpuLoss.GetShape().Rows() == batchSize);
+    CHECK(gpuLoss.GetShape().Rows() == 1);
 
     if (print)
     {
         std::cout << "MSE Forward (Cuda)" << std::endl;
-        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            for (int i = 0; i < 1; ++i)
-                std::cout << gpuForwardPtr[batchSize + i] << " ";
-            std::cout << std::endl;
-        }
+        std::cout << gpuForwardPtr[0] << " " << std::endl;;
 
         std::cout << "MSE Backward (Cuda)" << std::endl;
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             for (int i = 0; i < inputs; ++i)
-                std::cout << gpuBackwardPtr[batchSize * inputs + i] << " ";
+                std::cout << gpuBackwardPtr[batchIdx * inputs + i] << " ";
             std::cout << std::endl;
         }
 
         std::cout << "MSE Forward (Host)" << std::endl;
-        for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
-        {
-            for (int i = 0; i < 1; ++i)
-                std::cout << hostForwardPtr[batchSize + i] << " ";
-            std::cout << std::endl;
-        }
+        std::cout << hostForwardPtr[0] << " " << std::endl;
 
         std::cout << "MSE Backward(Host)" << std::endl;
         for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
         {
             for (int i = 0; i < inputs; ++i)
-                std::cout << hostBackwardPtr[batchSize * inputs + i] << " ";
+                std::cout << hostBackwardPtr[batchIdx * inputs + i] << " ";
             std::cout << std::endl;
         }
     }
@@ -100,5 +95,6 @@ void TestMSE(bool print)
         CHECK(TestEquality(hostBackwardPtr[i], gpuBackwardPtr[i]));
 
     ModelManager::CurModel().Clear();
+    Util::ResourceManager::ClearAll();
 }
 }

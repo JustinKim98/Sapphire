@@ -123,7 +123,7 @@ __host__ void CudnnConvolutionBackward2D(
     float* dFilter, const float* x, const float* dy, int deviceId)
 {
     float alpha = 1.0f;
-    float beta = 0.0f;
+    float beta = 1.0f;
     cudnnHandle_t* handle = Util::ResourceManager::GetCudnnHandle(
         deviceId, std::this_thread::get_id());
     checkCuDNN(cudnnConvolutionBackwardData(

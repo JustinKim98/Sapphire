@@ -8,6 +8,7 @@
 #define SAPPHIRE_UNIT_DECL_HPP
 
 #include <Sapphire/tensor/TensorData.hpp>
+#include <Sapphire/Model.hpp>
 #include <unordered_map>
 #include <Sapphire/tensor/TensorDescriptor.hpp>
 
@@ -17,29 +18,24 @@ namespace Sapphire
 class Unit
 {
 public:
-    Unit() = default;
-
-    Unit(Optimizer::Optimizer* optimizer)
-        : m_optimizer(optimizer)
+    Unit(std::string name)
+        : m_name(std::move(name))
     {
     }
 
-    virtual ~Unit()
-    {
-        delete m_optimizer;
-    }
+    virtual ~Unit() = default;
 
     Unit(const Unit& unit) = default;
     Unit(Unit&& unit) noexcept = default;
     Unit& operator=(const Unit& unit) = default;
     Unit& operator=(Unit&& unit) noexcept = default;
 
+
 protected:
     virtual void m_checkArguments(
         std::vector<TensorUtil::TensorDescriptor*> arguments) const = 0;
-    std::unordered_map<std::string, TensorUtil::TensorData> m_trainableDataMap;
-    std::unordered_map<std::string, TensorUtil::TensorData> m_mutableDataMap;
-    Optimizer::Optimizer* m_optimizer = nullptr;
+    std::string m_name;
+    std::unordered_map<std::string, Tensor> m_trainableTensorMap;
 };
 
 //! UnitDataWrapper

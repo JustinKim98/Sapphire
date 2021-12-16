@@ -14,7 +14,7 @@ namespace Sapphire::BackProp
 class ReLUBackward : public BackPropWrapper
 {
 public:
-    ReLUBackward(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
+    ReLUBackward(std::string name, TensorUtil::TensorData dx, TensorUtil::TensorData dy,
                  TensorUtil::TensorData x);
 
 private:

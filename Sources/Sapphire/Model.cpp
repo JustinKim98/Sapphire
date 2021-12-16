@@ -5,12 +5,48 @@
 // property of any third parties.
 
 #include <Sapphire/Model.hpp>
+#include <Sapphire/compute/Initialize.hpp>
 
 namespace Sapphire
 {
 Model::Model(std::string name)
-    : m_name(std::move(name))
+    : m_name(std::move(name)),
+      m_optimizer(nullptr)
 {
+}
+
+
+Model::Model(std::string name, Optimizer::Optimizer* optimizer)
+    : m_name(std::move(name)),
+      m_optimizer(optimizer)
+{
+}
+
+Model::~Model()
+{
+    m_tensorDescriptorPool.TensorDescMap.clear();
+    m_preservedDescriptorPool.TensorDescMap.clear();
+}
+
+int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
+                                    bool preserve)
+{
+    const int tensorDescKey = m_tensorDescriptorPool.Counter++;
+
+    if (preserve)
+    {
+        TensorUtil::TensorDescriptor tensorDesc(shape, type, tensorDescKey,
+                                                preserve);
+        m_preservedDescriptorPool.TensorDescMap[tensorDescKey] =
+            std::move(tensorDesc);
+        return tensorDescKey;
+    }
+
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, tensorDescKey,
+                                            preserve);
+    m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
+
+    return tensorDescKey;
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
@@ -101,14 +137,19 @@ TensorUtil::TensorDescriptor& Model::GetDescriptor(int descKey)
 
 void Model::BackProp(Tensor tensor)
 {
+    if (m_optimizer == nullptr)
+        throw std::runtime_error(
+            "Model::BackProp - Optimzier has not been set");
     m_autoGrad(tensor.TensorDescriptorKey());
-    // for (auto& [key, wrapper] : m_backPropWrapperPool)
-    //     delete wrapper;
-    // m_backPropWrapperPool.clear();
 }
 
 void Model::Clear()
 {
+    for (const auto& [_, desc] : m_preservedDescriptorPool.TensorDescMap)
+    {
+        auto tensorData = desc.GetBackwardData();
+        Compute::Initialize::Zeros(tensorData);
+    }
     m_tensorDescriptorPool.TensorDescMap.clear();
 }
 

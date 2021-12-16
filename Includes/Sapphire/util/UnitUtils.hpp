@@ -6,11 +6,11 @@
 
 #ifndef SAPPHIRE_UNIT_UTILS_HPP
 #define SAPPHIRE_UNIT_UTILS_HPP
-#include <type_traits>
-#include <optional>
+
 #include <Sapphire/tensor/TensorDescriptor.hpp>
 #include <Sapphire/Model.hpp>
-
+#include <type_traits>
+#include <optional>
 
 namespace Sapphire::Util
 {
@@ -33,6 +33,44 @@ void ChangeTensorDataDimension(int dimension, T& tensorData, Ts&... params)
     newShape.Shrink(dimension);
     tensorData.Reshape(newShape);
     ChangeTensorDataDimension(dimension, params...);
+}
+
+inline int GetMatchingDim(std::vector<Shape> shapes)
+{
+    if (shapes.empty())
+        throw std::runtime_error("Util::GetMatchingDim - shapes is empty");
+    int curDimFromLast = -1;
+    bool match = true;
+
+    while (match)
+    {
+        if (shapes.empty())
+            break;
+
+        if (shapes.at(0).Dim() + curDimFromLast < 0)
+        {
+            break;
+        }
+        const int shapeDim = shapes.at(0).At(curDimFromLast);
+        for (const auto& shape : shapes)
+        {
+            if (shape.Dim() + curDimFromLast < 0)
+            {
+                match = false;
+                break;
+            }
+            if (shapeDim != shape.At(curDimFromLast))
+            {
+                match = false;
+                break;
+            }
+        }
+
+        if (match)
+            curDimFromLast -= 1;
+    }
+
+    return -(curDimFromLast + 1);
 }
 
 template <std::size_t I = 0, typename... Tp>
@@ -91,8 +129,8 @@ bool CheckDeviceEquality(const T& paramA, const T& paramB)
     if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
         return false;
 
-    if (paramA.Mode() == DeviceType::Cuda &&
-        paramA.GetDevice() != paramB.GetDevice())
+    if (paramA.Mode() == ComputeMode::Cuda &&
+        paramA.GetCudaDevice() != paramB.GetCudaDevice())
         return false;
 
     return true;
@@ -105,8 +143,8 @@ bool CheckDeviceEquality(const T& paramA, const T& paramB,
     if (const bool typeMatch = paramA.Mode() == paramB.Mode(); !typeMatch)
         return false;
 
-    if (paramA.Mode() == DeviceType::Cuda &&
-        paramA.GetDevice() != paramB.GetDevice())
+    if (paramA.Mode() == ComputeMode::Cuda &&
+        paramA.GetCudaDevice() != paramB.GetCudaDevice())
         return false;
 
     return CheckDeviceEquality(paramB, params...);
@@ -159,13 +197,13 @@ inline std::optional<Shape> GetBroadcastedShape(const Shape& shapeA,
 }
 
 template <typename TensorT>
-bool CheckModeEquality(DeviceType mode, TensorT tensor)
+bool CheckModeEquality(ComputeMode mode, TensorT tensor)
 {
     return mode == tensor.Mode();
 }
 
 template <typename TensorT, typename ...TensorTs>
-bool CheckModeEquality(DeviceType mode, TensorT tensor,
+bool CheckModeEquality(ComputeMode mode, TensorT tensor,
                        TensorTs ... tensors)
 {
     if (mode == tensor.Mode())

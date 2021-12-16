@@ -13,9 +13,10 @@ namespace Sapphire::BackProp
 {
 class SoftMaxBackward : public BackPropWrapper
 {
- public:
-    SoftMaxBackward(TensorUtil::TensorData dx, TensorUtil::TensorData dy,
-                    TensorUtil::TensorData x);
+public:
+    SoftMaxBackward(std::string name, TensorUtil::TensorData dx,
+                    TensorUtil::TensorData dy,
+                    TensorUtil::TensorData y);
 
 private:
     void m_runBackProp() override;

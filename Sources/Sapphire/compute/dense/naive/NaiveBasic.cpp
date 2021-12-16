@@ -6,7 +6,9 @@
 
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
+#include <limits>
 
 namespace Sapphire::Compute::Dense::Naive
 {
@@ -167,7 +169,7 @@ void ReLUBackward(float* dx, const float* dy, const float* x,
 {
     for (unsigned int i = 0; i < totalSize; ++i)
     {
-        dx[i] = x[i] > 0.0f ? dy[i] : 0.0f;
+        dx[i] += x[i] > 0.0f ? dy[i] : 0.0f;
     }
 }
 
@@ -185,7 +187,7 @@ void LeakyReLUBackward(float* output, const float* input, float a,
 {
     for (unsigned int i = 0; i < totalSize; ++i)
     {
-        output[i] = input[i] > 0 ? 1 : a;
+        output[i] += input[i] > 0 ? 1 : a;
     }
 }
 
@@ -237,17 +239,29 @@ void Softmax(float* output, const float* input, unsigned int totalSize,
 
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
+        float max = -std::numeric_limits<float>::max();
+        for (unsigned int i = 0; i < unitSize; ++i)
+            if (max < input[unitSize * batchIdx + i])
+                max = input[unitSize * batchIdx + i];
+
         float sum = 0;
         for (unsigned int i = 0; i < unitSize; ++i)
-            sum += std::exp(input[unitSize * batchIdx + i]);
+        {
+            const auto inputVal = input[unitSize * batchIdx + i];
+            const auto toAdd = std::exp(inputVal - max);
+            sum += toAdd;
+        }
 
         for (unsigned int i = 0; i < unitSize; ++i)
+        {
+            const auto inputVal = input[unitSize * batchIdx + i];
             output[unitSize * batchIdx + i] =
-                std::exp(input[unitSize * batchIdx + i]) / sum;
+                std::exp(inputVal - max) / sum;
+        }
     }
 }
 
-void SoftmaxBackward(float* dx, const float* dy, const float* x,
+void SoftmaxBackward(float* dx, const float* dy, const float* y,
                      unsigned int totalSize, unsigned int unitSize)
 {
     const auto batchSize = totalSize / unitSize;
@@ -255,21 +269,33 @@ void SoftmaxBackward(float* dx, const float* dy, const float* x,
     for (unsigned int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
     {
         const unsigned int offset = unitSize * batchIdx;
-        float sum = 0;
-        for (unsigned int unitIdx = 0; unitIdx < unitSize; ++unitIdx)
-            for (unsigned int i = 0; i < unitSize; ++i)
+        for (unsigned int i = 0; i < unitSize; ++i)
+        {
+            float sum = 0.0f;
+            for (unsigned int j = 0; j < unitSize; ++j)
             {
-                if (i == unitIdx)
+                if (i == j)
                 {
-                    dx[offset + i] += dy[offset + i] *
-                        (x[offset + i] * (1 - x[offset + i]));
+                    const auto yVal = y[offset + j];
+                    const auto dyVal = dy[offset + j];
+                    sum += dyVal * (
+                        yVal * (1.0f - yVal));
+                    if (std::isnan(sum))
+                        std::cout << "nan detected" << std::endl;
                 }
                 else
                 {
-                    sum += dy[offset + i] *
-                        (-x[offset + unitIdx] * x[offset + i]);
+                    const auto yVal0 = y[offset + i];
+                    const auto yVal1 = y[offset + j];
+                    const auto dyVal = dy[offset + j];
+                    sum += dyVal * (-yVal0 * yVal1);
+                    if (std::isnan(sum))
+                        std::cout << "nan detected" << std::endl;
                 }
             }
+
+            dx[offset + i] += sum;
+        }
     }
 }
 } // namespace Sapphire::Compute::Naive::Dense

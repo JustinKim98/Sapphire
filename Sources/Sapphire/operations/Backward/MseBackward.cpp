@@ -13,10 +13,11 @@ constexpr int xIdx = 0;
 constexpr int labelIdx = 1;
 constexpr int dxIdx = 0;
 
-MSEBackward::MSEBackward(TensorUtil::TensorData dx,
+MSEBackward::MSEBackward(std::string name, TensorUtil::TensorData dx,
                          TensorUtil::TensorData x,
                          TensorUtil::TensorData label)
-    : BackPropWrapper({ std::move(dx) }, { TensorUtil::TensorData() },
+    : BackPropWrapper(std::move(name), { std::move(dx) },
+                      { TensorUtil::TensorData() },
                       { std::move(x), std::move(label) },
                       {})
 
@@ -29,10 +30,10 @@ void MSEBackward::m_runBackProp()
     auto label = m_constants[labelIdx];
     auto dx = m_dxVector[dxIdx];
     TensorUtil::TensorData diff(label.GetShape(), label.GetType(),
-                                label.GetDevice(), false);
+                                label.GetCudaDevice(), false);
     diff.SetMode(label.Mode());
 
-    Compute::Sub(diff, label, x);
-    Compute::Scale(dx, diff, -2.0f);
+    Compute::Sub(diff, x, label);
+    Compute::Scale(dx, diff, 2.0f / static_cast<float>(dx.GetShape().At(-1)));
 }
 } // namespace Sapphire::BackProp

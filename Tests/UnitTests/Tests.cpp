@@ -6,32 +6,35 @@
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
-#include <Sapphire/Tests/BroadcastTest.hpp>
-#include <Sapphire/Tests/GemmTest.hpp>
+#include <FunctionTest/BroadcastTest.hpp>
+#include <FunctionTest/GemmTest.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
-#include <Sapphire/Tests/SparseGemmTest.hpp>
-#include <Sapphire/Tests/SparseMemoryTest.hpp>
-#include <Sapphire/Tests/Test.hpp>
+#include <BasicsTest/SimpleTest.hpp>
 #include <OperationTest/MathTest.hpp>
 #include <OperationTest/MeanTest.hpp>
 #include <OperationTest/MSETest.hpp>
 #include <OperationTest/LinearTest.hpp>
 #include <OperationTest/Conv2DTest.hpp>
+#include <OperationTest/SoftmaxTest.hpp>
+#include <OperationTest/MaxPool2DTest.hpp>
+#include <OperationTest/CrossEntropyTest.hpp>
 #include <ModelTest/Conv2DModel.hpp>
-#include <ModelTest/SimpleLinearModel.hpp>
-#include <Sapphire/Tests/Basics/TransposeTest.hpp>
-#include <Sapphire/Tests/TensorTest/TensorFunctionalityTest.hpp>
-#include <Sapphire/Tests/TestUtil.hpp>
-#include <Sapphire/Tests/Conv2DTest.hpp>
+#include <ModelTest/MnistLinear.hpp>
+#include <BasicsTest/TransposeTest.hpp>
+#include <TensorTest/TensorFunctionalityTest.hpp>
+#include <DataLoaderTest/CsvLoaderTest.hpp>
+#include <FunctionTest/Conv2DTest.hpp>
 #include <Sapphire/compute/TrigonometricOps.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
-#include <Sapphire/Tests/GraphTest/GraphFunctionalityTest.hpp>
-#include <Sapphire/Tests/Basics/ReshapeTest.hpp>
+#include <Sapphire/util/ResourceManager.hpp>
+#include <TestUtil.hpp>
 #include <iostream>
 #include "doctest.h"
 
 #define GraphTest
+//#define DataLoaderTest
+#define TrainTest
 #define TensorFunctionalityTest
 #define BasicsTest
 #define ActivationTest
@@ -40,7 +43,7 @@
 #define InitializeTest
 #define ConvolutionTest
 #define BasicGraphTest
-#define ModelTest
+//#define ModelTest
 
 namespace Sapphire::Test
 {
@@ -100,14 +103,6 @@ TEST_CASE("Basics")
         std::cout << "Transpose" << std::endl;
         for (int i = 0; i < testLoops; ++i)
             TransposeTest(false);
-        Util::ResourceManager::ClearAll();
-    }
-
-    SUBCASE("Reshape")
-    {
-        std::cout << "Reshape" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            ReshapeTest(false);
         Util::ResourceManager::ClearAll();
     }
 
@@ -312,12 +307,6 @@ TEST_CASE("Convolution")
 #ifdef GraphTest
 TEST_CASE("BasicGraphTest")
 {
-    SUBCASE("BasicGraph")
-    {
-        std::cout << "Basic graph test" << std::endl;
-        GraphFunctionalityTest();
-    }
-
     SUBCASE("MultiplyTest")
     {
         std::cout << "Multiply" << std::endl;
@@ -336,6 +325,12 @@ TEST_CASE("BasicGraphTest")
         TestMSE(false);
     }
 
+    SUBCASE("CrossEntropyTest")
+    {
+        std::cout << "CrossEntropy" << std::endl;
+        TestCrossEntropy(false);
+    }
+
     SUBCASE("AddTest")
     {
         std::cout << "Add" << std::endl;
@@ -351,8 +346,60 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("Conv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
-        for (int i = 0; i < 3; ++i)
-            TestConv2D(false);
+        TestConv2D(false);
+    }
+
+    SUBCASE("MaxPool2DTest")
+    {
+        std::cout << "MaxPool2D" << std::endl;
+        TestMaxPool2D(false);
+    }
+
+    SUBCASE("SoftmaxTest")
+    {
+        std::cout << "Softmax" << std::endl;
+        TestSoftmax(false);
+    }
+}
+#endif
+
+#ifdef DataLoaderTest
+TEST_CASE("Data Loader Test")
+{
+    SUBCASE("Csv Loader Test")
+    {
+#ifdef _MSC_VER
+        const std::string filePath =
+            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\train.csv";
+#else
+        const std::string filePath =
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
+#endif
+        std::cout << "Testing csv loader " << std::endl;
+        CsvLoaderTest(filePath, false);
+    }
+}
+#endif
+
+#ifdef TrainTest
+TEST_CASE("train test")
+{
+    SUBCASE("Linear Train")
+    {
+        std::cout << "Testing Linear training with MSE" << std::endl;
+        TestLinearTraining(false);
+    }
+
+    SUBCASE("Conv2D Train")
+    {
+        std::cout << "Testing Conv2D training with MSE" << std::endl;
+        TestConv2DTraining(false);
+    }
+
+    SUBCASE("CrossEntropy Train")
+    {
+        std::cout << "Testing Cross Entropy training" << std::endl;
+        TestCrossEntropyTraining(false);
     }
 }
 #endif
@@ -361,59 +408,41 @@ TEST_CASE("BasicGraphTest")
 
 TEST_CASE("Model Test")
 {
-    SUBCASE("SimpleLinearModelTest")
+    SUBCASE("MnistTest")
     {
-        int xFeatures = 300;
-        int yFeatures = 300;
-        int batchSize = 10;
-        std::vector<float> xFeatureVector(xFeatures * batchSize, 0.1f);
-        std::vector<float> labelVector(yFeatures * batchSize, 10.0f);
+        std::cout << "--- Mnist linear model ---" << std::endl;
+#ifdef _MSC_VER
+        const std::string filePath =
+            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\train.csv";
+#else
+        const std::string filePath =
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
+#endif
     
-        SimpleLinearModel(xFeatureVector, labelVector, xFeatures, yFeatures,
-                          0.0001f, batchSize, 1000, false);
+        MnistLinear(
+            filePath, 100,
+            0.0001f, 5000, false);
     }
 
     SUBCASE("Conv2DModelTest")
     {
-        const auto xChannels = 3;
-        const auto yChannels = 3;
-        const auto batchSize = 1;
-        const auto xSize = std::make_pair(5, 5);
-        const auto filterSize = std::make_pair(3, 3);
-        const auto stride = std::make_pair(2, 2);
-        const auto padSize = std::make_pair(2, 2);
-        const auto dilation = std::make_pair(1, 1);
-        const auto learningRate = 0.001f;
-        const auto hostMode = false;
-        const auto epochs = 1000;
+        constexpr auto batchSize = 100;
 
-        const auto [xRows, xCols] = xSize;
-        const auto [filterRows, filterCols] = filterSize;
-        const auto [strideRows, strideCols] = stride;
-        const auto [padRows, padCols] = padSize;
-        const auto [dilationRows, dilationCols] = dilation;
+#ifdef _MSC_VER
+        const std::string filePath =
+            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\cifar-10-batches-"
+            "bin\\data_batch_1.bin";
+#else
+        const std::string filePath =
+            "/mnt/c/Users/user/Documents/Sapphire/Datasets/"
+            "cifar-10-batches-bin/"
+            "data_batch_1.bin";
+#endif
 
-        const auto yRows =
-            (xRows + 2 * padRows - dilationRows * (filterRows - 1) - 1) /
-            strideRows +
-            1;
-        const auto yCols =
-            (xCols + 2 * padCols - dilationCols * (filterCols - 1) - 1) /
-            strideCols +
-            1;
-
-        std::vector<float> xFeatureVector(
-            batchSize * xChannels * xRows * xCols,
-            0.1f);
-        std::vector<float> labelVector(
-            batchSize * yChannels * yRows * yCols
-            , 10.0f);
-
-        Conv2DModel(xFeatureVector, labelVector, batchSize, yChannels,
-                    xChannels, xSize,
-                    std::make_pair(yRows, yCols),
-                    filterSize, stride, padSize, dilation, learningRate,
-                    hostMode, epochs);
+        std::cout << "--- Cifar-10 Conv2D image classification model ---" <<
+            std::endl;
+        Conv2DModelTest(filePath,
+                        batchSize, 0.002f, false, 2500);
     }
 }
 
