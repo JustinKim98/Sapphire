@@ -8,6 +8,15 @@
 
 namespace Sapphire
 {
+Tensor MakeTensor(const Shape& shape,
+                  std::unique_ptr<Initialize::Initializer> initializer,
+                  bool preserve)
+{
+    auto tensor = Tensor(shape, preserve);
+    Initialize::Initialize(tensor, std::move(initializer));
+    return tensor;
+}
+
 Tensor MakeTensor(const Shape& shape, const CudaDevice& device,
                   std::unique_ptr<Initialize::Initializer> initializer,
                   bool preserve)

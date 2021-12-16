@@ -51,6 +51,7 @@ public:
     void LoadData(const std::vector<float>& data) const;
     void SetGradient(const std::vector<float>& data) const;
 
+    void SetDevice(CudaDevice device) const;
     void ToCuda() const;
     void ToHost() const;
     [[nodiscard]] ComputeMode Mode() const;

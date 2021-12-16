@@ -9,6 +9,13 @@
 
 namespace Sapphire
 {
+Tensor::Tensor(const Shape& shape, bool preserve)
+{
+    auto& model = ModelManager::CurModel();
+    m_tensorDescKey =
+        model.RegisterTensorDescriptor(shape, Type::Dense, preserve);
+}
+
 Tensor::Tensor(const Shape& shape, const CudaDevice& device,
                bool preserve)
 {
@@ -58,6 +65,13 @@ CudaDevice Tensor::GetDevice() const
 int Tensor::TensorDescriptorKey() const
 {
     return m_tensorDescKey;
+}
+
+void Tensor::SetDevice(CudaDevice device) const
+{
+    Model& model = ModelManager::CurModel();
+    auto& desc = model.GetDescriptor(m_tensorDescKey);
+    desc.SetDevice(std::move(device));
 }
 
 void Tensor::ToCuda() const

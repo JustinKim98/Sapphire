@@ -8,17 +8,4 @@
 
 namespace Sapphire
 {
-void Unit::ToHost()
-{
-    for (auto& [_, tensor] : m_trainableTensorMap)
-    {
-        tensor.ToHost();
-    }
-}
-
-void Unit::ToCuda()
-{
-    for (auto& [_, tensor] : m_trainableTensorMap)
-        tensor.ToCuda();
-}
 }

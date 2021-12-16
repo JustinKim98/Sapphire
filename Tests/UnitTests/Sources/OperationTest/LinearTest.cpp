@@ -54,7 +54,6 @@ void TestLinear(bool print)
     ModelManager::CurModel().SetOptimizer(&sgd);
 
     //! Test the operation using cuda
-    linear.ToCuda();
     input.ToCuda();
     auto gpuOutput = linear(input);
     const auto gpuForwardData = gpuOutput.GetData();
@@ -70,7 +69,6 @@ void TestLinear(bool print)
     linear.GetBias().LoadData(biasData);
 
     //! Test the operation on the host
-    linear.ToHost();
     input.ToHost();
     const auto hostOutput = linear(input);
     const auto hostForwardData = hostOutput.GetData();

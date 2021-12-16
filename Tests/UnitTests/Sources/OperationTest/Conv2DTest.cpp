@@ -81,7 +81,6 @@ void TestConv2D(bool print)
 
     //! Move tensors to gpu
     input.ToCuda();
-    conv2D.ToCuda();
 
     //! Setup optimizer
     Optimizer::SGD sgd(0.01f);
@@ -105,7 +104,6 @@ void TestConv2D(bool print)
 
     //! Move tensors to host
     input.ToHost();
-    conv2D.ToHost();
     auto hostOutput = conv2D(input);
     const auto hostForwardData = hostOutput.GetData();
     CHECK(hostOutput.GetShape().Rows() == outputRows);

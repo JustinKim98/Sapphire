@@ -9,8 +9,8 @@
 
 #include <Sapphire/operations/Backward/BackPropWrapper.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <list>
 #include <algorithm>
+#include <list>
 #include <mutex>
 
 namespace Sapphire::TensorUtil
@@ -48,6 +48,8 @@ public:
     [[nodiscard]] CudaDevice GetDevice() const;
     [[nodiscard]] CudaDevice GetCudaDevice() const;
     [[nodiscard]] Type GetType() const;
+
+    void SetDevice(CudaDevice device);
 
     void Reshape(Shape shape);
 

@@ -30,11 +30,6 @@ public:
     Unit& operator=(const Unit& unit) = default;
     Unit& operator=(Unit&& unit) noexcept = default;
 
-    //! Send all trainable tensors to host
-    void ToHost();
-
-    //! Send all trainable tensors to cuda
-    void ToCuda();
 
 protected:
     virtual void m_checkArguments(

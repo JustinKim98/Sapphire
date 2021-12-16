@@ -87,6 +87,12 @@ Type TensorDescriptor::GetType() const
     return m_forwardData.GetType();
 }
 
+void TensorDescriptor::SetDevice(CudaDevice device)
+{
+    m_forwardData.SetDevice(device);
+    m_backwardData.SetDevice(device);
+}
+
 void TensorDescriptor::Reshape(Shape shape)
 {
     m_forwardData.Reshape(shape);

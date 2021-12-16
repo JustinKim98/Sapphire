@@ -44,13 +44,18 @@ public:
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
+                                 bool preserve = false);
+
+    //! Creates and registers tensor descriptor
+    //! Assigns new key to the given tensorDesc
+    int RegisterTensorDescriptor(const Shape& shape, Type type,
                                  const CudaDevice& device,
                                  bool preserve = false);
 
     //! Registers back propagation wrapper
-//! \param backPropWrapper :  back propagation wrapper to register
-//! \return : key of the back propagation wrapper
-    int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
+    //! \param backPropWrapper :  back propagation wrapper to register
+    //! \return : key of the back propagation wrapper
+        int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
 
     //! Returns descriptor using the descKey
     //! \param descKey : key of the descriptor

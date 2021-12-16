@@ -29,6 +29,27 @@ Model::~Model()
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
+                                    bool preserve)
+{
+    const int tensorDescKey = m_tensorDescriptorPool.Counter++;
+
+    if (preserve)
+    {
+        TensorUtil::TensorDescriptor tensorDesc(shape, type, tensorDescKey,
+                                                preserve);
+        m_preservedDescriptorPool.TensorDescMap[tensorDescKey] =
+            std::move(tensorDesc);
+        return tensorDescKey;
+    }
+
+    TensorUtil::TensorDescriptor tensorDesc(shape, type, tensorDescKey,
+                                            preserve);
+    m_tensorDescriptorPool.TensorDescMap[tensorDescKey] = std::move(tensorDesc);
+
+    return tensorDescKey;
+}
+
+int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
                                     const CudaDevice& device, bool preserve)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;

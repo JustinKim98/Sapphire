@@ -28,14 +28,12 @@ Linear::Linear(int inputFeatureSize, int outputFeatureSize,
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
-    CudaDevice gpu(0, "cuda0");
 
     auto sd = 1.0f / static_cast<float>(std::sqrt(inputFeatureSize));
     const Tensor weight = MakeTensor(
         Shape({ inputFeatureSize, outputFeatureSize }),
-        gpu,
         M<Initialize::Uniform>(-sd, sd), true);
-    const Tensor bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
+    const Tensor bias = MakeTensor(Shape({ outputFeatureSize }),
                                    M<Initialize::Uniform>(-sd, sd), true);
     m_trainableTensorMap["weight"] = weight;
     m_trainableTensorMap["bias"] = bias;
@@ -51,13 +49,12 @@ Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
     if (m_isSparse)
         throw std::invalid_argument(
             "NN::Linear - Sparse version not implemented");
-    CudaDevice gpu(0, "cuda0");
 
     auto sd = 1.0f / static_cast<float>(std::sqrt(inputFeatureSize));
     const Tensor weight = MakeTensor(
-        Shape({ inputFeatureSize, outputFeatureSize }), gpu,
+        Shape({ inputFeatureSize, outputFeatureSize }),
         M<Initialize::Uniform>(-sd, sd), true);
-    const Tensor bias = MakeTensor(Shape({ outputFeatureSize }), gpu,
+    const Tensor bias = MakeTensor(Shape({ outputFeatureSize }),
                                    M<Initialize::Uniform>(-sd, sd), true);
 
     m_trainableTensorMap["weight"] = weight;
@@ -66,8 +63,11 @@ Linear::Linear(std::string name, int inputFeatureSize, int outputFeatureSize,
 
 Tensor Linear::operator()(Tensor& x)
 {
-    Tensor weight = m_trainableTensorMap.at("weight");
-    Tensor bias = m_trainableTensorMap.at("bias");
+    const Tensor weight = m_trainableTensorMap.at("weight");
+    const Tensor bias = m_trainableTensorMap.at("bias");
+
+    weight.SetDevice(x.GetDevice());
+    bias.SetDevice(x.GetDevice());
     if (weight.Mode() != x.Mode())
     {
         if (x.Mode() == ComputeMode::Cuda)

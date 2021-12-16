@@ -28,20 +28,19 @@ Conv2D::Conv2D(int yChannels, int xChannels, std::pair<int, int> filterSize,
       m_padSize(padSize),
       m_dilation(dilation)
 {
-    const CudaDevice gpu(0, "cuda0");
     const auto [filterRows, filterCols] = filterSize;
     const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
     const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
 
     const auto filter = MakeTensor(
-        Shape({ yChannels, xChannels, filterRows, filterCols }), gpu,
+        Shape({ yChannels, xChannels, filterRows, filterCols }),
         M<Initialize::Uniform>(-filterStd, filterStd), true);
     m_trainableTensorMap["filter"] = filter;
 
     if (useBias)
     {
         const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
-        const auto bias = MakeTensor(Shape({ yChannels }), gpu,
+        const auto bias = MakeTensor(Shape({ yChannels }),
                                      M<Initialize::Uniform>(-biasStd, biasStd),
                                      true);
         m_trainableTensorMap["bias"] = bias;
@@ -62,6 +61,23 @@ Conv2D::Conv2D(std::string name, int yChannels, int xChannels,
       m_padSize(padSize),
       m_dilation(dilation)
 {
+    const auto [filterRows, filterCols] = filterSize;
+    const auto kernelSize = filterRows * filterCols * yChannels * xChannels;
+    const auto filterStd = 1.0f / std::sqrt(static_cast<float>(kernelSize));
+
+    const auto filter =
+        MakeTensor(Shape({ yChannels, xChannels, filterRows, filterCols }),
+                   M<Initialize::Uniform>(-filterStd, filterStd), true);
+    m_trainableTensorMap["filter"] = filter;
+
+    if (useBias)
+    {
+        const auto biasStd = 1.0f / std::sqrt(static_cast<float>(yChannels));
+        const auto bias =
+            MakeTensor(Shape({ yChannels }),
+                       M<Initialize::Uniform>(-biasStd, biasStd), true);
+        m_trainableTensorMap["bias"] = bias;
+    }
 }
 
 Tensor Conv2D::operator()(Tensor& x)
@@ -86,7 +102,9 @@ Tensor Conv2D::operator()(Tensor& x)
     if (m_yRows <= 0 || m_yCols <= 0)
         throw std::invalid_argument("Conv2D::Conv2D - invalid argument");
 
+
     auto filter = m_trainableTensorMap.at("filter");
+    filter.SetDevice(x.GetDevice());
 
     if (filter.Mode() != x.Mode())
     {
@@ -98,6 +116,7 @@ Tensor Conv2D::operator()(Tensor& x)
     if (m_useBias)
     {
         auto bias = m_trainableTensorMap.at("bias");
+        bias.SetDevice(x.GetDevice());
         if (x.Mode() == ComputeMode::Cuda)
             bias.ToCuda();
         else
