@@ -49,7 +49,7 @@ public:
     [[nodiscard]] std::vector<float> GetGradient() const;
 
     void LoadData(const std::vector<float>& data) const;
-    void SetGradient(const std::vector<float>& data) const;
+    void LoadGradient(const std::vector<float>& data) const;
 
     void SetDevice(CudaDevice device) const;
     void ToCuda() const;

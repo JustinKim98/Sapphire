@@ -8,7 +8,7 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
-#include <Sapphire/operations/Forward/MathForward.hpp>
+#include <Sapphire/operations/Forward/Functional/MathForward.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <iostream>
 #include <random>
@@ -39,10 +39,10 @@ void TestMean(bool print)
     const int dim = dist(gen) % 3;
 
     x.ToCuda();
-    auto yGpu = NN::Functional::MeanOp(x, dim);
+    auto yGpu = F::Mean(x, dim);
     yGpu.ToHost();
     x.ToHost();
-    const auto yHost = NN::Functional::MeanOp(x, dim);
+    const auto yHost = F::Mean(x, dim);
 
     const auto yForwardGpu = yGpu.GetData();
     const auto yForwardHost = yHost.GetData();
@@ -54,7 +54,7 @@ void TestMean(bool print)
 
     x.ToCuda();
     yGpu.ToCuda();
-    Initialize::InitializeBackwardData(yGpu,
+    Initialize::InitializeGradient(yGpu,
                                        std::make_unique<Initialize::Normal>(
                                            0.0f, 10.0f));
 
@@ -65,7 +65,7 @@ void TestMean(bool print)
 
     const auto xBackwardGpu = x.GetGradient();
 
-    Initialize::InitializeBackwardData(
+    Initialize::InitializeGradient(
         x, std::make_unique<Initialize::Zeros>());
     ModelManager::CurModel().BackProp(yHost);
     x.ToHost();

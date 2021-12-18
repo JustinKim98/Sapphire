@@ -166,13 +166,13 @@ void Tensor::LoadData(const std::vector<float>& data) const
     tensorData.SetData(data);
 }
 
-void Tensor::SetGradient(const std::vector<float>& data) const
+void Tensor::LoadGradient(const std::vector<float>& data) const
 {
     const auto shape = GetShape();
     if (static_cast<int>(data.size()) != shape.Size())
     {
         throw std::invalid_argument(
-            "Tensor::SetGradient - data size mismatch Given size : (" +
+            "Tensor::LoadGradient - data size mismatch Given size : (" +
             std::to_string(data.size()) + ") expected size : (" +
             std::to_string(shape.Size()) + ")");
     }

@@ -6,7 +6,7 @@
 
 #ifndef SAPPHIRE_TEST_SIMPLE_LINEAR_MODEL_HPP
 #define SAPPHIRE_TEST_SIMPLE_LINEAR_MODEL_HPP
-#include <vector>
+
 #include <filesystem>
 
 namespace Sapphire::Test

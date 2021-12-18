@@ -5,17 +5,7 @@
 // property of any third parties.
 
 #include <ModelTest/Conv2DModel.hpp>
-#include <Sapphire/util/DataLoader/BinaryLoader.hpp>
-#include <Sapphire/Model.hpp>
-#include <Sapphire/operations/Forward/Linear.hpp>
-#include <Sapphire/operations/Forward/Conv2D.hpp>
-#include <Sapphire/operations/Forward/ReLU.hpp>
-#include <Sapphire/operations/Loss/CrossEntropy.hpp>
-#include <Sapphire/operations/optimizers/SGD.hpp>
-#include <Sapphire/util/ResourceManager.hpp>
-#include <Sapphire/operations/Forward/MaxPool2D.hpp>
-#include <Sapphire/util/FileManager.hpp>
-#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/Sapphire.hpp>
 #include <iostream>
 #include <random>
 
@@ -42,7 +32,6 @@ void Conv2DModelTest(
     //! Declare conv2d Layer
     NN::Conv2D conv0(6, 3, std::make_pair(5, 5), std::pair(1, 1),
                      std::pair(0, 0), std::pair(1, 1), false);
-    NN::MaxPool2D pool(std::make_pair(2, 2), std::make_pair(2, 2));
     NN::Conv2D conv1(16, 6, std::make_pair(5, 5), std::pair(1, 1),
                      std::make_pair(0, 0), std::make_pair(1, 1), false);
     NN::Linear fc0(16 * 5 * 5, 120);
@@ -101,27 +90,53 @@ void Conv2DModelTest(
         dataLoader.LoadData(label, batches, 0, 0, labelOneHot);
 
         //! Load data to x and label here
-        auto tensor = pool(NN::ReLU(conv0(x)));
-        tensor = pool(NN::ReLU(conv1(tensor)));
+        auto tensor = F::MaxPool2D(F::ReLU(conv0(x)), std::make_pair(2, 2),
+                                   std::make_pair(2, 2));
+        tensor = F::MaxPool2D(F::ReLU(conv1(tensor)), std::make_pair(2, 2),
+                              std::make_pair(2, 2));
         tensor.Reshape(
             Shape({ batchSize, tensor.GetShape().Size() / batchSize }));
-        tensor = NN::ReLU(fc0(tensor));
-        tensor = NN::ReLU(fc1(tensor));
+        tensor = F::ReLU(fc0(tensor));
+        tensor = F::ReLU(fc1(tensor));
         tensor = fc2(tensor);
-        tensor = NN::SoftMax(tensor);
+        tensor = F::SoftMax(tensor);
 
         auto loss = NN::Loss::CrossEntropy(tensor, label);
 
-        //! Print loss every 10 epochs
-        if (epoch % 10 == 0)
+        //! Print loss and accuracy every 100 epochs
+        if (epoch % 50 == 0)
         {
-            const auto val = tensor.GetData();
-            for (int idx = 0; idx < 10; ++idx)
-                std::cout << val[idx] << " ";
-            std::cout << std::endl;
+            const auto yData = tensor.GetData();
+            const auto labelData = label.GetData();
             const auto lossData = loss.GetData();
+
+            int correct = 0;
+            for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+            {
+                int modelOutput = 0;
+                float largest = 0.0f;
+                for (int idx = 0; idx < 10; ++idx)
+                    if (yData[batchIdx * 10 + idx] > largest)
+                    {
+                        largest = yData[batchIdx * 10 + idx];
+                        modelOutput = idx;
+                    }
+
+                int trueLabel = 0;
+                largest = 0.0f;
+                for (int idx = 0; idx < 10; ++idx)
+                    if (labelData[batchIdx * 10 + idx] > largest)
+                    {
+                        largest = labelData[batchIdx * 10 + idx];
+                        trueLabel = idx;
+                    }
+
+                if (modelOutput == trueLabel)
+                    correct += 1;
+            }
             std::cout << "epoch: " << epoch << " loss : " << lossData[0]
-                << std::endl;
+                << " Accuracy : "
+                << static_cast<float>(correct) / batchSize << std::endl;
         }
 
         //! Start back propagation and update weights
