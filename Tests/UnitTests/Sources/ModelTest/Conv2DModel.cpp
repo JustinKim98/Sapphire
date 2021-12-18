@@ -5,17 +5,7 @@
 // property of any third parties.
 
 #include <ModelTest/Conv2DModel.hpp>
-#include <Sapphire/util/DataLoader/BinaryLoader.hpp>
-#include <Sapphire/Model.hpp>
-#include <Sapphire/operations/Forward/Linear.hpp>
-#include <Sapphire/operations/Forward/Conv2D.hpp>
-#include <Sapphire/operations/Forward/Functional/ReLU.hpp>
-#include <Sapphire/operations/Loss/CrossEntropy.hpp>
-#include <Sapphire/operations/optimizers/SGD.hpp>
-#include <Sapphire/util/ResourceManager.hpp>
-#include <Sapphire/operations/Forward/Functional/MaxPool2D.hpp>
-#include <Sapphire/util/FileManager.hpp>
-#include <Sapphire/operations/Forward/Functional/Softmax.hpp>
+#include <Sapphire/Sapphire.hpp>
 #include <iostream>
 #include <random>
 
