@@ -26,7 +26,7 @@ void SoftMax(TensorData& y, const TensorData& x)
     }
     else
     {
-        Dense::Naive::Softmax(y.HostMutableRawPtr(), x.HostRawPtr(),
+        Dense::Naive::SoftMax(y.HostMutableRawPtr(), x.HostRawPtr(),
                               totalSize, unitSize);
     }
 }
@@ -118,7 +118,7 @@ void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
     }
     else
     {
-        Dense::Naive::SoftmaxBackward(dx.HostMutableRawPtr(), dy.HostRawPtr(),
+        Dense::Naive::SoftMaxBackward(dx.HostMutableRawPtr(), dy.HostRawPtr(),
                                       y.HostRawPtr(), totalSize, unitSize);
     }
 }

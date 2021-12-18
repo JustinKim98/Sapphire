@@ -9,16 +9,22 @@
 
 #include <Sapphire/tensor/Tensor.hpp>
 
-namespace Sapphire::NN::Functional
+namespace Sapphire::F
 {
 [[maybe_unused]]
-Tensor MulOp(const Tensor& inputA, const Tensor& inputB);
+Tensor MatMul(const Tensor& inputA, const Tensor& inputB);
 
 [[maybe_unused]]
-Tensor AddOp(const Tensor& inputA, const Tensor& inputB);
+Tensor Add(const Tensor& inputA, const Tensor& inputB);
 
 [[maybe_unused]]
-Tensor MeanOp(const Tensor& input, int dim);
+Tensor Sub(const Tensor& inputA, const Tensor& inputB);
+
+[[maybe_unused]]
+Tensor Dot(const Tensor& inputA, const Tensor& inputB);
+
+[[maybe_unused]]
+Tensor Mean(const Tensor& input, int dim);
 }
 
 #endif

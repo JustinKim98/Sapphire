@@ -36,6 +36,27 @@ private:
     void m_runBackProp() override;
 };
 
+class SubBackProp : public BackPropWrapper
+{
+public:
+    explicit SubBackProp(std::string name, TensorUtil::TensorData da,
+                         TensorUtil::TensorData db, TensorUtil::TensorData dy);
+
+private:
+    void m_runBackProp() override;
+};
+
+class DotBackProp : public BackPropWrapper
+{
+public:
+    explicit DotBackProp(std::string name, const TensorUtil::TensorData& a,
+                         const TensorUtil::TensorData& b, TensorUtil::TensorData da,
+                         TensorUtil::TensorData db, TensorUtil::TensorData dy);
+
+private:
+    void m_runBackProp() override;
+};
+
 class MeanBackProp : public BackPropWrapper
 {
 public:

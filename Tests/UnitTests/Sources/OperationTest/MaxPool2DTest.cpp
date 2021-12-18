@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <OperationTest/MaxPool2DTest.hpp>
-#include <Sapphire/operations/Forward/MaxPool2D.hpp>
+#include <Sapphire/operations/Forward/Functional/MaxPool2D.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
@@ -23,26 +23,26 @@ void TestMaxPool2D(bool print)
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
-    const int batchSize = 4;
-    const int channels = 3;
-    const int inputRows = 6;
-    const int inputCols = 4;
-    const int windowRows = 3;
-    const int windowCols = 3;
-    const int strideRows = 1;
-    const int strideCols = 2;
-    const int padSizeRows = 2;
-    const int padSizeCols = 1;
+    constexpr int batchSize = 4;
+    constexpr int channels = 3;
+    constexpr int inputRows = 6;
+    constexpr int inputCols = 4;
+    constexpr int windowRows = 3;
+    constexpr int windowCols = 3;
+    constexpr int strideRows = 1;
+    constexpr int strideCols = 2;
+    constexpr int padSizeRows = 2;
+    constexpr int padSizeCols = 1;
 
-    const auto windowSize = std::make_pair(windowRows, windowCols);
-    const auto stride = std::make_pair(strideRows, strideCols);
-    const auto padSize = std::make_pair(padSizeRows, padSizeCols);
+    constexpr auto windowSize = std::make_pair(windowRows, windowCols);
+    constexpr auto stride = std::make_pair(strideRows, strideCols);
+    constexpr auto padSize = std::make_pair(padSizeRows, padSizeCols);
 
-    const auto outputRows =
+    constexpr auto outputRows =
         (inputRows + 2 * padSizeRows - (windowRows - 1) - 1) /
         strideRows +
         1;
-    const auto outputCols =
+    constexpr auto outputCols =
         (inputCols + 2 * padSizeCols - (windowCols - 1) - 1) /
         strideCols +
         1;
@@ -83,13 +83,11 @@ void TestMaxPool2D(bool print)
     bias.ToCuda();
 
     //! Test Conv2D on gpu
-    NN::MaxPool2D maxPool2D(windowSize,
-                            stride, padSize);
-    auto gpuOutput = maxPool2D(input);
+    auto gpuOutput = F::MaxPool2D(input, windowSize, stride, padSize);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
-    gpuOutput.SetGradient(backwardData);
+    gpuOutput.LoadGradient(backwardData);
 
     Optimizer::SGD sgd(0.0f);
     ModelManager::CurModel().SetOptimizer(&sgd);
@@ -102,14 +100,14 @@ void TestMaxPool2D(bool print)
     bias.ToHost();
 
     //! Initialize backward data
-    Initialize::InitializeBackwardData(input,
-                                       std::make_unique<Initialize::Zeros>());
+    Initialize::InitializeGradient(input,
+                                   std::make_unique<Initialize::Zeros>());
 
-    auto hostOutput = maxPool2D(input);
+    auto hostOutput = F::MaxPool2D(input, windowSize, stride, padSize);
     const auto hostForwardData = hostOutput.GetData();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
-    hostOutput.SetGradient(backwardData);
+    hostOutput.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardData = input.GetGradient();
 

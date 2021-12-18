@@ -4,13 +4,13 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Forward/Functional/Softmax.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/operations/Backward/SoftmaxBackward.hpp>
 #include <Sapphire/Model.hpp>
 
-namespace Sapphire::NN
+namespace Sapphire::F
 {
 Tensor SoftMax(const Tensor& input)
 {
@@ -32,7 +32,6 @@ Tensor SoftMax(const Tensor& input)
         "Softmax" + std::to_string(unitIdCount++), dx, dy, y);
     Util::SaveHistory(wrapper, std::make_tuple(&xDesc),
                       std::make_tuple(&yDesc));
-
 
     return Tensor(yDescKey);
 }

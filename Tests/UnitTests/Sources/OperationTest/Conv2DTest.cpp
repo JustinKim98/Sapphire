@@ -91,7 +91,7 @@ void TestConv2D(bool print)
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
-    gpuOutput.SetGradient(backwardData);
+    gpuOutput.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuGradient = input.GetGradient();
     const auto gpuFilterData = conv2D.GetFilter().GetData();
@@ -108,7 +108,7 @@ void TestConv2D(bool print)
     const auto hostForwardData = hostOutput.GetData();
     CHECK(hostOutput.GetShape().Rows() == outputRows);
     CHECK(hostOutput.GetShape().Cols() == outputCols);
-    hostOutput.SetGradient(backwardData);
+    hostOutput.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardData = input.GetGradient();
     const auto hostFilterData = conv2D.GetFilter().GetData();

@@ -7,7 +7,7 @@
 #include <OperationTest/SoftmaxTest.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
-#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Forward/Functional/Softmax.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
@@ -52,9 +52,9 @@ void TestSoftmax(bool print)
     Optimizer::SGD sgd(0.0f);
     ModelManager::CurModel().SetOptimizer(&sgd);
 
-    auto tensor = NN::SoftMax(input);
+    auto tensor = F::SoftMax(input);
     const auto forwardDataHost = tensor.GetData();
-    tensor.SetGradient(backwardData);
+    tensor.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(tensor);
     const auto backwardDataHost = input.GetGradient();
 
@@ -62,12 +62,12 @@ void TestSoftmax(bool print)
     bias.ToCuda();
     weight.ToCuda();
 
-    Initialize::InitializeBackwardData(input,
-                                       std::make_unique<Initialize::Zeros>());
+    Initialize::InitializeGradient(input,
+                                   std::make_unique<Initialize::Zeros>());
 
-    tensor = NN::SoftMax(input);
+    tensor = F::SoftMax(input);
     const auto forwardDataCuda = tensor.GetData();
-    tensor.SetGradient(backwardData);
+    tensor.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(tensor);
     const auto backwardDataCuda = input.GetGradient();
 

@@ -4,18 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_TEST_MATH_TEST_HPP
-#define SAPPHIRE_TEST_MATH_TEST_HPP
+#ifndef SAPPHIRE_SOFTMAX_HPP
+#define SAPPHIRE_SOFTMAX_HPP
 
-namespace Sapphire::Test
+#include <Sapphire/tensor/Tensor.hpp>
+
+namespace Sapphire::F
 {
-void TestMatMul(bool print);
-
-void TestAdd(bool print);
-
-void TestSub(bool print);
-
-void TestDot(bool print);
+Tensor SoftMax(const Tensor& input);
 }
 
-#endif
+#endif  // Sapphire_SOFTMAX_HPP

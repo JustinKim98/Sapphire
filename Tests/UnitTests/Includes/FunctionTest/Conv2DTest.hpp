@@ -6,7 +6,7 @@
 
 namespace Sapphire::Test
 {
-void Conv2DTest(bool printForward, bool printBackward);
+void CudaConv2DTest(bool printForward, bool printBackward);
 
 void MaxPool2DTest(bool printForward, bool printBackward);
 

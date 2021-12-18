@@ -33,7 +33,7 @@
 #include "doctest.h"
 
 #define GraphTest
-//#define DataLoaderTest
+#define DataLoaderTest
 #define TrainTest
 #define TensorFunctionalityTest
 #define BasicsTest
@@ -43,7 +43,7 @@
 #define InitializeTest
 #define ConvolutionTest
 #define BasicGraphTest
-//#define ModelTest
+#define ModelTest
 
 namespace Sapphire::Test
 {
@@ -97,7 +97,7 @@ TEST_CASE("TensorFunctionalityTest")
 #ifdef BasicsTest
 TEST_CASE("Basics")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("Transpose")
     {
         std::cout << "Transpose" << std::endl;
@@ -175,7 +175,7 @@ TEST_CASE("Basics")
 #ifdef ActivationTest
 TEST_CASE("ActivationTest")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("ReLU")
     {
         std::cout << "ReLU Test" << std::endl;
@@ -197,7 +197,7 @@ TEST_CASE("ActivationTest")
 #ifdef GemmTest
 TEST_CASE("Gemm Test")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("Gemm With Cuda")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
@@ -213,7 +213,7 @@ TEST_CASE("Gemm Test")
 #ifdef GemmBroadcastTest
 TEST_CASE("Gemm Broadcast Test")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
@@ -240,22 +240,15 @@ TEST_CASE("Gemm Broadcast Test")
 #ifdef InitializeTest
 TEST_CASE("InitializeTest")
 {
-    const int testLoops = 3;
     SUBCASE("Initialize Ones")
     {
         std::cout << "Initialize Ones" << std::endl;
-        for (int i = 0; i < testLoops; i++)
-        {
-            EqualInitializeTest(Compute::Initialize::Ones, false);
-        }
+        EqualInitializeTest(Compute::Initialize::Ones, false);
     }
     SUBCASE("Initialize Normal")
     {
         std::cout << "Initialize Normal" << std::endl;
-        for (int i = 0; i < testLoops; i++)
-        {
-            NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
-        }
+        NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
     }
 }
 #endif
@@ -263,43 +256,44 @@ TEST_CASE("InitializeTest")
 #ifdef ConvolutionTest
 TEST_CASE("Convolution")
 {
-    const int testLoops = 3;
     SUBCASE("Im2ColHost")
     {
-        std::cout << "Im2Col && Col2Im" << std::endl;
+        std::cout << "Testing Im2Col && Col2Im ...";
         HostIm2ColTest(false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("HostConv2D")
     {
-        std::cout << "Host Conv2D" << std::endl;
+        std::cout << "Testing Conv2D on Host ... ";
         HostConv2DTest(false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
-    SUBCASE("Conv2D")
+    SUBCASE("Cuda Conv2D")
     {
-        std::cout << "Conv2D" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            Conv2DTest(false, false);
+        std::cout << "Testing Conv2D on Cuda ... ";
+        CudaConv2DTest(false, false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("MaxPool2D")
     {
-        std::cout << "MaxPool2D" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            MaxPool2DTest(false, false);
+        std::cout << "Testing MaxPool2D ... ";
+        MaxPool2DTest(false, false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("AvgPool2D")
     {
-        std::cout << "AvgPool2D" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            AvgPool2DTest(false, false);
+        std::cout << "Testing AvgPool2D ... ";
+        AvgPool2DTest(false, false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 }
 #endif
@@ -309,32 +303,51 @@ TEST_CASE("BasicGraphTest")
 {
     SUBCASE("MultiplyTest")
     {
-        std::cout << "Multiply" << std::endl;
-        TestMultiply(false);
+        std::cout << "Testing MatMul ... ";
+        TestMatMul(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("MeanTest")
     {
-        std::cout << "Mean" << std::endl;
+        std::cout << "Testing Mean ... ";
         TestMean(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("MSETest")
     {
-        std::cout << "MSE" << std::endl;
+        std::cout << "Testing MSE ... ";
         TestMSE(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("CrossEntropyTest")
     {
-        std::cout << "CrossEntropy" << std::endl;
+        std::cout << "Testing CrossEntropy ... ";
         TestCrossEntropy(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("AddTest")
     {
-        std::cout << "Add" << std::endl;
+        std::cout << "Testing Add ... ";
         TestAdd(false);
+        std::cout << "Done!" << std::endl;
+    }
+
+    SUBCASE("SubTest")
+    {
+        std::cout << "Testing Sub ... ";
+        TestAdd(false);
+        std::cout << "Done!" << std::endl;
+    }
+
+    SUBCASE("DotTest")
+    {
+        std::cout << "Testing Dot ... ";
+        TestAdd(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("Linear Test")
@@ -343,7 +356,7 @@ TEST_CASE("BasicGraphTest")
         TestLinear(false);
     }
 
-    SUBCASE("Conv2DTest")
+    SUBCASE("CudaConv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
         TestConv2D(false);
@@ -418,10 +431,10 @@ TEST_CASE("Model Test")
         const std::string filePath =
             "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
 #endif
-    
+
         MnistLinear(
             filePath, 100,
-            0.0001f, 5000, false);
+            0.0001f, 3000, false);
     }
 
     SUBCASE("Conv2DModelTest")
@@ -442,7 +455,7 @@ TEST_CASE("Model Test")
         std::cout << "--- Cifar-10 Conv2D image classification model ---" <<
             std::endl;
         Conv2DModelTest(filePath,
-                        batchSize, 0.002f, false, 2500);
+                        batchSize, 0.002f, false, 1000);
     }
 }
 

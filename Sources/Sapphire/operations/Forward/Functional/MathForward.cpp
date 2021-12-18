@@ -7,21 +7,21 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/operations/Backward/MathBackward.hpp>
-#include <Sapphire/operations/Forward/MathForward.hpp>
+#include <Sapphire/operations/Forward/Functional/MathForward.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
 
-namespace Sapphire::NN::Functional
+namespace Sapphire::F
 {
-Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
+Tensor MatMul(const Tensor& inputA, const Tensor& inputB)
 {
     static int unitIdCount = 0;
     Model& model = ModelManager::CurModel();
 
     if (inputA.Mode() != inputB.Mode())
-        throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
+        throw std::invalid_argument("NN::Functional::MatMul - Mode mismatch");
 
     if (inputA.GetDevice() != inputB.GetDevice())
-        throw std::invalid_argument("NN::Functional::MulOp - Device mismatch");
+        throw std::invalid_argument("NN::Functional::MatMul - Device mismatch");
 
     auto mode = inputA.Mode();
 
@@ -34,14 +34,14 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     const auto bShape = bDesc.GetShape();
 
     if (aShape.Cols() != bShape.Rows())
-        throw std::invalid_argument("NN::Functional::MulOp - Shape mismatch");
+        throw std::invalid_argument("NN::Functional::MatMul - Shape mismatch");
 
     const auto yShapeOption =
         Util::GetBroadcastedShape(aDesc.GetShape(), bDesc.GetShape(), 2);
     if (!yShapeOption)
     {
         throw std::invalid_argument(
-            "NN::Functional::MulOp - Broadcast failed");
+            "NN::Functional::MatMul - Broadcast failed");
     }
 
     auto yShape = yShapeOption.value();
@@ -73,16 +73,16 @@ Tensor MulOp(const Tensor& inputA, const Tensor& inputB)
     return Tensor(outputKey);
 }
 
-Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
+Tensor Add(const Tensor& inputA, const Tensor& inputB)
 {
     static int unitIdCount = 0;
     Model& model = ModelManager::CurModel();
 
     if (inputA.Mode() != inputB.Mode())
-        throw std::invalid_argument("NN::Functional::MulOp - Mode mismatch");
+        throw std::invalid_argument("NN::Functional::MatMul - Mode mismatch");
 
     if (inputA.GetDevice() != inputB.GetDevice())
-        throw std::invalid_argument("NN::Functional::MulOp - Device mismatch");
+        throw std::invalid_argument("NN::Functional::MatMul - Device mismatch");
 
     auto mode = inputA.Mode();
 
@@ -97,7 +97,7 @@ Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
 
     const auto outputShape = Util::GetBroadcastedShape(shapeA, shapeB, 0);
     if (!outputShape)
-        throw std::invalid_argument("NN::Functional::AddOp - Broadcast failed");
+        throw std::invalid_argument("NN::Functional::Add - Broadcast failed");
 
     const Type type = aDesc.GetType();
     const CudaDevice device = aDesc.GetDevice();
@@ -124,11 +124,111 @@ Tensor AddOp(const Tensor& inputA, const Tensor& inputB)
     return Tensor(yDesc.GetKey());
 }
 
-Tensor MeanOp(const Tensor& input, int dim)
+Tensor Sub(const Tensor& inputA, const Tensor& inputB)
+{
+    static int unitIdCount = 0;
+    Model& model = ModelManager::CurModel();
+
+    if (inputA.Mode() != inputB.Mode())
+        throw std::invalid_argument("NN::Functional::MatMul - Mode mismatch");
+
+    if (inputA.GetDevice() != inputB.GetDevice())
+        throw std::invalid_argument("NN::Functional::MatMul - Device mismatch");
+
+    auto mode = inputA.Mode();
+
+    //! Get descriptors
+    TensorUtil::TensorDescriptor& aDesc =
+        model.GetDescriptor(inputA.TensorDescriptorKey());
+    TensorUtil::TensorDescriptor& bDesc =
+        model.GetDescriptor(inputB.TensorDescriptorKey());
+
+    const auto shapeA = aDesc.GetShape();
+    const auto shapeB = bDesc.GetShape();
+
+    const auto outputShape = Util::GetBroadcastedShape(shapeA, shapeB, 0);
+    if (!outputShape)
+        throw std::invalid_argument("NN::Functional::Add - Broadcast failed");
+
+    const Type type = aDesc.GetType();
+    const CudaDevice device = aDesc.GetDevice();
+
+    const auto outKey =
+        model.RegisterTensorDescriptor(outputShape.value(), type, device);
+    auto& yDesc = model.GetDescriptor(outKey);
+    yDesc.SetMode(mode);
+
+    auto a = aDesc.GetForwardData();
+    auto da = aDesc.GetBackwardData();
+    auto b = bDesc.GetForwardData();
+    auto db = bDesc.GetBackwardData();
+    auto y = yDesc.GetForwardData();
+    auto dy = yDesc.GetBackwardData();
+
+    auto* backPropWrapper = new BackProp::AddBackProp(
+        "Add" + std::to_string(unitIdCount++), da, db, dy);
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
+                      std::make_tuple(&yDesc));
+
+    Compute::Add(y, a, b);
+    return Tensor(yDesc.GetKey());
+}
+
+Tensor Dot(const Tensor& inputA, const Tensor& inputB)
+{
+    static int unitIdCount = 0;
+    Model& model = ModelManager::CurModel();
+
+    if (inputA.Mode() != inputB.Mode())
+        throw std::invalid_argument("NN::Functional::MatMul - Mode mismatch");
+
+    if (inputA.GetDevice() != inputB.GetDevice())
+        throw std::invalid_argument("NN::Functional::MatMul - Device mismatch");
+
+    auto mode = inputA.Mode();
+
+    //! Get descriptors
+    TensorUtil::TensorDescriptor& aDesc =
+        model.GetDescriptor(inputA.TensorDescriptorKey());
+    TensorUtil::TensorDescriptor& bDesc =
+        model.GetDescriptor(inputB.TensorDescriptorKey());
+
+    const auto shapeA = aDesc.GetShape();
+    const auto shapeB = bDesc.GetShape();
+
+    const auto outputShape = Util::GetBroadcastedShape(shapeA, shapeB, 0);
+    if (!outputShape)
+        throw std::invalid_argument("NN::Functional::Add - Broadcast failed");
+
+    const Type type = aDesc.GetType();
+    const CudaDevice device = aDesc.GetDevice();
+
+    const auto outKey =
+        model.RegisterTensorDescriptor(outputShape.value(), type, device);
+    auto& yDesc = model.GetDescriptor(outKey);
+    yDesc.SetMode(mode);
+
+    auto a = aDesc.GetForwardData();
+    auto da = aDesc.GetBackwardData();
+    auto b = bDesc.GetForwardData();
+    auto db = bDesc.GetBackwardData();
+    auto y = yDesc.GetForwardData();
+    auto dy = yDesc.GetBackwardData();
+
+    auto* backPropWrapper = new BackProp::AddBackProp(
+        "Add" + std::to_string(unitIdCount++), da, db, dy);
+    Util::SaveHistory(backPropWrapper, std::make_tuple(&aDesc, &bDesc),
+                      std::make_tuple(&yDesc));
+
+    Compute::Add(y, a, b);
+    return Tensor(yDesc.GetKey());
+}
+
+Tensor Mean(const Tensor& input, int dim)
 {
     static int unitIdCount = 0;
     if (dim < 0 || dim >= input.GetShape().Dim())
-        throw std::invalid_argument("NN::Functional::MeanOp - Invalid dim");
+        throw std::invalid_argument("NN::Functional::Mean - Invalid dim");
 
     Model& model = ModelManager::CurModel();
 
