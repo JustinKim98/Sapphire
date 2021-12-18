@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <OperationTest/MathTest.hpp>
-#include <Sapphire/operations/Forward/MathForward.hpp>
+#include <Sapphire/operations/Forward/Functional/MathForward.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
@@ -40,7 +40,7 @@ void TestMultiply(bool print)
 
     inputA.ToCuda();
     inputB.ToCuda();
-    auto y = NN::Functional::MulOp(inputA, inputB);
+    auto y = F::MatMul(inputA, inputB);
 
     y.ToHost();
     const auto forwardDataPtr = y.GetData();
@@ -121,7 +121,7 @@ void TestAdd(bool print)
     Initialize::Initialize(inputB,
                            std::make_unique<Initialize::Normal>(0.0f, 10.0f));
 
-    auto y = NN::Functional::AddOp(inputA, inputB);
+    auto y = F::Add(inputA, inputB);
 
     y.ToHost();
     const auto forwardDataPtr = y.GetData();

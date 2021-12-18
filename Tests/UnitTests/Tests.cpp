@@ -263,43 +263,44 @@ TEST_CASE("InitializeTest")
 #ifdef ConvolutionTest
 TEST_CASE("Convolution")
 {
-    const int testLoops = 3;
     SUBCASE("Im2ColHost")
     {
-        std::cout << "Im2Col && Col2Im" << std::endl;
+        std::cout << "Testing Im2Col && Col2Im ...";
         HostIm2ColTest(false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("HostConv2D")
     {
-        std::cout << "Host Conv2D" << std::endl;
+        std::cout << "Testing Conv2D on Host ... ";
         HostConv2DTest(false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
-    SUBCASE("Conv2D")
+    SUBCASE("Cuda Conv2D")
     {
-        std::cout << "Conv2D" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            Conv2DTest(false, false);
+        std::cout << "Testing Conv2D on Cuda ... ";
+        CudaConv2DTest(false, false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("MaxPool2D")
     {
-        std::cout << "MaxPool2D" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            MaxPool2DTest(false, false);
+        std::cout << "Testing MaxPool2D ... ";
+        MaxPool2DTest(false, false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("AvgPool2D")
     {
-        std::cout << "AvgPool2D" << std::endl;
-        for (int i = 0; i < testLoops; ++i)
-            AvgPool2DTest(false, false);
+        std::cout << "Testing AvgPool2D ... ";
+        AvgPool2DTest(false, false);
         Util::ResourceManager::ClearAll();
+        std::cout << "Done!" << std::endl;
     }
 }
 #endif
@@ -309,32 +310,37 @@ TEST_CASE("BasicGraphTest")
 {
     SUBCASE("MultiplyTest")
     {
-        std::cout << "Multiply" << std::endl;
+        std::cout << "Testing Multiply ... ";
         TestMultiply(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("MeanTest")
     {
-        std::cout << "Mean" << std::endl;
+        std::cout << "Testing Mean ... ";
         TestMean(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("MSETest")
     {
-        std::cout << "MSE" << std::endl;
+        std::cout << "Testing MSE ... ";
         TestMSE(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("CrossEntropyTest")
     {
-        std::cout << "CrossEntropy" << std::endl;
+        std::cout << "Testing cross entropy loss ... ";
         TestCrossEntropy(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("AddTest")
     {
-        std::cout << "Add" << std::endl;
+        std::cout << "Testing Add ... ";
         TestAdd(false);
+        std::cout << "Done!" << std::endl;
     }
 
     SUBCASE("Linear Test")
@@ -343,7 +349,7 @@ TEST_CASE("BasicGraphTest")
         TestLinear(false);
     }
 
-    SUBCASE("Conv2DTest")
+    SUBCASE("CudaConv2DTest")
     {
         std::cout << "Conv2D" << std::endl;
         TestConv2D(false);

@@ -64,7 +64,53 @@ void AddBackProp::m_runBackProp()
     auto& da = m_dxVector[0];
     auto& db = m_dxVector[1];
     Compute::Add(da, dy, da);
-    Compute::Add(db, dy, db);
+    Compute::Add(db, db, dy);
+}
+
+SubBackProp::SubBackProp(std::string name, TensorUtil::TensorData da,
+                         TensorUtil::TensorData db, TensorUtil::TensorData dy)
+    : BackPropWrapper(std::move(name), { std::move(da), std::move(db) },
+                      { std::move(dy) })
+{
+}
+
+void SubBackProp::m_runBackProp()
+{
+    const auto& dy = m_dyVector[0];
+    auto& da = m_dxVector[0];
+    auto& db = m_dxVector[1];
+    Compute::Add(da, dy, da);
+    Compute::Sub(db, dy, db);
+}
+
+DotBackProp::DotBackProp(std::string name, const TensorUtil::TensorData& a,
+                         const TensorUtil::TensorData& b,
+                         TensorUtil::TensorData da,
+                         TensorUtil::TensorData db, TensorUtil::TensorData dy)
+    : BackPropWrapper(std::move(name), { std::move(da), std::move(db) },
+                      { std::move(dy) }, { a, b },
+                      {
+                          TensorUtil::TensorData(a.GetShape(), a.GetType(),
+                                                 a.GetCudaDevice()),
+                          TensorUtil::TensorData(b.GetShape(), b.GetType(),
+                                                 b.GetCudaDevice())
+                      })
+{
+}
+
+void DotBackProp::m_runBackProp()
+{
+    const auto& dy = m_dyVector[0];
+    auto& da = m_dxVector[0];
+    auto& db = m_dxVector[1];;
+    auto& daTemp = m_mutables[0];
+    auto& dbTemp = m_mutables[1];
+    const auto& a = m_constants[0];
+    const auto& b = m_constants[1];
+    Compute::Dot(daTemp, dy, b);
+    Compute::Dot(dbTemp, dy, a);
+    Compute::Add(da, da, daTemp);
+    Compute::Add(db, db, dbTemp);
 }
 
 MeanBackProp::MeanBackProp(std::string name, TensorUtil::TensorData dx,

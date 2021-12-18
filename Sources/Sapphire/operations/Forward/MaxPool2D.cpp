@@ -10,7 +10,6 @@
 #include <Sapphire/compute/ConvolutionOps.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/util/UnitUtils.hpp>
-#include <Sapphire/compute/Initialize.hpp>
 
 namespace Sapphire::NN
 {
@@ -62,8 +61,7 @@ Tensor MaxPool2D::operator()(const Tensor& tensor)
 
     Util::ChangeTensorDataDimension(4, x, dx, y, dy);
 
-    //! TODO : Do we need this?
-    Compute::Initialize::Zeros(y);
+    //Compute::Initialize::Zeros(y);
     Compute::MaxPool2DForward(y, x, windowRows, windowCols, strideRows,
                               strideCols, rowPadding, colPadding);
 
