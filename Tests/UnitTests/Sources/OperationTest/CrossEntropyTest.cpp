@@ -6,12 +6,12 @@
 
 #include <OperationTest/CrossEntropyTest.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
-#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Forward/Functional/Softmax.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
-#include <Sapphire/operations/Forward/ReLU.hpp>
+#include <Sapphire/operations/Forward/Functional/ReLU.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
@@ -156,9 +156,9 @@ void TestCrossEntropyTraining(bool printData)
     {
         x.LoadData(xData);
         label.LoadData(labelData);
-        auto tensor = NN::ReLU(linear(x));
+        auto tensor = F::ReLU(linear(x));
         tensor = linear1(tensor);
-        tensor = NN::SoftMax(tensor);
+        tensor = F::SoftMax(tensor);
         const auto loss = NN::Loss::CrossEntropy(tensor, label);
         // const auto loss = NN::Loss::MSE(tensor, label);
         if (i % 10 == 0)

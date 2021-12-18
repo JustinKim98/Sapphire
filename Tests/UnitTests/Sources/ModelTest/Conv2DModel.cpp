@@ -9,13 +9,13 @@
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
-#include <Sapphire/operations/Forward/ReLU.hpp>
+#include <Sapphire/operations/Forward/Functional/ReLU.hpp>
 #include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <Sapphire/operations/Forward/Functional/MaxPool2D.hpp>
 #include <Sapphire/util/FileManager.hpp>
-#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Forward/Functional/Softmax.hpp>
 #include <iostream>
 #include <random>
 
@@ -100,16 +100,16 @@ void Conv2DModelTest(
         dataLoader.LoadData(label, batches, 0, 0, labelOneHot);
 
         //! Load data to x and label here
-        auto tensor = F::MaxPool2D(NN::ReLU(conv0(x)), std::make_pair(2, 2),
+        auto tensor = F::MaxPool2D(F::ReLU(conv0(x)), std::make_pair(2, 2),
                                    std::make_pair(2, 2));
-        tensor = F::MaxPool2D(NN::ReLU(conv1(tensor)), std::make_pair(2, 2),
+        tensor = F::MaxPool2D(F::ReLU(conv1(tensor)), std::make_pair(2, 2),
                               std::make_pair(2, 2));
         tensor.Reshape(
             Shape({ batchSize, tensor.GetShape().Size() / batchSize }));
-        tensor = NN::ReLU(fc0(tensor));
-        tensor = NN::ReLU(fc1(tensor));
+        tensor = F::ReLU(fc0(tensor));
+        tensor = F::ReLU(fc1(tensor));
         tensor = fc2(tensor);
-        tensor = NN::SoftMax(tensor);
+        tensor = F::SoftMax(tensor);
 
         auto loss = NN::Loss::CrossEntropy(tensor, label);
 

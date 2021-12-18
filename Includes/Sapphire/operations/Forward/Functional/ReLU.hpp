@@ -4,12 +4,12 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef SAPPHIRE_NN_RELU_HPP
-#define SAPPHIRE_NN_RELU_HPP
+#ifndef SAPPHIRE_F_RELU_HPP
+#define SAPPHIRE_F_RELU_HPP
 
 #include <Sapphire/tensor/Tensor.hpp>
 
-namespace Sapphire::NN
+namespace Sapphire::F
 {
 Tensor ReLU(Tensor xTensor);
 }

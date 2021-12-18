@@ -9,7 +9,7 @@
 
 #include <Sapphire/tensor/Tensor.hpp>
 
-namespace Sapphire::NN
+namespace Sapphire::F
 {
 Tensor SoftMax(const Tensor& input);
 }

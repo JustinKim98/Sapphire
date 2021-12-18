@@ -97,7 +97,7 @@ TEST_CASE("TensorFunctionalityTest")
 #ifdef BasicsTest
 TEST_CASE("Basics")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("Transpose")
     {
         std::cout << "Transpose" << std::endl;
@@ -175,7 +175,7 @@ TEST_CASE("Basics")
 #ifdef ActivationTest
 TEST_CASE("ActivationTest")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("ReLU")
     {
         std::cout << "ReLU Test" << std::endl;
@@ -197,7 +197,7 @@ TEST_CASE("ActivationTest")
 #ifdef GemmTest
 TEST_CASE("Gemm Test")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("Gemm With Cuda")
     {
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
@@ -213,7 +213,7 @@ TEST_CASE("Gemm Test")
 #ifdef GemmBroadcastTest
 TEST_CASE("Gemm Broadcast Test")
 {
-    const int testLoops = 3;
+    constexpr int testLoops = 3;
     SUBCASE("Broadcast test with 1 dimension")
     {
         for (int i = 0; i < testLoops; i++)
@@ -240,22 +240,15 @@ TEST_CASE("Gemm Broadcast Test")
 #ifdef InitializeTest
 TEST_CASE("InitializeTest")
 {
-    const int testLoops = 3;
     SUBCASE("Initialize Ones")
     {
         std::cout << "Initialize Ones" << std::endl;
-        for (int i = 0; i < testLoops; i++)
-        {
-            EqualInitializeTest(Compute::Initialize::Ones, false);
-        }
+        EqualInitializeTest(Compute::Initialize::Ones, false);
     }
     SUBCASE("Initialize Normal")
     {
         std::cout << "Initialize Normal" << std::endl;
-        for (int i = 0; i < testLoops; i++)
-        {
-            NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
-        }
+        NoneZeroTest(Compute::Initialize::Normal, false, 100.0f, 1.0f);
     }
 }
 #endif

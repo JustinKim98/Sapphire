@@ -23,26 +23,26 @@ void TestMaxPool2D(bool print)
     ModelManager::SetCurrentModel("myModel");
 
     const CudaDevice gpu(0, "cuda0");
-    const int batchSize = 4;
-    const int channels = 3;
-    const int inputRows = 6;
-    const int inputCols = 4;
-    const int windowRows = 3;
-    const int windowCols = 3;
-    const int strideRows = 1;
-    const int strideCols = 2;
-    const int padSizeRows = 2;
-    const int padSizeCols = 1;
+    constexpr int batchSize = 4;
+    constexpr int channels = 3;
+    constexpr int inputRows = 6;
+    constexpr int inputCols = 4;
+    constexpr int windowRows = 3;
+    constexpr int windowCols = 3;
+    constexpr int strideRows = 1;
+    constexpr int strideCols = 2;
+    constexpr int padSizeRows = 2;
+    constexpr int padSizeCols = 1;
 
-    const auto windowSize = std::make_pair(windowRows, windowCols);
-    const auto stride = std::make_pair(strideRows, strideCols);
-    const auto padSize = std::make_pair(padSizeRows, padSizeCols);
+    constexpr auto windowSize = std::make_pair(windowRows, windowCols);
+    constexpr auto stride = std::make_pair(strideRows, strideCols);
+    constexpr auto padSize = std::make_pair(padSizeRows, padSizeCols);
 
-    const auto outputRows =
+    constexpr auto outputRows =
         (inputRows + 2 * padSizeRows - (windowRows - 1) - 1) /
         strideRows +
         1;
-    const auto outputCols =
+    constexpr auto outputCols =
         (inputCols + 2 * padSizeCols - (windowCols - 1) - 1) /
         strideCols +
         1;

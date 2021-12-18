@@ -7,11 +7,11 @@
 #include <ModelTest/MnistLinear.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/Forward/Linear.hpp>
-#include <Sapphire/operations/Forward/ReLU.hpp>
+#include <Sapphire/operations/Forward/Functional/ReLU.hpp>
 #include <Sapphire/operations/Forward/Conv2D.hpp>
 #include <Sapphire/operations/Loss/CrossEntropy.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
-#include <Sapphire/operations/Forward/Softmax.hpp>
+#include <Sapphire/operations/Forward/Functional/Softmax.hpp>
 #include <Sapphire/util/DataLoader/CsvLoader.hpp>
 #include <Sapphire/util/FileManager.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
@@ -86,9 +86,9 @@ void MnistLinear(std::filesystem::path filePath, int batchSize,
         dataLoader.LoadData(x, batches, 1, 784, dataPreProcess);
         dataLoader.LoadData(label, batches, 0, 0, labelOneHot);
 
-        auto tensor = NN::ReLU(fc0(x));
+        auto tensor = F::ReLU(fc0(x));
         tensor = fc1(tensor);
-        tensor = NN::SoftMax(tensor);
+        tensor = F::SoftMax(tensor);
         const auto loss = NN::Loss::CrossEntropy(tensor, label);
 
         //! Print loss and accuracy every 100 epochs

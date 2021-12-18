@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/operations/Forward/ReLU.hpp>
+#include <Sapphire/operations/Forward/Functional/ReLU.hpp>
 #include <Sapphire/operations/Unit.hpp>
 #include <Sapphire/operations/Backward/ReLUBackward.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
@@ -12,7 +12,7 @@
 #include <Sapphire/util/UnitUtils.hpp>
 #include <Sapphire/compute/ActivationOps.hpp>
 
-namespace Sapphire::NN
+namespace Sapphire::F
 {
 Tensor ReLU(Tensor xTensor)
 {
