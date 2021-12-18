@@ -102,7 +102,7 @@ void TestMaxPool2D(bool print)
     bias.ToHost();
 
     //! Initialize backward data
-    Initialize::InitializeBackwardData(input,
+    Initialize::InitializeGradient(input,
                                        std::make_unique<Initialize::Zeros>());
 
     auto hostOutput = maxPool2D(input);

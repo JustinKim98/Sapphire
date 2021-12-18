@@ -112,16 +112,40 @@ void Conv2DModelTest(
 
         auto loss = NN::Loss::CrossEntropy(tensor, label);
 
-        //! Print loss every 10 epochs
-        if (epoch % 10 == 0)
+        //! Print loss and accuracy every 100 epochs
+        if (epoch % 50 == 0)
         {
-            const auto val = tensor.GetData();
-            for (int idx = 0; idx < 10; ++idx)
-                std::cout << val[idx] << " ";
-            std::cout << std::endl;
+            const auto yData = tensor.GetData();
+            const auto labelData = label.GetData();
             const auto lossData = loss.GetData();
+
+            int correct = 0;
+            for (int batchIdx = 0; batchIdx < batchSize; ++batchIdx)
+            {
+                int modelOutput = 0;
+                float largest = 0.0f;
+                for (int idx = 0; idx < 10; ++idx)
+                    if (yData[batchIdx * 10 + idx] > largest)
+                    {
+                        largest = yData[batchIdx * 10 + idx];
+                        modelOutput = idx;
+                    }
+
+                int trueLabel = 0;
+                largest = 0.0f;
+                for (int idx = 0; idx < 10; ++idx)
+                    if (labelData[batchIdx * 10 + idx] > largest)
+                    {
+                        largest = labelData[batchIdx * 10 + idx];
+                        trueLabel = idx;
+                    }
+
+                if (modelOutput == trueLabel)
+                    correct += 1;
+            }
             std::cout << "epoch: " << epoch << " loss : " << lossData[0]
-                << std::endl;
+                << " Accuracy : "
+                << static_cast<float>(correct) / batchSize << std::endl;
         }
 
         //! Start back propagation and update weights

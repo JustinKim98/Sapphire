@@ -143,7 +143,7 @@ inline void Initialize(Tensor& tensor, std::unique_ptr<Initializer> initializer)
     initializer->operator()(forwardData);
 }
 
-inline void InitializeBackwardData(Tensor& tensor,
+inline void InitializeGradient(Tensor& tensor,
                                    std::unique_ptr<Initializer> initializer)
 {
     auto& desc = ModelManager::CurModel().GetDescriptor(

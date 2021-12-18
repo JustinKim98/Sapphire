@@ -62,7 +62,7 @@ void TestSoftmax(bool print)
     bias.ToCuda();
     weight.ToCuda();
 
-    Initialize::InitializeBackwardData(input,
+    Initialize::InitializeGradient(input,
                                        std::make_unique<Initialize::Zeros>());
 
     tensor = NN::SoftMax(input);

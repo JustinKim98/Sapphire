@@ -20,7 +20,7 @@
 #include <type_traits>
 #include <iostream>
 
-#define FP_EQUAL_THRESHOLD 0.05
+#define FP_EQUAL_THRESHOLD 0.1
 
 namespace Sapphire::Test
 {

@@ -33,7 +33,7 @@
 #include "doctest.h"
 
 #define GraphTest
-//#define DataLoaderTest
+#define DataLoaderTest
 #define TrainTest
 #define TensorFunctionalityTest
 #define BasicsTest
@@ -43,7 +43,7 @@
 #define InitializeTest
 #define ConvolutionTest
 #define BasicGraphTest
-//#define ModelTest
+#define ModelTest
 
 namespace Sapphire::Test
 {
@@ -310,8 +310,8 @@ TEST_CASE("BasicGraphTest")
 {
     SUBCASE("MultiplyTest")
     {
-        std::cout << "Testing Multiply ... ";
-        TestMultiply(false);
+        std::cout << "Testing MatMul ... ";
+        TestMatMul(false);
         std::cout << "Done!" << std::endl;
     }
 
@@ -331,7 +331,7 @@ TEST_CASE("BasicGraphTest")
 
     SUBCASE("CrossEntropyTest")
     {
-        std::cout << "Testing cross entropy loss ... ";
+        std::cout << "Testing CrpssEntropy ... ";
         TestCrossEntropy(false);
         std::cout << "Done!" << std::endl;
     }
@@ -339,6 +339,20 @@ TEST_CASE("BasicGraphTest")
     SUBCASE("AddTest")
     {
         std::cout << "Testing Add ... ";
+        TestAdd(false);
+        std::cout << "Done!" << std::endl;
+    }
+
+    SUBCASE("SubTest")
+    {
+        std::cout << "Testing Sub ... ";
+        TestAdd(false);
+        std::cout << "Done!" << std::endl;
+    }
+
+    SUBCASE("DotTest")
+    {
+        std::cout << "Testing Dot ... ";
         TestAdd(false);
         std::cout << "Done!" << std::endl;
     }
@@ -424,10 +438,10 @@ TEST_CASE("Model Test")
         const std::string filePath =
             "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
 #endif
-    
+
         MnistLinear(
             filePath, 100,
-            0.0001f, 5000, false);
+            0.0001f, 3000, false);
     }
 
     SUBCASE("Conv2DModelTest")
@@ -448,7 +462,7 @@ TEST_CASE("Model Test")
         std::cout << "--- Cifar-10 Conv2D image classification model ---" <<
             std::endl;
         Conv2DModelTest(filePath,
-                        batchSize, 0.002f, false, 2500);
+                        batchSize, 0.002f, false, 500);
     }
 }
 
