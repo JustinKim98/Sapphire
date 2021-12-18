@@ -331,7 +331,7 @@ TEST_CASE("BasicGraphTest")
 
     SUBCASE("CrossEntropyTest")
     {
-        std::cout << "Testing CrpssEntropy ... ";
+        std::cout << "Testing CrossEntropy ... ";
         TestCrossEntropy(false);
         std::cout << "Done!" << std::endl;
     }
@@ -462,7 +462,7 @@ TEST_CASE("Model Test")
         std::cout << "--- Cifar-10 Conv2D image classification model ---" <<
             std::endl;
         Conv2DModelTest(filePath,
-                        batchSize, 0.002f, false, 500);
+                        batchSize, 0.002f, false, 1000);
     }
 }
 

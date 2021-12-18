@@ -5,7 +5,7 @@
 // property of any third parties.
 
 #include <OperationTest/MaxPool2DTest.hpp>
-#include <Sapphire/operations/Forward/MaxPool2D.hpp>
+#include <Sapphire/operations/Forward/Functional/MaxPool2D.hpp>
 #include <Sapphire/Model.hpp>
 #include <Sapphire/operations/optimizers/SGD.hpp>
 #include <Sapphire/operations/Initializers/Initialize.hpp>
@@ -83,9 +83,7 @@ void TestMaxPool2D(bool print)
     bias.ToCuda();
 
     //! Test Conv2D on gpu
-    NN::MaxPool2D maxPool2D(windowSize,
-                            stride, padSize);
-    auto gpuOutput = maxPool2D(input);
+    auto gpuOutput = F::MaxPool2D(input, windowSize, stride, padSize);
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
@@ -103,9 +101,9 @@ void TestMaxPool2D(bool print)
 
     //! Initialize backward data
     Initialize::InitializeGradient(input,
-                                       std::make_unique<Initialize::Zeros>());
+                                   std::make_unique<Initialize::Zeros>());
 
-    auto hostOutput = maxPool2D(input);
+    auto hostOutput = F::MaxPool2D(input, windowSize, stride, padSize);
     const auto hostForwardData = hostOutput.GetData();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
