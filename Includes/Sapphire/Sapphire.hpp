@@ -9,6 +9,7 @@
 
 #include <Sapphire/Model.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#include <Sapphire/Tensor/Tensor.hpp>
 #include <Sapphire/util/FileManager.hpp>
 #include <Sapphire/util/DataLoader/BinaryLoader.hpp>
 #include <Sapphire/util/DataLoader/CsvLoader.hpp>

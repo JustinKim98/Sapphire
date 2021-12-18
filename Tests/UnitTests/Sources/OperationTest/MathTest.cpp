@@ -53,7 +53,7 @@ void TestMatMul(bool print)
     std::vector<float> backwardData(y.GetShape().Size());
     for (auto& elem : backwardData)
         elem = dist(gen);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataCuda = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -69,7 +69,7 @@ void TestMatMul(bool print)
                                    std::make_unique<Initialize::Zeros>());
 
     y = F::MatMul(inputA, inputB);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataHost = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -157,7 +157,7 @@ void TestAdd(bool print)
     std::vector<float> backwardData(y.GetShape().Size());
     for (auto& elem : backwardData)
         elem = dist(gen);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataCuda = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -173,7 +173,7 @@ void TestAdd(bool print)
                                    std::make_unique<Initialize::Zeros>());
 
     y = F::Add(inputA, inputB);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataHost = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -261,7 +261,7 @@ void TestSub(bool print)
     std::vector<float> backwardData(y.GetShape().Size());
     for (auto& elem : backwardData)
         elem = dist(gen);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataCuda = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -277,7 +277,7 @@ void TestSub(bool print)
                                    std::make_unique<Initialize::Zeros>());
 
     y = F::Sub(inputA, inputB);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataHost = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -366,7 +366,7 @@ void TestDot(bool print)
     std::vector<float> backwardData(y.GetShape().Size());
     for (auto& elem : backwardData)
         elem = dist(gen);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataCuda = y.GetData();
     ModelManager::CurModel().BackProp(y);
 
@@ -382,7 +382,7 @@ void TestDot(bool print)
                                    std::make_unique<Initialize::Zeros>());
 
     y = F::Dot(inputA, inputB);
-    y.SetGradient(backwardData);
+    y.LoadGradient(backwardData);
     const auto forwardDataHost = y.GetData();
     ModelManager::CurModel().BackProp(y);
 

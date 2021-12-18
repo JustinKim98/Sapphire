@@ -87,9 +87,6 @@ public:
 
     [[nodiscard]] int GetUnitSize(int requiredDim) const;
 
-
-    Shape GetReverse() const;
-
     [[nodiscard]] Shape GetTranspose() const;
 
 private:

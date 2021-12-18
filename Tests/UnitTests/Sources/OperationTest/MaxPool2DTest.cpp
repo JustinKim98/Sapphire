@@ -87,7 +87,7 @@ void TestMaxPool2D(bool print)
     CHECK(gpuOutput.GetShape().Rows() == outputRows);
     CHECK(gpuOutput.GetShape().Cols() == outputCols);
     const auto gpuForwardData = gpuOutput.GetData();
-    gpuOutput.SetGradient(backwardData);
+    gpuOutput.LoadGradient(backwardData);
 
     Optimizer::SGD sgd(0.0f);
     ModelManager::CurModel().SetOptimizer(&sgd);
@@ -107,7 +107,7 @@ void TestMaxPool2D(bool print)
     const auto hostForwardData = hostOutput.GetData();
     const auto outputRowsHost = hostOutput.GetShape().Rows();
     const auto outputColsHost = hostOutput.GetShape().Cols();
-    hostOutput.SetGradient(backwardData);
+    hostOutput.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
     const auto hostBackwardData = input.GetGradient();
 

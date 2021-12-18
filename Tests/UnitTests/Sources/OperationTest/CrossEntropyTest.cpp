@@ -49,17 +49,17 @@ void TestCrossEntropy(bool print)
     const auto gpuLoss = NN::Loss::CrossEntropy(x, label);
     const auto lossShape = gpuLoss.GetShape();
     const auto gpuForwardPtr = gpuLoss.GetData();
-    gpuLoss.SetGradient(backwardData);
+    gpuLoss.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuLoss);
     const auto gpuBackwardPtr = x.GetGradient();
 
-    x.SetGradient(std::vector<float>(x.Size(), 0.0f));
+    x.LoadGradient(std::vector<float>(x.Size(), 0.0f));
 
     x.ToHost();
     label.ToHost();
     const auto hostLoss = NN::Loss::CrossEntropy(x, label);
     const auto hostForwardPtr = hostLoss.GetData();
-    hostLoss.SetGradient(backwardData);
+    hostLoss.LoadGradient(backwardData);
 
     Optimizer::SGD sgd(0.0f);
     ModelManager::CurModel().SetOptimizer(&sgd);

@@ -54,7 +54,7 @@ void TestSoftmax(bool print)
 
     auto tensor = F::SoftMax(input);
     const auto forwardDataHost = tensor.GetData();
-    tensor.SetGradient(backwardData);
+    tensor.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(tensor);
     const auto backwardDataHost = input.GetGradient();
 
@@ -67,7 +67,7 @@ void TestSoftmax(bool print)
 
     tensor = F::SoftMax(input);
     const auto forwardDataCuda = tensor.GetData();
-    tensor.SetGradient(backwardData);
+    tensor.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(tensor);
     const auto backwardDataCuda = input.GetGradient();
 

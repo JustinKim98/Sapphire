@@ -57,7 +57,7 @@ void TestLinear(bool print)
     input.ToCuda();
     auto gpuOutput = linear(input);
     const auto gpuForwardData = gpuOutput.GetData();
-    gpuOutput.SetGradient(backwardData);
+    gpuOutput.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(gpuOutput);
     const auto gpuGradientData = input.GetGradient();
     const auto gpuWeightData = linear.GetWeight().GetData();
@@ -72,7 +72,7 @@ void TestLinear(bool print)
     input.ToHost();
     const auto hostOutput = linear(input);
     const auto hostForwardData = hostOutput.GetData();
-    hostOutput.SetGradient(backwardData);
+    hostOutput.LoadGradient(backwardData);
     ModelManager::CurModel().BackProp(hostOutput);
     const auto hostGradientData = input.GetGradient();
     const auto hostWeightData = linear.GetWeight().GetData();
