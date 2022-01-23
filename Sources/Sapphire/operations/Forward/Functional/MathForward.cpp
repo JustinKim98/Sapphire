@@ -55,6 +55,7 @@ Tensor MatMul(const Tensor& inputA, const Tensor& inputB)
 
     auto& yDesc = model.GetDescriptor(outputKey);
     yDesc.SetMode(mode);
+    yDesc.SetDevice(inputA.GetDevice());
 
     auto a = aDesc.GetForwardData();
     auto da = aDesc.GetBackwardData();
@@ -107,6 +108,7 @@ Tensor Add(const Tensor& inputA, const Tensor& inputB)
         device);
     auto& yDesc = model.GetDescriptor(outKey);
     yDesc.SetMode(mode);
+    yDesc.SetDevice(inputA.GetDevice());
 
     auto a = aDesc.GetForwardData();
     auto da = aDesc.GetBackwardData();
@@ -157,6 +159,7 @@ Tensor Sub(const Tensor& inputA, const Tensor& inputB)
         model.RegisterTensorDescriptor(outputShape.value(), type, device);
     auto& yDesc = model.GetDescriptor(outKey);
     yDesc.SetMode(mode);
+    yDesc.SetDevice(inputA.GetDevice());
 
     auto a = aDesc.GetForwardData();
     auto da = aDesc.GetBackwardData();
@@ -207,6 +210,7 @@ Tensor Dot(const Tensor& inputA, const Tensor& inputB)
         model.RegisterTensorDescriptor(outputShape.value(), type, device);
     auto& yDesc = model.GetDescriptor(outKey);
     yDesc.SetMode(mode);
+    yDesc.SetDevice(inputA.GetDevice());
 
     auto a = aDesc.GetForwardData();
     auto da = aDesc.GetBackwardData();
@@ -247,6 +251,7 @@ Tensor Mean(const Tensor& input, int dim)
     const auto yKey = model.RegisterTensorDescriptor(yShape, type, device);
     auto& yDesc = model.GetDescriptor(yKey);
     yDesc.SetMode(mode);
+    yDesc.SetDevice(input.GetDevice());
 
     auto x = xDesc.GetForwardData();
     auto dx = xDesc.GetBackwardData();

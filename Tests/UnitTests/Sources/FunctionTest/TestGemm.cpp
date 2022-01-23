@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <FunctionTest/GemmTest.hpp>
+#include <FunctionTest/TestGemm.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/Shape.hpp>
@@ -17,7 +17,7 @@
 
 namespace Sapphire::Test
 {
-void Gemm1(bool print)
+void TestGemm(bool print)
 {
     std::random_device rd;
     std::mt19937 gen(rd());

@@ -7,7 +7,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 
 #include <FunctionTest/BroadcastTest.hpp>
-#include <FunctionTest/GemmTest.hpp>
+#include <FunctionTest/TestGemm.hpp>
 #include <Sapphire/Tests/CudaFunctionalityTest.cuh>
 #include <BasicsTest/SimpleTest.hpp>
 #include <OperationTest/MathTest.hpp>
@@ -32,17 +32,17 @@
 #include <iostream>
 #include "doctest.h"
 
-// #define GraphTest
-// #define DataLoaderTest
-// #define TrainTest
-// #define TensorFunctionalityTest
-// #define BasicsTest
-// #define ActivationTest
-// #define GemmTest
-// #define GemmBroadcastTest
-// #define InitializeTest
-// #define ConvolutionTest
-// #define BasicGraphTest
+#define GraphTest
+#define DataLoaderTest
+#define TrainTest
+#define TensorFunctionalityTest
+#define BasicsTest
+#define ActivationTest
+#define GemmTest
+#define GemmBroadcastTest
+#define InitializeTest
+#define ConvolutionTest
+#define BasicGraphTest
 #define ModelTest
 
 namespace Sapphire::Test
@@ -135,7 +135,7 @@ TEST_CASE("Basics")
     {
         std::cout << "Log Test" << std::endl;
         for (int i = 0; i < testLoops; ++i)
-            TestWithOneArgumentStatic(false, 1.0f, Compute::log);
+            TestWithOneArgumentStatic(false, 1.0f, Compute::Log);
         Util::ResourceManager::ClearAll();
     }
 
@@ -204,7 +204,7 @@ TEST_CASE("Gemm Test")
         for (int loopIdx = 0; loopIdx < testLoops; loopIdx++)
         {
             std::cout << "Gemm test : " << loopIdx << std::endl;
-            Gemm1(false);
+            TestGemm(false);
         }
         Util::ResourceManager::ClearAll();
     }

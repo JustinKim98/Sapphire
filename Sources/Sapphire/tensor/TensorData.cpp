@@ -51,8 +51,7 @@ TensorData::TensorData(Shape shape, Type type, DeviceInfo device, bool preserve)
         throw std::runtime_error("Sapphire was not compiled to used cuda");
 #endif
     }
-    else
-        m_allocateHost();
+    m_allocateHost();
 }
 
 TensorData::TensorData(Shape shape, Type type, DeviceInfo device,
@@ -72,8 +71,7 @@ TensorData::TensorData(Shape shape, Type type, DeviceInfo device,
         throw std::runtime_error("Sapphire was not compiled to used cuda");
 #endif
     }
-    else
-        m_allocateHost();
+    m_allocateHost();
 }
 
 
@@ -191,10 +189,12 @@ void TensorData::SetDevice(DeviceInfo device)
 {
     if (device != m_device)
     {
-        if (m_device.GetID() == -1)
+#ifdef WITH_CUDA
+        if (m_device.GetID() == -1 && device.GetID() > 0)
         {
             m_allocateCuda();
         }
+#endif
         m_device = device;
     }
 }

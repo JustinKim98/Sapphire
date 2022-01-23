@@ -9,11 +9,8 @@
 
 namespace Sapphire::Test
 {
-#ifdef WITH_CUDA
-void Gemm1(bool print);
+void TestGemm(bool print);
 
-
-#endif
 }  // namespace Sapphire::Test
 
 #endif  // Sapphire_COMPUTATIONTEST_HPP

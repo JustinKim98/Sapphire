@@ -14,6 +14,7 @@ if __name__ == "__main__":
 	parser.add_argument('-gen_old', '--gen_old_arch', action='store_true', help='True if generating for old architectures')
 	parser.add_argument('-d', '--debug', action='store_true', help = 'Builds in debug mode')
 	parser.add_argument('-c', '--clear', action='store_true', help = 'Clears cache before building')
+	parser.add_argument('-cuda', '--cuda', action='store_true', help='Use cuda')
 
 	args= parser.parse_args()
 
@@ -33,6 +34,9 @@ if __name__ == "__main__":
 		cmake_str += " -DGEN_OLD_ARCH=ON"
 	
 	cmake_str += " ."
+
+	if args.cuda:
+		cmake_str += " -DUSE_CUDA=on"
 
 	os.system(cmake_str)
 	os.system("rm ./bin/UnitTests")

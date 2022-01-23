@@ -72,9 +72,7 @@ Shape TensorDescriptor::GetShape() const
 
 DeviceInfo TensorDescriptor::GetDevice() const
 {
-    if (Mode() == ComputeMode::Cuda)
-        return m_forwardData.GetDeviceInfo();
-    return DeviceInfo();
+    return m_forwardData.GetDeviceInfo();
 }
 
 DeviceInfo TensorDescriptor::GetCudaDevice() const
