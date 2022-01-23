@@ -39,7 +39,7 @@ void TestLinear(bool print)
     //! Initialize model and device
     ModelManager::AddModel("linear test model");
     ModelManager::SetCurrentModel("linear test model");
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     Tensor input(Shape({ batchSize, 1, inputs }), gpu, Type::Dense, true);
     input.LoadData(forwardData);
@@ -150,7 +150,7 @@ void TestLinearTraining(bool printData)
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     NN::Linear linear(inputFeatureSize, outputFeatureSize);
 

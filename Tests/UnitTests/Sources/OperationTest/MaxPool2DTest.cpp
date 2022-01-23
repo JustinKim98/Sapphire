@@ -22,7 +22,7 @@ void TestMaxPool2D(bool print)
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr int batchSize = 4;
     constexpr int channels = 3;
     constexpr int inputRows = 6;

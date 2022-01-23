@@ -7,11 +7,13 @@
 #ifndef SAPPHIRE_UTIL_MEMORYMANAGER_HPP
 #define SAPPHIRE_UTIL_MEMORYMANAGER_HPP
 
-#include <Sapphire/compute/dense/cuda/CudnnStruct.cuh>
-#include <Sapphire/compute/dense/cuda/Convolution.cuh>
-#include <Sapphire/compute/dense/cuda/Pool.cuh>
-#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <Sapphire/util/HashFunctions.hpp>
+#ifdef WITH_CUDA
+#include <Sapphire/compute/cudaUtil/CudaParams.cuh>
+#include <Sapphire/compute/dense/cuda/Convolution.cuh>
+#include <Sapphire/compute/dense/cuda/CudnnStruct.cuh>
+#include <Sapphire/compute/dense/cuda/Pool.cuh>
+#endif
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -42,23 +44,26 @@ struct MemoryChunk
 class ResourceManager
 {
 public:
-    //! Allocates memory on device
-    //! \param byteSize : Allocation byteSize in bytes
-    static void* GetMemoryCuda(size_t byteSize, bool preserve = false);
-
     //! Allocates memory on host
     //! \param byteSize : Allocation size in bytes
     static void* GetMemoryHost(size_t byteSize, bool preserve = false);
 
     static void FreePreservedHost(void* ptr);
 
-    static void FreePreservedCuda(void* ptr);
-
     static void MoveToPreservedHost(void* ptr);
 
-    static void MoveToPreservedCuda(void* ptr);
-
     static void MoveToVolatileHost(void* ptr);
+
+
+#ifdef WITH_CUDA
+
+        //! Allocates memory on device
+    //! \param byteSize : Allocation byteSize in bytes
+    static void* GetMemoryCuda(size_t byteSize, bool preserve = false);
+
+    static void FreePreservedCuda(void* ptr);
+
+    static void MoveToPreservedCuda(void* ptr);
 
     static void MoveToVolatileCuda(void* ptr);
 
@@ -73,6 +78,7 @@ public:
 
     static cudnnHandle_t*
     GetCudnnHandle(int deviceId, std::thread::id threadId);
+
 
     template <typename ...Ts>
     static void AddCudnnConv2DMetaData(
@@ -104,6 +110,15 @@ public:
 
     static void ClearCudnnHandlePool();
 
+    static bool HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig);
+
+    static bool HasPoolConfig(Compute::Dense::Cuda::PoolConfig poolConfig);
+
+    static bool HasCublasHandle(int deviceId, std::thread::id tid);
+
+    static bool HasCudnnHandle(int deviceId, std::thread::id tid);
+#endif
+
     static void Clean();
 
     static void ClearPreservedPool();
@@ -114,25 +129,26 @@ public:
 
     static void ClearAll();
 
-    static bool HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig);
-
-    static bool HasPoolConfig(Compute::Dense::Cuda::PoolConfig poolConfig);
-
-    static bool HasCublasHandle(int deviceId, std::thread::id tid);
-
-    static bool HasCudnnHandle(int deviceId, std::thread::id tid);
 
 private:
     //! Memory resources
 
     static std::unordered_map<std::intptr_t, MemoryChunk>
     m_hostVolatilePool;
+#ifdef WITH_CUDA
     static std::unordered_map<std::intptr_t, MemoryChunk>
     m_cudaVolatilePool;
+#endif
     static std::unordered_multimap<std::size_t, MemoryChunk> m_hostFreePool;
+
+#ifdef WITH_CUDA
     static std::unordered_multimap<std::size_t, MemoryChunk> m_cudaFreePool;
+#endif
+
     static std::unordered_map<std::intptr_t, MemoryChunk>
     m_hostPreservedPool;
+
+#ifdef WITH_CUDA
     static std::unordered_map<std::intptr_t, MemoryChunk>
     m_cudaPreservedPool;
 
@@ -155,6 +171,8 @@ private:
     static std::unordered_map<std::pair<int, std::thread::id>, cudnnHandle_t*,
                               DeviceIdTidHash>
     m_cudnnHandlePool;
+
+#endif
 
     static unsigned int m_allocationUnitByteSize;
 };

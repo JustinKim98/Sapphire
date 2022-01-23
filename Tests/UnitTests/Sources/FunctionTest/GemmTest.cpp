@@ -9,7 +9,7 @@
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
@@ -37,7 +37,7 @@ void Gemm1(bool print)
         << " batchSize : " << batchSize << std::endl;
 
     //! Declare cuda device
-    const CudaDevice cuda(0, "device0");
+    const DeviceInfo cuda(0, "device0");
 
     //! Create tensors with cuda available
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);

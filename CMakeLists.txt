@@ -7,7 +7,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 # Declare project
 project(sapphire)
 
-option(USE_CUDA "USE_CUDA" ON)
+option(USE_CUDA "USE_CUDA" OFF)
 option(USE_AVX2 "USE_AVX2" ON)
 option(USE_AVX512 "USE_AVX512" OFF)
 option(IGNORE_WARNINGS OFF)

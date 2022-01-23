@@ -6,7 +6,9 @@
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#ifdef WITH_CUDA
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
+#endif
 #include <cassert>
 #include <thread>
 #include <utility>
@@ -35,6 +37,7 @@ void FreeHost(void* ptr)
 #endif
 }
 
+#ifdef WITH_CUDA
 void* ResourceManager::GetMemoryCuda(size_t byteSize, bool preserve)
 {
     void* cudaPtr = nullptr;
@@ -70,6 +73,7 @@ void* ResourceManager::GetMemoryCuda(size_t byteSize, bool preserve)
     }
     return cudaPtr;
 }
+#endif
 
 void* ResourceManager::GetMemoryHost(size_t byteSize, bool preserve)
 {
@@ -116,19 +120,6 @@ void ResourceManager::FreePreservedHost(void* ptr)
     m_hostPreservedPool.erase(reinterpret_cast<std::intptr_t>(ptr));
 }
 
-void ResourceManager::FreePreservedCuda(void* ptr)
-{
-    auto itr =
-        m_hostPreservedPool.find(reinterpret_cast<std::intptr_t>(ptr));
-
-    if (itr == m_hostPreservedPool.end())
-        throw std::runtime_error(
-            "ResourceManager::FreePreservedHost - Given ptr to free was not "
-            "found");
-
-    Compute::Cuda::CudaFree(ptr);
-    m_hostPreservedPool.erase(reinterpret_cast<std::intptr_t>(ptr));
-}
 
 void ResourceManager::MoveToPreservedHost(void* ptr)
 {
@@ -142,17 +133,6 @@ void ResourceManager::MoveToPreservedHost(void* ptr)
     m_hostPreservedPool.emplace(temp);
 }
 
-void ResourceManager::MoveToPreservedCuda(void* ptr)
-{
-    auto itr = m_cudaVolatilePool.find(reinterpret_cast<std::intptr_t>(ptr));
-    if (itr == m_cudaVolatilePool.end())
-        throw std::runtime_error(
-            "ResourceManager::MoveToPreservedCuda - Cannot find given ptr");
-
-    auto temp = *itr;
-    m_cudaVolatilePool.erase(itr);
-    m_cudaPreservedPool.emplace(temp);
-}
 
 void ResourceManager::MoveToVolatileHost(void* ptr)
 {
@@ -165,6 +145,32 @@ void ResourceManager::MoveToVolatileHost(void* ptr)
     auto temp = *itr;
     m_hostPreservedPool.erase(itr);
     m_hostVolatilePool.emplace(temp);
+}
+
+#ifdef WITH_CUDA
+void ResourceManager::FreePreservedCuda(void* ptr)
+{
+    auto itr = m_hostPreservedPool.find(reinterpret_cast<std::intptr_t>(ptr));
+
+    if (itr == m_hostPreservedPool.end())
+        throw std::runtime_error(
+            "ResourceManager::FreePreservedHost - Given ptr to free was not "
+            "found");
+
+    Compute::Cuda::CudaFree(ptr);
+    m_hostPreservedPool.erase(reinterpret_cast<std::intptr_t>(ptr));
+}
+
+void ResourceManager::MoveToPreservedCuda(void* ptr)
+{
+    auto itr = m_cudaVolatilePool.find(reinterpret_cast<std::intptr_t>(ptr));
+    if (itr == m_cudaVolatilePool.end())
+        throw std::runtime_error(
+            "ResourceManager::MoveToPreservedCuda - Cannot find given ptr");
+
+    auto temp = *itr;
+    m_cudaVolatilePool.erase(itr);
+    m_cudaPreservedPool.emplace(temp);
 }
 
 void ResourceManager::MoveToVolatileCuda(void* ptr)
@@ -267,62 +273,6 @@ void ResourceManager::ClearCudnnHandlePool()
     m_cudnnHandlePool.clear();
 }
 
-void ResourceManager::Clean()
-{
-    for (auto& [key, memoryChunk] : m_hostVolatilePool)
-        m_hostFreePool.emplace(memoryChunk.ByteSize, memoryChunk);
-    for (auto& [key, memoryChunk] : m_cudaVolatilePool)
-        m_cudaFreePool.emplace(memoryChunk.ByteSize, memoryChunk);
-
-    m_hostVolatilePool.clear();
-    m_cudaVolatilePool.clear();
-}
-
-void ResourceManager::ClearPreservedPool()
-{
-    for (auto& [_, memoryChunk] : m_hostPreservedPool)
-        FreeHost(memoryChunk.Data);
-    for (auto& [_, memoryChunk] : m_cudaPreservedPool)
-        Compute::Cuda::CudaFree(memoryChunk.Data);
-
-    m_hostPreservedPool.clear();
-    m_cudaPreservedPool.clear();
-}
-
-void ResourceManager::ClearVolatilePool()
-{
-    for (auto& [key, memoryChunk] : m_hostVolatilePool)
-        FreeHost(memoryChunk.Data);
-    for (auto& [key, memoryChunk] : m_cudaVolatilePool)
-        Compute::Cuda::CudaFree(memoryChunk.Data);
-
-    m_hostVolatilePool.clear();
-    m_cudaVolatilePool.clear();
-}
-
-void ResourceManager::ClearFreePool()
-{
-    for (auto& [size, memoryChunk] : m_hostFreePool)
-        FreeHost(memoryChunk.Data);
-    for (auto& [size, memoryChunk] : m_cudaFreePool)
-        Compute::Cuda::CudaFree(memoryChunk.Data);
-
-    m_hostFreePool.clear();
-    m_cudaFreePool.clear();
-}
-
-void ResourceManager::ClearAll()
-{
-    ClearCudnnConv2DMetaDataPool();
-    ClearCudnnPool2DMetaDataPool();
-    ClearCublasHandlePool();
-    ClearCudnnHandlePool();
-    ClearPreservedPool();
-    ClearVolatilePool();
-    ClearFreePool();
-}
-
-
 bool ResourceManager::HasConvConfig(Compute::Dense::Cuda::ConvConfig convConfig)
 {
     return m_cudnnConv2DMetaDataPool.find(convConfig) !=
@@ -346,21 +296,95 @@ bool ResourceManager::HasCudnnHandle(int deviceId, std::thread::id id)
     return m_cudnnHandlePool.find(std::make_pair(deviceId, id)) !=
            m_cudnnHandlePool.end();
 }
+#endif
+
+void ResourceManager::Clean()
+{
+    for (auto& [key, memoryChunk] : m_hostVolatilePool)
+        m_hostFreePool.emplace(memoryChunk.ByteSize, memoryChunk);
+    m_hostVolatilePool.clear();
+
+#ifdef WITH_CUDA
+    for (auto& [key, memoryChunk] : m_cudaVolatilePool)
+        m_cudaFreePool.emplace(memoryChunk.ByteSize, memoryChunk);
+    m_cudaVolatilePool.clear();
+#endif
+}
+
+void ResourceManager::ClearPreservedPool()
+{
+    for (auto& [_, memoryChunk] : m_hostPreservedPool)
+        FreeHost(memoryChunk.Data);
+    m_hostPreservedPool.clear();
+
+#ifdef WITH_CUDA
+    for (auto& [_, memoryChunk] : m_cudaPreservedPool)
+        Compute::Cuda::CudaFree(memoryChunk.Data);
+    m_cudaPreservedPool.clear();
+#endif
+}
+
+void ResourceManager::ClearVolatilePool()
+{
+    for (auto& [key, memoryChunk] : m_hostVolatilePool)
+        FreeHost(memoryChunk.Data);
+    m_hostVolatilePool.clear();
+
+#ifdef WITH_CUDA
+    for (auto& [key, memoryChunk] : m_cudaVolatilePool)
+        Compute::Cuda::CudaFree(memoryChunk.Data);
+    m_cudaVolatilePool.clear();
+#endif
+}
+
+void ResourceManager::ClearFreePool()
+{
+    for (auto& [size, memoryChunk] : m_hostFreePool)
+        FreeHost(memoryChunk.Data);
+    m_hostFreePool.clear();
+
+#ifdef WITH_CUDA
+    for (auto& [size, memoryChunk] : m_cudaFreePool)
+        Compute::Cuda::CudaFree(memoryChunk.Data);
+    m_cudaFreePool.clear();
+#endif
+}
+
+
+void ResourceManager::ClearAll()
+{
+    ClearPreservedPool();
+    ClearVolatilePool();
+    ClearFreePool();
+#ifdef WITH_CUDA
+    ClearCudnnConv2DMetaDataPool();
+    ClearCudnnPool2DMetaDataPool();
+    ClearCublasHandlePool();
+    ClearCudnnHandlePool();
+#endif
+}
+
 
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_hostVolatilePool;
 
+#ifdef WITH_CUDA
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_cudaVolatilePool;
+#endif
 
 std::unordered_multimap<std::size_t, MemoryChunk>
 ResourceManager::m_hostFreePool;
+
+#ifdef WITH_CUDA
 std::unordered_multimap<std::size_t, MemoryChunk>
 ResourceManager::m_cudaFreePool;
+#endif
 
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_hostPreservedPool;
 
+#ifdef WITH_CUDA
 std::unordered_map<std::intptr_t, MemoryChunk>
 ResourceManager::m_cudaPreservedPool;
 
@@ -379,4 +403,5 @@ ResourceManager::m_cublasHandlePool;
 std::unordered_map<std::pair<int, std::thread::id>, cudnnHandle_t*,
                    DeviceIdTidHash>
 ResourceManager::m_cudnnHandlePool;
+#endif
 } // namespace Sapphire::Util

@@ -8,7 +8,7 @@
 #include <TestUtil.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/compute/Initialize.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <random>
 #include <doctest.h>
 
@@ -22,7 +22,7 @@ void SendDataBetweenHostDevice(bool print)
     std::uniform_int_distribution<> intDistrib(1, 100);
 
     const int dim = intDistrib(gen) % 5 + 1;
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     //! Randomly initialize the shape with random dimension and size
     const auto shape = CreateRandomShape(dim);
@@ -59,7 +59,7 @@ void TensorDataCopyOnCuda(bool print)
 
     const int dim = intDistrib(gen) % 5 + 1;
     const auto shape = CreateRandomShape(dim);
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
     tensorData.ToHost();
@@ -103,7 +103,7 @@ void TensorDataCopyOnHost(bool print)
     const int dim = intDistrib(gen) % 5 + 1;
     const auto shape = CreateRandomShape(dim);
 
-    CudaDevice cuda(0, "cuda0");
+    DeviceInfo cuda(0, "cuda0");
     TensorUtil::TensorData tensorData(shape, Type::Dense, cuda);
     tensorData.ToHost();
     tensorData.SetMode(ComputeMode::Host);

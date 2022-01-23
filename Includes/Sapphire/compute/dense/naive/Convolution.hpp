@@ -24,13 +24,13 @@ void Col2Im(TensorData& input, const TensorData& inputMatrix,
 
 void Conv2D(TensorData& y, const TensorData& x, const TensorData& filter,
             int strideRow, int strideCol, int rowPadding, int colPadding,
-            int dilationRow, int dilationCol, CudaDevice device);
+            int dilationRow, int dilationCol, DeviceInfo device);
 
 void Conv2DBackward(TensorData& dx, TensorData& dFilter, const TensorData& dy,
                     const TensorData& x, const TensorData& filter,
                     int strideRow,
                     int strideCol, int rowPadding, int colPadding,
-                    int dilationRow, int dilationCol, CudaDevice device);
+                    int dilationRow, int dilationCol, DeviceInfo device);
 }
 
 #endif

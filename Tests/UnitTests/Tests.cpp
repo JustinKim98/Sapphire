@@ -52,9 +52,10 @@ TEST_CASE("Simple test")
     CHECK(Add(2, 3) == 5);
 }
 
+#ifdef WITH_CUDA
+
 TEST_CASE("Check cuda")
 {
-#ifdef WITH_CUDA
     PrintCudaVersion();
 
     SUBCASE("Basic functionality test")
@@ -68,8 +69,8 @@ TEST_CASE("Check cuda")
         CHECK(EXIT_SUCCESS == CublasTest());
         std::cout << "Cublas test successful" << std::endl;
     }
-#endif
 }
+#endif
 
 #ifdef TensorFunctionalityTest
 TEST_CASE("TensorFunctionalityTest")

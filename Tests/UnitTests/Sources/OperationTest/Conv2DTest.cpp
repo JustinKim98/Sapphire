@@ -66,7 +66,7 @@ void TestConv2D(bool print)
     //! Initialize model and device
     ModelManager::AddModel("conv2D test model");
     ModelManager::SetCurrentModel("conv2D test model");
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     Tensor input(Shape({ batchSize, inputChannels, inputRows, inputCols }),
                  gpu, true);
@@ -266,7 +266,7 @@ void TestConv2DTraining(bool printData)
     ModelManager::AddModel("SimpleConv2DModel");
     ModelManager::SetCurrentModel("SimpleConv2DModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     NN::Conv2D conv2D(outputChannels, inputChannels, filterSize, stride,
                       padSize, dilation, true);

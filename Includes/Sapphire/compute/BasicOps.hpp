@@ -39,9 +39,9 @@ void Transpose(TensorData& y, const TensorData& x);
 //! Performs y = x^factor for each element
 void Pow(TensorData& y, const TensorData& x, float factor);
 
-void log(TensorData& y, const TensorData& x);
+void Log(TensorData& y, const TensorData& x);
 
-void log10(TensorData& y, const TensorData& x);
+void Log10(TensorData& y, const TensorData& x);
 
 void exp(TensorData& y, const TensorData& x);
 

@@ -5,24 +5,30 @@
 // property of any third parties.
 
 #include <Sapphire/compute/ActivationOps.hpp>
-#include <Sapphire/compute/dense/cuda/Activation.cuh>
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
+#ifdef WITH_CUDA
+#include <Sapphire/compute/dense/cuda/Activation.cuh>
 #include <Sapphire/compute/dense/cuda/Basic.cuh>
+#endif
 
 namespace Sapphire::Compute
 {
 void SoftMax(TensorData& y, const TensorData& x)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Compute::SoftMax - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto unitSize = y.GetShape().At(-1);
     const auto totalSize = y.Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::SoftMax(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize,
                              unitSize);
+#endif
     }
     else
     {
@@ -33,14 +39,18 @@ void SoftMax(TensorData& y, const TensorData& x)
 
 void LeakyReLU(TensorData& y, const TensorData& x, float a)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Compute::LeakyReLU - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto totalSize = y.Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::LeakyReLU(y.CudaMutableRawPtr(), x.CudaRawPtr(), a,
                                totalSize);
+#endif
     }
     else
     {
@@ -51,13 +61,17 @@ void LeakyReLU(TensorData& y, const TensorData& x, float a)
 
 void ReLU(TensorData& y, const TensorData& x)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Compute::ReLU - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto totalSize = y.Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::ReLU(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
+#endif
     }
     else
     {
@@ -68,14 +82,19 @@ void ReLU(TensorData& y, const TensorData& x)
 
 void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 {
-    assert(dx.Mode() == dy.Mode() && dx.Mode() == x.Mode());
-    const auto device = dx.GetCudaDevice();
+    if (dx.GetDeviceInfo() != dy.GetDeviceInfo() || dx.GetDeviceInfo() != x.
+        GetDeviceInfo())
+        throw std::runtime_error("Compute::ReLUBackward - Device mismatch");
+
+    const auto device = dx.GetDeviceInfo();
     const auto totalSize = dx.Size();
 
     if (dx.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::ReLUBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                   x.CudaRawPtr(), totalSize);
+#endif
     }
     else
     {
@@ -87,15 +106,22 @@ void ReLUBackward(TensorData& dx, const TensorData& dy, const TensorData& x)
 void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
                        const TensorData& x, float a)
 {
-    const auto device = dx.GetCudaDevice();
-    const auto totalSize = dx.Size();
+    if (dx.GetDeviceInfo() != dy.GetDeviceInfo() || dx.GetDeviceInfo() != x.
+        GetDeviceInfo())
+        throw std::runtime_error(
+            "Compute::LeakyReLUBackward - Device mismatch");
+
+    const auto device = dx.GetDeviceInfo();
 
     if (dx.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
+        const auto totalSize = dx.Size();
         Dense::Cuda::LeakyReLUBackward(dx.CudaMutableRawPtr(),
                                        dy.CudaRawPtr(),
                                        x.CudaRawPtr(),
                                        a, totalSize);
+#endif
     }
     else
     {
@@ -106,15 +132,20 @@ void LeakyReLUBackward(TensorData& dx, const TensorData& dy,
 
 void SoftMaxBackward(TensorData& dx, const TensorData& dy, const TensorData& y)
 {
-    assert(dx.Mode() == dy.Mode() && dx.Mode() == y.Mode());
-    const auto device = dx.GetCudaDevice();
+    if (dx.GetDeviceInfo() != dy.GetDeviceInfo() || dx.GetDeviceInfo() != y.
+        GetDeviceInfo())
+        throw std::runtime_error("Compute::SoftMaxBackward - Device mismatch");
+
+    const auto device = dx.GetDeviceInfo();
     const auto totalSize = dx.Size();
     const auto unitSize = dx.GetShape().At(-1);
 
     if (dx.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::SoftmaxBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                      y.CudaRawPtr(), totalSize, unitSize);
+#endif
     }
     else
     {

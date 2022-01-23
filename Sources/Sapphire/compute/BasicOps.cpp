@@ -6,12 +6,14 @@
 
 #include <Sapphire/compute/Broadcast.hpp>
 #include <Sapphire/compute/BasicOps.hpp>
-#include <Sapphire/compute/dense/cuda/Basic.cuh>
-#include <Sapphire/compute/dense/cuda/Gemm.cuh>
 #include <Sapphire/compute/dense/naive/NaiveBasic.hpp>
 #include <Sapphire/compute/dense/naive/NaiveGemm.hpp>
-#include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
 #include <Sapphire/util/UnitUtils.hpp>
+#ifdef WITH_CUDA
+#include <Sapphire/compute/dense/cuda/Basic.cuh>
+#include <Sapphire/compute/dense/cuda/Gemm.cuh>
+#include <Sapphire/compute/dense/cuda/BasicBackward.cuh>
+#endif
 #include <algorithm>
 #include <cassert>
 
@@ -20,10 +22,12 @@ namespace Sapphire::Compute
 {
 void Add(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    assert(y.Mode() == a.Mode());
-    assert(y.Mode() == b.Mode());
+    if (y.GetDeviceInfo() != a.GetDeviceInfo())
+        throw std::runtime_error("Add - Device mismatch");
+    if (y.GetDeviceInfo() != b.GetDeviceInfo())
+        throw std::runtime_error("Add - Device mismatch");
 
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDeviceInfo();
 
     auto shapeOut = y.GetShape();
     auto shapeA = a.GetShape();
@@ -36,19 +40,18 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
     shapeA.Expand(maxDim);
     shapeB.Expand(maxDim);
 
-    const auto sizeOut = shapeOut.Size();
-    const auto sizeA = shapeA.Size();
-    const auto sizeB = shapeB.Size();
-
     const int minRequiredDim =
         Util::GetMatchingDim({ shapeOut, shapeA, shapeB });
 
     if (y.Mode() == ComputeMode::Cuda)
     {
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
+#ifdef WITH_CUDA
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0,
                              minRequiredDim, Dense::Cuda::Add, 0, false, false);
+#endif
     }
     else
     {
@@ -62,10 +65,12 @@ void Add(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    assert(y.Mode() == a.Mode());
-    assert(y.Mode() == b.Mode());
+    if (y.GetDeviceInfo() != a.GetDeviceInfo())
+        throw std::runtime_error("Sub - Device mismatch");
+    if (y.GetDeviceInfo() != b.GetDeviceInfo())
+        throw std::runtime_error("Sub - Device mismatch");
 
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDeviceInfo();
 
     auto shapeOut = y.GetShape();
     auto shapeA = a.GetShape();
@@ -78,20 +83,19 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
     shapeA.Expand(maxDim);
     shapeB.Expand(maxDim);
 
-    const auto sizeOut = shapeOut.Size();
-    const auto sizeA = shapeA.Size();
-    const auto sizeB = shapeB.Size();
-
     const int minRequiredDim = Util::GetMatchingDim(
         { shapeOut, shapeA, shapeB });
 
     if (y.Mode() == ComputeMode::Cuda)
     {
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
+#ifdef WITH_CUDA
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0, minRequiredDim,
                              Dense::Cuda::Sub, 0, false,
                              false);
+#endif
     }
     else
     {
@@ -105,10 +109,12 @@ void Sub(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    assert(y.Mode() == a.Mode());
-    assert(y.Mode() == b.Mode());
+    if (y.GetDeviceInfo() != a.GetDeviceInfo())
+        throw std::runtime_error("Dot - Device mismatch");
+    if (y.GetDeviceInfo() != b.GetDeviceInfo())
+        throw std::runtime_error("Dot - Device mismatch");
 
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDeviceInfo();
 
     auto shapeOut = y.GetShape();
     auto shapeA = a.GetShape();
@@ -121,16 +127,16 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
     shapeA.Expand(maxDim);
     shapeB.Expand(maxDim);
 
-    const auto sizeOut = shapeOut.Size();
-    const auto sizeA = shapeA.Size();
-    const auto sizeB = shapeB.Size();
-
     if (y.Mode() == ComputeMode::Cuda)
     {
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB,
+#ifdef WITH_CUDA
+        BroadcastWith2Inputs(
+            shapeOut, shapeA, shapeB, shapeOut.Size(), shapeA.Size(),
+            shapeB.Size(),
                              y.CudaMutableRawPtr(), a.CudaRawPtr(),
                              b.CudaRawPtr(), 0, 0, Dense::Cuda::Dot, 0, false,
                              false);
+#endif
     }
     else
     {
@@ -145,12 +151,12 @@ void Dot(TensorData& y, const TensorData& a, const TensorData& b)
 void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
                  const TensorData& a, const TensorData& b)
 {
-    assert(dy.GetCudaDevice() == da.GetCudaDevice());
-    assert(dy.GetCudaDevice() == db.GetCudaDevice());
-    assert(dy.GetCudaDevice() == a.GetCudaDevice());
-    assert(dy.GetCudaDevice() == b.GetCudaDevice());
+    assert(dy.GetDeviceInfo() == da.GetDeviceInfo());
+    assert(dy.GetDeviceInfo() == db.GetDeviceInfo());
+    assert(dy.GetDeviceInfo() == a.GetDeviceInfo());
+    assert(dy.GetDeviceInfo() == b.GetDeviceInfo());
 
-    const auto device = dy.GetCudaDevice();
+    const auto device = dy.GetDeviceInfo();
 
     const auto maxDim = std::max(
         { dy.GetShape().Dim(), da.GetShape().Dim(), db.GetShape().Dim() });
@@ -163,16 +169,15 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
     shapeA.Expand(maxDim);
     shapeB.Expand(maxDim);
 
-    const auto sizeOut = shapeOut.Size();
-    const auto sizeA = shapeA.Size();
-    const auto sizeB = shapeB.Size();
-
     if (dy.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         BroadcastBackwardWith2Inputs(
-            shapeOut, shapeA, shapeB, sizeOut, sizeA, sizeB, dy.CudaRawPtr(),
+            shapeOut, shapeA, shapeB, shapeOut.Size(), shapeA.Size(),
+            shapeB.Size(), dy.CudaRawPtr(),
             da.CudaMutableRawPtr(), db.CudaMutableRawPtr(), a.CudaRawPtr(),
             b.CudaRawPtr(), 0, 0, Dense::Cuda::DotBackward, 0, false, false);
+#endif
     }
     else
     {
@@ -182,8 +187,10 @@ void DotBackward(TensorData& da, TensorData& db, const TensorData& dy,
 
 void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
 {
-    assert(y.Mode() == a.Mode());
-    assert(y.Mode() == b.Mode());
+    if (y.GetDeviceInfo() != a.GetDeviceInfo())
+        throw std::runtime_error("Gemm - Device mismatch");
+    if (y.GetDeviceInfo() != b.GetDeviceInfo())
+        throw std::runtime_error("Gemm - Device mismatch");
 
     auto shapeOut = y.GetShape();
     auto shapeA = a.GetShape();
@@ -194,7 +201,7 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
     shapeA.Expand(2);
     shapeB.Expand(2);
 
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDeviceInfo();
     const auto M = shapeOut.Rows();
     const auto N = shapeOut.Cols();
     const auto K = shapeA.Cols();
@@ -205,14 +212,15 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
         b.GetShape().Dim() == 2 && y.
         GetNumUnits(2) > 1)
     {
-        const auto batchSize = y.GetNumUnits(2);
-
         if (y.Mode() == ComputeMode::Cuda)
         {
+#ifdef WITH_CUDA
+            const auto batchSize = y.GetNumUnits(2);
             Dense::Cuda::GemmMatrixWiseBroadcast(
                 y.CudaMutableRawPtr(), a.CudaRawPtr(), b.CudaRawPtr(),
                 M, N, K, batchSize, a.GetNumUnits(2) == 1,
                 b.GetNumUnits(2) == 1, 0);
+#endif
             return;
         }
     }
@@ -225,17 +233,16 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
     shapeA.Expand(maxDim);
     shapeB.Expand(maxDim);
 
-    const auto sizeOut = shapeOut.Size();
-    const auto sizeA = shapeA.Size();
-    const auto sizeB = shapeB.Size();
-
     if (y.Mode() == ComputeMode::Cuda)
     {
-        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, sizeOut, sizeA,
-                             sizeB, y.CudaMutableRawPtr(),
+#ifdef WITH_CUDA
+        BroadcastWith2Inputs(shapeOut, shapeA, shapeB, shapeOut.Size(),
+                             shapeA.Size(), shapeB.Size(),
+                             y.CudaMutableRawPtr(),
                              a.CudaRawPtr(),
                              b.CudaRawPtr(), 0, 2, Dense::Cuda::Gemm, M, N, K,
-                             y.GetCudaDevice().GetID());
+                             y.GetDeviceInfo().GetID());
+#endif
     }
     else
     {
@@ -249,14 +256,18 @@ void Gemm(TensorData& y, const TensorData& a, const TensorData& b)
 
 void Scale(TensorData& y, const TensorData& x, const float factor)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
-    const auto totalSize = y.GetShape().Size();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Scale - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
+        const auto totalSize = y.GetShape().Size();
         Dense::Cuda::Scale(y.CudaMutableRawPtr(), x.CudaRawPtr(), factor,
                            totalSize);
+#endif
     }
     else
     {
@@ -268,8 +279,10 @@ void Scale(TensorData& y, const TensorData& x, const float factor)
 
 void Transpose(TensorData& y, const TensorData& x)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Transpose - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto inputM = x.Rows();
     const auto inputN = x.Cols();
     const auto broadcast = x.GetNumUnits(2) == 1;
@@ -277,9 +290,11 @@ void Transpose(TensorData& y, const TensorData& x)
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Transpose(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                                inputM, inputN,
                                chunkSize, broadcast);
+#endif
     }
     else
     {
@@ -292,14 +307,18 @@ void Transpose(TensorData& y, const TensorData& x)
 //! Performs y = x^factor for each element
 void Pow(TensorData& y, const TensorData& x, const float factor)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Pow - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto totalSize = y.GetShape().Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Pow(y.CudaMutableRawPtr(), x.CudaRawPtr(), factor,
                          totalSize);
+#endif
     }
     else
     {
@@ -308,15 +327,19 @@ void Pow(TensorData& y, const TensorData& x, const float factor)
     }
 }
 
-void log(TensorData& y, const TensorData& x)
+void Log(TensorData& y, const TensorData& x)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Log - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto totalSize = y.GetShape().Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::log(y.CudaMutableRawPtr(), x.CudaRawPtr(), totalSize);
+#endif
     }
     else
     {
@@ -325,16 +348,20 @@ void log(TensorData& y, const TensorData& x)
     }
 }
 
-void log10(TensorData& y, const TensorData& x)
+void Log10(TensorData& y, const TensorData& x)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Log10 - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto totalSize = y.GetShape().Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::log10(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                            totalSize);
+#endif
     }
     else
     {
@@ -345,14 +372,18 @@ void log10(TensorData& y, const TensorData& x)
 
 void Inverse(TensorData& y, const TensorData& x)
 {
-    assert(y.Mode() == x.Mode());
-    const auto device = y.GetCudaDevice();
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Inverse - Device mismatch");
+
+    const auto device = y.GetDeviceInfo();
     const auto totalSize = y.GetShape().Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Inverse(y.CudaMutableRawPtr(), x.CudaRawPtr(),
                              totalSize);
+#endif
     }
     else
     {
@@ -363,8 +394,10 @@ void Inverse(TensorData& y, const TensorData& x)
 
 void Mean(TensorData& y, const TensorData& x, int dim)
 {
-    assert(y.Mode() == x.Mode());
-    assert(y.GetShape().At(dim) == 1);
+    if (y.GetDeviceInfo() != x.GetDeviceInfo())
+        throw std::runtime_error("Mean - Device mismatch");
+    if (y.GetShape().At(dim) != 1)
+        throw std::runtime_error("Mean - output index should have 1 dimension");
 
     int stride = 1;
     for (int i = dim; i < y.GetShape().Dim(); ++i)
@@ -372,14 +405,16 @@ void Mean(TensorData& y, const TensorData& x, int dim)
         stride *= y.GetShape().At(i);
     }
 
-    const auto device = y.GetCudaDevice();
+    const auto device = y.GetDeviceInfo();
     const auto unitSize = x.GetShape().At(dim);
     const auto ySize = y.GetShape().Size();
 
     if (y.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Mean(y.CudaMutableRawPtr(), x.CudaRawPtr(), ySize,
                           unitSize, stride);
+#endif
     }
     else
     {
@@ -392,10 +427,12 @@ void Mean(TensorData& y, const TensorData& x, int dim)
 void MeanBackward(TensorData& dx, const TensorData& dy,
                   int dim)
 {
-    assert(dy.Mode() == dx.Mode());
-    assert(dx.GetShape().Dim() == dy.GetShape().Dim());
+    if (dy.GetDeviceInfo() != dx.GetDeviceInfo())
+        throw std::runtime_error("MeanBackward - Device mismatch");
+    if (dx.GetShape().Dim() != dy.GetShape().Dim())
+        throw std::runtime_error("MeanBackward - Dimension mismatch");
 
-    const auto device = dy.GetCudaDevice();
+    const auto device = dy.GetDeviceInfo();
     const auto yShape = dy.GetShape();
     const auto xShape = dx.GetShape();
 
@@ -407,8 +444,10 @@ void MeanBackward(TensorData& dx, const TensorData& dy,
 
     if (dy.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::MeanBackward(dx.CudaMutableRawPtr(), dy.CudaRawPtr(),
                                   yShape.Size(), xShape.At(dim), stride);
+#endif
     }
     else
     {

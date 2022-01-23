@@ -9,7 +9,7 @@
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <iostream>
@@ -35,7 +35,7 @@ void BroadcastWithOneDimension(bool print)
 
     std::cout << "M : " << M << " N: " << N << " K: " << K
         << " batchSize : " << batchSize << std::endl;
-    const CudaDevice cuda(0, "device0");
+    const DeviceInfo cuda(0, "device0");
 
     //! Initialize tensors with cuda mode
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
@@ -95,7 +95,7 @@ void BroadcastWithMissingDimension(bool print)
     const Shape shapeOut({ M, M, N });
 
     std::cout << "M : " << M << " N: " << N << " K: " << K << std::endl;
-    const CudaDevice cuda(0, "device0");
+    const DeviceInfo cuda(0, "device0");
 
     //! Initialize tensors with cuda mode
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);
@@ -156,7 +156,7 @@ void BroadcastMixed(bool print)
     const Shape shapeOut({ N, M, M, N });
 
     std::cout << "M : " << M << " N: " << N << " K: " << K << std::endl;
-    const CudaDevice cuda(0, "device0");
+    const DeviceInfo cuda(0, "device0");
 
     //! Initialize tensors with cuda mode
     TensorUtil::TensorData A(shapeA, Type::Dense, cuda);

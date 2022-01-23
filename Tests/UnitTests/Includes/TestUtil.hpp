@@ -85,7 +85,7 @@ void TestWithTwoArgumentsWithSameShape(bool print, float equalThreshold,
                                        Func function)
 {
     const Shape shape = CreateRandomShape(5);
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     //! Initialize data
     TensorUtil::TensorData A(shape, Type::Dense, cuda);
@@ -138,7 +138,7 @@ void TestWithOneArgumentStatic(bool print, float equalThreshold,
                                Func function)
 {
     const Shape shape = CreateRandomShape(5);
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     //! Initialize data
     TensorUtil::TensorData In(shape, Type::Dense, cuda);
@@ -188,7 +188,7 @@ void TestWithOneArgumentNormal(bool print, float equalThreshold, Func function,
                                float mean, float sd)
 {
     const Shape shape = CreateRandomShape(5);
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     //! Initialize data
     TensorUtil::TensorData In(shape, Type::Dense, cuda);
@@ -236,7 +236,7 @@ template <typename Func>
 void EqualInitializeTest(Func function, bool print)
 {
     const Shape shape = CreateRandomShape(5);
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     TensorUtil::TensorData data(shape, Type::Dense, cuda);
     data.SetMode(ComputeMode::Host);
@@ -266,7 +266,7 @@ template <typename Func, typename ...Ts>
 void NoneZeroTest(Func function, bool print, Ts ...params)
 {
     const Shape shape = CreateRandomShape(5);
-    const CudaDevice cuda(0, "cuda0");
+    const DeviceInfo cuda(0, "cuda0");
 
     TensorUtil::TensorData data(shape, Type::Dense, cuda);
     data.SetMode(ComputeMode::Host);
@@ -332,7 +332,7 @@ auto SendTo(ComputeMode device, T tensor, Ts&& ... tensors)
 }
 
 template <typename TFunc, typename ...TFuncParams>
-void TestOperation(CudaDevice cudaDevice, std::tuple<Shape> inputShapes,
+void TestOperation(DeviceInfo cudaDevice, std::tuple<Shape> inputShapes,
                    std::tuple<Shape> outputShapes,
                    TFunc function,
                    std::tuple<TFuncParams ...> funcParams)

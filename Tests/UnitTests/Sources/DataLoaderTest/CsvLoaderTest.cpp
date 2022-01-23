@@ -8,7 +8,7 @@
 #include <Sapphire/util/ResourceManager.hpp>
 #include <DataLoaderTest/CsvLoaderTest.hpp>
 #include <Sapphire/tensor/Tensor.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <iostream>
 
 namespace Sapphire::Test
@@ -17,7 +17,7 @@ void CsvLoaderTest(std::filesystem::path filePath, bool print)
 {
     Util::CsvLoader<int> dataLoader(filePath);
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     const Tensor labelTensor(Shape({ 1 }), gpu, Type::Dense, true);
     const Tensor dataTensor(Shape({ 28 * 28 }), gpu, Type::Dense, true);

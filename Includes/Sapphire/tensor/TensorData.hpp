@@ -11,7 +11,7 @@
 #include <vector>
 #include <Sapphire/compute/sparse/SparseMatrix.hpp>
 #include <Sapphire/util/Shape.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 
 namespace Sapphire::TensorUtil
 {
@@ -26,10 +26,10 @@ public:
     TensorData(Shape shape, Type type, int parentDescKey,
                bool preserve = false);
     //! TensorData is configured in both Host and Cuda Mode
-    TensorData(Shape shape, Type type, CudaDevice device,
+    TensorData(Shape shape, Type type, DeviceInfo device,
                bool preserve = false);
 
-    TensorData(Shape shape, Type type, CudaDevice device,
+    TensorData(Shape shape, Type type, DeviceInfo device,
                int parentDescKey, bool preserve = false);
 
     //! Shallow copies the internal data
@@ -60,12 +60,12 @@ public:
     //! If TensorData was configured in host & cuda mode, and given device is different
     //! with current device, data will be moved to the new device
     //! \param device : cuda device
-    void SetDevice(CudaDevice device);
+    void SetDevice(DeviceInfo device);
 
-    //! Gets current cuda device metadata
+    //! Gets current device metadata
     //! This object will be empty if current tensorData is configured in host only mode \return : device descriptor \return : device descriptor
     //! \return : device descriptor
-    [[nodiscard]] CudaDevice GetCudaDevice() const;
+    [[nodiscard]] DeviceInfo GetDeviceInfo() const;
 
     //! Changes shape of the tensorData
     //! \param shape : shape to change
@@ -208,7 +208,7 @@ private:
     Type m_type = Type::Dense;
     ComputeMode m_mode = ComputeMode::Host;
 
-    CudaDevice m_device;
+    DeviceInfo m_device;
     bool m_preserve;
 };
 } // namespace Sapphire::TensorUtil

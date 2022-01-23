@@ -65,7 +65,7 @@ private:
     static int m_unitIdCount;
     int m_inputs;
     int m_outputs;
-    CudaDevice m_device;
+    DeviceInfo m_device;
     bool m_isSparse;
 };
 } // namespace Sapphire::NN

@@ -22,7 +22,7 @@ void TestMSE(bool print)
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     const int inputs = 10;
 

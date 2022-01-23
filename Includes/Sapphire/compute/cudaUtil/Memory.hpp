@@ -7,6 +7,7 @@
 #ifndef Sapphire_COMPUTE_CUDA_MEMORY_CUH
 #define Sapphire_COMPUTE_CUDA_MEMORY_CUH
 
+#ifdef WITH_CUDA
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 
 namespace Sapphire::Compute::Cuda
@@ -29,4 +30,5 @@ void CopyDeviceToDeviceAsync(void* dst, const void* src,
 void CopyDeviceToDeviceBroadcast(void* dst, const void* src,
                                     unsigned int byteSize, unsigned int srcStrideByteSize);
 }  // namespace Sapphire::Compute::Cuda
+#endif
 #endif

@@ -27,7 +27,7 @@ public:
     TensorDescriptor(const Shape& shape, Type type, int key,
                      bool preserve = false);
 
-    TensorDescriptor(const Shape& shape, Type type, const CudaDevice& device,
+    TensorDescriptor(const Shape& shape, Type type, const DeviceInfo& device,
                      int key, bool preserve = false);
 
     ~TensorDescriptor() = default;
@@ -45,11 +45,11 @@ public:
     [[nodiscard]] unsigned int GetBatchSize() const;
 
     [[nodiscard]] Shape GetShape() const;
-    [[nodiscard]] CudaDevice GetDevice() const;
-    [[nodiscard]] CudaDevice GetCudaDevice() const;
+    [[nodiscard]] DeviceInfo GetDevice() const;
+    [[nodiscard]] DeviceInfo GetCudaDevice() const;
     [[nodiscard]] Type GetType() const;
 
-    void SetDevice(CudaDevice device);
+    void SetDevice(DeviceInfo device);
 
     void Reshape(Shape shape);
 

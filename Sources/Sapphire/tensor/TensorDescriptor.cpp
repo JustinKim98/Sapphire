@@ -19,7 +19,7 @@ TensorDescriptor::TensorDescriptor(const Shape& shape, Type type, int key,
 }
 
 TensorDescriptor::TensorDescriptor(const Shape& shape, Type type,
-                                   const CudaDevice& device,
+                                   const DeviceInfo& device,
                                    int key, bool preserve)
     : m_forwardData(shape, type, device, key, preserve),
       m_backwardData(shape, type, device, key, preserve),
@@ -70,16 +70,16 @@ Shape TensorDescriptor::GetShape() const
     return m_forwardData.GetShape();
 }
 
-CudaDevice TensorDescriptor::GetDevice() const
+DeviceInfo TensorDescriptor::GetDevice() const
 {
     if (Mode() == ComputeMode::Cuda)
-        return m_forwardData.GetCudaDevice();
-    return CudaDevice();
+        return m_forwardData.GetDeviceInfo();
+    return DeviceInfo();
 }
 
-CudaDevice TensorDescriptor::GetCudaDevice() const
+DeviceInfo TensorDescriptor::GetCudaDevice() const
 {
-    return m_forwardData.GetCudaDevice();
+    return m_forwardData.GetDeviceInfo();
 }
 
 Type TensorDescriptor::GetType() const
@@ -87,7 +87,7 @@ Type TensorDescriptor::GetType() const
     return m_forwardData.GetType();
 }
 
-void TensorDescriptor::SetDevice(CudaDevice device)
+void TensorDescriptor::SetDevice(DeviceInfo device)
 {
     m_forwardData.SetDevice(device);
     m_backwardData.SetDevice(device);

@@ -16,7 +16,7 @@ Tensor::Tensor(const Shape& shape, bool preserve)
         model.RegisterTensorDescriptor(shape, Type::Dense, preserve);
 }
 
-Tensor::Tensor(const Shape& shape, const CudaDevice& device,
+Tensor::Tensor(const Shape& shape, const DeviceInfo& device,
                bool preserve)
 {
     auto& model = ModelManager::CurModel();
@@ -24,7 +24,7 @@ Tensor::Tensor(const Shape& shape, const CudaDevice& device,
         model.RegisterTensorDescriptor(shape, Type::Dense, device, preserve);
 }
 
-Tensor::Tensor(const Shape& shape, const CudaDevice& device,
+Tensor::Tensor(const Shape& shape, const DeviceInfo& device,
                Type type, bool preserve)
 {
     auto& model = ModelManager::CurModel();
@@ -54,7 +54,7 @@ Shape Tensor::GetShape() const
     return desc.GetShape();
 }
 
-CudaDevice Tensor::GetDevice() const
+DeviceInfo Tensor::GetDevice() const
 {
     Model& model = ModelManager::CurModel();
     TensorUtil::TensorDescriptor& desc = model.GetDescriptor(
@@ -67,7 +67,7 @@ int Tensor::TensorDescriptorKey() const
     return m_tensorDescKey;
 }
 
-void Tensor::SetDevice(CudaDevice device) const
+void Tensor::SetDevice(DeviceInfo device) const
 {
     Model& model = ModelManager::CurModel();
     auto& desc = model.GetDescriptor(m_tensorDescKey);

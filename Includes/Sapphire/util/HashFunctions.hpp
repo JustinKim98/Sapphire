@@ -8,6 +8,9 @@
 #define SAPPHIRE_UTIL_HASH_FUNCTIONS_HPP
 
 #include <thread>
+#ifdef WITH_CUDA
+#include <Sapphire/compute/dense/cuda/CudnnStruct.cuh>
+#endif
 
 namespace Sapphire::Util
 {
@@ -28,6 +31,7 @@ struct DeviceIdTidHash
     }
 };
 
+#ifdef WITH_CUDA
 struct ConvMetaDataHash
 {
     std::size_t operator()(const Compute::Dense::Cuda::ConvConfig& key) const
@@ -53,6 +57,7 @@ struct PoolMetaDataHash
                                 key.ColumnPadding);
     }
 };
+#endif
 }
 
 #endif

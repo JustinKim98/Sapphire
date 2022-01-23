@@ -4,20 +4,21 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <stdexcept>
+
 
 namespace Sapphire
 {
-CudaDevice::CudaDevice(int id, std::string name)
+DeviceInfo::DeviceInfo(int id, std::string name)
     : m_id(id),
       m_name(std::move(name))
 {
+#ifdef WITH_CUDA
     if (id >= GetAvailableCudaDeviceCount())
     {
         throw std::runtime_error("Cuda device has not been detected");
     }
-
     int majorCapability;
     int minorCapability;
     cudaDeviceGetAttribute(&majorCapability, cudaDevAttrComputeCapabilityMajor,
@@ -25,14 +26,15 @@ CudaDevice::CudaDevice(int id, std::string name)
     cudaDeviceGetAttribute(&minorCapability, cudaDevAttrComputeCapabilityMinor,
                            m_id);
     m_cudaCapability = majorCapability * 10 + minorCapability;
+#endif
 }
 
-bool CudaDevice::operator==(const CudaDevice& device) const
+bool DeviceInfo::operator==(const DeviceInfo& device) const
 {
-    return m_id == device.m_id && m_name == device.m_name;
+    return m_id == device.m_id;
 }
 
-bool CudaDevice::operator!=(const CudaDevice& device) const
+bool DeviceInfo::operator!=(const DeviceInfo& device) const
 {
     return !(*this == device);
 }

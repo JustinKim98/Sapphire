@@ -18,7 +18,7 @@ void GraphFunctionalityTest()
     ModelManager::AddModel("BasicModel");
     ModelManager::SetCurrentModel("BasicModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     NN::TwoOutputs twoOutputs;
     NN::Basic hidden1;

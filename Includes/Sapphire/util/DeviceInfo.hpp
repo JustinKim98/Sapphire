@@ -4,12 +4,14 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-#ifndef Sapphire_DEVICE_HPP
-#define Sapphire_DEVICE_HPP
-
-#include <cuda_runtime.h>
+#ifndef SAPPHIRE_DEVICE_HPP
+#define SAPPHIRE_DEVICE_HPP
 #include <stdexcept>
 #include <string>
+
+#ifdef WITH_CUDA
+#include <cuda_runtime.h>
+#endif
 
 namespace Sapphire
 {
@@ -19,21 +21,21 @@ enum class ComputeMode
     Cuda,
 };
 
-class CudaDevice
+class DeviceInfo
 {
-public:
-    CudaDevice() = default;
+ public:
+    DeviceInfo() = default;
 
-    CudaDevice(int id, std::string name);
-    ~CudaDevice() = default;
+    DeviceInfo(int id, std::string name);
+    ~DeviceInfo() = default;
 
-    CudaDevice(const CudaDevice& device) = default;
-    CudaDevice(CudaDevice&& device) noexcept = default;
-    CudaDevice& operator=(const CudaDevice& device) = default;
-    CudaDevice& operator=(CudaDevice&& device) noexcept = default;
+    DeviceInfo(const DeviceInfo& device) = default;
+    DeviceInfo(DeviceInfo&& device) noexcept = default;
+    DeviceInfo& operator=(const DeviceInfo& device) = default;
+    DeviceInfo& operator=(DeviceInfo&& device) noexcept = default;
 
-    bool operator==(const CudaDevice& device) const;
-    bool operator!=(const CudaDevice& device) const;
+    bool operator==(const DeviceInfo& device) const;
+    bool operator!=(const DeviceInfo& device) const;
 
     [[nodiscard]] std::string Name() const
     {
@@ -44,6 +46,8 @@ public:
     {
         return m_id;
     }
+
+#ifdef WITH_CUDA
 
     [[nodiscard]] int GetCudaCapability() const
     {
@@ -57,11 +61,16 @@ public:
         return count;
     }
 
-private:
+#endif
+
+ private:
     int m_id = -1;
     std::string m_name = "Undefined";
+
+#ifdef WITH_CUDA
     int m_cudaCapability = 0;
+#endif
 };
-} // namespace Sapphire
+}  // namespace Sapphire
 
 #endif

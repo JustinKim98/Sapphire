@@ -49,7 +49,7 @@ public:
     //! Creates and registers tensor descriptor
     //! Assigns new key to the given tensorDesc
     int RegisterTensorDescriptor(const Shape& shape, Type type,
-                                 const CudaDevice& device,
+                                 const DeviceInfo& device,
                                  bool preserve = false);
 
     //! Registers back propagation wrapper

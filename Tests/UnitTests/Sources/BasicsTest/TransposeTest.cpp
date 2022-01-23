@@ -9,7 +9,7 @@
 #include <Sapphire/compute/Initialize.hpp>
 #include <Sapphire/util/Shape.hpp>
 #include <Sapphire/tensor/TensorData.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
 #include <TestUtil.hpp>
 #include <Sapphire/Model.hpp>
@@ -29,7 +29,7 @@ void TransposeTest(bool printResult)
     const auto shapeInput = CreateRandomShape(dim, 30);
     const auto shapeTransposed = shapeInput.GetTranspose();
 
-    const CudaDevice cuda(0, "device0");
+    const DeviceInfo cuda(0, "device0");
 
     //! Define TensorData for input and transposed
     TensorUtil::TensorData inputTensor(shapeInput, Type::Dense, cuda);

@@ -24,7 +24,7 @@ void TestMatMul(bool print)
     std::mt19937 gen(rd());
     std::uniform_real_distribution dist(-5.0f, 5.0f);
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr auto m = 3;
     constexpr auto n = 4;
     constexpr auto k = 2;
@@ -130,7 +130,7 @@ void TestAdd(bool print)
     std::mt19937 gen(rd());
     std::uniform_real_distribution dist(-1.0f, 1.0f);
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr auto N = 100;
 
     const Shape shapeA = Shape({ N });
@@ -234,7 +234,7 @@ void TestSub(bool print)
     std::mt19937 gen(rd());
     std::uniform_real_distribution dist(-1.0f, 1.0f);
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr auto N = 100;
 
     const Shape shapeA = Shape({ N });
@@ -339,7 +339,7 @@ void TestDot(bool print)
     std::mt19937 gen(rd());
     std::uniform_real_distribution dist(-1.0f, 1.0f);
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr auto N = 100;
 
     const Shape shapeA = Shape({ N });

@@ -49,7 +49,7 @@ Tensor MatMul(const Tensor& inputA, const Tensor& inputB)
     yShape[-1] = inputB.GetShape().At(-1);
 
     const Type type = aDesc.GetType();
-    const CudaDevice device = aDesc.GetDevice();
+    const DeviceInfo device = aDesc.GetDevice();
     const int outputKey = model.RegisterTensorDescriptor(
         yShape, type, device);
 
@@ -100,7 +100,7 @@ Tensor Add(const Tensor& inputA, const Tensor& inputB)
         throw std::invalid_argument("NN::Functional::Add - Broadcast failed");
 
     const Type type = aDesc.GetType();
-    const CudaDevice device = aDesc.GetDevice();
+    const DeviceInfo device = aDesc.GetDevice();
 
     const auto outKey = model.RegisterTensorDescriptor(
         outputShape.value(), type,
@@ -151,7 +151,7 @@ Tensor Sub(const Tensor& inputA, const Tensor& inputB)
         throw std::invalid_argument("NN::Functional::Add - Broadcast failed");
 
     const Type type = aDesc.GetType();
-    const CudaDevice device = aDesc.GetDevice();
+    const DeviceInfo device = aDesc.GetDevice();
 
     const auto outKey =
         model.RegisterTensorDescriptor(outputShape.value(), type, device);
@@ -201,7 +201,7 @@ Tensor Dot(const Tensor& inputA, const Tensor& inputB)
         throw std::invalid_argument("NN::Functional::Add - Broadcast failed");
 
     const Type type = aDesc.GetType();
-    const CudaDevice device = aDesc.GetDevice();
+    const DeviceInfo device = aDesc.GetDevice();
 
     const auto outKey =
         model.RegisterTensorDescriptor(outputShape.value(), type, device);

@@ -5,8 +5,10 @@
 // property of any third parties.
 
 #include <Sapphire/compute/Initialize.hpp>
-#include <Sapphire/compute/dense/cuda/Initialize.cuh>
 #include <Sapphire/compute/dense/naive/NaiveInitialize.hpp>
+#ifdef WITH_CUDA
+#include <Sapphire/compute/dense/cuda/Initialize.cuh>
+#endif
 #include <chrono>
 #include <cmath>
 
@@ -14,12 +16,14 @@ namespace Sapphire::Compute::Initialize
 {
 void Normal(TensorUtil::TensorData& data, float mean, float sd)
 {
-    const auto device = data.GetCudaDevice();
+    const auto device = data.GetDeviceInfo();
     if (data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Normal(data.CudaMutableRawPtr(), mean, sd,
                             data.DenseTotalLengthCuda,
                             static_cast<int>(std::clock()));
+#endif
     }
     else
     {
@@ -30,12 +34,14 @@ void Normal(TensorUtil::TensorData& data, float mean, float sd)
 
 void Uniform(TensorUtil::TensorData& data, float min, float max)
 {
-    if (const auto device = data.GetCudaDevice();
+    if (const auto device = data.GetDeviceInfo();
         data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Uniform(data.CudaMutableRawPtr(), min, max,
                              data.DenseTotalLengthCuda,
                              static_cast<int>(std::clock()));
+#endif
     }
     else
     {
@@ -46,11 +52,13 @@ void Uniform(TensorUtil::TensorData& data, float min, float max)
 
 void Ones(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetCudaDevice();
+    const auto device = data.GetDeviceInfo();
     if (data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), 1.0f,
                             data.DenseTotalLengthCuda);
+#endif
     }
     else
     {
@@ -60,11 +68,13 @@ void Ones(TensorUtil::TensorData& data)
 
 void Zeros(TensorUtil::TensorData& data)
 {
-    const auto device = data.GetCudaDevice();
+    const auto device = data.GetDeviceInfo();
     if (data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), 0.0f,
                             data.DenseTotalLengthCuda);
+#endif
     }
     else
     {
@@ -74,11 +84,13 @@ void Zeros(TensorUtil::TensorData& data)
 
 void Scalar(TensorUtil::TensorData& data, float value)
 {
-    const auto device = data.GetCudaDevice();
+    const auto device = data.GetDeviceInfo();
     if (data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Scalar(data.CudaMutableRawPtr(), value,
                             data.DenseTotalLengthCuda);
+#endif
     }
     else
     {
@@ -88,13 +100,15 @@ void Scalar(TensorUtil::TensorData& data, float value)
 
 void HeNormal(TensorUtil::TensorData& data, int fanIn)
 {
-    const auto device = data.GetCudaDevice();
+    const auto device = data.GetDeviceInfo();
     if (data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Normal(
             data.CudaMutableRawPtr(), 0.0,
             2.0f / std::sqrt(static_cast<float>(fanIn)),
             data.DenseTotalLengthCuda, static_cast<int>(std::clock()));
+#endif
     }
     else
     {
@@ -106,13 +120,15 @@ void HeNormal(TensorUtil::TensorData& data, int fanIn)
 
 void Xavier(TensorUtil::TensorData& data, int fanIn, int fanOut)
 {
-    const auto device = data.GetCudaDevice();
+    const auto device = data.GetDeviceInfo();
     if (data.Mode() == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Dense::Cuda::Normal(
             data.CudaMutableRawPtr(), 0.0,
             1.0f / std::sqrt(static_cast<float>(fanIn + fanOut)),
             data.DenseTotalLengthCuda, static_cast<int>(std::clock()));
+#endif
     }
     else
     {

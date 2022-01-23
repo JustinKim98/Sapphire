@@ -50,7 +50,7 @@ int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
 }
 
 int Model::RegisterTensorDescriptor(const Shape& shape, Type type,
-                                    const CudaDevice& device, bool preserve)
+                                    const DeviceInfo& device, bool preserve)
 {
     const int tensorDescKey = m_tensorDescriptorPool.Counter++;
 

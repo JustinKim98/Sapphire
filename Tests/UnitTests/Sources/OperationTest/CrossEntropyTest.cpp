@@ -25,7 +25,7 @@ void TestCrossEntropy(bool print)
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     const int inputs = 10;
 
@@ -127,7 +127,7 @@ void TestCrossEntropyTraining(bool printData)
     ModelManager::AddModel("SimpleLinearModel");
     ModelManager::SetCurrentModel("SimpleLinearModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     NN::Linear linear(inputFeatureSize, outputFeatureSize);
     NN::Linear linear1(outputFeatureSize, outputFeatureSize);

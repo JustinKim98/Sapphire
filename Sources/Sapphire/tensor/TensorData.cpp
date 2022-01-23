@@ -5,9 +5,11 @@
 // property of any third parties.
 
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
-#include <Sapphire/compute/dense/cuda/Initialize.cuh>
 #include <Sapphire/tensor/TensorData.hpp>
 #include <Sapphire/util/ResourceManager.hpp>
+#ifdef WITH_CUDA
+#include <Sapphire/compute/dense/cuda/Initialize.cuh>
+#endif
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
@@ -34,7 +36,7 @@ TensorData::TensorData(Shape shape, Type type, int parentDescKey, bool preserve)
 }
 
 
-TensorData::TensorData(Shape shape, Type type, CudaDevice device, bool preserve)
+TensorData::TensorData(Shape shape, Type type, DeviceInfo device, bool preserve)
     : m_shape(std::move(shape)),
       m_type(type),
       m_device(std::move(device)),
@@ -42,14 +44,18 @@ TensorData::TensorData(Shape shape, Type type, CudaDevice device, bool preserve)
 {
     if (device.GetID() >= 0)
     {
+#ifdef WITH_CUDA
         m_mode = ComputeMode::Cuda;
         m_allocateCuda();
+#else
+        throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
     }
     else
         m_allocateHost();
 }
 
-TensorData::TensorData(Shape shape, Type type, CudaDevice device,
+TensorData::TensorData(Shape shape, Type type, DeviceInfo device,
                        int parentDescKey, bool preserve)
     : m_shape(std::move(shape)),
       m_parentDescKey(parentDescKey),
@@ -59,8 +65,12 @@ TensorData::TensorData(Shape shape, Type type, CudaDevice device,
 {
     if (device.GetID() >= 0)
     {
+#ifdef WITH_CUDA
         m_allocateCuda();
         m_mode = ComputeMode::Cuda;
+#else
+        throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
     }
     else
         m_allocateHost();
@@ -161,8 +171,13 @@ void TensorData::SetData(std::vector<float> data)
 
     if (m_mode == ComputeMode::Cuda)
     {
+#ifdef WITH_CUDA
         Compute::Cuda::CopyHostToDevice(m_denseCuda, &data.front(),
                                         sizeof(float) * shape.Size());
+#else
+        throw std::runtime_error(
+            "TensorData::SetData - Cannot set data on CUDA device (binary is not compiled for cuda)");
+#endif
     }
 
     if (m_mode == ComputeMode::Host)
@@ -172,7 +187,7 @@ void TensorData::SetData(std::vector<float> data)
     }
 }
 
-void TensorData::SetDevice(CudaDevice device)
+void TensorData::SetDevice(DeviceInfo device)
 {
     if (device != m_device)
     {
@@ -184,7 +199,7 @@ void TensorData::SetDevice(CudaDevice device)
     }
 }
 
-CudaDevice TensorData::GetCudaDevice() const
+DeviceInfo TensorData::GetDeviceInfo() const
 {
     return m_device;
 }
@@ -201,7 +216,7 @@ int TensorData::GetUnitSize(int requiredDim) const
 
 TensorData TensorData::CreateCopy() const
 {
-    TensorData tensorData(m_shape, GetType(), GetCudaDevice(), m_parentDescKey);
+    TensorData tensorData(m_shape, GetType(), GetDeviceInfo(), m_parentDescKey);
     tensorData.SetMode(m_mode);
 
     DeepCopy(tensorData, *this);
@@ -210,6 +225,7 @@ TensorData TensorData::CreateCopy() const
 
 void TensorData::SetMode(ComputeMode type)
 {
+#ifdef WITH_CUDA
     m_mode = type;
     if (m_mode == ComputeMode::Host && m_denseHost == nullptr)
         m_allocateHost();
@@ -221,22 +237,33 @@ void TensorData::SetMode(ComputeMode type)
                 "use cuda device");
         m_allocateCuda();
     }
+#else
+    throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
 }
 
 void TensorData::ToCuda()
 {
+#ifdef WITH_CUDA
     if (m_denseHost == nullptr && m_mode == ComputeMode::Cuda)
         return;
     SetMode(ComputeMode::Cuda);
     m_toCuda();
+#else
+    throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
 }
 
 void TensorData::ToHost()
 {
+#ifdef WITH_CUDA
     if (m_denseCuda == nullptr && m_mode == ComputeMode::Host)
         return;
     SetMode(ComputeMode::Host);
     m_toHost();
+#else
+    throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
 }
 
 void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
@@ -262,10 +289,15 @@ void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
     for (int i = 0; i < dst.Size() / src.Size(); ++i)
         if (mode == ComputeMode::Cuda && matrixType == Type::Dense)
         {
+#ifdef WITH_CUDA
+
             auto* dstPtr = dst.m_denseCuda + src.Size() * i;
             Compute::Cuda::CopyDeviceToDevice(
                 dstPtr, src.m_denseCuda,
                 dst.DenseTotalLengthCuda * sizeof(float));
+#else
+            throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
         }
         else if (mode == ComputeMode::Host && matrixType == Type::Dense)
         {
@@ -283,6 +315,7 @@ void TensorData::DeepCopy(TensorData& dst, const TensorData& src)
 
 void TensorData::m_toCuda()
 {
+#ifdef WITH_CUDA
     if (m_type == Type::Sparse)
     {
         throw std::runtime_error(
@@ -294,10 +327,15 @@ void TensorData::m_toCuda()
 
     Compute::Cuda::CopyHostToDevice(m_denseCuda, m_denseHost,
                                     HostTotalSize * sizeof(float));
+#else
+    throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
 }
 
 void TensorData::m_toHost()
 {
+#ifdef WITH_CUDA
+
     if (m_type == Type::Sparse)
     {
         throw std::runtime_error(
@@ -309,6 +347,9 @@ void TensorData::m_toHost()
 
     Compute::Cuda::CopyDeviceToHost(m_denseHost, m_denseCuda,
                                     HostTotalSize * sizeof(float));
+#else
+    throw std::runtime_error("Sapphire was not compiled to used cuda");
+#endif
 }
 
 void TensorData::m_allocateHost()
@@ -332,6 +373,7 @@ void TensorData::m_allocateHost()
 
 void TensorData::m_allocateCuda()
 {
+#ifdef WITH_CUDA
     if (m_type == Type::Sparse)
     {
         throw std::runtime_error("m_allocate - Sparse not implemented");
@@ -352,5 +394,9 @@ void TensorData::m_allocateCuda()
     DenseTotalLengthCuda = totalSize;
 
     Compute::Dense::Cuda::Scalar(m_denseCuda, 0.0f, DenseTotalLengthCuda);
+#else
+    throw std::runtime_error("Sapphire was not compiled to use cuda");
+
+#endif
 }
 } // namespace Sapphire::TensorUtil

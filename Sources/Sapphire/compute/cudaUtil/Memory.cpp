@@ -4,6 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
+#ifdef WITH_CUDA
 #include <Sapphire/compute/cudaUtil/Memory.hpp>
 #include <Sapphire/compute/cudaUtil/CudaParams.cuh>
 #include <stdexcept>
@@ -99,3 +100,4 @@ void CopyDeviceToDeviceBroadcast(void* dst, const void* src,
 }
 
 }  // namespace Sapphire::Compute::Cuda
+#endif

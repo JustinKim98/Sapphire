@@ -19,7 +19,7 @@ namespace Sapphire::Test
 {
 void CudaConv2DTest(bool printForward, bool printBackward)
 {
-    CudaDevice cuda(0, "cuda0");
+    DeviceInfo cuda(0, "cuda0");
 
     int N = 4;
     int inputHeight = 100;
@@ -105,7 +105,7 @@ void CudaConv2DTest(bool printForward, bool printBackward)
 
 void MaxPool2DTest(bool printForward, bool printBackward)
 {
-    CudaDevice cuda(0, "cuda0");
+    DeviceInfo cuda(0, "cuda0");
 
     int N = 1;
     int inputHeight = 100;
@@ -182,7 +182,7 @@ void MaxPool2DTest(bool printForward, bool printBackward)
 
 void AvgPool2DTest(bool printForward, bool printBackward)
 {
-    CudaDevice cuda(0, "cuda0");
+    DeviceInfo cuda(0, "cuda0");
 
     int N = 1;
     int inputHeight = 100;
@@ -292,7 +292,7 @@ void HostIm2ColTest(bool print)
 
     const Shape inputMatrixShape({ N, inputMatrixRows, inputMatrixCols });
 
-    CudaDevice device(0, "cuda0");
+    DeviceInfo device(0, "cuda0");
     TensorUtil::TensorData inputData(inputShape, Type::Dense, device);
     TensorUtil::TensorData filterData(filterShape, Type::Dense, device);
     TensorUtil::TensorData inputMatrixData(inputMatrixShape, Type::Dense,
@@ -374,7 +374,7 @@ void HostConv2DTest(bool print)
     const Shape yShape({ N, numFilters, (yRows),
                          (yCols) });
 
-    CudaDevice device(0, "cuda0");
+    DeviceInfo device(0, "cuda0");
     TensorUtil::TensorData x(xShape, Type::Dense, device);
     TensorUtil::TensorData dx(xShape, Type::Dense, device);
     TensorUtil::TensorData filter(filterShape, Type::Dense, device);

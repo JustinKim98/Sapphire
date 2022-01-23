@@ -25,7 +25,7 @@ void TestMean(bool print)
     ModelManager::AddModel("myModel");
     ModelManager::SetCurrentModel("myModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     const Shape xShape = Shape({ dist(gen), dist(gen), dist(gen)
     });

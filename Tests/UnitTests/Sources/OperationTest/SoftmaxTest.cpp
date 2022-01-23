@@ -22,7 +22,7 @@ void TestSoftmax(bool print)
     ModelManager::AddModel("softmaxTestModel");
     ModelManager::SetCurrentModel("softmaxTestModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr int batchSize = 2;
     constexpr int unitSize = 10;
 

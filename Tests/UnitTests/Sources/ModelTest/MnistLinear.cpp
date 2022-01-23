@@ -24,7 +24,7 @@ void MnistLinear(std::filesystem::path filePath, int batchSize,
     ModelManager::AddModel("MnistLinear");
     ModelManager::SetCurrentModel("MnistLinear");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
 
     NN::Linear fc0(784, 100);
     NN::Linear fc1(100, 10);

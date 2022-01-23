@@ -25,7 +25,7 @@ void Conv2DModelTest(
     ModelManager::AddModel("SimpleConv2DModel");
     ModelManager::SetCurrentModel("SimpleConv2DModel");
 
-    const CudaDevice gpu(0, "cuda0");
+    const DeviceInfo gpu(0, "cuda0");
     constexpr auto xRows = 32;
     constexpr auto xCols = 32;
 

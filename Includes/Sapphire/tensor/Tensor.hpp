@@ -8,7 +8,7 @@
 #define SAPPHIRE_TENSOR_DECL_HPP
 
 #include <Sapphire/util/Shape.hpp>
-#include <Sapphire/util/CudaDevice.hpp>
+#include <Sapphire/util/DeviceInfo.hpp>
 #include <memory>
 
 namespace Sapphire
@@ -22,10 +22,10 @@ public:
 
     Tensor(const Shape& shape, bool preserve = false);
 
-    Tensor(const Shape& shape, const CudaDevice& device,
+    Tensor(const Shape& shape, const DeviceInfo& device,
            bool preserve = false);
 
-    Tensor(const Shape& shape, const CudaDevice& device, Type type,
+    Tensor(const Shape& shape, const DeviceInfo& device, Type type,
            bool preserve = false);
 
     Tensor(int descKey);
@@ -38,7 +38,7 @@ public:
     Tensor& operator=(Tensor&& tensor) = default;
 
     [[nodiscard]] Shape GetShape() const;
-    [[nodiscard]] CudaDevice GetDevice() const;
+    [[nodiscard]] DeviceInfo GetDevice() const;
     [[nodiscard]] int TensorDescriptorKey() const;
 
     void SetDescriptorKey(int key)
@@ -52,7 +52,7 @@ public:
     void LoadData(const std::vector<float>& data) const;
     void LoadGradient(const std::vector<float>& data) const;
 
-    void SetDevice(CudaDevice device) const;
+    void SetDevice(DeviceInfo device) const;
     void ToCuda() const;
     void ToHost() const;
     [[nodiscard]] ComputeMode Mode() const;
