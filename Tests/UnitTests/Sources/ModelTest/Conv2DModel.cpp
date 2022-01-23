@@ -98,13 +98,13 @@ void Conv2DModelTest(
             Shape({ batchSize, tensor.GetShape().Size() / batchSize }));
         tensor = F::ReLU(fc0(tensor));
         tensor = F::ReLU(fc1(tensor));
-        tensor = fc2(tensor);
-        tensor = F::SoftMax(tensor);
+        tensor = F::SoftMax(fc2(tensor));
+  
 
         auto loss = NN::Loss::CrossEntropy(tensor, label);
 
         //! Print loss and accuracy every 100 epochs
-        if (epoch % 50 == 0)
+        if (epoch % 20 == 0)
         {
             const auto yData = tensor.GetData();
             const auto labelData = label.GetData();

@@ -55,7 +55,7 @@ public:
     //! Registers back propagation wrapper
     //! \param backPropWrapper :  back propagation wrapper to register
     //! \return : key of the back propagation wrapper
-        int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
+    int RegisterBackPropWrapper(BackProp::BackPropWrapper* backPropWrapper);
 
     //! Returns descriptor using the descKey
     //! \param descKey : key of the descriptor

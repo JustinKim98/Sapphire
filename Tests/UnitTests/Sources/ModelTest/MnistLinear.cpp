@@ -9,6 +9,7 @@
 #include <iostream>
 #include <random>
 
+
 namespace Sapphire::Test
 {
 void MnistLinear(std::filesystem::path filePath, int batchSize,

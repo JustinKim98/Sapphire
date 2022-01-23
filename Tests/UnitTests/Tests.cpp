@@ -32,18 +32,18 @@
 #include <iostream>
 #include "doctest.h"
 
-#define GraphTest
+// #define GraphTest
 // #define DataLoaderTest
-#define TrainTest
-#define TensorFunctionalityTest
-#define BasicsTest
-#define ActivationTest
-#define GemmTest
-#define GemmBroadcastTest
-#define InitializeTest
-#define ConvolutionTest
-#define BasicGraphTest
-// #define ModelTest
+// #define TrainTest
+// #define TensorFunctionalityTest
+// #define BasicsTest
+// #define ActivationTest
+// #define GemmTest
+// #define GemmBroadcastTest
+// #define InitializeTest
+// #define ConvolutionTest
+// #define BasicGraphTest
+#define ModelTest
 
 namespace Sapphire::Test
 {
@@ -421,21 +421,21 @@ TEST_CASE("train test")
 
 TEST_CASE("Model Test")
 {
-    SUBCASE("MnistTest")
-    {
-        std::cout << "--- Mnist linear model ---" << std::endl;
-#ifdef _MSC_VER
-        const std::string filePath =
-            "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\train.csv";
-#else
-        const std::string filePath =
-            "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
-#endif
-
-        MnistLinear(
-            filePath, 100,
-            0.0001f, 3000, false);
-    }
+    //     SUBCASE("MnistTest")
+    //     {
+    //         std::cout << "--- Mnist linear model ---" << std::endl;
+    // #ifdef _MSC_VER
+    //         const std::string filePath =
+    //             "C:\\Users\\user\\Documents\\Sapphire\\Datasets\\train.csv";
+    // #else
+    //         const std::string filePath =
+    //             "/mnt/c/Users/user/Documents/Sapphire/Datasets/train.csv";
+    // #endif
+    //
+    //         MnistLinear(
+    //             filePath, 100,
+    //             0.0001f, 3000, false);
+    //     }
 
     SUBCASE("Conv2DModelTest")
     {
